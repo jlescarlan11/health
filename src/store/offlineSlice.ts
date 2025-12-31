@@ -23,6 +23,9 @@ const offlineSlice = createSlice({
       state.lastSync = Date.now();
       state.pendingSyncs = Math.max(0, state.pendingSyncs - 1);
     },
+    setLastSync: (state, action: PayloadAction<number>) => {
+      state.lastSync = action.payload;
+    },
     addPendingSync: (state) => {
       state.pendingSyncs += 1;
     },
@@ -32,5 +35,5 @@ const offlineSlice = createSlice({
   },
 });
 
-export const { setOfflineStatus, syncCompleted, addPendingSync, resetSyncStatus } = offlineSlice.actions;
+export const { setOfflineStatus, syncCompleted, setLastSync, addPendingSync, resetSyncStatus } = offlineSlice.actions;
 export default offlineSlice.reducer;

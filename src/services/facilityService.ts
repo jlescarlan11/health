@@ -63,9 +63,14 @@ const hostUri = Constants.expoConfig?.hostUri || Constants.manifest?.hostUri;
 logDebug('facilityService.ts:32', 'API URL resolved', { apiUrl: API_URL, platform: Platform.OS, configUrl, hostUri, expoConfigKeys: Object.keys(Constants.expoConfig?.extra || {}), manifestHostUri: Constants.manifest?.hostUri });
 // #endregion
 
-export const getFacilities = async () => {
+import { getFacilities as getFacilitiesFromDb, saveFacilities as saveFacilitiesToDb } from './database';
+import NetInfo from '@react-native-community/netinfo';
+
+// ... (existing code)
+
+export const fetchFacilitiesFromApi = async () => {
   // #region agent log
-  logDebug('facilityService.ts:50', 'getFacilities entry', { apiUrl: API_URL, expoConfigExtra: Constants.expoConfig?.extra, fullUrl: `${API_URL}/facilities` });
+  logDebug('facilityService.ts:50', 'fetchFacilitiesFromApi entry', { apiUrl: API_URL, expoConfigExtra: Constants.expoConfig?.extra, fullUrl: `${API_URL}/facilities` });
   // #endregion
   try {
     // #region agent log
@@ -78,9 +83,56 @@ export const getFacilities = async () => {
     return response.data;
   } catch (error: any) {
     // #region agent log
-    logDebug('facilityService.ts:61', 'Error in getFacilities', { errorMessage: error?.message, errorCode: error?.code, errorResponse: error?.response?.status, requestUrl: `${API_URL}/facilities`, isAxiosError: error?.isAxiosError });
+    logDebug('facilityService.ts:61', 'Error in fetchFacilitiesFromApi', { errorMessage: error?.message, errorCode: error?.code, errorResponse: error?.response?.status, requestUrl: `${API_URL}/facilities`, isAxiosError: error?.isAxiosError });
     // #endregion
-    console.error('Error fetching facilities:', error);
+    console.error('Error fetching facilities from API:', error);
     throw error;
   }
 };
+
+export const getFacilities = async () => {
+  const netInfo = await NetInfo.fetch();
+  
+  if (netInfo.isConnected) {
+    try {
+      const data = await fetchFacilitiesFromApi();
+      // Optionally cache the data here as well, or rely on the background sync service.
+      // For robust fallback, it's good to cache on every successful fetch.
+      // We need to match the data structure expected by saveFacilities.
+      // Assuming response.data is the array or has a facilities property.
+      // Based on existing logs: response.data?.facilities?.length or response.data?.length
+      
+      let facilitiesToSave = [];
+      if (Array.isArray(data)) {
+        facilitiesToSave = data;
+      } else if (data.facilities && Array.isArray(data.facilities)) {
+        facilitiesToSave = data.facilities;
+      }
+
+      if (facilitiesToSave.length > 0) {
+        saveFacilitiesToDb(facilitiesToSave).catch(err => console.error("Failed to cache facilities:", err));
+      }
+      
+      return data;
+    } catch (error) {
+      console.warn('API fetch failed, falling back to local database:', error);
+    }
+  }
+
+  // Fallback to database
+  console.log('Fetching facilities from local database');
+  const localData = await getFacilitiesFromDb();
+  if (localData && localData.length > 0) {
+    // Maintain API return structure if possible. 
+    // The API seems to return direct array or object with facilities.
+    // We will return the array directly as that's usually easier to handle, 
+    // but we should check what the caller expects. 
+    // Looking at `fetchFacilitiesFromApi`, it returns `response.data`.
+    // If `response.data` is `{ facilities: [...] }`, we should mock that?
+    // Let's assume for now the caller handles `data` or `data.facilities`.
+    return localData;
+  }
+
+  throw new Error('No internet connection and no cached data available.');
+};
+
