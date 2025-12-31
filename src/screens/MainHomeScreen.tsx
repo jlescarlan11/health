@@ -32,7 +32,15 @@ export const MainHomeScreen = () => {
   };
 
   const FeatureCard = ({ title, subtitle, icon, color, onPress, testID }: { title: string, subtitle: string, icon: string, color: string, onPress: () => void, testID?: string }) => (
-    <Card style={styles.card} onPress={onPress} testID={testID} accessible={true} accessibilityLabel={title}>
+    <Card 
+      style={styles.card} 
+      onPress={onPress} 
+      testID={testID} 
+      accessible={true} 
+      accessibilityLabel={`${title}, ${subtitle}`}
+      accessibilityRole="button"
+      accessibilityHint={`Double tap to navigate to ${title}`}
+    >
       <Card.Content style={styles.cardContent}>
         <View style={[styles.iconContainer, { backgroundColor: color }]}>
           <MaterialCommunityIcons name={icon} size={32} color="white" />
@@ -50,7 +58,7 @@ export const MainHomeScreen = () => {
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.greeting}>Kumusta!</Text>
+          <Text variant="headlineMedium" style={styles.greeting} accessibilityRole="header">Kumusta!</Text>
           <Text variant="titleMedium" style={styles.subGreeting}>How can we help you today?</Text>
         </View>
 
@@ -85,19 +93,21 @@ export const MainHomeScreen = () => {
         color="white"
         onPress={() => Alert.alert('Emergency', 'Call 911 or visit the nearest emergency room immediately.')}
         label="Emergency"
-        accessibilityLabel="Emergency Button"
+        accessibilityLabel="Emergency Call"
+        accessibilityHint="Double tap to see emergency instructions"
+        accessibilityRole="button"
       />
 
       <Portal>
         <Dialog visible={showDisclaimer} onDismiss={() => {}} dismissable={false}>
-          <Dialog.Title>Welcome to HEALTH</Dialog.Title>
+          <Dialog.Title accessibilityRole="header">Welcome to HEALTH</Dialog.Title>
           <Dialog.Content>
             <Paragraph>
               This application provides health information and guidance but is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
             </Paragraph>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={handleAcceptDisclaimer}>I Understand</Button>
+            <Button onPress={handleAcceptDisclaimer} accessibilityHint="Double tap to accept terms and continue">I Understand</Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>

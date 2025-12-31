@@ -36,6 +36,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           keyboardType="phone-pad"
           maxLength={4}
           error={hasError}
+          accessibilityLabel="Country Code"
         />
         <TextInput
           mode="outlined"
@@ -46,6 +47,7 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
           disabled={disabled}
           keyboardType="phone-pad"
           error={hasError}
+          accessibilityLabel={label}
         />
       </View>
       <HelperText type="error" visible={hasError}>

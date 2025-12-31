@@ -14,6 +14,9 @@ interface ButtonProps {
   style?: ViewStyle;
   labelStyle?: TextStyle;
   mode?: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal';
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  accessibilityRole?: 'button' | 'link' | 'image' | 'text' | 'none';
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -25,6 +28,9 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   style,
   labelStyle,
+  accessibilityLabel,
+  accessibilityHint,
+  accessibilityRole = 'button',
   ...props
 }) => {
   const theme = useTheme();
@@ -65,6 +71,9 @@ export const Button: React.FC<ButtonProps> = ({
       textColor={textColor}
       style={[styles.button, style]}
       labelStyle={[styles.label, labelStyle]}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole={accessibilityRole}
       {...props}
     >
       {title}
@@ -76,6 +85,8 @@ const styles = StyleSheet.create({
   button: {
     marginVertical: 4,
     borderRadius: 8,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   label: {
     fontSize: 16,

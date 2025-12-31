@@ -38,7 +38,13 @@ export const CustomHeader = ({ navigation, back }: StackHeaderProps) => {
         }} 
       />
       <View style={{ marginRight: 16 }}>
-        <TouchableOpacity onPress={handleProfilePress} accessibilityRole="button" accessibilityLabel="Profile">
+        <TouchableOpacity 
+          onPress={handleProfilePress} 
+          accessibilityRole="button" 
+          accessibilityLabel={isLoggedIn && user?.displayName ? `Profile, logged in as ${user.displayName}` : "Profile, not logged in"}
+          accessibilityHint="Double tap to view profile settings"
+          style={{ padding: 4 }} // Enhance touch target
+        >
           {isLoggedIn && user?.displayName ? (
             <Avatar.Text 
               size={40} 

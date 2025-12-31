@@ -30,6 +30,7 @@ export const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
         onPress={onAccept}
         textColor={theme.colors.primary}
         compact
+        accessibilityHint="Double tap to dismiss this disclaimer"
       >
         I Understand
       </Button>

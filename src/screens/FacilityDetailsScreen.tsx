@@ -12,7 +12,7 @@ export const FacilityDetailsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <Text style={styles.title}>Facility Details</Text>
+      <Text style={styles.title} accessibilityRole="header">Facility Details</Text>
       <Text>ID: {facilityId}</Text>
     </SafeAreaView>
   );

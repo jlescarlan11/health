@@ -20,6 +20,9 @@ export const EmergencyButton: React.FC<EmergencyButtonProps> = ({ onPress, style
       style={[styles.button, style]}
       contentStyle={styles.content}
       labelStyle={styles.label}
+      accessibilityLabel="Emergency Call"
+      accessibilityHint="Double tap to initiate an emergency call immediately"
+      accessibilityRole="button"
     >
       EMERGENCY CALL
     </Button>

@@ -25,8 +25,18 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 }) => {
   const theme = useTheme();
 
+  const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}`;
+
   return (
-    <Card style={[styles.card, style]} onPress={onPress} mode="elevated">
+    <Card 
+      style={[styles.card, style]} 
+      onPress={onPress} 
+      mode="elevated"
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint="Double tap to view facility details"
+    >
       <Card.Title
         title={facility.name}
         subtitle={facility.type}

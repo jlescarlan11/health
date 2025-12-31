@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export const RecommendationScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <Text style={styles.title}>Recommendations</Text>
+      <Text style={styles.title} accessibilityRole="header">Recommendations</Text>
       <Text>Care recommendations will appear here.</Text>
     </SafeAreaView>
   );

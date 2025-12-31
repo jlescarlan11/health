@@ -42,11 +42,23 @@ export const Alert: React.FC<AlertProps> = ({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor }, style]}>
+    <View 
+      style={[styles.container, { backgroundColor }, style]}
+      accessible={true}
+      accessibilityRole="alert"
+      accessibilityLiveRegion={type === 'error' ? 'assertive' : 'polite'}
+    >
       <IconButton icon={icon} iconColor={color} size={24} />
       <Text style={[styles.message, { color }]}>{message}</Text>
       {onDismiss && (
-        <IconButton icon="close" iconColor={color} size={20} onPress={onDismiss} />
+        <IconButton 
+          icon="close" 
+          iconColor={color} 
+          size={20} 
+          onPress={onDismiss} 
+          accessibilityLabel="Dismiss alert"
+          accessibilityRole="button"
+        />
       )}
     </View>
   );

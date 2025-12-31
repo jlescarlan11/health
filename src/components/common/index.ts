@@ -10,4 +10,5 @@ export * from './Alert';
 export * from './DisclaimerBanner';
 export * from './EmergencyButton';
 export * from './FacilityCard';
+export * from './FeatureCard';
 export * from './CustomHeader';

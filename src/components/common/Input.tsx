@@ -1,9 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
 import { TextInput, HelperText, useTheme } from 'react-native-paper';
-import { TextInputProps } from 'react-native-paper/lib/typescript/components/TextInput/TextInput';
 
-interface InputProps extends Omit<TextInputProps, 'theme'> {
+interface InputProps extends Omit<React.ComponentProps<typeof TextInput>, 'theme'> {
   errorText?: string;
   containerStyle?: ViewStyle;
   description?: string;
@@ -15,6 +14,9 @@ export const Input: React.FC<InputProps> = ({
   description,
   style,
   mode = 'outlined',
+  label,
+  accessibilityLabel,
+  accessibilityHint,
   ...props
 }) => {
   const theme = useTheme();
@@ -24,8 +26,11 @@ export const Input: React.FC<InputProps> = ({
     <View style={[styles.container, containerStyle]}>
       <TextInput
         mode={mode}
+        label={label}
         style={[styles.input, style]}
         error={hasError}
+        accessibilityLabel={accessibilityLabel || (typeof label === 'string' ? label : undefined)}
+        accessibilityHint={accessibilityHint}
         {...props}
       />
       {description && !hasError && (

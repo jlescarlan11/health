@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator, Modal } from 'react-native';
-import { useTheme, Text } from 'react-native-paper';
+import { View, StyleSheet, Modal } from 'react-native';
+import { useTheme, Text, ActivityIndicator } from 'react-native-paper';
 
 interface LoadingSpinnerProps {
   variant?: 'fullscreen' | 'inline';
@@ -26,7 +26,12 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     return (
       <Modal transparent animationType="fade" visible={visible}>
         <View style={styles.modalBackground}>
-          <View style={[styles.activityIndicatorWrapper, { backgroundColor: theme.colors.surface }]}>
+          <View 
+            style={[styles.activityIndicatorWrapper, { backgroundColor: theme.colors.surface }]}
+            accessible={true}
+            accessibilityRole="progressbar"
+            accessibilityLabel={text || "Loading"}
+          >
             <ActivityIndicator animating={true} color={spinnerColor} size={size} />
             {text && (
               <Text style={[styles.text, { color: theme.colors.onSurface }]}>
@@ -40,7 +45,12 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   }
 
   return (
-    <View style={styles.inlineContainer}>
+    <View 
+      style={styles.inlineContainer}
+      accessible={true}
+      accessibilityRole="progressbar"
+      accessibilityLabel={text || "Loading"}
+    >
       <ActivityIndicator animating={true} color={spinnerColor} size={size} />
       {text && (
         <Text style={[styles.inlineText, { color: theme.colors.onSurface }]}>
