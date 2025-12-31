@@ -116,6 +116,10 @@ class GeminiClient {
         
         const parsedResponse = this.parseJSONResponse(responseText);
 
+        // Fallback Policy: If uncertain or if red flags are present but level is low, upgrade.
+        // (This logic is partially in the prompt, but we enforce it here too if needed)
+        // For now, we trust the prompt's instruction but we could add a post-check here.
+
         // Update cache
         this.cache.set(cacheKey, {
           data: parsedResponse,

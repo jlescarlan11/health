@@ -1,2 +1,1 @@
-// Barrel export file for src/api
-export {};
+export * from './geminiClient';
