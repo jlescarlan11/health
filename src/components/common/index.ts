@@ -1,2 +1,1 @@
-// Barrel export file for src/components/common
-export {};
+export * from './CustomHeader';

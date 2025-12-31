@@ -1,37 +1,62 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import * as Linking from 'expo-linking';
+
+import { RootStackParamList } from '../types/navigation';
+import { CustomHeader } from '../components/common/CustomHeader';
+
+// Screens
+import { MainHomeScreen } from '../screens/MainHomeScreen';
 import { NavigationAssistant } from '../features/navigation';
+import { SymptomAssessmentScreen } from '../screens/SymptomAssessmentScreen';
+import { RecommendationScreen } from '../screens/RecommendationScreen';
 import { FacilityList } from '../features/facilities';
-import { View, Text } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { FacilityDetailsScreen } from '../screens/FacilityDetailsScreen';
+import { YakapEnrollmentScreen } from '../features/yakap';
+import { ProfileScreen } from '../features/profile/ProfileScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 
-const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator<RootStackParamList>();
 
-const Placeholder = ({ name }: { name: string }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-    <Text>{name} Feature Coming Soon</Text>
-  </View>
-);
+const prefix = Linking.createURL('/');
+
+const linking = {
+  prefixes: [prefix],
+  config: {
+    screens: {
+      MainHome: 'home',
+      AiChat: 'chat',
+      SymptomAssessment: 'assessment',
+      Recommendations: 'recommendations',
+      FacilityDirectory: 'facilities',
+      FacilityDetails: 'facilities/:facilityId',
+      YakapEnrollment: 'yakap',
+      Profile: 'profile',
+      Settings: 'settings',
+    },
+  },
+};
 
 const AppNavigator = () => {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ color, size }) => {
-            let iconName = '';
-            if (route.name === 'Assistant') iconName = 'robot';
-            else if (route.name === 'Facilities') iconName = 'hospital-building';
-            else if (route.name === 'YAKAP') iconName = 'card-account-details';
-            return <Icon name={iconName} size={size} color={color} />;
-          },
-        })}
+    <NavigationContainer linking={linking}>
+      <Stack.Navigator
+        initialRouteName="MainHome"
+        screenOptions={{
+          header: (props) => <CustomHeader {...props} />,
+        }}
       >
-        <Tab.Screen name="Assistant" component={NavigationAssistant} />
-        <Tab.Screen name="Facilities" component={FacilityList} />
-        <Tab.Screen name="YAKAP" children={() => <Placeholder name="YAKAP" />} />
-      </Tab.Navigator>
+        <Stack.Screen name="MainHome" component={MainHomeScreen} />
+        <Stack.Screen name="AiChat" component={NavigationAssistant} />
+        <Stack.Screen name="SymptomAssessment" component={SymptomAssessmentScreen} />
+        <Stack.Screen name="Recommendations" component={RecommendationScreen} />
+        <Stack.Screen name="FacilityDirectory" component={FacilityList} />
+        <Stack.Screen name="FacilityDetails" component={FacilityDetailsScreen} />
+        <Stack.Screen name="YakapEnrollment" component={YakapEnrollmentScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

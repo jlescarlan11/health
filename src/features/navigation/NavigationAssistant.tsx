@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TextInput, Button, Card, Text, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
@@ -47,50 +48,52 @@ const NavigationAssistant = () => {
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <ScrollView 
-        ref={scrollViewRef}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-        contentContainerStyle={styles.scrollContent}
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
       >
-        {chatHistory.map((msg) => (
-          <View key={msg.id} style={[
-            styles.messageWrapper,
-            msg.sender === 'user' ? styles.userWrapper : styles.aiWrapper
-          ]}>
-            <Card style={[
-              styles.messageCard,
-              msg.sender === 'user' ? styles.userCard : styles.aiCard
+        <ScrollView 
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          contentContainerStyle={styles.scrollContent}
+        >
+          {chatHistory.map((msg) => (
+            <View key={msg.id} style={[
+              styles.messageWrapper,
+              msg.sender === 'user' ? styles.userWrapper : styles.aiWrapper
             ]}>
-              <Card.Content>
-                <Text style={msg.sender === 'user' ? styles.userText : styles.aiText}>
-                  {msg.text}
-                </Text>
-              </Card.Content>
-            </Card>
-          </View>
-        ))}
-        {isLoading && (
-          <View style={styles.loadingWrapper}>
-            <ActivityIndicator animating={true} />
-          </View>
-        )}
-      </ScrollView>
+              <Card style={[
+                styles.messageCard,
+                msg.sender === 'user' ? styles.userCard : styles.aiCard
+              ]}>
+                <Card.Content>
+                  <Text style={msg.sender === 'user' ? styles.userText : styles.aiText}>
+                    {msg.text}
+                  </Text>
+                </Card.Content>
+              </Card>
+            </View>
+          ))}
+          {isLoading && (
+            <View style={styles.loadingWrapper}>
+              <ActivityIndicator animating={true} />
+            </View>
+          )}
+        </ScrollView>
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          mode="outlined"
-          value={input}
-          onChangeText={setInput}
-          placeholder="Describe your symptoms..."
-          style={styles.input}
-          right={<TextInput.Icon icon="send" onPress={handleSend} />}
-        />
-      </View>
-    </KeyboardAvoidingView>
+        <View style={styles.inputContainer}>
+          <TextInput
+            mode="outlined"
+            value={input}
+            onChangeText={setInput}
+            placeholder="Describe your symptoms..."
+            style={styles.input}
+            right={<TextInput.Icon icon="send" onPress={handleSend} />}
+          />
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
@@ -98,6 +101,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
   },
   scrollContent: {
     padding: 16,
