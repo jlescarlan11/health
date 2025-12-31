@@ -16,6 +16,7 @@ import { FacilityDetailsScreen } from '../screens/FacilityDetailsScreen';
 import { YakapEnrollmentScreen } from '../features/yakap';
 import { ProfileScreen } from '../features/profile/ProfileScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { PhoneLoginScreen, OTPVerificationScreen } from '../features/auth';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -34,6 +35,8 @@ const linking = {
       YakapEnrollment: 'yakap',
       Profile: 'profile',
       Settings: 'settings',
+      PhoneLogin: 'login',
+      OTPVerification: 'otp',
     },
   },
 };
@@ -56,6 +59,8 @@ const AppNavigator = () => {
         <Stack.Screen name="YakapEnrollment" component={YakapEnrollmentScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="PhoneLogin" component={PhoneLoginScreen} />
+        <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

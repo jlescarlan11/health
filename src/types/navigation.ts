@@ -8,4 +8,6 @@ export type RootStackParamList = {
   YakapEnrollment: undefined;
   Profile: undefined;
   Settings: undefined;
+  PhoneLogin: undefined;
+  OTPVerification: { verificationId: string; phoneNumber: string };
 };

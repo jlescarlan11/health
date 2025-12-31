@@ -4,9 +4,10 @@ interface AuthState {
   isLoggedIn: boolean;
   user: {
     uid: string;
-    email: string;
-    displayName?: string;
-    photoURL?: string;
+    email?: string | null;
+    phoneNumber?: string | null;
+    displayName?: string | null;
+    photoURL?: string | null;
   } | null;
   token: string | null;
   refreshToken: string | null;
@@ -29,7 +30,7 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ user: AuthState['user']; token: string; refreshToken?: string }>
+      action: PayloadAction<{ user: AuthState['user']; token: string | null; refreshToken?: string | null }>
     ) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
