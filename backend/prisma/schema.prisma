@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Facility {
+  id              String   @id @default(cuid())
+  name            String
+  type            String   // 'hospital' | 'health_center' | 'barangay_center'
+  address         String
+  latitude        Float
+  longitude       Float
+  phone           String?
+  yakap_accredited Boolean @default(false)
+  services        String[] // Array of services
+  operating_hours Json     // Store hours as JSON
+  photos          String[] // Array of photo URLs
+  barangay        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([latitude, longitude])
+  @@index([type])
+}
+
+model Symptom {
+  id              String   @id @default(cuid())
+  name            String
+  category        String   // 'common' | 'emergency' | 'chronic'
+  keywords        String[] // Search keywords
+  red_flags       String[] // Emergency indicators
+  recommended_care String  // 'self_care' | 'health_center' | 'hospital' | 'emergency'
+  follow_up_questions String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([category])
+}
+
+model UserEnrollment {
+  id              String   @id @default(cuid())
+  user_id         String   @unique // Firebase UID
+  phone_number    String   @unique
+  enrollment_pathway String? // 'egovph' | 'philhealth' | 'clinic' | 'office'
+  progress_step   Int      @default(0)
+  completed       Boolean  @default(false)
+  documents_uploaded Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([user_id])
+  @@index([phone_number])
+}
+
+model EmergencyContact {
+  id          String @id @default(cuid())
+  name        String
+  category    String // 'emergency' | 'mental_health' | 'hotline'
+  phone       String
+  available24x7 Boolean @default(true)
+  description String?
+  createdAt   DateTime @default(now())
+}
