@@ -1,18 +1,18 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import userReducer from './userSlice';
-import facilityReducer from './facilitySlice';
+import authReducer from './authSlice';
+import facilitiesReducer from './facilitiesSlice';
 import navigationReducer from './navigationSlice';
-import yakapReducer from './yakapSlice';
+import enrollmentReducer from './enrollmentSlice';
 import offlineReducer from './offlineSlice';
 import settingsReducer from './settingsSlice';
 
 const rootReducer = combineReducers({
-  user: userReducer,
-  facilities: facilityReducer,
+  auth: authReducer,
+  facilities: facilitiesReducer,
   navigation: navigationReducer,
-  yakap: yakapReducer,
+  enrollment: enrollmentReducer,
   offline: offlineReducer,
   settings: settingsReducer,
 });
@@ -20,7 +20,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['user', 'settings', 'yakap'], // Persist these slices
+  whitelist: ['auth', 'settings', 'enrollment'], // Persist these slices as requested
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

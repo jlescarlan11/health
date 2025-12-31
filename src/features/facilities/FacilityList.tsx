@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { List, Card, Text, ActivityIndicator, Chip } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
-import { fetchFacilities } from '../../store/facilitySlice';
+import { fetchFacilities } from '../../store/facilitiesSlice';
 
 const FacilityList = () => {
   const dispatch = useDispatch<AppDispatch>();

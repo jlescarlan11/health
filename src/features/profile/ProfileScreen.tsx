@@ -4,15 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/store';
-import { logout, setUser } from '../../store/userSlice';
+import { logout, setCredentials } from '../../store/authSlice';
 
 export const ProfileScreen = () => {
   const dispatch = useDispatch();
-  const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
+  const { user, isLoggedIn } = useSelector((state: RootState) => state.auth);
 
   const handleLogin = () => {
     // Mock login
-    dispatch(setUser({ uid: '123', email: 'test@example.com', displayName: 'John Doe' }));
+    dispatch(setCredentials({ 
+      user: { uid: '123', email: 'test@example.com', displayName: 'John Doe' },
+      token: 'mock-token-123'
+    }));
   };
 
   const handleLogout = () => {

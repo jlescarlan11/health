@@ -7,7 +7,7 @@ import { RootState } from '../../store/store';
 
 export const CustomHeader = ({ navigation, back }: StackHeaderProps) => {
   const theme = useTheme();
-  const { user, isLoggedIn } = useSelector((state: RootState) => state.user);
+  const { user, isLoggedIn } = useSelector((state: RootState) => state.auth);
 
   const handleProfilePress = () => {
     navigation.navigate('Profile');

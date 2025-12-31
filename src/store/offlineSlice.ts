@@ -26,8 +26,11 @@ const offlineSlice = createSlice({
     addPendingSync: (state) => {
       state.pendingSyncs += 1;
     },
+    resetSyncStatus: (state) => {
+      state.pendingSyncs = 0;
+    }
   },
 });
 
-export const { setOfflineStatus, syncCompleted, addPendingSync } = offlineSlice.actions;
+export const { setOfflineStatus, syncCompleted, addPendingSync, resetSyncStatus } = offlineSlice.actions;
 export default offlineSlice.reducer;
