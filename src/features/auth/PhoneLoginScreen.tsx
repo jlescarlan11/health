@@ -7,6 +7,9 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
+// #region agent log
+fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'PhoneLoginScreen.tsx:10',message:'PhoneLoginScreen importing authService',data:{timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'}})}).catch(()=>{});
+// #endregion
 import { authService } from '../../services/authService';
 import { useDispatch } from 'react-redux';
 import { setLoading, setError } from '../../store/authSlice';

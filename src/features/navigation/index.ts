@@ -1,1 +1,1 @@
-export { default as NavigationAssistant } from './NavigationAssistant';
+export { default as NavigatorHomeScreen } from './NavigatorHomeScreen';

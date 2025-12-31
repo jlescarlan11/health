@@ -1,8 +1,8 @@
 export type RootStackParamList = {
   MainHome: undefined;
   AiChat: undefined;
-  SymptomAssessment: undefined;
-  Recommendations: undefined;
+  SymptomAssessment: { initialSymptom: string };
+  Recommendations: { assessmentData: any }; // Replace 'any' with proper type later
   FacilityDirectory: undefined;
   FacilityDetails: { facilityId: string };
   YakapEnrollment: undefined;

@@ -52,3 +52,27 @@ JSON Schema:
   "nearest_facility_type": "Specific facility type suggestion (e.g., 'Barangay Health Center', 'General Hospital')"
 }
 `;
+
+export const CLARIFYING_QUESTIONS_PROMPT = `
+You are a medical triage AI. The user has described their symptoms.
+Your goal is to ask 2-4 relevant clarifying questions to better assess the severity and appropriate level of care.
+
+User Input: {{symptoms}}
+
+Instructions:
+- Return ONLY a JSON object.
+- Do NOT include markdown code blocks.
+- The JSON should contain an array of questions.
+
+JSON Schema:
+{
+  "questions": [
+    {
+      "id": "q1",
+      "text": "The question text",
+      "type": "choice" | "text",
+      "options": ["Option 1", "Option 2"] // Only for "choice" type
+    }
+  ]
+}
+`;
