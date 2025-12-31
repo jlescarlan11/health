@@ -1,13 +1,12 @@
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import morgan from 'morgan';
 
 import routes from './routes';
 import { errorHandler, apiLimiter } from './middleware';
 
-dotenv.config();
+// Note: dotenv.config() is now called in server.ts before this module is imported
 
 const app = express();
 

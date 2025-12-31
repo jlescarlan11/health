@@ -2,11 +2,18 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../../generated/prisma/client';
 
-const connectionString = `${process.env.DATABASE_URL}`;
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error('❌ DATABASE_URL environment variable is not set!');
+  throw new Error('DATABASE_URL environment variable is required');
+}
 
 const pool = new Pool({
   connectionString,
   ssl: process.env.NODE_ENV === 'production' ? true : { rejectUnauthorized: false },
+});
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err);
 });
 const adapter = new PrismaPg(pool);
 
