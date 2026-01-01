@@ -117,7 +117,7 @@ export const FacilityDetailsScreen = () => {
   const mapPreviewUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${facility.latitude},${facility.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${facility.latitude},${facility.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`;
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView>
         <TouchableOpacity onPress={() => images.length > 0 && setImageViewerVisible(true)}>
           <Image
@@ -221,7 +221,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
   },
   contentContainer: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   headerSection: {
     flexDirection: 'row',

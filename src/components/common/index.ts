@@ -13,3 +13,4 @@ export * from './FacilityCard';
 export * from './FeatureCard';
 export * from './CustomHeader';
 export * from './OfflineBanner';
+export * from './StandardHeader';

@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Dimensions, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Card, Title, Paragraph, FAB, Button, Dialog, Portal, useTheme } from 'react-native-paper';
+import { Button, Card, Dialog, Paragraph, Portal, Title, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TabScreenProps } from '../types/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { setHasSeenDisclaimer } from '../store/settingsSlice';
 
+// Import the new components
+import HomeHero from '../components/heroes/HomeHero';
+import { EmergencyButton } from '../components/common/EmergencyButton';
+
+
 type MainHomeNavigationProp = TabScreenProps<'Home'>['navigation'];
 
 export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:21', message: 'MainHomeScreen render - navigation check', data: { hasNavigate: typeof navigation.navigate === 'function', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' } }) }).catch(() => {});
-  // #endregion
   const theme = useTheme();
   const dispatch = useDispatch();
   const hasSeenDisclaimer = useSelector((state: RootState) => state.settings.hasSeenDisclaimer);
@@ -57,12 +58,9 @@ export const MainHomeScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text variant="headlineMedium" style={styles.greeting} accessibilityRole="header">Kumusta!</Text>
-          <Text variant="titleMedium" style={styles.subGreeting}>How can we help you today?</Text>
-        </View>
+        <HomeHero />
 
         <View style={styles.cardsContainer}>
           <FeatureCard
@@ -71,10 +69,7 @@ export const MainHomeScreen = () => {
             icon="stethoscope"
             color="#4CAF50"
             onPress={() => {
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:75', message: 'Navigating to Check tab', data: { targetTab: 'Check', targetScreen: 'NavigatorHome', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' } }) }).catch(() => {});
-              // #endregion
-              navigation.navigate('Check', { screen: 'NavigatorHome' });
+              navigation.navigate('Check', { screen: 'NavigatorHomeScreen' });
             }}
           />
           <FeatureCard
@@ -83,10 +78,7 @@ export const MainHomeScreen = () => {
             icon="hospital-marker"
             color="#2196F3"
             onPress={() => {
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:82', message: 'Navigating to Find tab', data: { targetTab: 'Find', targetScreen: 'FacilityDirectory', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' } }) }).catch(() => {});
-              // #endregion
-              navigation.navigate('Find', { screen: 'FacilityDirectory' });
+              navigation.navigate('Find', { screen: 'FacilityDirectoryScreen' });
             }}
           />
           <FeatureCard
@@ -95,25 +87,17 @@ export const MainHomeScreen = () => {
             icon="card-account-details"
             color="#FF9800"
             onPress={() => {
-              // #region agent log
-              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:89', message: 'Navigating to YAKAP tab', data: { targetTab: 'YAKAP', targetScreen: 'YakapEnrollment', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' } }) }).catch(() => {});
-              // #endregion
-              navigation.navigate('YAKAP', { screen: 'YakapEnrollment' });
+              navigation.navigate('YAKAP', { screen: 'YAKAPHomeScreen' });
             }}
           />
         </View>
       </ScrollView>
 
-      <FAB
-        icon="alert"
-        style={[styles.fab, { backgroundColor: theme.colors.error }]}
-        color="white"
-        onPress={() => Alert.alert('Emergency', 'Call 911 or visit the nearest emergency room immediately.')}
-        label="Emergency"
-        accessibilityLabel="Emergency Call"
-        accessibilityHint="Double tap to see emergency instructions"
-        accessibilityRole="button"
-      />
+      <View style={styles.fabContainer}>
+        <EmergencyButton
+            onPress={() => Alert.alert('Emergency', 'Call 911 or visit the nearest emergency room immediately.')}
+        />
+      </View>
 
       <Portal>
         <Dialog visible={showDisclaimer} onDismiss={() => {}} dismissable={false}>
@@ -138,31 +122,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   scrollContent: {
-    padding: 20,
-    paddingBottom: 80, // Space for FAB
-  },
-  header: {
-    marginBottom: 24,
-  },
-  greeting: {
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  subGreeting: {
-    color: '#666',
+    paddingBottom: 100, // Increased padding to avoid overlap with the emergency button
   },
   cardsContainer: {
+    marginTop: 24,
+    paddingHorizontal: 20, // Apply padding here for cards, not to HomeHero
     gap: 16,
   },
   card: {
-    marginBottom: 10,
-    elevation: 2,
+    backgroundColor: 'white',
     borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    padding: 16,
   },
   iconContainer: {
     width: 56,
@@ -183,10 +162,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  fab: {
+  fabContainer: {
     position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
+    bottom: 16,
+    right: 16,
+    left: 16,
   },
 });

@@ -40,14 +40,12 @@ export const DisclaimerBanner: React.FC<DisclaimerBannerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    paddingHorizontal: 16,
     flexDirection: 'column',
     alignItems: 'flex-start',
     width: '100%',
   },
-  content: {
-    marginBottom: 8,
-  },
+  content: {},
   text: {
     marginTop: 4,
   },

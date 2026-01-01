@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { StyleSheet } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -51,7 +52,6 @@ const linking = {
   },
 };
 
-
 const AppContent = () => {
   useEffect(() => {
     // Initial Sync Status Load
@@ -64,24 +64,32 @@ const AppContent = () => {
     loadSyncStatus();
 
     // Network Listener
-    const unsubscribe = NetInfo.addEventListener(state => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
       const isOffline = state.isConnected === false;
       store.dispatch(setOfflineStatus(isOffline));
     });
 
     // Initial Sync
-    syncFacilities().catch(err => console.log('Initial sync failed (likely offline or error):', err));
+    syncFacilities().catch((err) =>
+      console.log('Initial sync failed (likely offline or error):', err),
+    );
 
     return () => unsubscribe();
   }, []);
 
   return (
-    <>
+    <SafeAreaView style={styles.container}>
       <OfflineBanner />
       <AppNavigator />
-    </>
+    </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
 
 export default function App() {
   // Catch any unhandled errors during module loading
@@ -91,22 +99,25 @@ export default function App() {
         console.warn('Firebase native module not available (expected in Expo Go):', error.message);
       }
     };
-    
+
     // Set up global error handler
     const originalError = console.error;
     console.error = (...args) => {
-      if (args[0]?.message?.includes('RNFBAppModule') || args[0]?.message?.includes('Native module')) {
+      if (
+        args[0]?.message?.includes('RNFBAppModule') ||
+        args[0]?.message?.includes('Native module')
+      ) {
         errorHandler(args[0]);
         return; // Suppress the error
       }
       originalError(...args);
     };
-    
+
     return () => {
       console.error = originalError;
     };
   }, []);
-  
+
   return (
     <StoreProvider store={store}>
       <PersistGate loading={null} persistor={persistor}>

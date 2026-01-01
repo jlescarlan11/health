@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MainHomeScreen } from '../screens/MainHomeScreen';
 import { ProfileScreen } from '../features';
@@ -13,6 +14,8 @@ import { TabParamList } from './types';
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const TabNavigator = () => {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -37,7 +40,7 @@ const TabNavigator = () => {
         tabBarActiveTintColor: '#2E9B95',
         tabBarInactiveTintColor: 'gray',
         tabBarStyle: {
-          height: Platform.OS === 'ios' ? 60 : 56,
+          height: 24 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: 10,
@@ -46,11 +49,31 @@ const TabNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name="Home" component={MainHomeScreen} options={{ headerShown: false, tabBarLabel: 'Home' }} />
-      <Tab.Screen name="Check" component={CheckNavigator} options={{ headerShown: false, tabBarLabel: 'Check' }} />
-      <Tab.Screen name="Find" component={FacilitiesNavigator} options={{ headerShown: false, tabBarLabel: 'Find' }} />
-      <Tab.Screen name="YAKAP" component={YakapNavigator} options={{ headerShown: false, tabBarLabel: 'YAKAP' }} />
-      <Tab.Screen name="Me" component={ProfileScreen} options={{ headerShown: false, tabBarLabel: 'Me' }} />
+      <Tab.Screen
+        name="Home"
+        component={MainHomeScreen}
+        options={{ headerShown: false, tabBarLabel: 'Home' }}
+      />
+      <Tab.Screen
+        name="Check"
+        component={CheckNavigator}
+        options={{ headerShown: false, tabBarLabel: 'Check' }}
+      />
+      <Tab.Screen
+        name="Find"
+        component={FacilitiesNavigator}
+        options={{ headerShown: false, tabBarLabel: 'Find' }}
+      />
+      <Tab.Screen
+        name="YAKAP"
+        component={YakapNavigator}
+        options={{ headerShown: false, tabBarLabel: 'YAKAP' }}
+      />
+      <Tab.Screen
+        name="Me"
+        component={ProfileScreen}
+        options={{ headerShown: false, tabBarLabel: 'Me' }}
+      />
     </Tab.Navigator>
   );
 };

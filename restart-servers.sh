@@ -36,3 +36,4 @@ echo ""
 echo "To stop servers, press Ctrl+C or run: kill $BACKEND_PID $EXPO_PID"
 
 
+

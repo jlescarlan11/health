@@ -4,6 +4,7 @@ import NavigatorHomeScreen from '../features/navigation/NavigatorHomeScreen';
 import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
 import RecommendationScreen from '../screens/RecommendationScreen';
 import { CheckStackParamList } from './types';
+import StandardHeader from '../components/common/StandardHeader';
 
 const Stack = createStackNavigator<CheckStackParamList>();
 
@@ -13,9 +14,27 @@ const CheckNavigator = () => {
   // #endregion
   return (
     <Stack.Navigator>
-      <Stack.Screen name="NavigatorHome" component={NavigatorHomeScreen} options={{ title: 'AI Navigator' }} />
-      <Stack.Screen name="SymptomAssessment" component={SymptomAssessmentScreen} options={{ title: 'Symptom Check' }} />
-      <Stack.Screen name="Recommendation" component={RecommendationScreen} options={{ title: 'Recommendation' }} />
+      <Stack.Screen
+        name="NavigatorHome"
+        component={NavigatorHomeScreen}
+        options={{
+          header: () => <StandardHeader title="AI Navigator" />,
+        }}
+      />
+      <Stack.Screen
+        name="SymptomAssessment"
+        component={SymptomAssessmentScreen}
+        options={{
+          header: () => <StandardHeader title="Symptom Check" showBackButton />,
+        }}
+      />
+      <Stack.Screen
+        name="Recommendation"
+        component={RecommendationScreen}
+        options={{
+          header: () => <StandardHeader title="Recommendation" showBackButton />,
+        }}
+      />
     </Stack.Navigator>
   );
 };

@@ -116,7 +116,7 @@ export const FacilityDirectoryScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <Appbar.Header style={styles.header} elevated>
         <Appbar.Content title="Facilities" titleStyle={styles.headerTitle} />
         <Appbar.Action 

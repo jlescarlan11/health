@@ -1,2 +1,2 @@
 // Barrel export file for src/components
-export {};
+export * from './heroes';

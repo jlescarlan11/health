@@ -35,7 +35,7 @@ export const SettingsScreen = () => {
     : 'Never';
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title} accessibilityRole="header">Settings</Text>
       
       <View style={styles.section}>
@@ -54,9 +54,9 @@ export const SettingsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
+  container: { flex: 1, backgroundColor: '#f5f5f5', paddingHorizontal: 20 },
   title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: '#333' },
-  section: { backgroundColor: 'white', padding: 20, borderRadius: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 2 },
+  section: { backgroundColor: 'white', borderRadius: 10, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 2, paddingVertical: 20 },
   sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 10, color: '#333' },
   infoText: { marginBottom: 15, color: '#666' },
   warningText: { marginTop: 10, color: '#d32f2f', fontSize: 12 }

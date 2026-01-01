@@ -114,7 +114,7 @@ const SymptomAssessmentScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <View style={styles.header}>
         <Text variant="titleLarge">Assessment</Text>
         <ProgressBar progress={(currentStep + 1) / questions.length} style={styles.progressBar} />
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   header: { padding: 16, backgroundColor: 'white' },
   progressBar: { marginVertical: 8, height: 8, borderRadius: 4 },
   progressText: { textAlign: 'right', color: '#666' },
-  content: { padding: 16 },
+  content: { paddingHorizontal: 16, paddingVertical: 16 },
   card: { padding: 8, borderRadius: 12 },
   questionText: { marginBottom: 16 },
   footer: { flexDirection: 'row', padding: 16, backgroundColor: 'white', borderTopWidth: 1, borderColor: '#eee' },

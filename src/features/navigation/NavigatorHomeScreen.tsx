@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, TextInput, Button, Chip, useTheme, Surface, ActivityIndicator } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +16,10 @@ const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 
 const NavigatorHomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
+  // #region agent log
+  const insets = useSafeAreaInsets();
+  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'NavigatorHomeScreen.tsx:19', message: 'SafeAreaInsets measured', data: { top: insets.top, bottom: insets.bottom, left: insets.left, right: insets.right, scrollPaddingVertical: 16, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' } }) }).catch(() => {});
+  // #endregion
   const [symptom, setSymptom] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -74,8 +78,14 @@ const NavigatorHomeScreen = () => {
     navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
   };
 
+  // #region agent log
+  const containerStyle = styles.container;
+  const scrollContentStyle = styles.scrollContent;
+  const headerStyle = styles.header;
+  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'NavigatorHomeScreen.tsx:79', message: 'Style values before render', data: { scrollPaddingVertical: scrollContentStyle.paddingVertical, scrollPaddingHorizontal: scrollContentStyle.paddingHorizontal, headerMarginBottom: headerStyle.marginBottom, headerPaddingTop: headerStyle.paddingTop, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' } }) }).catch(() => {});
+  // #endregion
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
        <ScrollView contentContainerStyle={styles.scrollContent}>
          <View style={styles.header}>
             <Text variant="headlineMedium" style={styles.branding}>HEALTH Navigator</Text>
@@ -151,8 +161,8 @@ const NavigatorHomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
-  scrollContent: { padding: 16, paddingBottom: 100 },
-  header: { marginBottom: 16, alignItems: 'center' },
+  scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
+  header: { alignItems: 'center' },
   branding: { fontWeight: 'bold', color: '#1a73e8' },
   subtitle: { color: '#5f6368' },
   inputSection: { padding: 16, borderRadius: 12, backgroundColor: 'white', marginBottom: 20 },
@@ -164,7 +174,7 @@ const styles = StyleSheet.create({
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { marginBottom: 8 },
   submitButton: { paddingVertical: 6 },
-  fabContainer: { position: 'absolute', right: 16, bottom: 24 },
+  fabContainer: { position: 'absolute', right: 16, bottom: 16 },
 });
 
 export default NavigatorHomeScreen;

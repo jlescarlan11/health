@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { FacilityDirectoryScreen } from '../features/facilities/FacilityDirectoryScreen';
 import FacilityDetailsScreen from '../screens/FacilityDetailsScreen';
 import { FacilitiesStackParamList } from './types';
+import StandardHeader from '../components/common/StandardHeader';
 
 // #region agent log
 fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'FacilitiesNavigator.tsx:6', message: 'FacilityDirectoryScreen import check', data: { isUndefined: FacilityDirectoryScreen === undefined, type: typeof FacilityDirectoryScreen, hasComponent: !!FacilityDirectoryScreen, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' } }) }).catch(() => {});
@@ -22,8 +23,20 @@ const FacilitiesNavigator = () => {
   // #endregion
   return (
     <Stack.Navigator>
-      <Stack.Screen name="FacilityDirectory" component={FacilityDirectoryScreen} options={{ title: 'Facilities' }} />
-      <Stack.Screen name="FacilityDetails" component={FacilityDetailsScreen} options={{ title: 'Facility Details' }} />
+      <Stack.Screen
+        name="FacilityDirectory"
+        component={FacilityDirectoryScreen}
+        options={{
+          header: () => <StandardHeader title="Facilities" />,
+        }}
+      />
+      <Stack.Screen
+        name="FacilityDetails"
+        component={FacilityDetailsScreen}
+        options={{
+          header: () => <StandardHeader title="Facility Details" showBackButton />,
+        }}
+      />
     </Stack.Navigator>
   );
 };

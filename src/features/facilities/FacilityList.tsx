@@ -5,7 +5,7 @@ import { FacilityListView } from '../../components/features/facilities';
 
 const FacilityList = () => {
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container}>
       <FacilityListView />
     </SafeAreaView>
   );

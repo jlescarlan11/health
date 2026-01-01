@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export const YakapEnrollmentScreen = () => {
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <Text style={styles.title}>YAKAP Enrollment</Text>
       <Text>Enrollment flow starts here.</Text>
     </SafeAreaView>

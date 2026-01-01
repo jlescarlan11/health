@@ -56,7 +56,7 @@ export const ProfileScreen = () => {
 
   if (!isLoggedIn) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <SafeAreaView style={styles.container} edges={['left', 'right']}>
         <View style={styles.centerContent}>
           <Text variant="headlineMedium" style={styles.title}>Welcome</Text>
           <Text variant="bodyLarge" style={styles.subtitle}>
@@ -75,7 +75,7 @@ export const ProfileScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* User Info Section */}
