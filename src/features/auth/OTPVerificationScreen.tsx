@@ -68,6 +68,9 @@ export const OTPVerificationScreen = () => {
           phoneNumber: user.phoneNumber,
           displayName: user.displayName,
           photoURL: user.photoURL,
+          metadata: {
+            creationTime: user.metadata?.creationTime,
+          },
         },
         token: await user.getIdToken(),
       }));
@@ -75,7 +78,7 @@ export const OTPVerificationScreen = () => {
       // Navigate to Home or Profile
       navigation.reset({
         index: 0,
-        routes: [{ name: 'MainHome' }],
+        routes: [{ name: 'Main', params: { screen: 'Home' } }],
       });
       
     } catch (err: any) {

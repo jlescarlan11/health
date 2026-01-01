@@ -14,3 +14,12 @@ export interface Facility {
   photoUrl?: string;
   distance?: number; // Optional calculated field
 }
+
+export interface EmergencyContact {
+  id: string;
+  name: string;
+  category: string;
+  phone: string;
+  available24x7: boolean;
+  description?: string;
+}

@@ -17,7 +17,7 @@ import { RootStackParamList } from './src/types/navigation';
 
 const prefix = Linking.createURL('/');
 
-const linking = {
+const linking: any = {
   prefixes: [prefix],
   config: {
     screens: {

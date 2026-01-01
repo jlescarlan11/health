@@ -5,11 +5,11 @@ import { Text, TextInput, Button, Chip, useTheme, Surface, ActivityIndicator } f
 import { Audio } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types/navigation';
+import { CheckStackScreenProps } from '../../types/navigation';
 import { EmergencyButton } from '../../components/common/EmergencyButton';
 import { DisclaimerBanner } from '../../components/common/DisclaimerBanner';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'AiChat'>;
+type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
 
 const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 'Prenatal'];
 
@@ -82,7 +82,7 @@ const NavigatorHomeScreen = () => {
   const containerStyle = styles.container;
   const scrollContentStyle = styles.scrollContent;
   const headerStyle = styles.header;
-  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'NavigatorHomeScreen.tsx:79', message: 'Style values before render', data: { scrollPaddingVertical: scrollContentStyle.paddingVertical, scrollPaddingHorizontal: scrollContentStyle.paddingHorizontal, headerMarginBottom: headerStyle.marginBottom, headerPaddingTop: headerStyle.paddingTop, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' } }) }).catch(() => {});
+  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'NavigatorHomeScreen.tsx:79', message: 'Style values before render', data: { scrollPaddingVertical: (scrollContentStyle as any).paddingVertical, scrollPaddingHorizontal: (scrollContentStyle as any).paddingHorizontal, headerMarginBottom: (headerStyle as any).marginBottom, headerPaddingTop: (headerStyle as any).paddingTop, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' } }) }).catch(() => {});
   // #endregion
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>

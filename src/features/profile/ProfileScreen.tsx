@@ -11,9 +11,9 @@ import { RootState } from '../../store';
 import { logout } from '../../store/authSlice';
 import { setHighContrastMode, setFontSize } from '../../store/settingsSlice';
 import { authService } from '../../services/authService';
-import { RootStackParamList } from '../../types/navigation';
+import { TabScreenProps, RootStackScreenProps } from '../../types/navigation';
 
-type NavigationProp = StackNavigationProp<RootStackParamList, 'Profile'>;
+type NavigationProp = TabScreenProps<'Me'>['navigation'] & RootStackScreenProps<'PhoneLogin'>['navigation'];
 
 export const ProfileScreen = () => {
   const dispatch = useDispatch();
@@ -36,7 +36,7 @@ export const ProfileScreen = () => {
             try {
               await authService.logout();
               dispatch(logout());
-              navigation.reset({
+              (navigation as any).getParent()?.reset({
                 index: 0,
                 routes: [{ name: 'PhoneLogin' }],
               });
@@ -51,7 +51,7 @@ export const ProfileScreen = () => {
   };
 
   const handleLoginNavigation = () => {
-    navigation.navigate('PhoneLogin');
+    (navigation as any).getParent()?.navigate('PhoneLogin');
   };
 
   if (!isLoggedIn) {
@@ -103,7 +103,9 @@ export const ProfileScreen = () => {
             <Text variant="bodyLarge">High Contrast Mode</Text>
             <Switch
               value={highContrastMode}
-              onValueChange={(val) => dispatch(setHighContrastMode(val))}
+              onValueChange={(val) => {
+                dispatch(setHighContrastMode(val));
+              }}
             />
           </View>
 

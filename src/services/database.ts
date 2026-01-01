@@ -1,30 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-
-// Define interfaces locally to avoid circular dependencies or if types aren't exported
-interface Facility {
-  id: string;
-  name: string;
-  type: string;
-  services: string[];
-  address: string;
-  latitude: number;
-  longitude: number;
-  phone?: string;
-  yakapAccredited: boolean;
-  hours?: string;
-  photoUrl?: string;
-  [key: string]: any; // Allow for extra properties
-}
-
-interface EmergencyContact {
-  id: string;
-  name: string;
-  category: string;
-  phone: string;
-  available24x7: boolean;
-  description?: string;
-  [key: string]: any;
-}
+import { Facility, EmergencyContact } from '../types';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -46,6 +21,7 @@ export const initDatabase = async () => {
         yakapAccredited INTEGER,
         hours TEXT,
         photoUrl TEXT,
+        lastUpdated INTEGER,
         data TEXT
       );
     `);
@@ -59,6 +35,7 @@ export const initDatabase = async () => {
         phone TEXT,
         available24x7 INTEGER,
         description TEXT,
+        lastUpdated INTEGER,
         data TEXT
       );
     `);
@@ -74,15 +51,12 @@ export const saveFacilities = async (facilities: Facility[]) => {
   if (!db) await initDatabase();
   if (!db) throw new Error('Database not initialized');
 
+  const timestamp = Date.now();
+
   try {
     await db.withTransactionAsync(async () => {
-      // Clear existing data (optional: dependent on sync strategy, here we overwrite)
-      // await db!.execAsync('DELETE FROM facilities'); 
-      // Better to upsert usually, but for a simple cache replace, delete all might be cleaner if we fetch full list.
-      // For now, let's use INSERT OR REPLACE to update existing ones.
-      
       const statement = await db!.prepareAsync(
-        `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $data)`
+        `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`
       );
 
       for (const facility of facilities) {
@@ -98,6 +72,7 @@ export const saveFacilities = async (facilities: Facility[]) => {
           $yakapAccredited: facility.yakapAccredited ? 1 : 0,
           $hours: facility.hours || null,
           $photoUrl: facility.photoUrl || null,
+          $lastUpdated: timestamp,
           $data: JSON.stringify(facility)
         });
       }
@@ -119,14 +94,10 @@ export const getFacilities = async (): Promise<Facility[]> => {
     const result = await db.getAllAsync<any>('SELECT * FROM facilities');
     
     return result.map(row => {
-      // Try to parse the full data object first
       try {
         const fullData = row.data ? JSON.parse(row.data) : {};
-        // Merge with structured columns, preferring structured columns for consistency?
-        // Or just return the reconstructed object.
-        // Let's reconstruct from columns to ensure type safety based on schema.
         return {
-          ...fullData, // spread full data first to get extra fields
+          ...fullData,
           id: row.id,
           name: row.name,
           type: row.type,
@@ -138,12 +109,14 @@ export const getFacilities = async (): Promise<Facility[]> => {
           yakapAccredited: Boolean(row.yakapAccredited),
           hours: row.hours,
           photoUrl: row.photoUrl,
+          // We can attach metadata if needed, but Facility type doesn't have it yet.
+          // keeping it clean to return Facility objects.
         };
       } catch (e) {
         console.error('Error parsing facility row:', e);
         return null;
       }
-    }).filter(f => f !== null) as Facility[];
+    }).filter((f): f is Facility => f !== null);
   } catch (error) {
     console.error('Error getting facilities:', error);
     throw error;
@@ -184,10 +157,12 @@ export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
   if (!db) await initDatabase();
   if (!db) throw new Error('Database not initialized');
 
+  const timestamp = Date.now();
+
   try {
     await db.withTransactionAsync(async () => {
       const statement = await db!.prepareAsync(
-        `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $data)`
+        `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, lastUpdated, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $lastUpdated, $data)`
       );
 
       for (const contact of contacts) {
@@ -198,6 +173,7 @@ export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
           $phone: contact.phone,
           $available24x7: contact.available24x7 ? 1 : 0,
           $description: contact.description || null,
+          $lastUpdated: timestamp,
           $data: JSON.stringify(contact)
         });
       }
@@ -234,7 +210,7 @@ export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
         console.error('Error parsing emergency contact row:', e);
         return null;
       }
-    }).filter(c => c !== null) as EmergencyContact[];
+    }).filter((c): c is EmergencyContact => c !== null);
   } catch (error) {
     console.error('Error getting emergency contacts:', error);
     throw error;

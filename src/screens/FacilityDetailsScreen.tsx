@@ -14,10 +14,10 @@ import {
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { MaterialIcons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
-import { RootStackParamList } from '../types/navigation';
+import { FacilitiesStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { Button } from '../components/common/Button';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
@@ -30,7 +30,7 @@ const useUserLocation = () => ({
   error: null,
 });
 
-type FacilityDetailsRouteProp = RouteProp<RootStackParamList, 'FacilityDetails'>;
+type FacilityDetailsRouteProp = FacilitiesStackScreenProps<'FacilityDetails'>['route'];
 
 const { width } = Dimensions.get('window');
 const IMAGE_HEIGHT = 250;
@@ -52,7 +52,7 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
 
 export const FacilityDetailsScreen = () => {
   const route = useRoute<FacilityDetailsRouteProp>();
-  const { facilityId } = route.params;
+  const { facilityId } = route.params || { facilityId: '' };
 
   const facility = useSelector((state: RootState) =>
     state.facilities.facilities.find((f) => f.id === facilityId)
@@ -119,17 +119,11 @@ export const FacilityDetailsScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView>
-        <TouchableOpacity 
-          onPress={() => images.length > 0 && setImageViewerVisible(true)}
-          accessibilityLabel="View facility photos"
-          accessibilityHint="Double tap to open photo gallery"
-          accessibilityRole="imagebutton"
-        >
+        <TouchableOpacity onPress={() => images.length > 0 && setImageViewerVisible(true)}>
           <Image
             source={images.length > 0 ? { uri: images[0].uri } : require('../../assets/icon.png')}
             style={styles.headerImage}
             resizeMode="cover"
-            accessibilityLabel={`${facility.name} photo`}
           />
         </TouchableOpacity>
         
@@ -179,13 +173,7 @@ export const FacilityDetailsScreen = () => {
 
           <View style={styles.infoSection}>
             <MaterialIcons name="phone" size={24} color="#4A90E2" />
-            <TouchableOpacity 
-              onPress={handleCall} 
-              style={styles.infoTextContainer}
-              accessibilityLabel={`Call ${facility.phone || 'facility'}`}
-              accessibilityHint="Double tap to make a call"
-              accessibilityRole="link"
-            >
+            <TouchableOpacity onPress={handleCall} style={styles.infoTextContainer}>
               <Text style={[styles.infoText, styles.linkText]}>{facility.phone || 'Not available'}</Text>
             </TouchableOpacity>
           </View>
@@ -204,18 +192,8 @@ export const FacilityDetailsScreen = () => {
 
           <View style={styles.mapSection}>
             <Text style={styles.sectionTitle}>Location</Text>
-            <TouchableOpacity 
-              onPress={handleDirections}
-              accessibilityLabel="View location on map"
-              accessibilityHint="Double tap to open maps application"
-              accessibilityRole="button"
-            >
-              <Image 
-                source={{ uri: mapPreviewUrl }} 
-                style={styles.mapPreview} 
-                resizeMode="cover"
-                accessibilityLabel="Map preview showing facility location" 
-              />
+            <TouchableOpacity onPress={handleDirections}>
+              <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} resizeMode="cover" />
                <View style={styles.mapOverlay}>
                 <Text style={styles.mapOverlayText}>Tap to view in map</Text>
               </View>

@@ -8,7 +8,7 @@ import { RootState } from '../../store';
 const ProfileHero: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
 
-  const getInitials = (name: string | undefined) => {
+  const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
     return name
       .split(' ')
@@ -17,8 +17,8 @@ const ProfileHero: React.FC = () => {
       .toUpperCase();
   };
 
-  const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString('en-US', {
+  const memberSince = user?.metadata?.creationTime
+    ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
@@ -29,9 +29,9 @@ const ProfileHero: React.FC = () => {
     <HeroSection colors={['#C3AED6', '#FFFFFF']} height={250}>
       <View style={styles.container}>
         <View style={styles.avatar}>
-          <Text style={styles.initials}>{getInitials(user?.name)}</Text>
+          <Text style={styles.initials}>{getInitials(user?.displayName)}</Text>
         </View>
-        <Text style={styles.phone}>{user?.phone_number || 'No phone number'}</Text>
+        <Text style={styles.phone}>{user?.phoneNumber || 'No phone number'}</Text>
         <Text style={styles.memberSince}>Member since {memberSince}</Text>
       </View>
     </HeroSection>

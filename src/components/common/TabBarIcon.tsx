@@ -2,7 +2,7 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 interface TabBarIconProps {
-  name: string;
+  name: any;
   focused: boolean;
   color: string;
   size?: number;

@@ -9,10 +9,10 @@ import { RootState, AppDispatch } from '../../../store';
 import { fetchFacilities } from '../../../store/facilitiesSlice';
 import { FacilityCard } from '../../common/FacilityCard';
 import { FacilityCardSkeleton } from './FacilityCardSkeleton';
-import { RootStackParamList } from '../../../types/navigation';
+import { FacilitiesStackScreenProps } from '../../../types/navigation';
 import { Facility } from '../../../types';
 
-type FacilityListNavigationProp = StackNavigationProp<RootStackParamList, 'FacilityDirectory'>;
+type FacilityListNavigationProp = FacilitiesStackScreenProps<'FacilityDirectory'>['navigation'];
 
 export const FacilityListView: React.FC = () => {
   const theme = useTheme();

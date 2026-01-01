@@ -2,8 +2,9 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { RootState } from '../../../store';
 import { selectFacility } from '../../../store/facilitiesSlice';
+import { Facility } from '../../../types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FacilityCard } from '../../common/FacilityCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,7 +67,7 @@ export const FacilityMapView: React.FC = () => {
 
   // Get selected facility object
   const selectedFacility = useMemo(() => 
-    facilities.find(f => f.id === selectedFacilityId), 
+    facilities.find((f: Facility) => f.id === selectedFacilityId), 
     [facilities, selectedFacilityId]
   );
 
@@ -74,7 +75,7 @@ export const FacilityMapView: React.FC = () => {
   const facilityFeatures = useMemo((): FeatureCollection<Geometry, GeoJsonProperties> => {
     return {
       type: 'FeatureCollection',
-      features: facilities.map(f => ({
+      features: facilities.map((f: Facility) => ({
         type: 'Feature',
         id: f.id,
         properties: {

@@ -4,12 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, Card, RadioButton, TextInput, ProgressBar, ActivityIndicator, useTheme } from 'react-native-paper';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../types/navigation';
+import { CheckStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
 
-type ScreenRouteProp = RouteProp<RootStackParamList, 'SymptomAssessment'>;
-type NavigationProp = StackNavigationProp<RootStackParamList, 'SymptomAssessment'>;
+type ScreenRouteProp = CheckStackScreenProps<'SymptomAssessment'>['route'];
+type NavigationProp = CheckStackScreenProps<'SymptomAssessment'>['navigation'];
 
 interface Question {
   id: string;
@@ -22,7 +22,7 @@ const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
-  const { initialSymptom } = route.params;
+  const { initialSymptom } = route.params || { initialSymptom: '' };
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
@@ -37,7 +37,7 @@ const SymptomAssessmentScreen = () => {
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const prompt = CLARIFYING_QUESTIONS_PROMPT.replace('{{symptoms}}', initialSymptom);
+      const prompt = CLARIFYING_QUESTIONS_PROMPT.replace('{{symptoms}}', initialSymptom || '');
       const response = await getGeminiResponse(prompt);
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -130,12 +130,7 @@ const SymptomAssessmentScreen = () => {
                     {currentQuestion.type === 'choice' && currentQuestion.options ? (
                         <RadioButton.Group onValueChange={val => setAnswers(prev => ({...prev, [currentQuestion.id]: val}))} value={currentAnswer}>
                             {currentQuestion.options.map(opt => (
-                                <RadioButton.Item 
-                                  key={opt} 
-                                  label={opt} 
-                                  value={opt} 
-                                  accessibilityLabel={`Option ${opt}`}
-                                />
+                                <RadioButton.Item key={opt} label={opt} value={opt} />
                             ))}
                         </RadioButton.Group>
                     ) : (
@@ -146,7 +141,6 @@ const SymptomAssessmentScreen = () => {
                             placeholder="Type your answer..."
                             multiline
                             style={{ backgroundColor: 'white' }}
-                            accessibilityLabel="Type your answer here"
                         />
                     )}
                 </Card.Content>

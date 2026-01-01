@@ -16,7 +16,7 @@ const HomeHero: React.FC = () => {
     day: 'numeric',
   });
 
-  const greeting = user ? `Kumusta, ${user.name}!` : 'Kumusta!';
+  const greeting = user ? `Kumusta, ${user.displayName || 'User'}!` : 'Kumusta!';
 
   return (
     <HeroSection colors={['#A8D0E6', '#FFFFFF']} height={220}>

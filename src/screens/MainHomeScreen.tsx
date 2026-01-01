@@ -37,7 +37,7 @@ export const MainHomeScreen = () => {
     setShowDisclaimer(false);
   };
 
-  const FeatureCard = ({ title, subtitle, icon, color, onPress, testID }: { title: string, subtitle: string, icon: string, color: string, onPress: () => void, testID?: string }) => {
+  const FeatureCard = ({ title, subtitle, icon, color, onPress, testID }: { title: string, subtitle: string, icon: any, color: string, onPress: () => void, testID?: string }) => {
     // #region agent log
     React.useEffect(() => {
       fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:42',message:'FeatureCard render',data:{title,iconName:icon,color,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
@@ -92,7 +92,7 @@ export const MainHomeScreen = () => {
             icon="stethoscope"
             color="#4CAF50"
             onPress={() => {
-              navigation.navigate('Check', { screen: 'NavigatorHomeScreen' });
+              navigation.navigate('Check', { screen: 'NavigatorHome' });
             }}
           />
           <FeatureCard
@@ -101,7 +101,7 @@ export const MainHomeScreen = () => {
             icon="hospital-marker"
             color="#2196F3"
             onPress={() => {
-              navigation.navigate('Find', { screen: 'FacilityDirectoryScreen' });
+              navigation.navigate('Find', { screen: 'FacilityDirectory' });
             }}
           />
           <FeatureCard
@@ -110,7 +110,7 @@ export const MainHomeScreen = () => {
             icon="card-account-details"
             color="#FF9800"
             onPress={() => {
-              navigation.navigate('YAKAP', { screen: 'YAKAPHomeScreen' });
+              navigation.navigate('YAKAP', { screen: 'YakapEnrollment' });
             }}
           />
         </View>
