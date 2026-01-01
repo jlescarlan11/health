@@ -3,3 +3,5 @@ export * from './facilityService';
 export * from './gemini';
 export * from './emergencyDetector';
 export * from './mentalHealthDetector';
+export * from './syncService';
+export * from './authService';

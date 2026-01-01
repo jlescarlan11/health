@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Button, Switch, Divider, List, SegmentedButtons, useTheme, Avatar } from 'react-native-paper';
@@ -6,11 +6,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Constants from 'expo-constants';
+import { format } from 'date-fns';
 
 import { RootState } from '../../store';
 import { logout } from '../../store/authSlice';
 import { setHighContrastMode, setFontSize } from '../../store/settingsSlice';
 import { authService } from '../../services/authService';
+import { syncFacilities } from '../../services/syncService';
 import { TabScreenProps, RootStackScreenProps } from '../../types/navigation';
 
 type NavigationProp = TabScreenProps<'Me'>['navigation'] & RootStackScreenProps<'PhoneLogin'>['navigation'];
@@ -22,6 +24,9 @@ export const ProfileScreen = () => {
   
   const { user, isLoggedIn } = useSelector((state: RootState) => state.auth);
   const { highContrastMode, fontSize } = useSelector((state: RootState) => state.settings);
+  const { lastSync, isOffline } = useSelector((state: RootState) => state.offline);
+
+  const [syncing, setSyncing] = useState(false);
 
   const handleLogout = async () => {
     Alert.alert(
@@ -53,6 +58,28 @@ export const ProfileScreen = () => {
   const handleLoginNavigation = () => {
     (navigation as any).getParent()?.navigate('PhoneLogin');
   };
+
+  const handleSync = async () => {
+    if (isOffline) {
+      Alert.alert('Offline', 'Cannot sync while offline. Please check your internet connection.');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      await syncFacilities();
+      Alert.alert('Success', 'Data synchronized successfully.');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to synchronize data.');
+      console.error(error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const formattedLastSync = lastSync 
+    ? format(new Date(lastSync), 'PPpp') 
+    : 'Never';
 
   if (!isLoggedIn) {
     return (
@@ -93,6 +120,29 @@ export const ProfileScreen = () => {
           </View>
         </View>
         
+        <Divider style={styles.divider} />
+
+        {/* Data Synchronization */}
+        <View style={styles.section}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>Data Synchronization</Text>
+          <Text variant="bodyMedium" style={{ marginBottom: 10 }}>
+            Last Synced: {formattedLastSync}
+          </Text>
+          <Button 
+            mode="outlined" 
+            onPress={handleSync} 
+            loading={syncing}
+            disabled={syncing || isOffline}
+          >
+            {syncing ? "Syncing..." : "Sync Now"}
+          </Button>
+          {isOffline && (
+            <Text variant="bodySmall" style={{ color: theme.colors.error, marginTop: 5 }}>
+              You are currently offline.
+            </Text>
+          )}
+        </View>
+
         <Divider style={styles.divider} />
 
         {/* Accessibility Settings */}
