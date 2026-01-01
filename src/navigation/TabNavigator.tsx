@@ -1,7 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MainHomeScreen } from '../screens/MainHomeScreen';
@@ -10,6 +9,7 @@ import CheckNavigator from './CheckNavigator';
 import FacilitiesNavigator from './FacilitiesNavigator';
 import YakapNavigator from './YakapNavigator';
 import { TabParamList } from './types';
+import { TabBarIcon } from '../components/common/TabBarIcon';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -21,7 +21,7 @@ const TabNavigator = () => {
       initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          let iconName: string = 'alert';
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
@@ -35,7 +35,7 @@ const TabNavigator = () => {
             iconName = focused ? 'person' : 'person-outline';
           }
 
-          return <Ionicons name={iconName as any} size={size} color={color} />;
+          return <TabBarIcon name={iconName} size={size} color={color} focused={focused} />;
         },
         tabBarActiveTintColor: '#2E9B95',
         tabBarInactiveTintColor: 'gray',

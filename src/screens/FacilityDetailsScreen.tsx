@@ -14,7 +14,7 @@ import {
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { RootStackParamList } from '../types/navigation';

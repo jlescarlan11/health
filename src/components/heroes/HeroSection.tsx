@@ -17,7 +17,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   style,
 }) => {
   return (
-    <LinearGradient colors={colors} style={[styles.container, { height }, style]}>
+    <LinearGradient colors={colors as any} style={[styles.container, { height }, style]}>
       <View style={styles.content}>{children}</View>
     </LinearGradient>
   );
