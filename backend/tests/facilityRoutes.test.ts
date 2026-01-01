@@ -13,7 +13,7 @@ describe('Facility Routes', () => {
     phone: '123-456-7890',
     yakap_accredited: true,
     services: ['Checkup'],
-    operating_hours: { open: '8:00', close: '17:00' },
+    operating_hours: { description: 'Mon-Fri: 8am-5pm' },
     photos: ['url1'],
     barangay: 'Test Barangay',
     createdAt: new Date(),
@@ -25,7 +25,7 @@ describe('Facility Routes', () => {
   });
 
   describe('GET /api/facilities', () => {
-    it('should return a list of facilities', async () => {
+    it('should return a list of facilities with frontend structure', async () => {
       prismaMock.facility.findMany.mockResolvedValue([mockFacility]);
       prismaMock.facility.count.mockResolvedValue(1);
 
@@ -34,6 +34,11 @@ describe('Facility Routes', () => {
       expect(response.status).toBe(200);
       expect(response.body.facilities).toHaveLength(1);
       expect(response.body.facilities[0].name).toBe('Test Facility');
+      // Check transformed fields
+      expect(response.body.facilities[0].yakapAccredited).toBe(true);
+      expect(response.body.facilities[0].hours).toBe('Mon-Fri: 8am-5pm');
+      expect(response.body.facilities[0].photoUrl).toBe('url1');
+      
       expect(prismaMock.facility.findMany).toHaveBeenCalledTimes(1);
     });
 
@@ -51,13 +56,15 @@ describe('Facility Routes', () => {
   });
 
   describe('GET /api/facilities/:id', () => {
-    it('should return a facility by id', async () => {
+    it('should return a facility by id with frontend structure', async () => {
       prismaMock.facility.findUnique.mockResolvedValue(mockFacility);
 
       const response = await request(app).get('/api/facilities/1');
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe('1');
+      expect(response.body.yakapAccredited).toBe(true);
+      expect(response.body.hours).toBe('Mon-Fri: 8am-5pm');
     });
 
     it('should return 404 if not found', async () => {
@@ -78,6 +85,7 @@ describe('Facility Routes', () => {
 
           expect(response.status).toBe(200);
           expect(response.body).toHaveLength(1);
+          expect(response.body[0].yakapAccredited).toBe(true);
           expect(prismaMock.$queryRaw).toHaveBeenCalled();
       });
 

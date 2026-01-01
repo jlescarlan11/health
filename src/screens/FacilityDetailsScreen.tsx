@@ -21,6 +21,7 @@ import { FacilitiesStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { Button } from '../components/common/Button';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
+import { getOpenStatus } from '../utils';
 import { Facility } from '../types';
 
 // Mock location hook - replace with actual implementation
@@ -108,11 +109,7 @@ export const FacilityDetailsScreen = () => {
     }
   };
 
-  const isCurrentlyOpen = () => {
-    // This is a placeholder. A robust implementation would parse `facility.hours`
-    // and compare it with the current time and day.
-    return true; // Assume open for now
-  };
+  const { isOpen, text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
   
   const mapPreviewUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${facility.latitude},${facility.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${facility.latitude},${facility.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`;
 
@@ -165,8 +162,8 @@ export const FacilityDetailsScreen = () => {
             <MaterialIcons name="access-time" size={24} color="#4A90E2" />
             <View style={styles.infoTextContainer}>
               <Text style={styles.infoText}>{facility.hours || 'Hours not available'}</Text>
-              <View style={[styles.openStatus, isCurrentlyOpen() ? styles.open : styles.closed]}>
-                <Text style={styles.openStatusText}>{isCurrentlyOpen() ? 'Open Now' : 'Closed'}</Text>
+              <View style={[styles.openStatus, { backgroundColor: openStatusColor === 'green' ? '#D4EDDA' : '#F8D7DA' }]}>
+                <Text style={styles.openStatusText}>{openStatusText}</Text>
               </View>
             </View>
           </View>

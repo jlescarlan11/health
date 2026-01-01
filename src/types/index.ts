@@ -11,6 +11,13 @@ export interface Facility {
   phone?: string;
   yakapAccredited: boolean;
   hours?: string;
+  operatingHours?: {
+    is24x7: boolean;
+    open?: string; // Legacy/Simple
+    close?: string; // Legacy/Simple
+    description?: string;
+    schedule?: Record<number, { open: string; close: string } | null>;
+  };
   photoUrl?: string;
   distance?: number; // Optional calculated field
 }

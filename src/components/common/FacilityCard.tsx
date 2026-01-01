@@ -4,6 +4,7 @@ import { Card, Text, Chip, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
+import { getOpenStatus } from '../../utils';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -27,31 +28,6 @@ const getServiceIcon = (service: string): string => {
   return 'medical-bag';
 };
 
-const getOpenStatus = (hours?: string): { isOpen: boolean; text: string; color: string } => {
-  if (!hours) return { isOpen: false, text: 'Hours N/A', color: 'gray' };
-  
-  // Simple parsing assuming format like "Mon-Fri: 8am-5pm" or "24/7"
-  if (hours.toLowerCase().includes('24/7')) {
-    return { isOpen: true, text: 'Open 24/7', color: 'green' };
-  }
-
-  // Basic check for current time within range (very simplified for MVP)
-  // For a robust app, use a library like date-fns or moment with structured hours data
-  const now = new Date();
-  const currentHour = now.getHours();
-  
-  // Heuristic: specific hours usually mean day time. 
-  // If it's between 8 AM and 5 PM, assume open for standard clinics
-  // This is a placeholder logic. Real logic needs structured data.
-  const isBusinessHours = currentHour >= 8 && currentHour < 17;
-  
-  if (isBusinessHours) {
-    return { isOpen: true, text: 'Open Now', color: 'green' };
-  }
-  
-  return { isOpen: false, text: 'Closed', color: 'red' };
-};
-
 export const FacilityCard: React.FC<FacilityCardProps> = ({
   facility,
   onPress,
@@ -60,7 +36,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   distance,
 }) => {
   const theme = useTheme();
-  const { isOpen, text: statusText, color: statusColor } = getOpenStatus(facility.hours);
+  const { isOpen, text: statusText, color: statusColor } = getOpenStatus(facility);
 
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${showDistance && distance !== undefined ? `, Distance: ${formatDistance(distance)}` : ''}`;
 

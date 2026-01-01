@@ -1,6 +1,29 @@
 import { Request, Response } from 'express';
 import * as facilityService from '../services/facilityService';
 
+// Helper to map DB model to Frontend Interface
+const mapToFacility = (f: any) => {
+  const hours = f.operating_hours && typeof f.operating_hours === 'object' 
+    ? (f.operating_hours as any).description || '' 
+    : '';
+
+  return {
+    id: f.id,
+    name: f.name,
+    type: f.type,
+    services: f.services,
+    address: f.address,
+    latitude: f.latitude,
+    longitude: f.longitude,
+    phone: f.phone,
+    yakapAccredited: f.yakap_accredited,
+    hours: hours,
+    operatingHours: f.operating_hours, // Expose full structured data
+    photoUrl: f.photos && f.photos.length > 0 ? f.photos[0] : null,
+    distance: f.distance // Preserve if present
+  };
+};
+
 export const listFacilities = async (req: Request, res: Response) => {
   try {
     const { type, yakap_accredited, limit, offset } = req.query;
@@ -12,7 +35,10 @@ export const listFacilities = async (req: Request, res: Response) => {
       offset: offset ? Number(offset) : undefined,
     });
 
-    res.json(result);
+    res.json({
+      ...result,
+      facilities: result.facilities.map(mapToFacility)
+    });
   } catch (error) {
     console.error('Error listing facilities:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -29,7 +55,7 @@ export const getFacility = async (req: Request, res: Response) => {
       return;
     }
 
-    res.json(facility);
+    res.json(mapToFacility(facility));
   } catch (error) {
     console.error('Error getting facility:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -40,6 +66,11 @@ export const listFacilitiesNearby = async (req: Request, res: Response) => {
   try {
     const { lat, lng, radius, type } = req.query;
 
+    if (!lat || !lng) {
+      res.status(400).json({ error: 'Missing latitude or longitude' });
+      return;
+    }
+
     const facilities = await facilityService.getFacilitiesNearby({
       latitude: Number(lat),
       longitude: Number(lng),
@@ -47,7 +78,7 @@ export const listFacilitiesNearby = async (req: Request, res: Response) => {
       type: type as string,
     });
 
-    res.json(facilities);
+    res.json(facilities.map(mapToFacility));
   } catch (error) {
     console.error('Error finding nearby facilities:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -65,7 +96,10 @@ export const listFacilitiesByType = async (req: Request, res: Response) => {
       offset ? Number(offset) : undefined
     );
 
-    res.json(result);
+    res.json({
+      ...result,
+      facilities: result.facilities.map(mapToFacility)
+    });
   } catch (error) {
     console.error('Error listing facilities by type:', error);
     res.status(500).json({ error: 'Internal server error' });
