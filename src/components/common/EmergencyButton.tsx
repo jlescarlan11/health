@@ -5,18 +5,25 @@ import { Button, useTheme } from 'react-native-paper';
 interface EmergencyButtonProps {
   onPress: () => void;
   style?: ViewStyle;
+  buttonColor?: string;
+  textColor?: string;
 }
 
-export const EmergencyButton: React.FC<EmergencyButtonProps> = ({ onPress, style }) => {
+export const EmergencyButton: React.FC<EmergencyButtonProps> = ({ 
+  onPress, 
+  style,
+  buttonColor,
+  textColor
+}) => {
   const theme = useTheme();
 
   return (
     <Button
       mode="contained"
       onPress={onPress}
-      icon="alert-circle"
-      buttonColor={theme.colors.error}
-      textColor={theme.colors.onError}
+      icon="phone-in-talk"
+      buttonColor={buttonColor || theme.colors.error}
+      textColor={textColor || theme.colors.onError}
       style={[styles.button, style]}
       contentStyle={styles.content}
       labelStyle={styles.label}

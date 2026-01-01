@@ -1,41 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Card, Button, Avatar, IconButton, useTheme, ActivityIndicator, Divider } from 'react-native-paper';
-import { useRoute, RouteProp } from '@react-navigation/native';
-import { CheckStackParamList } from '../types/navigation';
+import { Text, Card, Button, Avatar, IconButton, useTheme, ActivityIndicator, Divider, Surface } from 'react-native-paper';
+import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { CheckStackParamList, CheckStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { SYMPTOM_ASSESSMENT_PROMPT } from '../constants/prompts';
 import { EmergencyButton } from '../components/common/EmergencyButton';
+import { FacilityCard } from '../components/common/FacilityCard';
+import { DisclaimerBanner } from '../components/common/DisclaimerBanner';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
+import { Facility } from '../types';
 
-// Mock facility data
-const NEARBY_FACILITIES = [
-    { id: '1', name: 'Naga City Hospital', distance: '1.2 km', phone: '09123456789', type: 'Hospital' },
-    { id: '2', name: 'Bicol Medical Center', distance: '2.5 km', phone: '09987654321', type: 'Hospital' },
-    { id: '3', name: 'Concepcion Pequeña Health Center', distance: '0.8 km', phone: '09112233445', type: 'Health Center' },
-];
-
-type ScreenRouteProp = RouteProp<CheckStackParamList, 'Recommendation'>;
+type ScreenProps = CheckStackScreenProps<'Recommendation'>;
 
 const RecommendationScreen = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RecommendationScreen.tsx:21', message: 'RecommendationScreen render entry', data: { routeName: 'Recommendation', hasRoute: true, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H2' } }) }).catch(() => {});
-    // #endregion
-    const route = useRoute<ScreenRouteProp>();
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RecommendationScreen.tsx:24', message: 'After useRoute', data: { hasParams: !!route.params, paramsKeys: route.params ? Object.keys(route.params) : [], timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H2' } }) }).catch(() => {});
-    // #endregion
+    const route = useRoute<RouteProp<CheckStackParamList, 'Recommendation'>>();
+    const navigation = useNavigation<ScreenProps['navigation']>();
     const theme = useTheme();
+    
     const { assessmentData } = route.params;
+    const { facilities } = useSelector((state: RootState) => state.facilities);
+    
     const [loading, setLoading] = useState(true);
     const [recommendation, setRecommendation] = useState<any>(null);
+    const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
 
     useEffect(() => {
         analyzeSymptoms();
     }, []);
+
+    useEffect(() => {
+        if (recommendation && facilities.length > 0) {
+            filterFacilities();
+        }
+    }, [recommendation, facilities]);
 
     const analyzeSymptoms = async () => {
         try {
@@ -47,19 +50,18 @@ const RecommendationScreen = () => {
             const mentalHealthCheck = detectMentalHealthCrisis(combinedSymptoms);
 
             if (emergencyCheck.isEmergency && emergencyCheck.overrideResponse) {
-                console.log('Local emergency override triggered');
                 setRecommendation(emergencyCheck.overrideResponse);
                 setLoading(false);
                 return;
             }
 
             if (mentalHealthCheck.isCrisis) {
-                console.log('Local mental health crisis detected');
                 setRecommendation({
-                    recommended_level: "Emergency",
+                    recommended_level: "Mental Health Support",
                     reasoning: mentalHealthCheck.message || "Potential mental health crisis detected. Please seek immediate support.",
                     red_flags: mentalHealthCheck.matchedKeywords,
-                    nearest_facility_type: "Emergency Room / Mental Health Center"
+                    nearest_facility_type: "Hospital", // Often best for immediate crisis
+                    isMentalHealth: true
                 });
                 setLoading(false);
                 return;
@@ -78,117 +80,247 @@ const RecommendationScreen = () => {
 
             const response = await getGeminiResponse(prompt);
             const jsonMatch = response.match(/\{[\s\S]*\}/);
+            
             if (jsonMatch) {
-                setRecommendation(JSON.parse(jsonMatch[0]));
+                const parsed = JSON.parse(jsonMatch[0]);
+                setRecommendation(parsed);
             } else {
                 throw new Error("Failed to parse recommendation");
             }
         } catch (error) {
-            console.error(error);
-            // Fallback for demo purposes if AI fails or token limits
+            console.error("Analysis Error:", error);
+            // Fallback
             setRecommendation({
                 recommended_level: "Health Center",
                 reasoning: "Based on your symptoms, a visit to the local health center is recommended for a check-up.",
                 red_flags: [],
-                nearest_facility_type: "Barangay Health Center"
+                nearest_facility_type: "Health Center"
             });
         } finally {
             setLoading(false);
         }
     };
 
+    const filterFacilities = () => {
+        if (!recommendation) return;
+
+        let targetType = recommendation.nearest_facility_type || "";
+        const targetLevel = recommendation.recommended_level || "";
+        
+        // Normalize types for matching
+        const isEmergency = targetLevel.toLowerCase().includes('emergency') || targetType.toLowerCase().includes('hospital');
+        const isHealthCenter = targetType.toLowerCase().includes('health center') || targetType.toLowerCase().includes('clinic');
+
+        let filtered = facilities.filter(f => {
+            if (isEmergency) return f.type === 'Hospital' || f.type === 'Infirmary/Hospital';
+            if (isHealthCenter) return f.type.includes('Health') || f.type.includes('Unit') || f.type.includes('Center');
+            return true; // Default to all if unsure
+        });
+
+        // If no matches found with strict filtering, fallback to all sorted by distance
+        if (filtered.length === 0) filtered = [...facilities];
+
+        // Sort by distance (assuming distance is populated in store)
+        filtered.sort((a, b) => (a.distance || 9999) - (b.distance || 9999));
+
+        setRecommendedFacilities(filtered.slice(0, 3));
+    };
+
+    const handleCall = (phoneNumber?: string) => {
+        if (phoneNumber) Linking.openURL(`tel:${phoneNumber}`);
+    };
+
+    const handleDirections = (facility: Facility) => {
+        const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
+        const latLng = `${facility.latitude},${facility.longitude}`;
+        const label = facility.name;
+        const url = Platform.select({
+            ios: `${scheme}${label}@${latLng}`,
+            android: `${scheme}${latLng}(${label})`
+        });
+        if (url) Linking.openURL(url);
+    };
+
+    const handleViewOnMap = (facilityId: string) => {
+        // Navigate to Find tab
+        navigation.navigate('Find', {
+            screen: 'FacilityDirectory',
+            params: { 
+                // We would ideally pass a param to highlight this facility
+                // For now, just going to the list/map is the requirement
+             } 
+        });
+    };
+
     if (loading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" />
-                <Text style={styles.loadingText}>Generating recommendation...</Text>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={styles.loadingText}>Analyzing symptoms...</Text>
             </View>
         );
     }
 
     if (!recommendation) return null;
 
-    const isEmergency = recommendation.recommended_level === 'Emergency';
+    const isEmergency = recommendation.recommended_level === 'Emergency' || recommendation.recommended_level?.toLowerCase().includes('emergency');
+    const isMentalHealth = recommendation.isMentalHealth;
 
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
             <ScrollView contentContainerStyle={styles.content}>
                 
                 {/* Emergency Alert */}
                 {isEmergency && (
                     <View style={styles.emergencyBanner}>
-                        <MaterialCommunityIcons name="alert-circle" size={40} color="white" />
-                        <View style={styles.emergencyTextContainer}>
-                            <Text style={styles.emergencyTitle}>EMERGENCY DETECTED</Text>
-                            <Text style={styles.emergencyText}>Seek immediate medical attention.</Text>
+                        <View style={styles.emergencyHeader}>
+                            <MaterialCommunityIcons name="alert-octagon" size={48} color="white" />
+                            <View style={styles.emergencyTextContainer}>
+                                <Text style={styles.emergencyTitle}>SEEK EMERGENCY CARE IMMEDIATELY</Text>
+                            </View>
                         </View>
-                        <EmergencyButton onPress={() => Alert.alert('Calling 911...')} style={{ marginTop: 0 }} />
+                        <Text style={styles.emergencyText}>
+                            Your symptoms indicate a potential medical emergency. Go to the nearest hospital immediately.
+                        </Text>
+                        <EmergencyButton 
+                            onPress={() => handleCall('911')} 
+                            style={styles.emergencyButton}
+                            buttonColor="white"
+                            textColor={theme.colors.error}
+                        />
                     </View>
                 )}
 
-                {/* Recommendation Card */}
-                <Card style={styles.card}>
-                    <Card.Content style={styles.cardHeader}>
-                         <Avatar.Icon 
-                            size={64} 
-                            icon={isEmergency ? "ambulance" : "hospital-box"} 
-                            style={{ backgroundColor: isEmergency ? theme.colors.error : theme.colors.primary }}
-                        />
-                        <View style={styles.recTextContainer}>
-                            <Text variant="titleMedium">Recommended Care Level</Text>
-                            <Text variant="headlineMedium" style={{ color: isEmergency ? theme.colors.error : theme.colors.primary, fontWeight: 'bold' }}>
-                                {recommendation.recommended_level}
+                {/* Mental Health Support */}
+                {isMentalHealth && (
+                    <Surface style={[styles.mhBanner, { backgroundColor: theme.colors.tertiaryContainer }]} elevation={2}>
+                        <View style={styles.mhHeader}>
+                            <MaterialCommunityIcons name="heart-pulse" size={40} color={theme.colors.onTertiaryContainer} />
+                            <Text variant="headlineSmall" style={[styles.mhTitle, { color: theme.colors.onTertiaryContainer }]}>
+                                We are here to help
                             </Text>
                         </View>
-                    </Card.Content>
-                    <Divider style={styles.divider} />
-                    <Card.Content>
-                        <Text variant="bodyMedium">{recommendation.reasoning}</Text>
-                        {recommendation.red_flags && recommendation.red_flags.length > 0 && (
-                            <View style={styles.redFlags}>
-                                <Text style={{ color: theme.colors.error, fontWeight: 'bold' }}>Alerts:</Text>
-                                {recommendation.red_flags.map((flag: string, idx: number) => (
-                                    <Text key={idx} style={{ color: theme.colors.error }}>• {flag}</Text>
-                                ))}
-                            </View>
-                        )}
-                    </Card.Content>
-                </Card>
+                        <Text style={{ color: theme.colors.onTertiaryContainer, marginBottom: 16 }}>
+                            {recommendation.reasoning}
+                        </Text>
+                        <Text style={{ fontWeight: 'bold', color: theme.colors.onTertiaryContainer }}>
+                            24/7 Crisis Hotline:
+                        </Text>
+                        <Button 
+                            icon="phone" 
+                            mode="contained" 
+                            buttonColor={theme.colors.tertiary}
+                            textColor={theme.colors.onTertiary}
+                            onPress={() => handleCall('09175584673')} // Example Hopeline PH
+                            style={styles.mhButton}
+                        >
+                            Call Hopeline: 0917-558-4673
+                        </Button>
+                    </Surface>
+                )}
 
-                {/* Nearest Facilities */}
-                <Text variant="titleLarge" style={styles.sectionTitle}>Nearest Facilities</Text>
-                {NEARBY_FACILITIES.map(facility => (
-                    <Card key={facility.id} style={styles.facilityCard} mode="outlined">
-                        <Card.Content>
-                            <View style={styles.facilityHeader}>
-                                <View>
-                                    <Text variant="titleMedium">{facility.name}</Text>
-                                    <Text variant="bodySmall" style={{color: '#666'}}>{facility.type} • {facility.distance}</Text>
-                                </View>
-                                <IconButton icon="phone" mode="contained" onPress={() => Linking.openURL(`tel:${facility.phone}`)} />
-                            </View>
-                            <View style={styles.facilityActions}>
-                                <Button icon="map-marker" mode="text" compact onPress={() => {}}>View Map</Button>
-                                <Button icon="directions" mode="text" compact onPress={() => {}}>Directions</Button>
+                {/* Recommendation Card */}
+                {!isMentalHealth && (
+                    <Card style={styles.card}>
+                        <Card.Content style={styles.cardHeader}>
+                            <Avatar.Icon 
+                                size={64} 
+                                icon={isEmergency ? "ambulance" : "hospital-building"} 
+                                style={{ backgroundColor: isEmergency ? theme.colors.error : theme.colors.primary }}
+                            />
+                            <View style={styles.recTextContainer}>
+                                <Text variant="titleMedium">Recommended Care</Text>
+                                <Text variant="headlineSmall" style={{ 
+                                    color: isEmergency ? theme.colors.error : theme.colors.primary, 
+                                    fontWeight: 'bold',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    {recommendation.recommended_level}
+                                </Text>
                             </View>
                         </Card.Content>
+                        <Divider style={styles.divider} />
+                        <Card.Content>
+                            <Text variant="bodyMedium" style={styles.reasoning}>{recommendation.reasoning}</Text>
+                            {recommendation.red_flags && recommendation.red_flags.length > 0 && (
+                                <View style={styles.redFlags}>
+                                    <Text style={{ color: theme.colors.error, fontWeight: 'bold', marginBottom: 4 }}>
+                                        <MaterialCommunityIcons name="alert" size={16} /> Important Alerts:
+                                    </Text>
+                                    {recommendation.red_flags.map((flag: string, idx: number) => (
+                                        <Text key={idx} style={{ color: theme.colors.error, marginLeft: 8 }}>• {flag}</Text>
+                                    ))}
+                                </View>
+                            )}
+                        </Card.Content>
                     </Card>
+                )}
+
+                {/* Nearest Facilities */}
+                <Text variant="titleLarge" style={styles.sectionTitle}>
+                    {isEmergency ? "Nearest Hospitals" : "Recommended Facilities"}
+                </Text>
+                
+                {recommendedFacilities.map(facility => (
+                    <View key={facility.id} style={styles.facilityWrapper}>
+                        <FacilityCard 
+                            facility={facility} 
+                            showDistance={true}
+                            distance={facility.distance}
+                            onPress={() => handleViewOnMap(facility.id)}
+                        />
+                        <View style={styles.actionRow}>
+                            <Button 
+                                icon="map" 
+                                mode="text" 
+                                compact 
+                                onPress={() => handleViewOnMap(facility.id)}
+                            >
+                                Map
+                            </Button>
+                            <Button 
+                                icon="phone" 
+                                mode="text" 
+                                compact 
+                                disabled={!facility.phone}
+                                onPress={() => handleCall(facility.phone)}
+                            >
+                                Call
+                            </Button>
+                            <Button 
+                                icon="directions" 
+                                mode="text" 
+                                compact 
+                                onPress={() => handleDirections(facility)}
+                            >
+                                Directions
+                            </Button>
+                        </View>
+                    </View>
                 ))}
 
-                {/* Mini Map Placeholder */}
-                 <Text variant="titleLarge" style={styles.sectionTitle}>Location</Text>
-                 <Card style={styles.mapCard}>
+                {recommendedFacilities.length === 0 && (
+                     <Text style={{ textAlign: 'center', color: '#666', marginBottom: 20 }}>
+                        No matching facilities found nearby.
+                     </Text>
+                )}
+
+                {/* Mini Map Preview */}
+                <Text variant="titleMedium" style={styles.sectionTitle}>Location Preview</Text>
+                <Surface style={styles.mapPreview} elevation={1}>
                     <View style={styles.mapPlaceholder}>
-                        <MaterialCommunityIcons name="map" size={48} color="#ccc" />
-                        <Text style={{color: '#888'}}>Map View Placeholder</Text>
+                        <MaterialCommunityIcons name="map-marker-radius" size={48} color={theme.colors.primary} />
+                        <Text style={{ color: theme.colors.secondary, marginTop: 8 }}>Map Preview Area</Text>
+                        <Button mode="outlined" style={{ marginTop: 12 }} onPress={() => navigation.navigate('Find', { screen: 'FacilityDirectory' })}>
+                            Open Full Map
+                        </Button>
                     </View>
-                 </Card>
+                </Surface>
 
                 {/* Disclaimer */}
-                <Text style={styles.disclaimer}>
-                    Disclaimer: This is an AI-generated assessment and does not constitute medical advice.
-                    Always consult a healthcare professional.
-                </Text>
+                <View style={styles.footer}>
+                     <DisclaimerBanner onAccept={() => {}} visible={true} />
+                </View>
 
             </ScrollView>
         </SafeAreaView>
@@ -196,34 +328,61 @@ const RecommendationScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
+    container: { flex: 1, backgroundColor: '#f8f9fa' },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     loadingText: { marginTop: 16 },
-    content: { paddingHorizontal: 16, paddingVertical: 16 },
+    content: { padding: 16, paddingBottom: 32 },
+    
     emergencyBanner: {
-        backgroundColor: '#d32f2f',
+        backgroundColor: '#b00020',
         padding: 16,
         borderRadius: 12,
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        marginBottom: 16
+        marginBottom: 24,
+        elevation: 4
     },
-    emergencyTextContainer: { flex: 1, marginLeft: 12, marginRight: 8 },
-    emergencyTitle: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-    emergencyText: { color: 'white' },
-    card: { marginBottom: 24, borderRadius: 12 },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    emergencyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    emergencyTextContainer: { flex: 1, marginLeft: 12 },
+    emergencyTitle: { color: 'white', fontWeight: 'bold', fontSize: 20, flexWrap: 'wrap' },
+    emergencyText: { color: 'white', fontSize: 16, marginBottom: 16 },
+    emergencyButton: { marginVertical: 8 },
+    
+    mhBanner: {
+        padding: 20,
+        borderRadius: 16,
+        marginBottom: 24,
+    },
+    mhHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    mhTitle: { marginLeft: 12, fontWeight: 'bold' },
+    mhButton: { marginTop: 8 },
+
+    card: { marginBottom: 24, borderRadius: 12, backgroundColor: 'white' },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     recTextContainer: { marginLeft: 16, flex: 1 },
-    divider: { marginVertical: 12 },
-    redFlags: { marginTop: 12, padding: 8, backgroundColor: '#ffebee', borderRadius: 8 },
-    sectionTitle: { marginBottom: 12, fontWeight: 'bold' },
-    facilityCard: { marginBottom: 12 },
-    facilityHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    facilityActions: { flexDirection: 'row', marginTop: 8 },
-    mapCard: { height: 200, marginBottom: 24, overflow: 'hidden' },
-    mapPlaceholder: { flex: 1, backgroundColor: '#e0e0e0', justifyContent: 'center', alignItems: 'center' },
-    disclaimer: { textAlign: 'center', color: '#888', fontSize: 12, marginBottom: 32 }
+    reasoning: { lineHeight: 22, color: '#444' },
+    divider: { marginVertical: 8 },
+    redFlags: { marginTop: 16, padding: 12, backgroundColor: '#ffebee', borderRadius: 8 },
+    
+    sectionTitle: { marginBottom: 12, fontWeight: 'bold', marginTop: 8 },
+    
+    facilityWrapper: { marginBottom: 16 },
+    actionRow: { 
+        flexDirection: 'row', 
+        justifyContent: 'space-around', 
+        backgroundColor: 'white', 
+        borderBottomLeftRadius: 12, 
+        borderBottomRightRadius: 12,
+        marginTop: -8, // tuck under the card
+        paddingTop: 8,
+        paddingBottom: 4,
+        elevation: 1,
+        borderTopWidth: 1,
+        borderTopColor: '#eee'
+    },
+    
+    mapPreview: { height: 180, borderRadius: 12, overflow: 'hidden', marginBottom: 24, backgroundColor: '#e0e0e0' },
+    mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' },
+    
+    footer: { marginTop: 16 }
 });
 
 export default RecommendationScreen;
