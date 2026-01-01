@@ -26,6 +26,8 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   "not breathing": 10,
   "gasping": 10,
   "choking": 10,
+  "severe abdominal pain": 10,
+  "suicide attempt": 10,
 
   // Moderate to High (Score 8 - Likely Emergency)
   "broken bone": 8,
@@ -35,6 +37,10 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   "black stool": 8,
   "vision loss": 8,
   "sudden blind": 8,
+  "stiff neck": 8,
+  "confusion": 8,
+  "high fever": 8,
+  "dehydration": 8,
 };
 
 interface EmergencyDetectionResult {

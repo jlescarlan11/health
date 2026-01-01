@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": "1.0.0",
-    "last_updated": "2025-12-31",
+    "version": "1.1.0",
+    "last_updated": "2026-01-01",
     "disclaimer": "CRITICAL: This knowledge base is for development and prototyping purposes only. It has NOT been validated by a medical professional or legal advisor. It should not be used for actual medical diagnosis or triage without rigorous expert review, validation, and regulatory compliance checks."
   },
   "emergency_keywords": [
@@ -23,7 +23,9 @@
     "anaphylaxis",
     "severe allergic reaction",
     "blue lips",
-    "crushing pain"
+    "crushing pain",
+    "severe abdominal pain",
+    "suicide attempt"
   ],
   "mental_health_keywords": [
     "suicide",
@@ -36,7 +38,8 @@
     "hearing voices",
     "hallucinations",
     "severe depression",
-    "uncontrollable anger"
+    "uncontrollable anger",
+    "panic attack"
   ],
   "situations": [
     {
@@ -57,7 +60,8 @@
         "Seizure",
         "Difficulty breathing",
         "Severe headache",
-        "Rash"
+        "Rash",
+        "Fever in infant under 3 months"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
@@ -68,21 +72,22 @@
       ]
     },
     {
-      "id": "cough_cold",
-      "name": "Cough / Cold / Flu",
+      "id": "common_cold",
+      "name": "Common Cold / Flu",
       "symptoms": [
         "Runny or stuffy nose",
         "Sore throat",
         "Cough",
         "Congestion",
         "Mild body aches",
-        "Sneezing"
+        "Sneezing",
+        "Low-grade fever"
       ],
       "red_flags": [
         "Difficulty breathing",
         "Chest pain",
         "Coughing up blood",
-        "High fever failing to improve",
+        "High fever failing to improve after 3 days",
         "Wheezing"
       ],
       "recommended_facility_level": "Health Center",
@@ -93,14 +98,37 @@
       ]
     },
     {
+      "id": "respiratory_symptoms",
+      "name": "Respiratory Symptoms (Mild/Asthma)",
+      "symptoms": [
+        "Mild wheezing",
+        "Persistent cough",
+        "Shortness of breath with exertion",
+        "Chest tightness"
+      ],
+      "red_flags": [
+        "Gasping for air",
+        "Blue lips or face",
+        "Inability to speak in full sentences",
+        "Rescue inhaler not working",
+        "Retractions (skin pulling in ribs)"
+      ],
+      "recommended_facility_level": "Hospital",
+      "follow_up_questions": [
+        "Do you have a diagnosed lung condition?",
+        "Did you use your inhaler? Did it help?",
+        "Can you speak a full sentence without stopping for breath?"
+      ]
+    },
+    {
       "id": "minor_injury",
-      "name": "Minor Injuries (Cuts/Bruises)",
+      "name": "Minor Injuries (Cuts/Scrapes)",
       "symptoms": [
         "Pain at injury site",
         "Swelling",
         "Bruising",
         "Minor bleeding",
-        "Scrapes"
+        "Surface abrasions"
       ],
       "red_flags": [
         "Heavy bleeding that won't stop",
@@ -122,7 +150,8 @@
       "symptoms": [
         "Pain in head or neck",
         "Sensitivity to light/sound",
-        "Throbbing sensation"
+        "Throbbing sensation",
+        "Tension"
       ],
       "red_flags": [
         "Sudden 'thunderclap' headache",
@@ -139,70 +168,75 @@
       ]
     },
     {
-      "id": "stomach_issues",
-      "name": "Stomach Issues / Abdominal Pain",
+      "id": "gastrointestinal",
+      "name": "Gastrointestinal Issues",
       "symptoms": [
         "Stomach cramp",
         "Nausea",
+        "Vomiting",
+        "Diarrhea",
         "Bloating",
-        "Gas",
-        "Mild pain"
+        "Gas"
       ],
       "red_flags": [
         "Severe, sharp pain",
         "Vomiting blood",
         "Bloody or black stools",
         "Rigid or hard abdomen",
-        "Pain radiating to chest or back"
+        "Signs of dehydration (dry mouth, no urine)"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
         "Where exactly is the pain located?",
-        "Does eating make it better or worse?",
-        "Is there any possibility of pregnancy?"
+        "Have you noticed blood in vomit or stool?",
+        "Are you able to keep fluids down?"
       ]
     },
     {
-      "id": "diarrhea_vomiting",
-      "name": "Diarrhea / Vomiting",
+      "id": "hypertension",
+      "name": "Hypertension (High Blood Pressure)",
       "symptoms": [
-        "Frequent loose stools",
-        "Nausea",
-        "Vomiting",
-        "Stomach cramps"
+        "High BP reading",
+        "Mild headache",
+        "Flushing",
+        "Dizziness"
       ],
       "red_flags": [
-        "Signs of dehydration (dry mouth, no urine)",
-        "Blood in stool or vomit",
-        "Severe abdominal pain",
-        "Confusion"
+        "BP > 180/120 (Hypertensive Crisis)",
+        "Severe chest pain",
+        "Severe headache with confusion",
+        "Blurred vision",
+        "Shortness of breath"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
-        "How many times have you vomited or had diarrhea today?",
-        "Are you able to keep fluids down?",
-        "Have you noticed blood?"
+        "What was your last BP reading?",
+        "Did you take your medication today?",
+        "Are you experiencing chest pain?"
       ]
     },
     {
-      "id": "chronic_follow_up",
-      "name": "Chronic Disease Follow-up",
+      "id": "diabetes",
+      "name": "Diabetes Management",
       "symptoms": [
-        "Routine check-up need",
-        "Medication refill",
-        "Monitoring BP/Sugar"
+        "High blood sugar reading",
+        "Increased thirst",
+        "Frequent urination",
+        "Fatigue",
+        "Blurred vision"
       ],
       "red_flags": [
-        "Sudden spike in BP",
-        "Very high or low blood sugar symptoms",
-        "Chest pain",
-        "Fainting"
+        "Confusion or unresponsiveness",
+        "Fruity smelling breath",
+        "Deep, rapid breathing",
+        "Seizures",
+        "Foot ulcer with infection"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
-        "What condition are you monitoring?",
-        "Have you missed any medication doses?",
-        "Are you experiencing new symptoms?"
+        "What is your blood sugar level?",
+        "When did you last eat?",
+        "Did you take your insulin or medication?"
       ]
     },
     {
@@ -211,7 +245,8 @@
       "symptoms": [
         "Pregnancy check-up",
         "Mild morning sickness",
-        "Fatigue"
+        "Fatigue",
+        "Backache"
       ],
       "red_flags": [
         "Vaginal bleeding",
@@ -247,6 +282,28 @@
       ]
     },
     {
+      "id": "wellness_check",
+      "name": "Wellness Check / Physical",
+      "symptoms": [
+        "Routine health assessment",
+        "Employment physical",
+        "School physical",
+        "General preventive care"
+      ],
+      "red_flags": [
+        "New, unexplained lump",
+        "Unexplained weight loss",
+        "Severe fatigue",
+        "Night sweats"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "Is this for a specific requirement (work/school)?",
+        "Do you have any specific health concerns?",
+        "When was your last physical?"
+      ]
+    },
+    {
       "id": "skin_conditions",
       "name": "Skin Conditions (Rashes/Infections)",
       "symptoms": [
@@ -254,7 +311,8 @@
         "Itching",
         "Rash",
         "Minor swelling",
-        "Dry skin"
+        "Dry skin",
+        "Acne"
       ],
       "red_flags": [
         "Rapidly spreading redness (Cellulitis)",
@@ -271,12 +329,36 @@
       ]
     },
     {
-      "id": "dental_pain",
-      "name": "Dental Pain",
+      "id": "ear_conditions",
+      "name": "Ear Conditions",
+      "symptoms": [
+        "Ear pain",
+        "Muffled hearing",
+        "Itching in ear",
+        "Mild discharge"
+      ],
+      "red_flags": [
+        "Swelling behind the ear",
+        "High fever",
+        "Severe dizziness/vertigo",
+        "Object stuck in ear",
+        "Bleeding from ear"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "Have you had a cold recently?",
+        "Is there any discharge from the ear?",
+        "Are you dizzy?"
+      ]
+    },
+    {
+      "id": "dental_concerns",
+      "name": "Dental Concerns",
       "symptoms": [
         "Toothache",
         "Sensitivity to hot/cold",
-        "Gum swelling"
+        "Gum swelling",
+        "Bleeding gums"
       ],
       "red_flags": [
         "Swelling spreading to eye or neck",
@@ -292,13 +374,38 @@
       ]
     },
     {
+      "id": "eye_concerns",
+      "name": "Eye Concerns",
+      "symptoms": [
+        "Redness in eye",
+        "Discharge/crusting",
+        "Itching",
+        "Tearing",
+        "Mild blurriness"
+      ],
+      "red_flags": [
+        "Sudden vision loss",
+        "Severe eye pain",
+        "Trauma to the eye",
+        "Chemical splash",
+        "Flashing lights or floaters"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "Is your vision affected?",
+        "Is there pain or just discomfort?",
+        "Do you wear contact lenses?"
+      ]
+    },
+    {
       "id": "allergies",
       "name": "Allergies (Mild)",
       "symptoms": [
         "Sneezing",
         "Itchy eyes",
         "Runny nose",
-        "Mild hives"
+        "Mild hives",
+        "Itchy skin"
       ],
       "red_flags": [
         "Difficulty breathing",
@@ -314,61 +421,20 @@
       ]
     },
     {
-      "id": "eye_infections",
-      "name": "Eye Infections / Pink Eye",
-      "symptoms": [
-        "Redness in eye",
-        "Discharge/crusting",
-        "Itching",
-        "Tearing"
-      ],
-      "red_flags": [
-        "Vision loss",
-        "Severe eye pain",
-        "Trauma to the eye",
-        "Chemical splash"
-      ],
-      "recommended_facility_level": "Health Center",
-      "follow_up_questions": [
-        "Is your vision affected?",
-        "Is there pain or just discomfort?",
-        "Do you wear contact lenses?"
-      ]
-    },
-    {
-      "id": "ear_pain",
-      "name": "Ear Pain",
-      "symptoms": [
-        "Pain in ear",
-        "Muffled hearing",
-        "Fluid drainage"
-      ],
-      "red_flags": [
-        "Swelling behind the ear",
-        "High fever",
-        "Severe dizziness/vertigo",
-        "Object stuck in ear"
-      ],
-      "recommended_facility_level": "Health Center",
-      "follow_up_questions": [
-        "Have you had a cold recently?",
-        "Is there any discharge from the ear?",
-        "Are you dizzy?"
-      ]
-    },
-    {
-      "id": "uti",
-      "name": "Urinary Tract Infection (UTI)",
+      "id": "urinary_symptoms",
+      "name": "Urinary Symptoms",
       "symptoms": [
         "Burning with urination",
         "Frequent urge to urinate",
-        "Cloudy urine"
+        "Cloudy urine",
+        "Mild pelvic pain"
       ],
       "red_flags": [
         "Back/flank pain (Kidney involvement)",
         "High fever",
         "Vomiting",
-        "Blood in urine"
+        "Blood in urine",
+        "Inability to urinate"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
@@ -378,19 +444,20 @@
       ]
     },
     {
-      "id": "joint_back_pain",
-      "name": "Joint or Back Pain",
+      "id": "musculoskeletal_pain",
+      "name": "Musculoskeletal Pain",
       "symptoms": [
-        "Aching",
-        "Stiffness",
-        "Limited range of motion",
-        "Muscle strain"
+        "Back pain",
+        "Joint aching",
+        "Muscle stiffness",
+        "Chronic pain flare-up"
       ],
       "red_flags": [
-        "Loss of bowel/bladder control (Cauda Equina)",
+        "Loss of bowel/bladder control",
         "Numbness or weakness in legs",
         "History of cancer",
-        "Pain after major trauma"
+        "Pain after major trauma",
+        "Saddle anesthesia"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
@@ -400,18 +467,20 @@
       ]
     },
     {
-      "id": "minor_burn",
-      "name": "Burn (Minor)",
+      "id": "minor_burns",
+      "name": "Minor Burns",
       "symptoms": [
         "Redness",
         "Pain",
-        "Small blisters"
+        "Small blisters",
+        "Peeling skin"
       ],
       "red_flags": [
         "Burn covers large area (e.g., larger than palm)",
         "Burn on face, hands, feet, or genitals",
         "Charred or white skin (3rd degree)",
-        "Inhalation of smoke"
+        "Inhalation of smoke",
+        "Chemical burn"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
@@ -421,67 +490,27 @@
       ]
     },
     {
-      "id": "animal_bite",
-      "name": "Animal Bite",
+      "id": "sprains",
+      "name": "Sprains / Strains",
       "symptoms": [
-        "Puncture wound",
-        "Scratch",
-        "Bleeding",
-        "Pain"
+        "Pain in joint",
+        "Swelling",
+        "Bruising",
+        "Limited movement",
+        "Pop or tear sound at injury"
       ],
       "red_flags": [
-        "Wild animal attack (Rabies risk)",
-        "Deep puncture wound",
-        "Heavy bleeding",
-        "Signs of infection (pus, red streaks)"
+        "Bone sticking out",
+        "Inability to bear any weight",
+        "Severe deformity",
+        "Numbness or cold limb",
+        "Severe pain"
       ],
       "recommended_facility_level": "Health Center",
       "follow_up_questions": [
-        "What kind of animal was it?",
-        "Was the animal a stray or pet?",
-        "is the wound bleeding heavily?"
-      ]
-    },
-    {
-      "id": "asthma_mild",
-      "name": "Asthma / Breathing Issues (Non-Critical)",
-      "symptoms": [
-        "Mild wheezing",
-        "Coughing",
-        "Shortness of breath with exertion"
-      ],
-      "red_flags": [
-        "Gasping for air",
-        "Blue lips or face",
-        "Inability to speak in full sentences",
-        "Rescue inhaler not working"
-      ],
-      "recommended_facility_level": "Hospital",
-      "follow_up_questions": [
-        "Do you have a diagnosed lung condition?",
-        "Did you use your inhaler? Did it help?",
-        "Can you speak a full sentence without stopping for breath?"
-      ]
-    },
-    {
-      "id": "sore_throat",
-      "name": "Sore Throat",
-      "symptoms": [
-        "Pain when swallowing",
-        "Scratchy throat",
-        "Hoarseness"
-      ],
-      "red_flags": [
-        "Drooling (Epiglottitis)",
-        "Difficulty breathing",
-        "Difficulty opening mouth",
-        "High fever with rash"
-      ],
-      "recommended_facility_level": "Health Center",
-      "follow_up_questions": [
-        "Can you swallow liquids?",
-        "Do you have a fever?",
-        "Is there any swelling in your neck?"
+        "Can you move the joint?",
+        "Can you put weight on it?",
+        "Is it swollen or bruised?"
       ]
     }
   ]

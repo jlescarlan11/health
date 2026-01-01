@@ -7,6 +7,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { CheckStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
+import { detectEmergency } from '../services/emergencyDetector';
+import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 
 type ScreenRouteProp = CheckStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = CheckStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -31,6 +33,18 @@ const SymptomAssessmentScreen = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
+    // Check for immediate escalation
+    const emergencyCheck = detectEmergency(initialSymptom || '');
+    const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
+
+    if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
+      console.log('Immediate escalation triggered');
+      navigation.navigate('Recommendation', { 
+        assessmentData: { symptoms: initialSymptom, answers: {} } 
+      });
+      return;
+    }
+
     fetchQuestions();
   }, []);
 

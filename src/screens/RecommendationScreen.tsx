@@ -8,6 +8,8 @@ import { getGeminiResponse } from '../services/gemini';
 import { SYMPTOM_ASSESSMENT_PROMPT } from '../constants/prompts';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { detectEmergency } from '../services/emergencyDetector';
+import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 
 // Mock facility data
 const NEARBY_FACILITIES = [
@@ -38,6 +40,32 @@ const RecommendationScreen = () => {
     const analyzeSymptoms = async () => {
         try {
             setLoading(true);
+            
+            // 1. Local Emergency Check (Immediate Safety Response)
+            const combinedSymptoms = `${assessmentData.symptoms} ${JSON.stringify(assessmentData.answers)}`;
+            const emergencyCheck = detectEmergency(combinedSymptoms);
+            const mentalHealthCheck = detectMentalHealthCrisis(combinedSymptoms);
+
+            if (emergencyCheck.isEmergency && emergencyCheck.overrideResponse) {
+                console.log('Local emergency override triggered');
+                setRecommendation(emergencyCheck.overrideResponse);
+                setLoading(false);
+                return;
+            }
+
+            if (mentalHealthCheck.isCrisis) {
+                console.log('Local mental health crisis detected');
+                setRecommendation({
+                    recommended_level: "Emergency",
+                    reasoning: mentalHealthCheck.message || "Potential mental health crisis detected. Please seek immediate support.",
+                    red_flags: mentalHealthCheck.matchedKeywords,
+                    nearest_facility_type: "Emergency Room / Mental Health Center"
+                });
+                setLoading(false);
+                return;
+            }
+
+            // 2. AI Assessment
             const context = `
             Initial Symptom: ${assessmentData.symptoms}
             Answers to Questions: ${JSON.stringify(assessmentData.answers)}

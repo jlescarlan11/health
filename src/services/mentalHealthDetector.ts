@@ -12,7 +12,8 @@ const CRISIS_KEYWORDS = [
   "severe depression",
   "uncontrollable anger",
   "better off dead",
-  "no reason to live"
+  "no reason to live",
+  "panic attack"
 ];
 
 export interface MentalHealthResource {
