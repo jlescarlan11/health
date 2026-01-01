@@ -72,6 +72,25 @@ const SymptomAssessmentScreen = () => {
   };
 
   const handleNext = () => {
+    // 1. Immediate Emergency Check on current answer
+    const currentAnswer = currentQuestion ? answers[currentQuestion.id] : '';
+    // Check specifically the new answer, or we could check the whole context. 
+    // Checking the specific answer is usually enough for "I have chest pain now"
+    const emergencyCheck = detectEmergency(currentAnswer);
+    
+    if (emergencyCheck.isEmergency) {
+        // Log detection
+        console.log("Emergency detected during assessment:", emergencyCheck.matchedKeywords);
+        
+        // Terminate and navigate immediately
+        const partialData = {
+            symptoms: initialSymptom,
+            answers: { ...answers, [currentQuestion?.id || 'last']: currentAnswer }
+        };
+        navigation.navigate('Recommendation', { assessmentData: partialData });
+        return;
+    }
+
     if (currentStep < questions.length - 1) {
       setCurrentStep(curr => curr + 1);
     } else {

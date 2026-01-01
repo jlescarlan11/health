@@ -1,6 +1,7 @@
 import { AssessmentResponse } from "../api/geminiClient";
 
-// Keywords derived from medical-knowledge.json and standard triage protocols
+// Keywords derived from medical-knowledge.json
+// Scores: 0-10. >7 is EMERGENCY.
 const EMERGENCY_KEYWORDS: Record<string, number> = {
   // High severity (Score 10 - Immediate Emergency)
   "chest pain": 10,
@@ -29,18 +30,17 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   "severe abdominal pain": 10,
   "suicide attempt": 10,
 
-  // Moderate to High (Score 8 - Likely Emergency)
+  // Moderate to High (Score 8-9 - Likely Emergency)
   "broken bone": 8,
   "deep wound": 8,
-  "severe pain": 8,
   "vomiting blood": 8,
   "black stool": 8,
   "vision loss": 8,
-  "sudden blind": 8,
+  "sudden blindness": 8,
   "stiff neck": 8,
   "confusion": 8,
-  "high fever": 8,
-  "dehydration": 8,
+  "high fever": 8, // Especially if > 40C or with other symptoms
+  "severe dehydration": 8,
 };
 
 interface EmergencyDetectionResult {
@@ -50,12 +50,18 @@ interface EmergencyDetectionResult {
   overrideResponse?: AssessmentResponse;
 }
 
+/**
+ * Analyzes input text for emergency keywords.
+ * Normalizes text and calculates a severity score (0-10).
+ * If score > 7, it's an EMERGENCY.
+ */
 export const detectEmergency = (text: string): EmergencyDetectionResult => {
   const normalizedText = text.toLowerCase().trim();
   let maxScore = 0;
   const matchedKeywords: string[] = [];
 
   for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
+    // Check for exact keyword or phrase match
     if (normalizedText.includes(keyword)) {
       matchedKeywords.push(keyword);
       if (severity > maxScore) {
@@ -76,9 +82,9 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
   if (isEmergency) {
     overrideResponse = {
       recommended_level: "Emergency",
-      reasoning: "CRITICAL: Potential life-threatening condition detected based on keywords (" + matchedKeywords.join(", ") + "). Immediate medical attention is required.",
+      reasoning: `CRITICAL: Potential life-threatening condition detected based on keywords (${matchedKeywords.join(", ")}). Immediate medical attention is required.`,
       red_flags: matchedKeywords,
-      nearest_facility_type: "Emergency Room / Hospital"
+      nearest_facility_type: "Hospital" // Force Hospital/Emergency
     };
   }
 
