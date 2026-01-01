@@ -81,10 +81,10 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
 
   if (isEmergency) {
     overrideResponse = {
-      recommended_level: "Emergency",
-      reasoning: `CRITICAL: Potential life-threatening condition detected based on keywords (${matchedKeywords.join(", ")}). Immediate medical attention is required.`,
+      recommended_level: "emergency",
+      assessment_summary: `CRITICAL: Potential life-threatening condition detected based on keywords (${matchedKeywords.join(", ")}). Immediate medical attention is required.`,
       red_flags: matchedKeywords,
-      nearest_facility_type: "Hospital" // Force Hospital/Emergency
+      follow_up_questions: []
     };
   }
 

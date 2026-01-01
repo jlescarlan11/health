@@ -32,11 +32,8 @@ export const performTriage = async (
 
   // 3. AI Assessment
   try {
-    const assessment = await geminiClient.assessSymptoms({
-      symptoms,
-      age,
-      severity
-    });
+    const fullSymptoms = `Symptoms: ${symptoms}. Age: ${age}. Severity: ${severity}/10.`;
+    const assessment = await geminiClient.assessSymptoms(fullSymptoms, []);
     return {
       type: 'ASSESSMENT',
       data: assessment

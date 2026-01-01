@@ -6,14 +6,11 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { CheckStackParamList, CheckStackScreenProps } from '../types/navigation';
-import { getGeminiResponse } from '../services/gemini';
-import { SYMPTOM_ASSESSMENT_PROMPT } from '../constants/prompts';
+import { geminiClient } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { DisclaimerBanner } from '../components/common/DisclaimerBanner';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { detectEmergency } from '../services/emergencyDetector';
-import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { Facility } from '../types';
 
 type ScreenProps = CheckStackScreenProps<'Recommendation'>;
@@ -44,54 +41,25 @@ const RecommendationScreen = () => {
         try {
             setLoading(true);
             
-            // 1. Local Emergency Check (Immediate Safety Response)
-            const combinedSymptoms = `${assessmentData.symptoms} ${JSON.stringify(assessmentData.answers)}`;
-            const emergencyCheck = detectEmergency(combinedSymptoms);
-            const mentalHealthCheck = detectMentalHealthCrisis(combinedSymptoms);
+            const context = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(assessmentData.answers)}`;
+            const response = await geminiClient.assessSymptoms(context);
 
-            if (emergencyCheck.isEmergency && emergencyCheck.overrideResponse) {
-                setRecommendation(emergencyCheck.overrideResponse);
-                setLoading(false);
-                return;
-            }
+            // Map new API response to screen state
+            setRecommendation({
+                ...response,
+                reasoning: response.assessment_summary,
+                isMentalHealth: response.red_flags.some(f => 
+                    ['suicide', 'self-harm', 'kill myself', 'hopelessness'].some(k => f.toLowerCase().includes(k))
+                ) || response.assessment_summary.toLowerCase().includes('mental health'),
+                // Infer nearest facility type for filtering
+                nearest_facility_type: response.recommended_level === 'health_center' ? 'Health Center' : 'Hospital'
+            });
 
-            if (mentalHealthCheck.isCrisis) {
-                setRecommendation({
-                    recommended_level: "Mental Health Support",
-                    reasoning: mentalHealthCheck.message || "Potential mental health crisis detected. Please seek immediate support.",
-                    red_flags: mentalHealthCheck.matchedKeywords,
-                    nearest_facility_type: "Hospital", // Often best for immediate crisis
-                    isMentalHealth: true
-                });
-                setLoading(false);
-                return;
-            }
-
-            // 2. AI Assessment
-            const context = `
-            Initial Symptom: ${assessmentData.symptoms}
-            Answers to Questions: ${JSON.stringify(assessmentData.answers)}
-            `;
-            
-            // Construct prompt
-            let prompt = SYMPTOM_ASSESSMENT_PROMPT.replace('{{symptoms}}', context);
-            prompt = prompt.replace('{{age}}', 'Not specified'); 
-            prompt = prompt.replace('{{severity}}', 'Not specified');
-
-            const response = await getGeminiResponse(prompt);
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
-            
-            if (jsonMatch) {
-                const parsed = JSON.parse(jsonMatch[0]);
-                setRecommendation(parsed);
-            } else {
-                throw new Error("Failed to parse recommendation");
-            }
         } catch (error) {
             console.error("Analysis Error:", error);
             // Fallback
             setRecommendation({
-                recommended_level: "Health Center",
+                recommended_level: "health_center",
                 reasoning: "Based on your symptoms, a visit to the local health center is recommended for a check-up.",
                 red_flags: [],
                 nearest_facility_type: "Health Center"
@@ -104,12 +72,11 @@ const RecommendationScreen = () => {
     const filterFacilities = () => {
         if (!recommendation) return;
 
-        let targetType = recommendation.nearest_facility_type || "";
         const targetLevel = recommendation.recommended_level || "";
         
         // Normalize types for matching
-        const isEmergency = targetLevel.toLowerCase().includes('emergency') || targetType.toLowerCase().includes('hospital');
-        const isHealthCenter = targetType.toLowerCase().includes('health center') || targetType.toLowerCase().includes('clinic');
+        const isEmergency = targetLevel === 'emergency' || targetLevel === 'hospital';
+        const isHealthCenter = targetLevel === 'health_center';
 
         let filtered = facilities.filter(f => {
             if (isEmergency) return f.type === 'Hospital' || f.type === 'Infirmary/Hospital';
