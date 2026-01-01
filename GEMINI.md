@@ -9,6 +9,7 @@
 *   **Facility Directory:** Lists 29 healthcare facilities in Naga City with details like services, hours, and YAKAP accreditation.
 *   **YAKAP Enrollment:** Guides eligible residents through the process of enrolling in the free YAKAP healthcare program.
 *   **Offline Capability:** Core directory and emergency features function without internet access.
+*   **Safety & Fallback:** Implements a conservative decision strategy. If AI confidence is low (< 0.8) or symptoms are ambiguous, the system automatically upgrades the recommendation to a higher level of care (e.g., Health Center to Hospital) to prevent under-triage.
 
 ## Architecture & Tech Stack
 

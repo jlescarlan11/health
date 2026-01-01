@@ -39,6 +39,8 @@ Facility Levels (strictly use these enum values for "recommended_level"):
 JSON Schema:
 {
   "recommended_level": "self_care" | "health_center" | "hospital" | "emergency",
+  "confidence_score": 0.0 to 1.0, // A float representing your confidence in this assessment.
+  "ambiguity_detected": boolean, // Set to true if symptoms are vague, conflicting, or insufficient.
   "follow_up_questions": ["Question 1?", "Question 2?"], // 2-4 questions to clarify severity or duration. Empty if diagnosis is clear.
   "assessment_summary": "A concise summary of the assessment and why this level of care is recommended.",
   "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"] // Empty array if none.
@@ -46,7 +48,7 @@ JSON Schema:
 
 Rules:
 1. **Safety First:** If ANY red flag is present (chest pain, severe bleeding, unconsciousness, stroke signs, suicide risk), "recommended_level" MUST be "emergency".
-2. **Follow-up:** If the user's input is vague (e.g., "my stomach hurts"), provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions".
+2. **Follow-up:** If the user's input is vague (e.g., "my stomach hurts"), provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
 3. **Tone:** Empathetic, professional, calm.
 `;
 

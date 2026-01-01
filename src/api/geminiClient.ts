@@ -25,6 +25,8 @@ export interface AssessmentResponse {
   follow_up_questions: string[];
   assessment_summary: string;
   red_flags: string[];
+  confidence_score?: number;
+  ambiguity_detected?: boolean;
 }
 
 interface CacheEntry {
@@ -32,7 +34,7 @@ interface CacheEntry {
   timestamp: number;
 }
 
-class GeminiClient {
+export class GeminiClient {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
   private cache: Map<string, CacheEntry>;
@@ -121,6 +123,8 @@ class GeminiClient {
         follow_up_questions: json.follow_up_questions || [],
         assessment_summary: json.assessment_summary || "No summary provided.",
         red_flags: json.red_flags || [],
+        confidence_score: json.confidence_score,
+        ambiguity_detected: json.ambiguity_detected,
       };
     } catch (error) {
       console.error("JSON Parse Error:", error);
@@ -147,6 +151,7 @@ class GeminiClient {
           emergency.overrideResponse?.assessment_summary ||
           "Critical symptoms detected. Immediate care required.",
         red_flags: emergency.matchedKeywords,
+        confidence_score: 1.0,
       };
     }
 
@@ -158,6 +163,7 @@ class GeminiClient {
         assessment_summary:
           mhCrisis.message || "Mental health crisis detected. Help is available.",
         red_flags: mhCrisis.matchedKeywords,
+        confidence_score: 1.0,
       };
     }
 
@@ -204,6 +210,31 @@ class GeminiClient {
         const responseText = result.response.text();
         
         const parsed = this.parseResponse(responseText);
+
+        // --- Conservative Fallback Logic ---
+        const levels = ["self_care", "health_center", "hospital", "emergency"];
+        let currentLevelIdx = levels.indexOf(parsed.recommended_level);
+        
+        // Force Emergency if Red Flags exist (AI might have missed setting the level)
+        if (parsed.red_flags && parsed.red_flags.length > 0 && parsed.recommended_level !== "emergency") {
+           console.log("[GeminiClient] Red flags detected but not Emergency. Upgrading to Emergency.");
+           parsed.recommended_level = "emergency";
+           parsed.assessment_summary += " (Upgraded to Emergency due to detected red flags).";
+           currentLevelIdx = 3;
+        }
+
+        // Upgrade if Low Confidence or Ambiguity Detected
+        const isLowConfidence = parsed.confidence_score !== undefined && parsed.confidence_score < 0.8;
+        const isAmbiguous = parsed.ambiguity_detected === true;
+
+        if ((isLowConfidence || isAmbiguous) && currentLevelIdx < 3) {
+          const nextLevel = levels[currentLevelIdx + 1] as AssessmentResponse["recommended_level"];
+          console.log(`[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Conf: ${isLowConfidence}, Ambiguous: ${isAmbiguous}`);
+          
+          parsed.recommended_level = nextLevel;
+          parsed.assessment_summary += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
+        }
+        // -----------------------------------
 
         // Update Cache
         this.cache.set(cacheKey, {

@@ -55,6 +55,8 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     Output Schema (JSON only):
     {
       "recommendation": "One of: Self-Care, Health Center, Hospital, Emergency",
+      "confidence_score": 0.0 to 1.0,
+      "ambiguity_detected": boolean,
       "reasoning": "Brief explanation...",
       "recommended_facility_ids": ["id1", "id2"]
     }
@@ -75,6 +77,35 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     console.error('Failed to parse Gemini response:', cleanedText);
     throw new Error('AI service unavailable');
   }
+
+  // --- Conservative Fallback Logic ---
+  const levels = ["Self-Care", "Health Center", "Hospital", "Emergency"];
+  const currentIdx = levels.indexOf(parsedResponse.recommendation);
+
+  const isLowConfidence = parsedResponse.confidence_score !== undefined && parsedResponse.confidence_score < 0.8;
+  const isAmbiguous = parsedResponse.ambiguity_detected === true;
+
+  if ((isLowConfidence || isAmbiguous) && currentIdx !== -1 && currentIdx < 3) {
+    const nextLevel = levels[currentIdx + 1];
+    parsedResponse.recommendation = nextLevel;
+    parsedResponse.reasoning += ` (Note: Recommendation upgraded to ${nextLevel} due to uncertainty/ambiguity for safety.)`;
+
+    // Update recommended facilities based on new level
+    let targetTypeKeyword = "";
+    if (nextLevel === "Health Center") targetTypeKeyword = "Center"; // Matches "Barangay Health Center"
+    else if (nextLevel === "Hospital" || nextLevel === "Emergency") targetTypeKeyword = "Hospital";
+
+    if (targetTypeKeyword) {
+      const newFacilities = allFacilities
+        .filter(f => f.type.includes(targetTypeKeyword))
+        .slice(0, 3); // Take top 3
+      parsedResponse.recommended_facility_ids = newFacilities.map(f => f.id);
+    } else {
+        // If Self-Care (unlikely to upgrade TO self-care), clear facilities
+        parsedResponse.recommended_facility_ids = [];
+    }
+  }
+  // -----------------------------------
 
   // Retrieve full facility details for the recommended IDs
   const recommendedFacilities = await prisma.facility.findMany({
