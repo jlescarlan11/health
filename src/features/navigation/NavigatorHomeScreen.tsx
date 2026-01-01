@@ -9,6 +9,7 @@ import { EmergencyButton } from '../../components/common/EmergencyButton';
 import { DisclaimerBanner } from '../../components/common/DisclaimerBanner';
 import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
 import { setHasSeenDisclaimer } from '../../store/settingsSlice';
+import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 
 type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
 
@@ -111,6 +112,15 @@ const NavigatorHomeScreen = () => {
 
   const handleSubmit = () => {
     if (!symptom.trim()) return;
+
+    // Check for mental health crisis
+    const crisisCheck = detectMentalHealthCrisis(symptom);
+    if (crisisCheck.isCrisis) {
+      // @ts-ignore - CrisisSupport is added to navigator but TS might need full restart to pick up
+      navigation.navigate('CrisisSupport');
+      return;
+    }
+
     navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
   };
 

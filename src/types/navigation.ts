@@ -7,6 +7,7 @@ export type CheckStackParamList = {
   NavigatorHome: undefined;
   SymptomAssessment: { initialSymptom?: string };
   Recommendation: { assessmentData: any }; // Replace 'any' with proper type later
+  CrisisSupport: undefined;
 };
 
 export type FacilitiesStackParamList = {

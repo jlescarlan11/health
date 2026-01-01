@@ -3,6 +3,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import NavigatorHomeScreen from '../features/navigation/NavigatorHomeScreen';
 import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
 import RecommendationScreen from '../screens/RecommendationScreen';
+import CrisisSupportScreen from '../screens/CrisisSupportScreen';
 import { CheckStackParamList } from './types';
 import StandardHeader from '../components/common/StandardHeader';
 
@@ -30,6 +31,14 @@ const CheckNavigator = () => {
         component={RecommendationScreen}
         options={{
           header: () => <StandardHeader title="Recommendation" showBackButton />,
+        }}
+      />
+      <Stack.Screen
+        name="CrisisSupport"
+        component={CrisisSupportScreen}
+        options={{
+          headerShown: false, // Hide header for full immersion
+          presentation: 'modal', // Make it slide up like a modal
         }}
       />
     </Stack.Navigator>

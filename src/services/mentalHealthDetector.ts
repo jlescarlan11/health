@@ -1,4 +1,4 @@
-// Keywords derived from medical-knowledge.json
+// Keywords derived from medical-knowledge.json and crisis intervention guidelines
 const CRISIS_KEYWORDS = [
   "suicide",
   "kill myself",
@@ -13,7 +13,16 @@ const CRISIS_KEYWORDS = [
   "uncontrollable anger",
   "better off dead",
   "no reason to live",
-  "panic attack"
+  "panic attack",
+  "want to end it",
+  "can't go on",
+  "give up",
+  "tired of living",
+  "make it stop",
+  "hang myself",
+  "cut myself",
+  "overdose",
+  "take all the pills"
 ];
 
 export interface MentalHealthResource {
@@ -29,13 +38,18 @@ export const MENTAL_HEALTH_RESOURCES: MentalHealthResource[] = [
     description: "National Center for Mental Health (24/7)"
   },
   {
-    name: "Hopeline Philippines",
-    number: "2919",
-    description: "24/7 Suicide Prevention Hotline"
+    name: "Natasha Goulbourn Foundation",
+    number: "(02) 8804-4673",
+    description: "24/7 Hope Line"
+  },
+  {
+    name: "In Touch Crisis Line",
+    number: "(02) 8893-7603",
+    description: "24/7 Crisis Line"
   },
   {
     name: "Naga City Mental Health Unit",
-    number: "(054) 473-1234", // Placeholder - would need actual local number
+    number: "(054) 473-1234", // Placeholder - check for actual local number if available
     description: "Local support services"
   }
 ];
