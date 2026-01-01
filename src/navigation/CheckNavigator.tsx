@@ -9,9 +9,6 @@ import StandardHeader from '../components/common/StandardHeader';
 const Stack = createStackNavigator<CheckStackParamList>();
 
 const CheckNavigator = () => {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'CheckNavigator.tsx:10', message: 'CheckNavigator render', data: { registeredScreens: ['NavigatorHome', 'SymptomAssessment', 'Recommendation'], recommendationScreenName: 'Recommendation', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H1' } }) }).catch(() => {});
-  // #endregion
   return (
     <Stack.Navigator>
       <Stack.Screen
@@ -25,7 +22,7 @@ const CheckNavigator = () => {
         name="SymptomAssessment"
         component={SymptomAssessmentScreen}
         options={{
-          header: () => <StandardHeader title="Symptom Check" showBackButton />,
+          header: () => <StandardHeader title="Assessment" showBackButton />,
         }}
       />
       <Stack.Screen
