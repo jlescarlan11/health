@@ -3,15 +3,54 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import Constants from 'expo-constants';
+import { NavigationContainer } from '@react-navigation/native';
+import * as Linking from 'expo-linking';
+import NetInfo from '@react-native-community/netinfo';
+
 import { store, persistor } from './src/store/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { OfflineBanner } from './src/components/common';
-
-// Let's create a wrapper component here to handle global app initialization logic that requires Redux
-import NetInfo from '@react-native-community/netinfo';
 import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
+import { RootStackParamList } from './src/types/navigation';
+
+const prefix = Linking.createURL('/');
+
+const linking = {
+  prefixes: [prefix],
+  config: {
+    screens: {
+      Main: {
+        screens: {
+          Home: 'home',
+          Check: {
+            screens: {
+              NavigatorHome: 'chat',
+              SymptomAssessment: 'assessment',
+              Recommendation: 'recommendations',
+            },
+          },
+          Find: {
+            screens: {
+              FacilityDirectory: 'facilities',
+              FacilityDetails: 'facilities/:facilityId',
+            },
+          },
+          YAKAP: {
+            screens: {
+              YakapEnrollment: 'yakap',
+            },
+          },
+          Me: 'profile',
+        },
+      },
+      PhoneLogin: 'login',
+      OTPVerification: 'otp',
+      NotFound: '*',
+    },
+  },
+};
+
 
 const AppContent = () => {
   useEffect(() => {
@@ -73,7 +112,9 @@ export default function App() {
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
           <PaperProvider>
-            <AppContent />
+            <NavigationContainer linking={linking}>
+              <AppContent />
+            </NavigationContainer>
           </PaperProvider>
         </SafeAreaProvider>
       </PersistGate>

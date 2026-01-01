@@ -80,7 +80,16 @@ const SymptomAssessmentScreen = () => {
         symptoms: initialSymptom,
         answers: answers
     };
-    navigation.navigate('Recommendations', { assessmentData });
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'SymptomAssessmentScreen.tsx:78', message: 'finishAssessment entry', data: { targetScreen: 'Recommendation', assessmentDataKeys: Object.keys(assessmentData), navigationType: typeof navigation, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H1' } }) }).catch(() => {});
+    // #endregion
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'SymptomAssessmentScreen.tsx:83', message: 'Before navigation.navigate', data: { targetScreen: 'Recommendation', hasParams: !!assessmentData, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H1' } }) }).catch(() => {});
+    // #endregion
+    navigation.navigate('Recommendation', { assessmentData });
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'SymptomAssessmentScreen.tsx:84', message: 'After navigation.navigate', data: { targetScreen: 'Recommendation', timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H1' } }) }).catch(() => {});
+    // #endregion
   };
 
   const currentQuestion = questions[currentStep];

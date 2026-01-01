@@ -3,18 +3,20 @@ import { View, StyleSheet, ScrollView, Alert, Dimensions, TouchableOpacity } fro
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Card, Title, Paragraph, FAB, Button, Dialog, Portal, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RootStackParamList } from '../types/navigation';
+import { TabScreenProps } from '../types/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { setHasSeenDisclaimer } from '../store/settingsSlice';
 
-type MainHomeNavigationProp = StackNavigationProp<RootStackParamList, 'MainHome'>;
+type MainHomeNavigationProp = TabScreenProps<'Home'>['navigation'];
 
 export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:21', message: 'MainHomeScreen render - navigation check', data: { hasNavigate: typeof navigation.navigate === 'function', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'A' } }) }).catch(() => {});
+  // #endregion
   const theme = useTheme();
   const dispatch = useDispatch();
   const hasSeenDisclaimer = useSelector((state: RootState) => state.settings.hasSeenDisclaimer);
@@ -68,21 +70,36 @@ export const MainHomeScreen = () => {
             subtitle="AI-powered health assessment"
             icon="stethoscope"
             color="#4CAF50"
-            onPress={() => navigation.navigate('AiChat')}
+            onPress={() => {
+              // #region agent log
+              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:75', message: 'Navigating to Check tab', data: { targetTab: 'Check', targetScreen: 'NavigatorHome', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'B' } }) }).catch(() => {});
+              // #endregion
+              navigation.navigate('Check', { screen: 'NavigatorHome' });
+            }}
           />
           <FeatureCard
             title="Find Facilities"
             subtitle="Locate nearby health centers"
             icon="hospital-marker"
             color="#2196F3"
-            onPress={() => navigation.navigate('FacilityDirectory')}
+            onPress={() => {
+              // #region agent log
+              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:82', message: 'Navigating to Find tab', data: { targetTab: 'Find', targetScreen: 'FacilityDirectory', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' } }) }).catch(() => {});
+              // #endregion
+              navigation.navigate('Find', { screen: 'FacilityDirectory' });
+            }}
           />
           <FeatureCard
             title="YAKAP Enrollment"
             subtitle="Register for healthcare benefits"
             icon="card-account-details"
             color="#FF9800"
-            onPress={() => navigation.navigate('YakapEnrollment')}
+            onPress={() => {
+              // #region agent log
+              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'MainHomeScreen.tsx:89', message: 'Navigating to YAKAP tab', data: { targetTab: 'YAKAP', targetScreen: 'YakapEnrollment', timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'D' } }) }).catch(() => {});
+              // #endregion
+              navigation.navigate('YAKAP', { screen: 'YakapEnrollment' });
+            }}
           />
         </View>
       </ScrollView>

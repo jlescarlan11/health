@@ -25,7 +25,14 @@ const FILTERS = [
   { id: 'open_now', label: 'Open Now' },
 ];
 
+// #region agent log
+fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'FacilityDirectoryScreen.tsx:27', message: 'Before export definition', data: { moduleExports: typeof module !== 'undefined' ? Object.keys(module.exports || {}) : [], timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' } }) }).catch(() => {});
+// #endregion
+
 export const FacilityDirectoryScreen = () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'FacilityDirectoryScreen.tsx:31', message: 'Component function entry', data: { componentDefined: true, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' } }) }).catch(() => {});
+  // #endregion
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');

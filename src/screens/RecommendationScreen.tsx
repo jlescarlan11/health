@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Card, Button, Avatar, IconButton, useTheme, ActivityIndicator, Divider } from 'react-native-paper';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import { RootStackParamList } from '../types/navigation';
+import { CheckStackParamList } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { SYMPTOM_ASSESSMENT_PROMPT } from '../constants/prompts';
 import { EmergencyButton } from '../components/common/EmergencyButton';
@@ -16,10 +16,16 @@ const NEARBY_FACILITIES = [
     { id: '3', name: 'Concepcion Pequeña Health Center', distance: '0.8 km', phone: '09112233445', type: 'Health Center' },
 ];
 
-type ScreenRouteProp = RouteProp<RootStackParamList, 'Recommendations'>;
+type ScreenRouteProp = RouteProp<CheckStackParamList, 'Recommendation'>;
 
 const RecommendationScreen = () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RecommendationScreen.tsx:21', message: 'RecommendationScreen render entry', data: { routeName: 'Recommendation', hasRoute: true, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H2' } }) }).catch(() => {});
+    // #endregion
     const route = useRoute<ScreenRouteProp>();
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'RecommendationScreen.tsx:24', message: 'After useRoute', data: { hasParams: !!route.params, paramsKeys: route.params ? Object.keys(route.params) : [], timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'H2' } }) }).catch(() => {});
+    // #endregion
     const theme = useTheme();
     const { assessmentData } = route.params;
     const [loading, setLoading] = useState(true);

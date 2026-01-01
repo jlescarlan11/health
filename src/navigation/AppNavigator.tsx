@@ -1,72 +1,37 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import * as Linking from 'expo-linking';
-
+import TabNavigator from './TabNavigator';
 import { RootStackParamList } from '../types/navigation';
-import { CustomHeader } from '../components/common/CustomHeader';
+import NotFoundScreen from '../screens/NotFoundScreen';
+import { PhoneLoginScreen } from '../features/auth/PhoneLoginScreen';
+import { OTPVerificationScreen } from '../features/auth/OTPVerificationScreen';
 
-// Screens
-import { MainHomeScreen } from '../screens/MainHomeScreen';
-import { NavigatorHomeScreen } from '../features/navigation';
-import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
-import RecommendationScreen from '../screens/RecommendationScreen';
-import { FacilityList, FacilityDirectoryScreen } from '../features/facilities';
-import { FacilityDetailsScreen } from '../screens/FacilityDetailsScreen';
-import { YakapEnrollmentScreen } from '../features/yakap';
-import { ProfileScreen } from '../features/profile/ProfileScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
-import { PhoneLoginScreen, OTPVerificationScreen } from '../features/auth';
+// #region agent log
+const _phoneType = typeof PhoneLoginScreen;
+const _phoneUndef = PhoneLoginScreen === undefined;
+fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AppNavigator.tsx:9', message: 'PhoneLoginScreen import POST-FIX', data: { type: _phoneType, isUndefined: _phoneUndef, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' } }) }).catch(() => {});
+// #endregion
+// #region agent log
+const _otpType = typeof OTPVerificationScreen;
+const _otpUndef = OTPVerificationScreen === undefined;
+fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AppNavigator.tsx:12', message: 'OTPVerificationScreen import POST-FIX', data: { type: _otpType, isUndefined: _otpUndef, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'B' } }) }).catch(() => {});
+// #endregion
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-const prefix = Linking.createURL('/');
-
-const linking = {
-  prefixes: [prefix],
-  config: {
-    screens: {
-      MainHome: 'home',
-      AiChat: 'chat',
-      SymptomAssessment: 'assessment',
-      Recommendations: 'recommendations',
-      FacilityDirectory: 'facilities',
-      FacilityDetails: 'facilities/:facilityId',
-      YakapEnrollment: 'yakap',
-      Profile: 'profile',
-      Settings: 'settings',
-      PhoneLogin: 'login',
-      OTPVerification: 'otp',
-    },
-  },
-};
-
 const AppNavigator = () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'AppNavigator.tsx:19', message: 'AppNavigator render POST-FIX', data: { phoneDefined: !!PhoneLoginScreen, otpDefined: !!OTPVerificationScreen, timestamp: Date.now(), sessionId: 'debug-session', runId: 'post-fix', hypothesisId: 'A' } }) }).catch(() => {});
+  // #endregion
   return (
-    <NavigationContainer linking={linking}>
-      <Stack.Navigator
-        initialRouteName="MainHome"
-        screenOptions={{
-          header: (props) => <CustomHeader {...props} />,
-        }}
-      >
-        <Stack.Screen name="MainHome" component={MainHomeScreen} />
-        <Stack.Screen name="AiChat" component={NavigatorHomeScreen} />
-        <Stack.Screen name="SymptomAssessment" component={SymptomAssessmentScreen} />
-        <Stack.Screen name="Recommendations" component={RecommendationScreen} />
-        <Stack.Screen 
-          name="FacilityDirectory" 
-          component={FacilityDirectoryScreen} 
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="FacilityDetails" component={FacilityDetailsScreen} />
-        <Stack.Screen name="YakapEnrollment" component={YakapEnrollmentScreen} />
-        <Stack.Screen name="Profile" component={ProfileScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
+    <Stack.Navigator>
+      <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
+      <Stack.Group screenOptions={{ presentation: 'modal' }}>
         <Stack.Screen name="PhoneLogin" component={PhoneLoginScreen} />
         <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+      </Stack.Group>
+    </Stack.Navigator>
   );
 };
 
