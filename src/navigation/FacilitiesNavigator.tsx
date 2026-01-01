@@ -27,7 +27,7 @@ const FacilitiesNavigator = () => {
         name="FacilityDirectory"
         component={FacilityDirectoryScreen}
         options={{
-          header: () => <StandardHeader title="Facilities" />,
+          headerShown: false,
         }}
       />
       <Stack.Screen

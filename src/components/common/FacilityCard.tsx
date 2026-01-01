@@ -28,6 +28,14 @@ const getServiceIcon = (service: string): string => {
   return 'medical-bag';
 };
 
+const formatFacilityType = (type: string): string => {
+  if (!type) return '';
+  return type
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
 export const FacilityCard: React.FC<FacilityCardProps> = ({
   facility,
   onPress,
@@ -52,7 +60,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     >
       <Card.Title
         title={facility.name}
-        subtitle={facility.type}
+        subtitle={(
+          <View style={styles.typeContainer}>
+            <Text style={[styles.typeText, { color: theme.colors.primary }]}>
+              {formatFacilityType(facility.type)}
+            </Text>
+          </View>
+        )}
         titleStyle={styles.title}
         right={(props) => (
           <View style={styles.rightContainer}>
@@ -121,6 +135,18 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: 'bold',
+  },
+  typeContainer: {
+    marginTop: 4,
+    backgroundColor: '#E6F4F1', // Light teal/primary background
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  typeText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   chip: {
     marginRight: 0,

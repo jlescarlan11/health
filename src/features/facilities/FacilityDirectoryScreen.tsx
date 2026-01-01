@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Keyboard } from 'react-native';
+import { View, StyleSheet, Keyboard, TouchableOpacity } from 'react-native';
 import { 
   Searchbar, 
   Chip, 
-  Appbar, 
   useTheme,
   Text,
 } from 'react-native-paper';
@@ -12,10 +11,12 @@ import * as Location from 'expo-location';
 import { debounce } from 'lodash';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { AppDispatch, RootState } from '../../store';
 import { fetchFacilities, setFilters, updateDistances } from '../../store/facilitiesSlice';
 import { FacilityListView, FacilityMapView } from '../../components/features/facilities';
+import StandardHeader from '../../components/common/StandardHeader';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -81,59 +82,49 @@ export const FacilityDirectoryScreen = () => {
 
   const handleFilterPress = (filterId: string) => {
     setActiveFilter(filterId);
-    let filters: any = {};
     
-    // Reset filters
-    dispatch(setFilters({ type: undefined, yakapAccredited: undefined })); // Reset specific fields if needed, or rely on logic
+    // Default reset
+    const baseFilter = { type: undefined, yakapAccredited: undefined, openNow: undefined };
 
-    // We should probably just dispatch a clean filter set based on selection
-    // But setFilters merges. So we need to be careful.
-    // Ideally we should clear other mutually exclusive filters.
-    // For this simple UI, we can assume:
-    
     switch (filterId) {
       case 'health_center':
-        dispatch(setFilters({ type: 'Health Center', yakapAccredited: undefined }));
+        dispatch(setFilters({ ...baseFilter, type: 'health_center' }));
         break;
       case 'hospital':
-        dispatch(setFilters({ type: 'Hospital', yakapAccredited: undefined }));
+        dispatch(setFilters({ ...baseFilter, type: 'hospital' }));
         break;
       case 'yakap':
-        dispatch(setFilters({ type: undefined, yakapAccredited: true }));
+        dispatch(setFilters({ ...baseFilter, yakapAccredited: true }));
         break;
       case 'open_now':
-        // 'open_now' is not in FacilityFilters in slice yet, or handled locally.
-        // Slice logic for filtering: `type`, `services`, `yakapAccredited`, `searchQuery`.
-        // If we want Open Now, we need to add it to slice or handle it.
-        // For MVP compliance with previous code, let's skip or add it if easy.
-        // Previous slice didn't have 'openNow'.
-        // Let's just reset for 'all'.
-        dispatch(setFilters({ type: undefined, yakapAccredited: undefined }));
+        dispatch(setFilters({ ...baseFilter, openNow: true }));
         break;
       default: // 'all'
-        dispatch(setFilters({ type: undefined, yakapAccredited: undefined }));
+        dispatch(setFilters(baseFilter));
     }
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <Appbar.Header style={styles.header} elevated>
-        <Appbar.Content title="Facilities" titleStyle={styles.headerTitle} />
-        <Appbar.Action 
-          icon={viewMode === 'list' ? "map" : "format-list-bulleted"} 
-          onPress={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')} 
-        />
-      </Appbar.Header>
+      <StandardHeader title="Find Facilities" />
 
       <View style={styles.contentContainer}>
-        <Searchbar
-          placeholder="Search facilities, address..."
-          onChangeText={handleSearchChange}
-          value={searchQuery}
-          style={styles.searchBar}
-          icon={searchQuery ? "close" : "magnify"}
-          onIconPress={searchQuery ? handleClearSearch : undefined}
-        />
+        <View style={styles.searchContainer}>
+          <Searchbar
+            placeholder="Search facilities, address..."
+            onChangeText={handleSearchChange}
+            value={searchQuery}
+            style={styles.searchBar}
+            icon={searchQuery ? "close" : "magnify"}
+            onIconPress={searchQuery ? handleClearSearch : undefined}
+          />
+          <TouchableOpacity 
+            onPress={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
+            style={styles.viewToggle}
+          >
+            <Ionicons name={viewMode === 'list' ? "map-outline" : "list-outline"} size={28} color="#2E9B95" />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.filterContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
@@ -166,20 +157,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
-    backgroundColor: '#fff',
-    elevation: 4,
-  },
-  headerTitle: {
-    fontWeight: 'bold',
-  },
   contentContainer: {
     flex: 1,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    // Removed white background/elevation to blend with screen
+  },
   searchBar: {
-    margin: 16,
-    elevation: 2,
+    flex: 1,
+    elevation: 0,
+    backgroundColor: '#fff', // Keep searchbar white
+  },
+  viewToggle: {
+    marginLeft: 12,
+    padding: 8,
     backgroundColor: '#fff',
+    borderRadius: 8,
+    // Add elevation/shadow to match searchbar if desired, or keep flat
+    elevation: 1, 
   },
   filterContainer: {
     marginBottom: 8,
@@ -189,6 +187,7 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginRight: 8,
+    backgroundColor: '#fff', // Ensure chips have background if container doesn't
   },
   center: {
     flex: 1,

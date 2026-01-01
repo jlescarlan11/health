@@ -2,12 +2,14 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getFacilities } from '../services/facilityService';
 import { Facility } from '../types';
 import { calculateDistance } from '../utils/locationUtils';
+import { getOpenStatus } from '../utils/facilityUtils';
 
 interface FacilityFilters {
   type?: string;
   services?: string[];
   yakapAccredited?: boolean;
   searchQuery?: string;
+  openNow?: boolean;
 }
 
 interface FacilitiesState {
@@ -68,7 +70,7 @@ const facilitiesSlice = createSlice({
       state.filters = { ...state.filters, ...action.payload };
       // Apply filters logic here or in a selector/separate effect
       // For simple state management, we can re-filter here
-      const { type, services, yakapAccredited, searchQuery } = state.filters;
+      const { type, services, yakapAccredited, searchQuery, openNow } = state.filters;
       
       state.filteredFacilities = state.facilities.filter(facility => {
         const matchesType = !type || facility.type === type;
@@ -82,7 +84,9 @@ const facilitiesSlice = createSlice({
         const matchesServices = !services || services.length === 0 || 
           services.some(s => facility.services.includes(s));
 
-        return matchesType && matchesYakap && matchesSearch && matchesServices;
+        const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
+
+        return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
       });
       
       // Re-sort if distances are available (check first item)
@@ -138,7 +142,7 @@ const facilitiesSlice = createSlice({
         // If filters are active, we might want to trigger a server-side filtered fetch instead.
         // For now, we update the client-side filtered list with what we have.
         // Copy-pasting filter logic from setFilters to ensure consistency
-        const { type, services, yakapAccredited, searchQuery } = state.filters;
+        const { type, services, yakapAccredited, searchQuery, openNow } = state.filters;
         state.filteredFacilities = state.facilities.filter(facility => {
             const matchesType = !type || facility.type === type;
             const matchesYakap = yakapAccredited === undefined || facility.yakapAccredited === yakapAccredited;
@@ -148,8 +152,10 @@ const facilitiesSlice = createSlice({
             
             const matchesServices = !services || services.length === 0 || 
               services.some(s => facility.services.includes(s));
+
+            const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
     
-            return matchesType && matchesYakap && matchesSearch && matchesServices;
+            return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
         });
 
         // Re-sort if distances are available. 
