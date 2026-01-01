@@ -275,10 +275,22 @@ export const FacilityMapView: React.FC = () => {
 
       {/* Map Controls */}
       <View style={[styles.controls, { top: insets.top + 16 }]}>
-        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnUser}>
+        <TouchableOpacity 
+          style={styles.controlButton} 
+          onPress={handleCenterOnUser}
+          accessibilityLabel="Center on my location"
+          accessibilityHint="Moves the map view to your current location"
+          accessibilityRole="button"
+        >
           <MaterialCommunityIcons name="crosshairs-gps" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnNaga}>
+        <TouchableOpacity 
+          style={styles.controlButton} 
+          onPress={handleCenterOnNaga}
+          accessibilityLabel="Center on Naga City"
+          accessibilityHint="Resets the map view to Naga City center"
+          accessibilityRole="button"
+        >
             <MaterialCommunityIcons name="compass" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
         {/* Zoom buttons could be added here if we track zoom state, or omitted if pinch is sufficient */}

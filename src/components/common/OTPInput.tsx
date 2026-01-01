@@ -34,7 +34,7 @@ export const OTPInput: React.FC<OTPInputProps> = ({
         accessibilityLabel="One Time Password Input"
         accessibilityHint="Double tap to enter verification code"
         accessibilityValue={{ text: value.split('').join(' ') }}
-        accessibilityRole="adjustable"
+        accessibilityRole="button"
       >
         {Array(length)
           .fill(0)

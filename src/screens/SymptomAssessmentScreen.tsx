@@ -130,7 +130,12 @@ const SymptomAssessmentScreen = () => {
                     {currentQuestion.type === 'choice' && currentQuestion.options ? (
                         <RadioButton.Group onValueChange={val => setAnswers(prev => ({...prev, [currentQuestion.id]: val}))} value={currentAnswer}>
                             {currentQuestion.options.map(opt => (
-                                <RadioButton.Item key={opt} label={opt} value={opt} />
+                                <RadioButton.Item 
+                                  key={opt} 
+                                  label={opt} 
+                                  value={opt} 
+                                  accessibilityLabel={`Option ${opt}`}
+                                />
                             ))}
                         </RadioButton.Group>
                     ) : (
@@ -141,6 +146,7 @@ const SymptomAssessmentScreen = () => {
                             placeholder="Type your answer..."
                             multiline
                             style={{ backgroundColor: 'white' }}
+                            accessibilityLabel="Type your answer here"
                         />
                     )}
                 </Card.Content>

@@ -119,11 +119,17 @@ export const FacilityDetailsScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <ScrollView>
-        <TouchableOpacity onPress={() => images.length > 0 && setImageViewerVisible(true)}>
+        <TouchableOpacity 
+          onPress={() => images.length > 0 && setImageViewerVisible(true)}
+          accessibilityLabel="View facility photos"
+          accessibilityHint="Double tap to open photo gallery"
+          accessibilityRole="imagebutton"
+        >
           <Image
             source={images.length > 0 ? { uri: images[0].uri } : require('../../assets/icon.png')}
             style={styles.headerImage}
             resizeMode="cover"
+            accessibilityLabel={`${facility.name} photo`}
           />
         </TouchableOpacity>
         
@@ -173,7 +179,13 @@ export const FacilityDetailsScreen = () => {
 
           <View style={styles.infoSection}>
             <MaterialIcons name="phone" size={24} color="#4A90E2" />
-            <TouchableOpacity onPress={handleCall} style={styles.infoTextContainer}>
+            <TouchableOpacity 
+              onPress={handleCall} 
+              style={styles.infoTextContainer}
+              accessibilityLabel={`Call ${facility.phone || 'facility'}`}
+              accessibilityHint="Double tap to make a call"
+              accessibilityRole="link"
+            >
               <Text style={[styles.infoText, styles.linkText]}>{facility.phone || 'Not available'}</Text>
             </TouchableOpacity>
           </View>
@@ -192,8 +204,18 @@ export const FacilityDetailsScreen = () => {
 
           <View style={styles.mapSection}>
             <Text style={styles.sectionTitle}>Location</Text>
-            <TouchableOpacity onPress={handleDirections}>
-              <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} resizeMode="cover" />
+            <TouchableOpacity 
+              onPress={handleDirections}
+              accessibilityLabel="View location on map"
+              accessibilityHint="Double tap to open maps application"
+              accessibilityRole="button"
+            >
+              <Image 
+                source={{ uri: mapPreviewUrl }} 
+                style={styles.mapPreview} 
+                resizeMode="cover"
+                accessibilityLabel="Map preview showing facility location" 
+              />
                <View style={styles.mapOverlay}>
                 <Text style={styles.mapOverlayText}>Tap to view in map</Text>
               </View>
