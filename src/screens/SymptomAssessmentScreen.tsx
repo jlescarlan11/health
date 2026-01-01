@@ -119,8 +119,8 @@ const SymptomAssessmentScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 100 }]}>
         
         <View style={styles.initialSymptomContainer}>
             <Text variant="titleMedium" style={styles.label}>Initial Symptoms:</Text>

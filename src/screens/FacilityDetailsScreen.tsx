@@ -118,7 +118,7 @@ export const FacilityDetailsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <ScrollView>
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
         <TouchableOpacity onPress={() => images.length > 0 && setImageViewerVisible(true)}>
           <Image
             source={images.length > 0 ? { uri: images[0].uri } : require('../../assets/icon.png')}

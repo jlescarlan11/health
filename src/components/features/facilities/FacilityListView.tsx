@@ -123,7 +123,9 @@ export const FacilityListView: React.FC = () => {
 
 const styles = StyleSheet.create({
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 100,
     flexGrow: 1,
   },
   card: {

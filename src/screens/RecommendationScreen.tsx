@@ -167,7 +167,7 @@ const RecommendationScreen = () => {
     const isMentalHealth = recommendation.isMentalHealth;
 
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        <SafeAreaView style={styles.container} edges={['left', 'right']}>
             <ScrollView contentContainerStyle={styles.content}>
                 
                 {/* Emergency Alert */}
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f8f9fa' },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     loadingText: { marginTop: 16 },
-    content: { padding: 16, paddingBottom: 32 },
+    content: { padding: 16, paddingBottom: 100 },
     
     emergencyBanner: {
         backgroundColor: '#b00020',
