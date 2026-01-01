@@ -3,6 +3,27 @@ import { Facility, EmergencyContact } from '../types';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
+// Migration function to add missing columns
+const migrateTableSchema = async (tableName: string, requiredColumns: { name: string; type: string }[]) => {
+  if (!db) return;
+  
+  try {
+    // Get existing columns
+    const tableInfo = await db.getAllAsync<any>(`PRAGMA table_info(${tableName})`);
+    const existingColumnNames = tableInfo.map((col: any) => col.name);
+    
+    // Check and add missing columns
+    for (const requiredColumn of requiredColumns) {
+      if (!existingColumnNames.includes(requiredColumn.name)) {
+        await db.execAsync(`ALTER TABLE ${tableName} ADD COLUMN ${requiredColumn.name} ${requiredColumn.type}`);
+      }
+    }
+  } catch (error: any) {
+    console.error(`Error migrating ${tableName} schema:`, error);
+    throw error;
+  }
+};
+
 export const initDatabase = async () => {
   try {
     db = await SQLite.openDatabaseAsync('health_app.db');
@@ -26,6 +47,11 @@ export const initDatabase = async () => {
       );
     `);
 
+    // Migrate facilities table schema (add missing columns if table already existed)
+    await migrateTableSchema('facilities', [
+      { name: 'lastUpdated', type: 'INTEGER' }
+    ]);
+
     // Create Emergency Contacts Table
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS emergency_contacts (
@@ -39,6 +65,11 @@ export const initDatabase = async () => {
         data TEXT
       );
     `);
+
+    // Migrate emergency_contacts table schema (add missing columns if table already existed)
+    await migrateTableSchema('emergency_contacts', [
+      { name: 'lastUpdated', type: 'INTEGER' }
+    ]);
 
     console.log('Database initialized successfully');
   } catch (error) {

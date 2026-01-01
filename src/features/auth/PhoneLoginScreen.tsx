@@ -117,7 +117,7 @@ export const PhoneLoginScreen = () => {
 
             <View style={[styles.warningContainer, { backgroundColor: theme.colors.secondaryContainer }]}>
               <Text variant="labelSmall" style={{ color: theme.colors.onSecondaryContainer }}>
-                ⚠️ Important: Standard SMS rates may apply. By proceeding, you agree to receive an OTP for verification.
+                ⚠️ Important: Standard SMS rates apply (approximately ₱0.50–₱1.00). By proceeding, you agree to receive an OTP for verification.
               </Text>
             </View>
 

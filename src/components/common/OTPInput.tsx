@@ -89,6 +89,8 @@ export const OTPInput: React.FC<OTPInputProps> = ({
         maxLength={length}
         style={styles.hiddenInput}
         caretHidden
+        textContentType="oneTimeCode"
+        autoComplete="sms-otp"
       />
     </View>
   );
