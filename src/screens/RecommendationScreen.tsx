@@ -7,7 +7,7 @@ import { CheckStackParamList } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { SYMPTOM_ASSESSMENT_PROMPT } from '../constants/prompts';
 import { EmergencyButton } from '../components/common/EmergencyButton';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 // Mock facility data
 const NEARBY_FACILITIES = [

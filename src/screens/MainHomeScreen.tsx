@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, Dialog, Paragraph, Portal, Title, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TabScreenProps } from '../types/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -27,6 +27,9 @@ export const MainHomeScreen = () => {
     if (!hasSeenDisclaimer) {
       setShowDisclaimer(true);
     }
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:30',message:'MainHomeScreen mounted',data:{platform:Platform.OS,hasSeenDisclaimer,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
   }, [hasSeenDisclaimer]);
 
   const handleAcceptDisclaimer = async () => {
@@ -34,28 +37,48 @@ export const MainHomeScreen = () => {
     setShowDisclaimer(false);
   };
 
-  const FeatureCard = ({ title, subtitle, icon, color, onPress, testID }: { title: string, subtitle: string, icon: string, color: string, onPress: () => void, testID?: string }) => (
-    <Card 
-      style={styles.card} 
-      onPress={onPress} 
-      testID={testID} 
-      accessible={true} 
-      accessibilityLabel={`${title}, ${subtitle}`}
-      accessibilityRole="button"
-      accessibilityHint={`Double tap to navigate to ${title}`}
-    >
-      <Card.Content style={styles.cardContent}>
-        <View style={[styles.iconContainer, { backgroundColor: color }]}>
-          <MaterialCommunityIcons name={icon} size={32} color="white" />
-        </View>
-        <View style={styles.textContainer}>
-          <Title style={styles.cardTitle}>{title}</Title>
-          <Paragraph style={styles.cardSubtitle}>{subtitle}</Paragraph>
-        </View>
-        <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />
-      </Card.Content>
-    </Card>
-  );
+  const FeatureCard = ({ title, subtitle, icon, color, onPress, testID }: { title: string, subtitle: string, icon: string, color: string, onPress: () => void, testID?: string }) => {
+    // #region agent log
+    React.useEffect(() => {
+      fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:42',message:'FeatureCard render',data:{title,iconName:icon,color,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    }, [title, icon, color]);
+    // #endregion
+
+    return (
+      <Card 
+        style={styles.card} 
+        onPress={onPress} 
+        testID={testID} 
+        accessible={true} 
+        accessibilityLabel={`${title}, ${subtitle}`}
+        accessibilityRole="button"
+        accessibilityHint={`Double tap to navigate to ${title}`}
+      >
+        <Card.Content style={styles.cardContent}>
+          <View style={[styles.iconContainer, { backgroundColor: color }]}>
+            {/* #region agent log */}
+            {(() => {
+              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:60',message:'Rendering MaterialCommunityIcons',data:{iconName:icon,title,size:32,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+              return null;
+            })()}
+            {/* #endregion */}
+            <MaterialCommunityIcons name={icon} size={32} color="white" />
+          </View>
+          <View style={styles.textContainer}>
+            <Title style={styles.cardTitle}>{title}</Title>
+            <Paragraph style={styles.cardSubtitle}>{subtitle}</Paragraph>
+          </View>
+          {/* #region agent log */}
+          {(() => {
+            fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:72',message:'Rendering MaterialCommunityIcons chevron',data:{iconName:'chevron-right',size:24,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+            return null;
+          })()}
+          {/* #endregion */}
+          <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />
+        </Card.Content>
+      </Card>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>

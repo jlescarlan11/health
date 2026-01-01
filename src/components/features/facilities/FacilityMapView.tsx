@@ -2,9 +2,9 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../../store';
+import { RootState } from '../../../store/store';
 import { selectFacility } from '../../../store/facilitiesSlice';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FacilityCard } from '../../common/FacilityCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme, ActivityIndicator } from 'react-native-paper';
@@ -275,22 +275,10 @@ export const FacilityMapView: React.FC = () => {
 
       {/* Map Controls */}
       <View style={[styles.controls, { top: insets.top + 16 }]}>
-        <TouchableOpacity 
-          style={styles.controlButton} 
-          onPress={handleCenterOnUser}
-          accessibilityLabel="Center on my location"
-          accessibilityHint="Moves the map view to your current location"
-          accessibilityRole="button"
-        >
+        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnUser}>
           <MaterialCommunityIcons name="crosshairs-gps" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.controlButton} 
-          onPress={handleCenterOnNaga}
-          accessibilityLabel="Center on Naga City"
-          accessibilityHint="Resets the map view to Naga City center"
-          accessibilityRole="button"
-        >
+        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnNaga}>
             <MaterialCommunityIcons name="compass" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
         {/* Zoom buttons could be added here if we track zoom state, or omitted if pinch is sufficient */}
