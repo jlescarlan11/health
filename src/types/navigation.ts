@@ -32,7 +32,9 @@ export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
   NotFound: undefined;
   PhoneLogin: undefined;
-  OTPVerification: { verificationId: string; phoneNumber: string };
+  OTPVerification: { verificationId: string; phoneNumber:string };
+  PrivacyPolicy: undefined;
+  TermsOfService: undefined;
 };
 
 // Define the props for each screen in the navigators

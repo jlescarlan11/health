@@ -1,2 +1,2 @@
 // Barrel export file for src/hooks
-export {};
+export * from './reduxHooks';

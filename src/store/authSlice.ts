@@ -8,6 +8,9 @@ interface AuthState {
     phoneNumber?: string | null;
     displayName?: string | null;
     photoURL?: string | null;
+    metadata: {
+      creationTime?: string;
+    };
   } | null;
   token: string | null;
   refreshToken: string | null;
@@ -62,4 +65,7 @@ const authSlice = createSlice({
 });
 
 export const { setCredentials, updateUser, logout, setLoading, setError } = authSlice.actions;
+
+export const selectUser = (state: { auth: AuthState }) => state.auth.user;
+
 export default authSlice.reducer;
