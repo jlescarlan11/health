@@ -30,3 +30,4 @@ Write-Host "`n✓ Both servers are starting in separate windows" -ForegroundColo
 Write-Host "`nNote: Make sure your local IP is correct in app.config.js" -ForegroundColor Yellow
 Write-Host "Run 'node get-local-ip.js' to get your current IP address" -ForegroundColor Yellow
 
+

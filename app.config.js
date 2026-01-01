@@ -39,9 +39,15 @@ module.exports = {
     },
     plugins: [
       "expo-router",
-      "@rnmapbox/maps",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "mapbox"
+        }
+      ],
       "expo-sqlite",
-      "@react-native-firebase/app"
+      "@react-native-firebase/app",
+      "expo-system-ui"
     ],
     extra: {
       apiUrl: process.env.BACKEND_API_URL || "http://localhost:3000/api",

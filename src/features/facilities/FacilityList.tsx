@@ -1,56 +1,12 @@
-import React, { useEffect } from 'react';
-import { View, FlatList, StyleSheet } from 'react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { List, Card, Text, ActivityIndicator, Chip } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../../store/store';
-import { fetchFacilities } from '../../store/facilitiesSlice';
+import { FacilityListView } from '../../components/features/facilities';
 
 const FacilityList = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const { facilities, isLoading, error } = useSelector((state: RootState) => state.facilities);
-
-  useEffect(() => {
-    dispatch(fetchFacilities());
-  }, [dispatch]);
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.center} edges={['bottom', 'left', 'right']}>
-        <ActivityIndicator size="large" />
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.center} edges={['bottom', 'left', 'right']}>
-        <Text>Error: {error}</Text>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
-      <FlatList
-        data={facilities}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Card style={styles.card}>
-            <Card.Title 
-              title={item.name} 
-              subtitle={item.type}
-              right={(props) => item.yakapAccredited ? <Chip icon="check-decagram" style={styles.chip}>YAKAP</Chip> : null}
-            />
-            <Card.Content>
-              <Text variant="bodyMedium">{item.address}</Text>
-              {item.phone && <Text variant="bodySmall">Phone: {item.phone}</Text>}
-              <Text variant="bodySmall">Services: {item.services.join(', ')}</Text>
-            </Card.Content>
-          </Card>
-        )}
-        contentContainerStyle={styles.list}
-      />
+      <FacilityListView />
     </SafeAreaView>
   );
 };
@@ -58,21 +14,6 @@ const FacilityList = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  list: {
-    padding: 16,
-  },
-  card: {
-    marginBottom: 16,
-  },
-  chip: {
-    marginRight: 16,
-    backgroundColor: '#e1bee7',
   },
 });
 

@@ -56,7 +56,8 @@ HEALTH is an AI-powered mobile healthcare navigation application designed for Na
 
 2.  Update `.env` with your API keys and configuration:
     - `EXPO_PUBLIC_GEMINI_API_KEY`: Your Google Gemini API Key
-    - `EXPO_PUBLIC_MAPBOX_TOKEN`: Your Mapbox Access Token
+    - `EXPO_PUBLIC_MAPBOX_TOKEN`: Your Mapbox Access Token (for runtime API calls)
+    - `RNMAPBOX_MAPS_DOWNLOAD_TOKEN`: Your Mapbox Download Token (for downloading SDK resources during build)
     - `DATABASE_URL`: PostgreSQL connection string
     - `FIREBASE_CONFIG`: Firebase configuration
 

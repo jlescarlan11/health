@@ -68,15 +68,15 @@ import NetInfo from '@react-native-community/netinfo';
 
 // ... (existing code)
 
-export const fetchFacilitiesFromApi = async () => {
+export const fetchFacilitiesFromApi = async (params: { limit?: number; offset?: number } = {}) => {
   // #region agent log
-  logDebug('facilityService.ts:50', 'fetchFacilitiesFromApi entry', { apiUrl: API_URL, expoConfigExtra: Constants.expoConfig?.extra, fullUrl: `${API_URL}/facilities` });
+  logDebug('facilityService.ts:50', 'fetchFacilitiesFromApi entry', { apiUrl: API_URL, expoConfigExtra: Constants.expoConfig?.extra, fullUrl: `${API_URL}/facilities`, params });
   // #endregion
   try {
     // #region agent log
-    logDebug('facilityService.ts:54', 'Before axios.get', { requestUrl: `${API_URL}/facilities` });
+    logDebug('facilityService.ts:54', 'Before axios.get', { requestUrl: `${API_URL}/facilities`, params });
     // #endregion
-    const response = await axios.get(`${API_URL}/facilities`);
+    const response = await axios.get(`${API_URL}/facilities`, { params });
     // #region agent log
     logDebug('facilityService.ts:57', 'After axios.get success', { status: response.status, dataLength: response.data?.length || response.data?.facilities?.length || 0 });
     // #endregion
@@ -90,12 +90,12 @@ export const fetchFacilitiesFromApi = async () => {
   }
 };
 
-export const getFacilities = async () => {
+export const getFacilities = async (params: { limit?: number; offset?: number } = {}) => {
   const netInfo = await NetInfo.fetch();
   
   if (netInfo.isConnected) {
     try {
-      const data = await fetchFacilitiesFromApi();
+      const data = await fetchFacilitiesFromApi(params);
       // Optionally cache the data here as well, or rely on the background sync service.
       // For robust fallback, it's good to cache on every successful fetch.
       // We need to match the data structure expected by saveFacilities.
@@ -130,6 +130,14 @@ export const getFacilities = async () => {
     // Looking at `fetchFacilitiesFromApi`, it returns `response.data`.
     // If `response.data` is `{ facilities: [...] }`, we should mock that?
     // Let's assume for now the caller handles `data` or `data.facilities`.
+    // If pagination was requested but we're offline, we might need to simulate pagination or just return all.
+    // Simulating basic pagination for offline mode:
+    if (params.limit && params.offset !== undefined) {
+      return {
+         facilities: localData.slice(params.offset, params.offset + params.limit),
+         total: localData.length
+      };
+    }
     return localData;
   }
 

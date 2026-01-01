@@ -11,7 +11,7 @@ import { MainHomeScreen } from '../screens/MainHomeScreen';
 import { NavigatorHomeScreen } from '../features/navigation';
 import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
 import RecommendationScreen from '../screens/RecommendationScreen';
-import { FacilityList } from '../features/facilities';
+import { FacilityList, FacilityDirectoryScreen } from '../features/facilities';
 import { FacilityDetailsScreen } from '../screens/FacilityDetailsScreen';
 import { YakapEnrollmentScreen } from '../features/yakap';
 import { ProfileScreen } from '../features/profile/ProfileScreen';
@@ -54,7 +54,11 @@ const AppNavigator = () => {
         <Stack.Screen name="AiChat" component={NavigatorHomeScreen} />
         <Stack.Screen name="SymptomAssessment" component={SymptomAssessmentScreen} />
         <Stack.Screen name="Recommendations" component={RecommendationScreen} />
-        <Stack.Screen name="FacilityDirectory" component={FacilityList} />
+        <Stack.Screen 
+          name="FacilityDirectory" 
+          component={FacilityDirectoryScreen} 
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="FacilityDetails" component={FacilityDetailsScreen} />
         <Stack.Screen name="YakapEnrollment" component={YakapEnrollmentScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />

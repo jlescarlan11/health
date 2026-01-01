@@ -1,4 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
 import facilityRoutes from './facilityRoutes';
 import symptomRoutes from './symptomRoutes';
 import aiRoutes from './aiRoutes';

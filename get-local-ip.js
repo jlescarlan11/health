@@ -35,3 +35,4 @@ function getLocalIP() {
 const localIP = getLocalIP();
 console.log(localIP);
 
+

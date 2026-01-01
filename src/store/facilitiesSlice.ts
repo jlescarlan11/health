@@ -1,20 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getFacilities } from '../services/facilityService';
-
-// Re-using the Facility interface from the service or defining it here if not exported
-interface Facility {
-  id: string;
-  name: string;
-  type: string;
-  services: string[];
-  address: string;
-  latitude: number;
-  longitude: number;
-  phone?: string;
-  yakapAccredited: boolean;
-  hours?: string;
-  photoUrl?: string;
-}
+import { Facility } from '../types';
+import { calculateDistance } from '../utils/locationUtils';
 
 interface FacilityFilters {
   type?: string;
@@ -30,6 +17,9 @@ interface FacilitiesState {
   filters: FacilityFilters;
   isLoading: boolean;
   error: string | null;
+  total: number;
+  page: number;
+  hasMore: boolean;
 }
 
 const initialState: FacilitiesState = {
@@ -39,13 +29,18 @@ const initialState: FacilitiesState = {
   filters: {},
   isLoading: false,
   error: null,
+  total: 0,
+  page: 1,
+  hasMore: true,
 };
 
 export const fetchFacilities = createAsyncThunk(
   'facilities/fetchFacilities',
-  async () => {
-    const data = await getFacilities();
-    return data;
+  async (params: { page: number; limit?: number; refresh?: boolean } = { page: 1, limit: 20, refresh: true }) => {
+    const { page, limit = 20, refresh = false } = params;
+    const offset = (page - 1) * limit;
+    const data = await getFacilities({ limit, offset });
+    return { data, page, refresh };
   }
 );
 
@@ -55,6 +50,19 @@ const facilitiesSlice = createSlice({
   reducers: {
     selectFacility: (state, action: PayloadAction<string | null>) => {
       state.selectedFacilityId = action.payload;
+    },
+    updateDistances: (state, action: PayloadAction<{ latitude: number; longitude: number }>) => {
+      const { latitude, longitude } = action.payload;
+      
+      const updateDistance = (f: Facility) => {
+        f.distance = calculateDistance(latitude, longitude, f.latitude, f.longitude);
+      };
+
+      state.facilities.forEach(updateDistance);
+      state.filteredFacilities.forEach(updateDistance);
+      
+      // Sort filtered facilities by distance
+      state.filteredFacilities.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
     },
     setFilters: (state, action: PayloadAction<FacilityFilters>) => {
       state.filters = { ...state.filters, ...action.payload };
@@ -76,10 +84,19 @@ const facilitiesSlice = createSlice({
 
         return matchesType && matchesYakap && matchesSearch && matchesServices;
       });
+      
+      // Re-sort if distances are available (check first item)
+      if (state.filteredFacilities.length > 0 && state.filteredFacilities[0].distance !== undefined) {
+         state.filteredFacilities.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+      }
     },
     clearFilters: (state) => {
       state.filters = {};
       state.filteredFacilities = state.facilities;
+      // Re-sort if distances are available
+      if (state.filteredFacilities.length > 0 && state.filteredFacilities[0].distance !== undefined) {
+         state.filteredFacilities.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+      }
     },
   },
   extraReducers: (builder) => {
@@ -87,10 +104,58 @@ const facilitiesSlice = createSlice({
       .addCase(fetchFacilities.pending, (state) => {
         state.isLoading = true;
       })
-      .addCase(fetchFacilities.fulfilled, (state, action: PayloadAction<Facility[]>) => {
+      .addCase(fetchFacilities.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.facilities = action.payload;
-        state.filteredFacilities = action.payload; // Initialize filtered list
+        const { data, page, refresh } = action.payload;
+        
+        let newFacilities: Facility[] = [];
+        let total = 0;
+
+        if (Array.isArray(data)) {
+           newFacilities = data;
+           total = data.length; // Fallback if total not provided
+        } else if (data && typeof data === 'object') {
+           newFacilities = data.facilities || [];
+           total = data.total || newFacilities.length;
+        }
+
+        if (refresh) {
+          state.facilities = newFacilities;
+        } else {
+          // Append and remove duplicates
+          const existingIds = new Set(state.facilities.map(f => f.id));
+          const uniqueNewFacilities = newFacilities.filter(f => !existingIds.has(f.id));
+          state.facilities = [...state.facilities, ...uniqueNewFacilities];
+        }
+        
+        state.total = total;
+        state.page = page;
+        state.hasMore = state.facilities.length < total;
+        
+        // Re-apply filters on the updated list
+        // Note: For true server-side pagination, client-side filtering might be incomplete.
+        // But assuming we are pulling 'all' data via pagination or just displaying list, this is fine for now.
+        // If filters are active, we might want to trigger a server-side filtered fetch instead.
+        // For now, we update the client-side filtered list with what we have.
+        // Copy-pasting filter logic from setFilters to ensure consistency
+        const { type, services, yakapAccredited, searchQuery } = state.filters;
+        state.filteredFacilities = state.facilities.filter(facility => {
+            const matchesType = !type || facility.type === type;
+            const matchesYakap = yakapAccredited === undefined || facility.yakapAccredited === yakapAccredited;
+            const matchesSearch = !searchQuery || 
+              facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              facility.address.toLowerCase().includes(searchQuery.toLowerCase());
+            
+            const matchesServices = !services || services.length === 0 || 
+              services.some(s => facility.services.includes(s));
+    
+            return matchesType && matchesYakap && matchesSearch && matchesServices;
+        });
+
+        // Re-sort if distances are available. 
+        // Note: New facilities won't have distance unless we recalc. 
+        // Ideally updateDistances should be called after fetch if location is known. 
+        // For now, we leave them undefined until next updateDistances call.
       })
       .addCase(fetchFacilities.rejected, (state, action) => {
         state.isLoading = false;
@@ -99,5 +164,5 @@ const facilitiesSlice = createSlice({
   },
 });
 
-export const { selectFacility, setFilters, clearFilters } = facilitiesSlice.actions;
+export const { selectFacility, setFilters, clearFilters, updateDistances } = facilitiesSlice.actions;
 export default facilitiesSlice.reducer;

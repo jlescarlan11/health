@@ -35,3 +35,4 @@ echo "Run 'node get-local-ip.js' to get your current IP address"
 echo ""
 echo "To stop servers, press Ctrl+C or run: kill $BACKEND_PID $EXPO_PID"
 
+
