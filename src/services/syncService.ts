@@ -2,7 +2,7 @@ import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchFacilitiesFromApi } from './facilityService';
 import { saveFacilities } from './database';
-import { store } from '../store/store';
+import { store } from '../store';
 import { syncCompleted, setOfflineStatus } from '../store/offlineSlice';
 
 export const syncFacilities = async () => {

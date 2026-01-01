@@ -18,10 +18,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { RootStackParamList } from '../types/navigation';
-import { RootState } from '../store/store';
+import { RootState } from '../store';
 import { Button } from '../components/common/Button';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
-import { Facility } from '../store/facilitiesSlice';
+import { Facility } from '../types';
 
 // Mock location hook - replace with actual implementation
 const useUserLocation = () => ({

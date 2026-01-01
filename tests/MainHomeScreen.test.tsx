@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent, cleanup } from '@testing-library/react-native';
 import { MainHomeScreen } from '../src/screens/MainHomeScreen';
 import { Provider } from 'react-redux';
-import { store } from '../src/store/store';
+import { store } from '../src/store';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
 

@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
 import HeroSection from './HeroSection';
-import { RootState } from '../../store/store';
+import { RootState } from '../../store';
 
 const ProfileHero: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);

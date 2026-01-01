@@ -8,7 +8,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import NetInfo from '@react-native-community/netinfo';
 
-import { store, persistor } from './src/store/store';
+import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { OfflineBanner } from './src/components/common';
 import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';

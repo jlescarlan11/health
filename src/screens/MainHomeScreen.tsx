@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { TabScreenProps } from '../types/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store/store';
+import { RootState } from '../store';
 import { setHasSeenDisclaimer } from '../store/settingsSlice';
 
 // Import the new components

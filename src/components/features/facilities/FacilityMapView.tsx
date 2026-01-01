@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
 import * as Location from 'expo-location';
 import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from '../../../store/store';
+import { RootState } from '../../../store';
 import { selectFacility } from '../../../store/facilitiesSlice';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { FacilityCard } from '../../common/FacilityCard';

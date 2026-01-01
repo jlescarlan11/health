@@ -13,7 +13,7 @@ import { debounce } from 'lodash';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
 
-import { AppDispatch, RootState } from '../../store/store';
+import { AppDispatch, RootState } from '../../store';
 import { fetchFacilities, setFilters, updateDistances } from '../../store/facilitiesSlice';
 import { FacilityListView, FacilityMapView } from '../../components/features/facilities';
 

@@ -3,7 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { Appbar, Avatar, useTheme } from 'react-native-paper';
 import { useSelector } from 'react-redux';
 import { StackHeaderProps } from '@react-navigation/stack';
-import { RootState } from '../../store/store';
+import { RootState } from '../../store';
 
 export const CustomHeader = ({ navigation, back }: StackHeaderProps) => {
   const theme = useTheme();

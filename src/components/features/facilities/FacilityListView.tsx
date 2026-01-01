@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-import { RootState, AppDispatch } from '../../../store/store';
+import { RootState, AppDispatch } from '../../../store';
 import { fetchFacilities } from '../../../store/facilitiesSlice';
 import { FacilityCard } from '../../common/FacilityCard';
 import { FacilityCardSkeleton } from './FacilityCardSkeleton';

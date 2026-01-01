@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Constants from 'expo-constants';
 
-import { RootState } from '../../store/store';
+import { RootState } from '../../store';
 import { logout } from '../../store/authSlice';
 import { setHighContrastMode, setFontSize } from '../../store/settingsSlice';
 import { authService } from '../../services/authService';
