@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions, Alert, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert, Platform, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../../store';
@@ -8,7 +8,7 @@ import { Facility } from '../../../types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FacilityCard } from '../../common/FacilityCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, useTheme, ActivityIndicator } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 
 // Lazy load Mapbox to prevent module load errors
@@ -31,7 +31,7 @@ if (Mapbox && MAPBOX_TOKEN) {
 }
 
 const NAGA_CITY_COORDINATES = [123.1948, 13.6218]; // Longitude, Latitude
-const DEFAULT_ZOOM_LEVEL = 12;
+const DEFAULT_ZOOM_LEVEL = 13;
 
 export const FacilityMapView: React.FC = () => {
   const dispatch = useDispatch();
@@ -40,9 +40,9 @@ export const FacilityMapView: React.FC = () => {
   const { facilities, selectedFacilityId } = useSelector((state: RootState) => state.facilities);
   
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
   const cameraRef = useRef<any>(null);
   const mapRef = useRef<any>(null);
+  const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM_LEVEL);
   
   // Show fallback if Mapbox is not available
   if (!Mapbox) {
@@ -83,6 +83,7 @@ export const FacilityMapView: React.FC = () => {
           type: f.type,
           yakapAccredited: f.yakapAccredited,
           name: f.name,
+          icon: f.type === 'Hospital' ? 'hospital-box' : 'hospital-building', // Simplified logic
         },
         geometry: {
           type: 'Point',
@@ -96,13 +97,9 @@ export const FacilityMapView: React.FC = () => {
     (async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        setPermissionStatus(status);
         if (status === 'granted') {
           const location = await Location.getCurrentPositionAsync({});
           setUserLocation(location);
-        } else {
-            // Fallback: Just show map centered on Naga (already default)
-            console.log('Location permission denied');
         }
       } catch (error) {
         console.error('Error getting location:', error);
@@ -110,35 +107,36 @@ export const FacilityMapView: React.FC = () => {
     })();
   }, []);
 
-  const handleZoomIn = () => {
-    // Current zoom level is not directly accessible without state tracking or imperative call
-    // Simplified: just flyTo with higher zoom or use zoomTo
-    // Mapbox Camera API is imperative
-    // We can't easily get current zoom from ref without a query
-    // So we assume the user wants to zoom in relative to current view
-    // A better way is to rely on standard gestures, but for buttons:
-    // We can't know current zoom easily in functional component without keeping track.
-    // We'll skip precise steps and just let user pinch-zoom or implement tracking if needed.
-    // Re-reading prompt: "Add essential map controls, including zoom in/out buttons"
-    // To do this reliably, we'd need to track zoom level in state via onCameraChanged
-    // OR just use a fixed increment if Mapbox allows relative zoom (it does via zoomTo with animation)
-    // Actually, Mapbox Camera methods often take a zoom level.
-    // Using `zoomTo` might require current zoom.
-    // Workaround: Use simple state for zoom or just let standard gestures handle it if buttons are too complex without current zoom.
-    // But I will try to implement basic zoom logic using `zoomLevel` prop on Camera if I controlled it, but I used `defaultSettings`.
-    // Let's use `zoomTo` on `mapRef`? No, `Camera` handles it.
-    // I'll keep it simple: "Center on User" and "Compass" are easier. 
-    // For Zoom, I'll try to find a way or omit if too complex for this snippet, but prompt requires it.
-    // I'll implement `onCameraChanged` to track zoom.
+  const handleZoomIn = async () => {
+    if (cameraRef.current) {
+        const newZoom = Math.min(currentZoom + 1, 20);
+        setCurrentZoom(newZoom);
+        cameraRef.current.setCamera({
+            zoomLevel: newZoom,
+            animationDuration: 300,
+        });
+    }
+  };
+
+  const handleZoomOut = async () => {
+     if (cameraRef.current) {
+        const newZoom = Math.max(currentZoom - 1, 0);
+        setCurrentZoom(newZoom);
+        cameraRef.current.setCamera({
+            zoomLevel: newZoom,
+            animationDuration: 300,
+        });
+    }
   };
 
   const handleCenterOnUser = () => {
     if (userLocation && cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: [userLocation.coords.longitude, userLocation.coords.latitude],
-        zoomLevel: 14,
+        zoomLevel: 15,
         animationDuration: 1000,
       });
+      setCurrentZoom(15);
     } else if (!userLocation) {
       Alert.alert('Location not available', 'Please enable location services.');
     }
@@ -151,45 +149,40 @@ export const FacilityMapView: React.FC = () => {
         zoomLevel: DEFAULT_ZOOM_LEVEL,
         animationDuration: 1000,
       });
+      setCurrentZoom(DEFAULT_ZOOM_LEVEL);
      }
   };
 
   const onShapePress = (event: any) => {
     const feature = event.features[0];
     if (feature.properties?.cluster) {
-      // Zoom into cluster
-      // Mapbox handles this if we use specialized logic, or we calculate expansion zoom.
-      // For now, simple zoom in on cluster center.
       if (cameraRef.current) {
+        const expansionZoom = currentZoom + 2; 
         cameraRef.current.setCamera({
             centerCoordinate: feature.geometry.coordinates,
-            zoomLevel: 14, // Arbitrary deeper zoom
+            zoomLevel: expansionZoom,
             animationDuration: 500,
         });
+        setCurrentZoom(expansionZoom);
       }
     } else {
-      // It's a facility
       const id = feature.properties?.id;
-      dispatch(selectFacility(id));
-      // Optionally center on it
-      /* 
-      if (cameraRef.current) {
-        cameraRef.current.setCamera({
-            centerCoordinate: feature.geometry.coordinates,
-            zoomLevel: 15,
-            animationDuration: 500,
-            padding: { paddingBottom: 200, paddingLeft: 0, paddingRight: 0, paddingTop: 0 } // Make room for card
-        });
+      if (id) {
+        dispatch(selectFacility(id));
       }
-      */
     }
   };
   
   const handleMapPress = () => {
-     // Deselect if clicking on empty map
      if (selectedFacilityId) {
          dispatch(selectFacility(null));
      }
+  };
+
+  const onCameraChanged = (state: any) => {
+      if (state && state.properties && state.properties.zoomLevel) {
+          setCurrentZoom(state.properties.zoomLevel);
+      }
   };
 
   return (
@@ -198,9 +191,11 @@ export const FacilityMapView: React.FC = () => {
         style={styles.map} 
         ref={mapRef}
         onPress={handleMapPress}
+        onCameraChanged={onCameraChanged}
         styleURL={Mapbox.StyleURL.Street}
-        logoEnabled={false} // Clean look
+        logoEnabled={false}
         scaleBarEnabled={false}
+        attributionEnabled={false}
       >
         <Mapbox.Camera
             ref={cameraRef}
@@ -212,33 +207,26 @@ export const FacilityMapView: React.FC = () => {
         
         <Mapbox.UserLocation visible={true} showsUserHeadingIndicator={true} />
 
-        <Mapbox.Images>
-            {/* If we had custom images, we'd add them here. Using CircleLayers instead as planned. */}
-        </Mapbox.Images>
-
         <Mapbox.ShapeSource
           id="facilitiesSource"
           shape={facilityFeatures}
           cluster
           clusterRadius={50}
-          clusterMaxZoomLevel={14}
+          clusterMaxZoomLevel={16}
           onPress={onShapePress}
         >
-          {/* Cluster Circle Layer */}
           <Mapbox.CircleLayer
             id="clusters"
             belowLayerID="pointCount"
             filter={['has', 'point_count']}
             style={{
               circleColor: theme.colors.primary,
-              circleRadius: 20,
-              circleOpacity: 0.8,
+              circleRadius: 18,
               circleStrokeWidth: 2,
               circleStrokeColor: 'white',
             }}
           />
 
-          {/* Cluster Count Text Layer */}
           <Mapbox.SymbolLayer
             id="pointCount"
             filter={['has', 'point_count']}
@@ -246,46 +234,69 @@ export const FacilityMapView: React.FC = () => {
               textField: '{point_count_abbreviated}',
               textSize: 12,
               textColor: 'white',
-              textPitchAlignment: 'map',
+              textIgnorePlacement: false,
+              textAllowOverlap: true,
             }}
           />
 
-          {/* Unclustered Points (Facilities) */}
           <Mapbox.CircleLayer
-            id="unclusteredPoints"
+            id="facilityBackground"
+            filter={['!', ['has', 'point_count']]}
+            style={{
+              circleColor: 'white',
+              circleRadius: 12,
+            }}
+          />
+
+          <Mapbox.CircleLayer
+            id="facilityPoints"
+            aboveLayerID="facilityBackground"
             filter={['!', ['has', 'point_count']]}
             style={{
               circleColor: [
                 'match',
                 ['get', 'type'],
-                'Hospital', '#2196F3', // Blue
-                'Health Center', '#4CAF50', // Green
-                '#757575' // Default Gray
+                'Hospital', '#2196F3', // Blue for Hospital
+                'Health Center', '#4CAF50', // Green for Health Center
+                '#4CAF50' // Default Green
               ],
-              circleRadius: 8,
-              circleStrokeWidth: [
-                 'case',
-                 ['get', 'yakapAccredited'], 3,
-                 0
-              ],
-              circleStrokeColor: '#FFD700', // Gold/Yellow for Yakap
+              circleRadius: 10,
             }}
           />
+          
+          <Mapbox.SymbolLayer
+            id="yakapStar"
+            aboveLayerID="facilityPoints"
+            filter={['all', ['!', ['has', 'point_count']], ['==', ['get', 'yakapAccredited'], true]]}
+            style={{
+              textField: '★', // Unicode Star
+              textColor: '#FFD700', // Gold
+              textSize: 14,
+              textAllowOverlap: true,
+              textIgnorePlacement: true,
+              textAnchor: 'center',
+              textTranslate: [0, 0]
+            }}
+          />
+
         </Mapbox.ShapeSource>
       </Mapbox.MapView>
 
-      {/* Map Controls */}
       <View style={[styles.controls, { top: insets.top + 16 }]}>
-        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnUser}>
+        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnUser} accessibilityLabel="Center on my location">
           <MaterialCommunityIcons name="crosshairs-gps" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnNaga}>
+        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnNaga} accessibilityLabel="Center on Naga City">
             <MaterialCommunityIcons name="compass" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        {/* Zoom buttons could be added here if we track zoom state, or omitted if pinch is sufficient */}
+        <TouchableOpacity style={styles.controlButton} onPress={handleZoomIn} accessibilityLabel="Zoom in">
+            <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onSurface} />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.controlButton} onPress={handleZoomOut} accessibilityLabel="Zoom out">
+            <MaterialCommunityIcons name="minus" size={24} color={theme.colors.onSurface} />
+        </TouchableOpacity>
       </View>
 
-      {/* Selected Facility Card */}
       {selectedFacility && (
         <View style={[styles.cardContainer, { paddingBottom: insets.bottom + 16 }]}>
           <FacilityCard 
@@ -293,16 +304,12 @@ export const FacilityMapView: React.FC = () => {
             showDistance={true} 
             distance={selectedFacility.distance}
             onPress={() => {
-                // Navigate to details?
-                // For now just keep it selected
-                console.log('Pressed card');
             }}
             style={styles.card}
           />
         </View>
       )}
       
-      {/* Legend / Key (Optional, but good for UX) */}
       <View style={[styles.legend, { top: insets.top + 16 }]}>
          <View style={styles.legendItem}>
              <View style={[styles.dot, { backgroundColor: '#2196F3' }]} />
@@ -313,7 +320,7 @@ export const FacilityMapView: React.FC = () => {
              <Text style={styles.legendText}>Health Center</Text>
          </View>
          <View style={styles.legendItem}>
-            <View style={[styles.dot, { backgroundColor: 'transparent', borderColor: '#FFD700', borderWidth: 2 }]} />
+            <Text style={{color: '#FFD700', fontSize: 12, marginRight: 6}}>★</Text>
             <Text style={styles.legendText}>YAKAP</Text>
          </View>
       </View>
@@ -338,7 +345,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     flexDirection: 'column',
-    gap: 8,
+    gap: 12,
   },
   controlButton: {
     backgroundColor: 'white',
@@ -349,6 +356,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 44,
+    height: 44,
   },
   cardContainer: {
     position: 'absolute',
@@ -364,24 +375,28 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     backgroundColor: 'white',
-    padding: 8,
+    padding: 12,
     borderRadius: 8,
     elevation: 4,
-    opacity: 0.9,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 6,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
   },
   legendText: {
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
   },
 });
