@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   scrollContent: {
-    paddingBottom: 100, // Increased padding to avoid overlap with the emergency button
+    paddingBottom: 80, // Reduced padding to minimize space while clearing emergency button
   },
   cardsContainer: {
     marginTop: 24,

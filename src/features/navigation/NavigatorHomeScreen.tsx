@@ -221,7 +221,7 @@ const NavigatorHomeScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f9fa' },
-  scrollContent: { paddingHorizontal: 16, paddingVertical: 16, paddingBottom: 100 },
+  scrollContent: { paddingHorizontal: 16, paddingVertical: 16, paddingBottom: 80 },
   header: { alignItems: 'center', marginBottom: 20 },
   branding: { fontWeight: 'bold' },
   subtitle: { color: '#5f6368', marginTop: 4 },
