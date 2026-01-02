@@ -104,3 +104,11 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
         *   `src/components/features/facilities/FacilityMapView.tsx` (Major update: Route display, interactions)
         *   `src/features/facilities/FacilityDirectoryScreen.tsx` (Added `initialViewMode` param support)
         *   `src/screens/FacilityDetailsScreen.tsx` (Integrated map actions)
+*   **Geolocation Support:** Implemented `expo-location` for real-time user positioning and distance calculation.
+    *   **Features:** Runtime permission handling with graceful fallbacks, active location watching when map is visible, and automatic distance-based sorting of facilities.
+    *   **Architecture:** Created reusable `useUserLocation` hook and integrated location state into Redux (`facilitiesSlice`) for global access.
+    *   **Integration:** 
+        *   `FacilityDirectoryScreen`: Toggles location watching based on view mode (Map vs List).
+        *   `FacilityMapView`: Uses Redux location state for centering and routing.
+        *   `RecommendationScreen`: Fetches location to ensure nearest facility recommendations are accurate.
+    *   **Files Created/Modified:** `src/hooks/useUserLocation.ts`, `src/store/facilitiesSlice.ts`, `src/features/facilities/FacilityDirectoryScreen.tsx`, `src/components/features/facilities/FacilityMapView.tsx`.
