@@ -11,18 +11,18 @@ import {
   Dimensions,
   Platform,
 } from 'react-native';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { FacilitiesStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { Button } from '../components/common/Button';
+import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus } from '../utils';
-import { Facility } from '../types';
 
 // Mock location hook - replace with actual implementation
 const useUserLocation = () => ({
@@ -50,9 +50,9 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
   return <MaterialIcons name={getIconName(serviceName)} size={24} color="#4A90E2" style={styles.serviceIcon} />;
 };
 
-
 export const FacilityDetailsScreen = () => {
   const route = useRoute<FacilityDetailsRouteProp>();
+  const navigation = useNavigation();
   const { facilityId } = route.params || { facilityId: '' };
 
   const facility = useSelector((state: RootState) =>
@@ -71,7 +71,11 @@ export const FacilityDetailsScreen = () => {
   if (!facility) {
     return (
       <SafeAreaView style={styles.centered}>
-        <Text>Facility not found.</Text>
+        <StandardHeader title="Details" showBackButton />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Facility not found.</Text>
+          <Button title="Go Back" onPress={() => navigation.goBack()} />
+        </View>
       </SafeAreaView>
     );
   }
@@ -111,17 +115,40 @@ export const FacilityDetailsScreen = () => {
 
   const { isOpen, text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
   
+  // Use a static map image for preview. Replace YOUR_API_KEY with an actual key or use a placeholder if needed.
+  // Note: For this demo, we'll assume a placeholder or valid URL construction.
+  // Ideally, use a library like react-native-maps for interactive maps, but static image is requested for preview.
   const mapPreviewUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${facility.latitude},${facility.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${facility.latitude},${facility.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`;
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <TouchableOpacity onPress={() => images.length > 0 && setImageViewerVisible(true)}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StandardHeader
+        title={facility.name}
+        showBackButton
+        rightActions={
+          <TouchableOpacity onPress={handleShare} style={styles.headerShareButton}>
+            <Ionicons name="share-outline" size={24} color="#000" />
+          </TouchableOpacity>
+        }
+      />
+      
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Photo Gallery */}
+        <TouchableOpacity 
+          activeOpacity={0.9}
+          onPress={() => images.length > 0 && setImageViewerVisible(true)}
+        >
           <Image
             source={images.length > 0 ? { uri: images[0].uri } : require('../../assets/icon.png')}
             style={styles.headerImage}
             resizeMode="cover"
           />
+          {images.length > 0 && (
+            <View style={styles.galleryIndicator}>
+              <Ionicons name="images-outline" size={16} color="#fff" />
+              <Text style={styles.galleryText}>View Photos</Text>
+            </View>
+          )}
         </TouchableOpacity>
         
         {images.length > 0 && (
@@ -134,47 +161,93 @@ export const FacilityDetailsScreen = () => {
         )}
 
         <View style={styles.contentContainer}>
+          {/* Header Info */}
           <View style={styles.headerSection}>
-            <Text style={styles.facilityName}>{facility.name}</Text>
-            {facility.yakapAccredited && (
-              <View style={styles.yakapBadge}>
-                <Text style={styles.yakapText}>YAKAP</Text>
-              </View>
-            )}
+            <View style={styles.titleRow}>
+              <Text style={styles.facilityName}>{facility.name}</Text>
+              {facility.yakapAccredited && (
+                <View style={styles.yakapBadge}>
+                  <Text style={styles.yakapText}>YAKAP</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.facilityType}>{facility.type}</Text>
           </View>
-          <Text style={styles.facilityType}>{facility.type}</Text>
 
+          {/* Quick Actions */}
           <View style={styles.actionButtons}>
-            <Button icon="phone" title="Call" onPress={handleCall} style={styles.actionButton} variant="outline" />
-            <Button icon="directions" title="Directions" onPress={handleDirections} style={styles.actionButton} variant="outline" />
-            <Button icon="share" title="Share" onPress={handleShare} style={styles.actionButton} variant="outline" />
+            <Button 
+              icon="phone" 
+              title="Call" 
+              onPress={handleCall} 
+              style={styles.actionButton} 
+              variant="primary" 
+            />
+            <Button 
+              icon="directions" 
+              title="Directions" 
+              onPress={handleDirections} 
+              style={styles.actionButton} 
+              variant="outline" 
+            />
+            <Button 
+              icon="share" 
+              title="Share" 
+              onPress={handleShare} 
+              style={styles.actionButton} 
+              variant="outline" 
+            />
           </View>
 
+          <View style={styles.divider} />
+
+          {/* Location */}
           <View style={styles.infoSection}>
-            <MaterialIcons name="location-on" size={24} color="#4A90E2" />
+            <View style={styles.iconContainer}>
+              <Ionicons name="location-outline" size={24} color="#4A90E2" />
+            </View>
             <View style={styles.infoTextContainer}>
+              <Text style={styles.sectionLabel}>Address</Text>
               <Text style={styles.infoText}>{facility.address}</Text>
-              {distance !== null && <Text style={styles.distanceText}>About {formatDistance(distance)} away</Text>}
+              {distance !== null && (
+                <View style={styles.distanceBadge}>
+                  <Ionicons name="navigate-circle-outline" size={14} color="#555" />
+                  <Text style={styles.distanceText}>{formatDistance(distance)} away</Text>
+                </View>
+              )}
             </View>
           </View>
           
+          {/* Hours */}
           <View style={styles.infoSection}>
-            <MaterialIcons name="access-time" size={24} color="#4A90E2" />
+            <View style={styles.iconContainer}>
+              <Ionicons name="time-outline" size={24} color="#4A90E2" />
+            </View>
             <View style={styles.infoTextContainer}>
+              <Text style={styles.sectionLabel}>Operating Hours</Text>
               <Text style={styles.infoText}>{facility.hours || 'Hours not available'}</Text>
-              <View style={[styles.openStatus, { backgroundColor: openStatusColor === 'green' ? '#D4EDDA' : '#F8D7DA' }]}>
-                <Text style={styles.openStatusText}>{openStatusText}</Text>
+              <View style={[styles.openStatus, { backgroundColor: openStatusColor === 'green' ? '#E8F5E9' : '#FFEBEE' }]}>
+                <Text style={[styles.openStatusText, { color: openStatusColor === 'green' ? '#2E7D32' : '#C62828' }]}>
+                  {openStatusText}
+                </Text>
               </View>
             </View>
           </View>
 
+          {/* Phone */}
           <View style={styles.infoSection}>
-            <MaterialIcons name="phone" size={24} color="#4A90E2" />
+            <View style={styles.iconContainer}>
+              <Ionicons name="call-outline" size={24} color="#4A90E2" />
+            </View>
             <TouchableOpacity onPress={handleCall} style={styles.infoTextContainer}>
+              <Text style={styles.sectionLabel}>Phone</Text>
               <Text style={[styles.infoText, styles.linkText]}>{facility.phone || 'Not available'}</Text>
             </TouchableOpacity>
           </View>
 
+          <View style={styles.divider} />
+
+          {/* Services */}
           <View style={styles.servicesSection}>
             <Text style={styles.sectionTitle}>Services</Text>
             <View style={styles.servicesGrid}>
@@ -187,12 +260,14 @@ export const FacilityDetailsScreen = () => {
             </View>
           </View>
 
+          {/* Map Preview */}
           <View style={styles.mapSection}>
-            <Text style={styles.sectionTitle}>Location</Text>
-            <TouchableOpacity onPress={handleDirections}>
+            <Text style={styles.sectionTitle}>Location Preview</Text>
+            <TouchableOpacity onPress={handleDirections} style={styles.mapContainer}>
               <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} resizeMode="cover" />
                <View style={styles.mapOverlay}>
-                <Text style={styles.mapOverlayText}>Tap to view in map</Text>
+                <Ionicons name="map" size={32} color="white" />
+                <Text style={styles.mapOverlayText}>Tap to view full map</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -205,68 +280,119 @@ export const FacilityDetailsScreen = () => {
 const styles = StyleSheet.create({
   centered: {
     flex: 1,
+    backgroundColor: '#fff',
+  },
+  errorContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  errorText: {
+    marginBottom: 20,
+    fontSize: 16,
+    color: '#666',
   },
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+  headerShareButton: {
+    padding: 8,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   headerImage: {
     width: width,
     height: IMAGE_HEIGHT,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#F5F5F5',
+  },
+  galleryIndicator: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  galleryText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   contentContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    padding: 20,
   },
   headerSection: {
+    marginBottom: 24,
+  },
+  titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 4,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 8,
   },
   facilityName: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    flex: 1,
+    marginRight: 10,
+    flexShrink: 1,
   },
   yakapBadge: {
     backgroundColor: '#4CAF50',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 10,
+    borderRadius: 4,
   },
   yakapText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: 10,
+    textTransform: 'uppercase',
   },
   facilityType: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 16,
+    fontWeight: '500',
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     marginBottom: 24,
+    gap: 12,
   },
   actionButton: {
     flex: 1,
-    marginHorizontal: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F0F0F0',
+    marginBottom: 24,
   },
   infoSection: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 24,
+  },
+  iconContainer: {
+    width: 40,
+    alignItems: 'center',
+    marginRight: 12,
+    marginTop: 2,
   },
   infoTextContainer: {
-    marginLeft: 16,
     flex: 1,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    fontWeight: '600',
   },
   infoText: {
     fontSize: 16,
@@ -274,85 +400,90 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   linkText: {
-    color: '#1A0DAB',
-    textDecorationLine: 'underline',
+    color: '#4A90E2',
+    fontWeight: '500',
+  },
+  distanceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    backgroundColor: '#F5F5F5',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   distanceText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#555',
-    marginTop: 2,
+    marginLeft: 4,
   },
   openStatus: {
-    marginTop: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
   },
-  open: {
-    backgroundColor: '#D4EDDA',
-  },
-  closed: {
-    backgroundColor: '#F8D7DA',
-  },
   openStatusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    fontSize: 13,
+    fontWeight: '600',
   },
   servicesSection: {
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 16,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
   },
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 12,
   },
   serviceItem: {
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#F9F9F9',
+    padding: 12,
+    borderRadius: 8,
   },
   serviceIcon: {
     marginRight: 10,
   },
   serviceText: {
-    fontSize: 15,
+    fontSize: 14,
     color: '#444',
     flex: 1,
   },
   mapSection: {
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 16,
+    marginBottom: 20,
+  },
+  mapContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+    height: 180,
+    backgroundColor: '#E0E0E0',
   },
   mapPreview: {
     width: '100%',
-    height: 200,
-    borderRadius: 8,
-    backgroundColor: '#E0E0E0',
+    height: '100%',
   },
   mapOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.3)',
   },
   mapOverlayText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
+    marginTop: 8,
   },
 });
 
