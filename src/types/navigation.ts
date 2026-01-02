@@ -11,12 +11,17 @@ export type CheckStackParamList = {
 };
 
 export type FacilitiesStackParamList = {
-  FacilityDirectory: { initialViewMode?: 'list' | 'map' };
+  FacilityDirectory: { initialViewMode?: 'list' | 'map'; filter?: 'yakap' };
   FacilityDetails: { facilityId: string };
 };
 
 export type YakapStackParamList = {
+  YakapHome: undefined;
   YakapEnrollment: undefined;
+  EligibilityChecker: undefined;
+  EnrollmentPathway: undefined;
+  EnrollmentGuide: undefined;
+  EnrollmentCompletion: undefined;
 };
 
 // Define the parameters for each tab in the bottom tab navigator

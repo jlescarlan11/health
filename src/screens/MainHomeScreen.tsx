@@ -13,7 +13,6 @@ import { setHasSeenDisclaimer } from '../store/settingsSlice';
 import HomeHero from '../components/heroes/HomeHero';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 
-
 type MainHomeNavigationProp = TabScreenProps<'Home'>['navigation'];
 
 export const MainHomeScreen = () => {
@@ -28,7 +27,19 @@ export const MainHomeScreen = () => {
       setShowDisclaimer(true);
     }
     // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:30',message:'MainHomeScreen mounted',data:{platform:Platform.OS,hasSeenDisclaimer,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'MainHomeScreen.tsx:30',
+        message: 'MainHomeScreen mounted',
+        data: { platform: Platform.OS, hasSeenDisclaimer, iconLibrary: '@expo/vector-icons' },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'post-fix',
+        hypothesisId: 'A',
+      }),
+    }).catch(() => {});
     // #endregion
   }, [hasSeenDisclaimer]);
 
@@ -37,19 +48,45 @@ export const MainHomeScreen = () => {
     setShowDisclaimer(false);
   };
 
-  const FeatureCard = ({ title, subtitle, icon, color, onPress, testID }: { title: string, subtitle: string, icon: any, color: string, onPress: () => void, testID?: string }) => {
+  const FeatureCard = ({
+    title,
+    subtitle,
+    icon,
+    color,
+    onPress,
+    testID,
+  }: {
+    title: string;
+    subtitle: string;
+    icon: any;
+    color: string;
+    onPress: () => void;
+    testID?: string;
+  }) => {
     // #region agent log
     React.useEffect(() => {
-      fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:42',message:'FeatureCard render',data:{title,iconName:icon,color,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'MainHomeScreen.tsx:42',
+          message: 'FeatureCard render',
+          data: { title, iconName: icon, color, iconLibrary: '@expo/vector-icons' },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'post-fix',
+          hypothesisId: 'A',
+        }),
+      }).catch(() => {});
     }, [title, icon, color]);
     // #endregion
 
     return (
-      <Card 
-        style={styles.card} 
-        onPress={onPress} 
-        testID={testID} 
-        accessible={true} 
+      <Card
+        style={styles.card}
+        onPress={onPress}
+        testID={testID}
+        accessible={true}
         accessibilityLabel={`${title}, ${subtitle}`}
         accessibilityRole="button"
         accessibilityHint={`Double tap to navigate to ${title}`}
@@ -58,7 +95,19 @@ export const MainHomeScreen = () => {
           <View style={[styles.iconContainer, { backgroundColor: color }]}>
             {/* #region agent log */}
             {(() => {
-              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:60',message:'Rendering MaterialCommunityIcons',data:{iconName:icon,title,size:32,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  location: 'MainHomeScreen.tsx:60',
+                  message: 'Rendering MaterialCommunityIcons',
+                  data: { iconName: icon, title, size: 32, iconLibrary: '@expo/vector-icons' },
+                  timestamp: Date.now(),
+                  sessionId: 'debug-session',
+                  runId: 'post-fix',
+                  hypothesisId: 'A',
+                }),
+              }).catch(() => {});
               return null;
             })()}
             {/* #endregion */}
@@ -70,11 +119,27 @@ export const MainHomeScreen = () => {
           </View>
           {/* #region agent log */}
           {(() => {
-            fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'MainHomeScreen.tsx:72',message:'Rendering MaterialCommunityIcons chevron',data:{iconName:'chevron-right',size:24,iconLibrary:'@expo/vector-icons'},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+            fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                location: 'MainHomeScreen.tsx:72',
+                message: 'Rendering MaterialCommunityIcons chevron',
+                data: { iconName: 'chevron-right', size: 24, iconLibrary: '@expo/vector-icons' },
+                timestamp: Date.now(),
+                sessionId: 'debug-session',
+                runId: 'post-fix',
+                hypothesisId: 'A',
+              }),
+            }).catch(() => {});
             return null;
           })()}
           {/* #endregion */}
-          <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.onSurfaceVariant} />
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={theme.colors.onSurfaceVariant}
+          />
         </Card.Content>
       </Card>
     );
@@ -118,7 +183,9 @@ export const MainHomeScreen = () => {
 
       <View style={styles.fabContainer}>
         <EmergencyButton
-            onPress={() => Alert.alert('Emergency', 'Call 911 or visit the nearest emergency room immediately.')}
+          onPress={() =>
+            Alert.alert('Emergency', 'Call 911 or visit the nearest emergency room immediately.')
+          }
         />
       </View>
 
@@ -127,11 +194,19 @@ export const MainHomeScreen = () => {
           <Dialog.Title accessibilityRole="header">Welcome to HEALTH</Dialog.Title>
           <Dialog.Content>
             <Paragraph>
-              This application provides health information and guidance but is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+              This application provides health information and guidance but is not a substitute for
+              professional medical advice, diagnosis, or treatment. Always seek the advice of your
+              physician or other qualified health provider with any questions you may have regarding
+              a medical condition.
             </Paragraph>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={handleAcceptDisclaimer} accessibilityHint="Double tap to accept terms and continue">I Understand</Button>
+            <Button
+              onPress={handleAcceptDisclaimer}
+              accessibilityHint="Double tap to accept terms and continue"
+            >
+              I Understand
+            </Button>
           </Dialog.Actions>
         </Dialog>
       </Portal>
@@ -145,7 +220,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   scrollContent: {
-    paddingBottom: 80, // Reduced padding to minimize space while clearing emergency button
+    paddingBottom: 40, // Reduced padding to minimize space while clearing emergency button
   },
   cardsContainer: {
     marginTop: 24,

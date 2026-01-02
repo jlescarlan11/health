@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import { Text, Card, Button, List, IconButton, useTheme, ProgressBar, Chip, Portal, Dialog, Paragraph } from 'react-native-paper';
+import {
+  Text,
+  Card,
+  Button,
+  List,
+  IconButton,
+  useTheme,
+  ProgressBar,
+  Chip,
+  Portal,
+  Dialog,
+  Paragraph,
+} from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useSelector, useDispatch } from 'react-redux';
@@ -20,7 +32,9 @@ const YakapHomeScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<YakapScreenNavigationProp>();
   const dispatch = useDispatch();
-  const { enrollmentStatus, currentStep, selectedPathway } = useSelector((state: RootState) => state.enrollment);
+  const { enrollmentStatus, currentStep, selectedPathway } = useSelector(
+    (state: RootState) => state.enrollment,
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isEligibilityDialogVisible, setIsEligibilityDialogVisible] = useState(false);
 
@@ -34,10 +48,10 @@ const YakapHomeScreen = () => {
   const navigateToEnrollment = () => {
     // If enrollment is already in progress, go to the guide directly
     if (enrollmentStatus === 'in_progress' && selectedPathway) {
-        navigation.navigate('EnrollmentGuide');
+      navigation.navigate('EnrollmentGuide');
     } else {
-        // Start fresh
-        navigation.navigate('EligibilityChecker');
+      // Start fresh
+      navigation.navigate('EligibilityChecker');
     }
   };
 
@@ -50,162 +64,214 @@ const YakapHomeScreen = () => {
   };
 
   const navigateToFacilities = () => {
-     // Navigate to the Find tab, then to FacilityDirectory with filter
-     // @ts-ignore - navigation types for cross-tab are complex, ensuring runtime works
-     navigation.navigate('Find', { 
-       screen: 'FacilityDirectory', 
-       params: { filter: 'yakap' } 
-     });
+    // Navigate to the Find tab, then to FacilityDirectory with filter
+    // @ts-ignore - navigation types for cross-tab are complex, ensuring runtime works
+    navigation.navigate('Find', {
+      screen: 'FacilityDirectory',
+      params: { filter: 'yakap' },
+    });
   };
 
   const renderBenefitCard = (benefit: any) => (
     <Card key={benefit.id} style={styles.benefitCard}>
       <Card.Content>
-        <MaterialCommunityIcons name="medical-bag" size={32} color={theme.colors.primary} style={styles.benefitIcon}/>
-        <Text variant="titleMedium" style={styles.benefitTitle}>{benefit.category}</Text>
-        <Text variant="bodySmall" style={styles.benefitDesc}>{benefit.description}</Text>
+        <MaterialCommunityIcons
+          name="medical-bag"
+          size={32}
+          color={theme.colors.primary}
+          style={styles.benefitIcon}
+        />
+        <Text variant="titleMedium" style={styles.benefitTitle}>
+          {benefit.category}
+        </Text>
+        <Text variant="bodySmall" style={styles.benefitDesc}>
+          {benefit.description}
+        </Text>
       </Card.Content>
     </Card>
   );
 
   return (
     <View style={styles.container}>
-      <StandardHeader 
-        title="YAKAP" 
+      <StandardHeader
+        title="YAKAP"
         rightActions={<IconButton icon="information" onPress={showEligibility} />}
       />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
         <View style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer }]}>
-           <View style={styles.logoPlaceholder}>
-             <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
-           </View>
-           <Text variant="headlineMedium" style={styles.heroTitle}>YAKAP Program</Text>
-           <Text variant="titleMedium" style={styles.heroSubtitle}>Yaman, Kalinga, at Pag-aaruga</Text>
-           <Text style={styles.heroDesc}>
-             Free primary care, medicines, and lab tests for every Naga City resident.
-           </Text>
+          <View style={styles.logoPlaceholder}>
+            <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
+          </View>
+          <Text variant="headlineMedium" style={styles.heroTitle}>
+            YAKAP Program
+          </Text>
+          <Text variant="titleMedium" style={styles.heroSubtitle}>
+            Yaman, Kalinga, at Pag-aaruga
+          </Text>
+          <Text style={styles.heroDesc}>
+            Free primary care, medicines, and lab tests for every Naga City resident.
+          </Text>
         </View>
 
         {/* Eligibility Banner */}
         <Card style={styles.eligibilityBanner}>
-            <Card.Content style={styles.eligibilityContent}>
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                    <MaterialCommunityIcons name="party-popper" size={24} color="#2E7D32" style={{marginRight: 8}}/>
-                    <Text variant="titleLarge" style={styles.eligibilityTitle}>Every Filipino is Eligible!</Text>
-                </View>
-                <Text variant="bodyMedium" style={{textAlign: 'center'}}>
-                    No age limits. No income restrictions. Just healthcare for all.
-                </Text>
-            </Card.Content>
+          <Card.Content style={styles.eligibilityContent}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <MaterialCommunityIcons
+                name="party-popper"
+                size={24}
+                color="#2E7D32"
+                style={{ marginRight: 8 }}
+              />
+              <Text variant="titleLarge" style={styles.eligibilityTitle}>
+                Every Filipino is Eligible!
+              </Text>
+            </View>
+            <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
+              No age limits. No income restrictions. Just healthcare for all.
+            </Text>
+          </Card.Content>
         </Card>
 
         {/* Enrollment Status */}
         <Card style={styles.statusCard}>
-            <Card.Title 
-                title="Enrollment Status" 
-                left={(props) => <MaterialCommunityIcons {...props} name="card-account-details" />} 
-            />
-            <Card.Content>
-                {enrollmentStatus === 'completed' ? (
-                    <View>
-                         <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
-                            <Chip icon="check" style={styles.enrolledChip} textStyle={{color: '#1B5E20'}}>Enrolled</Chip>
-                            <Text style={{marginLeft: 10, color: 'gray'}}>Enjoy your benefits!</Text>
-                         </View>
-                         <Button mode="contained" onPress={() => {}} style={styles.statusButton}>View My Benefits</Button>
-                         
-                         {__DEV__ && (
-                             <Button 
-                                mode="text" 
-                                onPress={handleReset} 
-                                textColor={theme.colors.error}
-                                style={{marginTop: 8}}
-                                icon="refresh"
-                             >
-                                Reset Progress (Dev Mode)
-                             </Button>
-                         )}
-                    </View>
-                ) : enrollmentStatus === 'in_progress' ? (
-                     <View>
-                        <Text style={{marginBottom: 10}}>Enrollment in progress...</Text>
-                        <ProgressBar progress={0.5} color={theme.colors.primary} style={{height: 8, borderRadius: 4}} />
-                        <Button mode="contained" onPress={navigateToEnrollment} style={styles.statusButton}>Continue Enrollment</Button>
-                        
-                        {__DEV__ && (
-                             <Button 
-                                mode="text" 
-                                onPress={handleReset} 
-                                textColor={theme.colors.error}
-                                style={{marginTop: 8}}
-                                icon="refresh"
-                             >
-                                Reset (Dev Mode)
-                             </Button>
-                         )}
-                     </View>
-                ) : (
-                    <View>
-                        <Text style={{marginBottom: 10}}>You are not enrolled yet.</Text>
-                        <Button mode="contained" onPress={navigateToEnrollment}>Start Enrollment</Button>
-                    </View>
+          <Card.Title
+            title="Enrollment Status"
+            left={(props) => <MaterialCommunityIcons {...props} name="card-account-details" />}
+          />
+          <Card.Content>
+            {enrollmentStatus === 'completed' ? (
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                  <Chip icon="check" style={styles.enrolledChip} textStyle={{ color: '#1B5E20' }}>
+                    Enrolled
+                  </Chip>
+                  <Text style={{ marginLeft: 10, color: 'gray' }}>Enjoy your benefits!</Text>
+                </View>
+                <Button mode="contained" onPress={() => {}} style={styles.statusButton}>
+                  View My Benefits
+                </Button>
+
+                {__DEV__ && (
+                  <Button
+                    mode="text"
+                    onPress={handleReset}
+                    textColor={theme.colors.error}
+                    style={{ marginTop: 8 }}
+                    icon="refresh"
+                  >
+                    Reset Progress (Dev Mode)
+                  </Button>
                 )}
-            </Card.Content>
+              </View>
+            ) : enrollmentStatus === 'in_progress' ? (
+              <View>
+                <Text style={{ marginBottom: 10 }}>Enrollment in progress...</Text>
+                <ProgressBar
+                  progress={0.5}
+                  color={theme.colors.primary}
+                  style={{ height: 8, borderRadius: 4 }}
+                />
+                <Button mode="contained" onPress={navigateToEnrollment} style={styles.statusButton}>
+                  Continue Enrollment
+                </Button>
+
+                {__DEV__ && (
+                  <Button
+                    mode="text"
+                    onPress={handleReset}
+                    textColor={theme.colors.error}
+                    style={{ marginTop: 8 }}
+                    icon="refresh"
+                  >
+                    Reset (Dev Mode)
+                  </Button>
+                )}
+              </View>
+            ) : (
+              <View>
+                <Text style={{ marginBottom: 10 }}>You are not enrolled yet.</Text>
+                <Button mode="contained" onPress={navigateToEnrollment}>
+                  Start Enrollment
+                </Button>
+              </View>
+            )}
+          </Card.Content>
         </Card>
 
         {/* Benefits Summary */}
         <View style={styles.section}>
-            <Text variant="titleLarge" style={styles.sectionHeader}>Key Benefits</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.benefitsScroll}>
-                {YAKAP_BENEFITS.map(renderBenefitCard)}
-            </ScrollView>
+          <Text variant="titleLarge" style={styles.sectionHeader}>
+            Key Benefits
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.benefitsScroll}
+          >
+            {YAKAP_BENEFITS.map(renderBenefitCard)}
+          </ScrollView>
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-             <Button mode="outlined" icon="check-decagram" onPress={navigateToEligibility} style={styles.actionBtn}>
-                Check Eligibility
-             </Button>
-             <Button mode="outlined" icon="hospital-marker" onPress={navigateToFacilities} style={styles.actionBtn}>
-                Find YAKAP Clinics
-             </Button>
+          <Button
+            mode="outlined"
+            icon="check-decagram"
+            onPress={navigateToEligibility}
+            style={styles.actionBtn}
+          >
+            Check Eligibility
+          </Button>
+          <Button
+            mode="outlined"
+            icon="hospital-marker"
+            onPress={navigateToFacilities}
+            style={styles.actionBtn}
+          >
+            Find YAKAP Clinics
+          </Button>
         </View>
 
         {/* FAQs */}
         <View style={styles.section}>
-            <Text variant="titleLarge" style={styles.sectionHeader}>Frequently Asked Questions</Text>
-            {YAKAP_FAQS.slice(0, 5).map(faq => (
-                <List.Accordion
-                    key={faq.id}
-                    title={faq.question}
-                    id={faq.id}
-                    expanded={expandedId === faq.id}
-                    onPress={() => handleAccordionPress(faq.id)}
-                    titleNumberOfLines={2}
-                    left={props => <List.Icon {...props} icon="help-circle-outline" />}
-                >
-                    <List.Item title={faq.answer} titleNumberOfLines={10} descriptionNumberOfLines={10} />
-                </List.Accordion>
-            ))}
+          <Text variant="titleLarge" style={styles.sectionHeader}>
+            Frequently Asked Questions
+          </Text>
+          {YAKAP_FAQS.slice(0, 5).map((faq) => (
+            <List.Accordion
+              key={faq.id}
+              title={faq.question}
+              id={faq.id}
+              expanded={expandedId === faq.id}
+              onPress={() => handleAccordionPress(faq.id)}
+              titleNumberOfLines={2}
+              left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
+            >
+              <List.Item title={faq.answer} titleNumberOfLines={10} descriptionNumberOfLines={10} />
+            </List.Accordion>
+          ))}
         </View>
-        
-        <View style={{height: 24}} /> 
+
+        <View style={{ height: 24 }} />
       </ScrollView>
 
       <Portal>
         <Dialog visible={isEligibilityDialogVisible} onDismiss={hideEligibility}>
           <Dialog.Title>Eligibility Criteria</Dialog.Title>
           <Dialog.Content>
-            <Paragraph style={{fontWeight: 'bold', marginBottom: 8}}>{ELIGIBILITY_INFO.mainText}</Paragraph>
-            <ScrollView style={{maxHeight: 200}}>
-                {ELIGIBILITY_INFO.points.map((point, index) => (
-                    <View key={index} style={{flexDirection: 'row', marginBottom: 4}}>
-                        <Text style={{marginRight: 8}}>•</Text>
-                        <Text>{point}</Text>
-                    </View>
-                ))}
+            <Paragraph style={{ fontWeight: 'bold', marginBottom: 8 }}>
+              {ELIGIBILITY_INFO.mainText}
+            </Paragraph>
+            <ScrollView style={{ maxHeight: 200 }}>
+              {ELIGIBILITY_INFO.points.map((point, index) => (
+                <View key={index} style={{ flexDirection: 'row', marginBottom: 4 }}>
+                  <Text style={{ marginRight: 8 }}>•</Text>
+                  <Text>{point}</Text>
+                </View>
+              ))}
             </ScrollView>
           </Dialog.Content>
           <Dialog.Actions>
@@ -223,7 +289,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 24,
   },
   heroSection: {
     alignItems: 'center',
@@ -300,7 +366,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   actionBtn: {
-    borderColor: '#6200ee', 
+    borderColor: '#6200ee',
   },
 });
 

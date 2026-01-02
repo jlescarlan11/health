@@ -43,15 +43,6 @@ export const FacilityDirectoryScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
 
-  // Handle initialViewMode param
-  useEffect(() => {
-    if (route.params?.initialViewMode) {
-      setViewMode(route.params.initialViewMode);
-      // Optional: Clear the param so it doesn't stick if we navigate back and forth without intent,
-      // but strictly navigating *to* here with the param is usually explicit.
-    }
-  }, [route.params?.initialViewMode]);
-
   // Use the custom hook for location management
   // It will automatically update the Redux store with the user's location
   // We only watch for live updates when in map mode
@@ -61,7 +52,6 @@ export const FacilityDirectoryScreen = () => {
   useEffect(() => {
     dispatch(fetchFacilities({ page: 1, refresh: true }));
   }, [dispatch]);
-
 
   // Debounce search dispatch
   const debouncedDispatch = React.useMemo(
@@ -105,6 +95,16 @@ export const FacilityDirectoryScreen = () => {
         dispatch(setFilters(baseFilter));
     }
   };
+
+  // Handle route params (initialViewMode, filter)
+  useEffect(() => {
+    if (route.params?.initialViewMode) {
+      setViewMode(route.params.initialViewMode);
+    }
+    if (route.params?.filter) {
+      handleFilterPress(route.params.filter);
+    }
+  }, [route.params?.initialViewMode, route.params?.filter]);
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>

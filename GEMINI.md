@@ -30,7 +30,8 @@ The application follows a **feature-based** architecture:
 *   **`src/features/`**: Contains the core logic and UI for main features:
     *   `facilities/`: Facility directory, list, and details.
     *   `navigation/`: AI assistant chat interface and logic.
-    *   `yakap/`: Enrollment guides and status tracking.
+    *   `yakap/`: Enrollment guides, status tracking, and completion celebration.
+        *   `EnrollmentCompletionScreen.tsx`: Success screen after enrollment with benefits summary and sharing.
 *   **`src/services/`**: Business logic and API clients (Gemini, Facility Data).
 *   **`src/store/`**: Redux store configuration and slices (`facilitySlice`, `navigationSlice`).
 *   **`src/components/`**: Shared UI components (`common/`) and feature-specific components (`features/`).

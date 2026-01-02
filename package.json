@@ -32,6 +32,7 @@
     "expo": "~54.0.30",
     "expo-av": "^16.0.8",
     "expo-constants": "~18.0.12",
+    "expo-document-picker": "~14.0.8",
     "expo-linear-gradient": "^15.0.8",
     "expo-location": "~19.0.8",
     "expo-router": "~6.0.21",
