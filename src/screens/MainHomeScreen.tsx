@@ -101,7 +101,7 @@ export const MainHomeScreen = () => {
             icon="hospital-marker"
             color="#2196F3"
             onPress={() => {
-              navigation.navigate('Find', { screen: 'FacilityDirectory' });
+              navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} });
             }}
           />
           <FeatureCard

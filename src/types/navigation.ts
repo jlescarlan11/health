@@ -11,7 +11,7 @@ export type CheckStackParamList = {
 };
 
 export type FacilitiesStackParamList = {
-  FacilityDirectory: undefined;
+  FacilityDirectory: { initialViewMode?: 'list' | 'map' };
   FacilityDetails: { facilityId: string };
 };
 

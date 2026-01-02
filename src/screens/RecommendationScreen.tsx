@@ -278,7 +278,7 @@ const RecommendationScreen = () => {
                     <View style={styles.mapPlaceholder}>
                         <MaterialCommunityIcons name="map-marker-radius" size={48} color={theme.colors.primary} />
                         <Text style={{ color: theme.colors.secondary, marginTop: 8 }}>Map Preview Area</Text>
-                        <Button mode="outlined" style={{ marginTop: 12 }} onPress={() => navigation.navigate('Find', { screen: 'FacilityDirectory' })}>
+                        <Button mode="outlined" style={{ marginTop: 12 }} onPress={() => navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })}>
                             Open Full Map
                         </Button>
                     </View>

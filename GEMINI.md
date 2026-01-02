@@ -93,3 +93,14 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 *   `src/services/gemini.ts`: Interface for the AI Assistant.
 *   `src/features/navigation/NavigationAssistant.tsx`: Main UI for the AI chat.
 *   `project-brief.md`: Detailed product requirements and context.
+
+## Recent Updates (Jan 2, 2026)
+*   **Mapbox Integration:** Implemented fully functional map view using `@rnmapbox/maps`.
+    *   **Features:** Marker clustering, custom markers (Hospital/Health Center/YAKAP), user location tracking, and route drawing via Mapbox Directions API.
+    *   **Offline Support:** Automatic downloading of offline map packs for Naga City region on map initialization.
+    *   **Navigation:** Seamless transition between List and Map views. "Get Directions" in Facility Details now offers in-app navigation or external maps.
+    *   **Files Created/Modified:** 
+        *   `src/services/mapService.ts` (New: Directions API & Offline Manager)
+        *   `src/components/features/facilities/FacilityMapView.tsx` (Major update: Route display, interactions)
+        *   `src/features/facilities/FacilityDirectoryScreen.tsx` (Added `initialViewMode` param support)
+        *   `src/screens/FacilityDetailsScreen.tsx` (Integrated map actions)

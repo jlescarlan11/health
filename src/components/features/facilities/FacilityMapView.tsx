@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert, Platform, Dimensions } from 'react-native';
 import * as Location from 'expo-location';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 import { RootState } from '../../../store';
 import { selectFacility } from '../../../store/facilitiesSlice';
 import { Facility } from '../../../types';
@@ -9,7 +10,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FacilityCard } from '../../common/FacilityCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, useTheme } from 'react-native-paper';
-import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
+import { FeatureCollection, Geometry, GeoJsonProperties, LineString } from 'geojson';
+import { getDirections, downloadOfflineMap } from '../../../services/mapService';
 
 // Lazy load Mapbox to prevent module load errors
 let Mapbox: any = null;
@@ -35,11 +37,15 @@ const DEFAULT_ZOOM_LEVEL = 13;
 
 export const FacilityMapView: React.FC = () => {
   const dispatch = useDispatch();
+  const navigation = useNavigation<any>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { facilities, selectedFacilityId } = useSelector((state: RootState) => state.facilities);
   
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+  const [routeGeoJSON, setRouteGeoJSON] = useState<LineString | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{ duration: number; distance: number } | null>(null);
+  
   const cameraRef = useRef<any>(null);
   const mapRef = useRef<any>(null);
   const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM_LEVEL);
@@ -101,11 +107,67 @@ export const FacilityMapView: React.FC = () => {
           const location = await Location.getCurrentPositionAsync({});
           setUserLocation(location);
         }
+        
+        // Initiate offline map download
+        downloadOfflineMap();
       } catch (error) {
         console.error('Error getting location:', error);
       }
     })();
   }, []);
+
+  // Fetch route when facility is selected and user location is available
+  useEffect(() => {
+    if (selectedFacility && userLocation) {
+      const fetchRoute = async () => {
+        const start: [number, number] = [userLocation.coords.longitude, userLocation.coords.latitude];
+        const end: [number, number] = [selectedFacility.longitude, selectedFacility.latitude];
+        const result = await getDirections(start, end);
+        
+        if (result && result.routes.length > 0) {
+          setRouteGeoJSON(result.routes[0].geometry);
+          setRouteInfo({
+            duration: result.routes[0].duration,
+            distance: result.routes[0].distance,
+          });
+          
+          // Fit bounds to show route
+          if (cameraRef.current) {
+             // Basic bbox calculation
+             const minLng = Math.min(start[0], end[0]);
+             const minLat = Math.min(start[1], end[1]);
+             const maxLng = Math.max(start[0], end[0]);
+             const maxLat = Math.max(start[1], end[1]);
+             
+             cameraRef.current.fitBounds(
+               [maxLng, maxLat],
+               [minLng, minLat],
+               [50, 50, 300, 50], // padding
+               1000 // duration
+             );
+          }
+        } else {
+            setRouteGeoJSON(null);
+            setRouteInfo(null);
+        }
+      };
+      fetchRoute();
+    } else {
+        setRouteGeoJSON(null);
+        setRouteInfo(null);
+    }
+  }, [selectedFacility, userLocation]);
+
+  // Center on selected facility if no user location (and thus no route)
+  useEffect(() => {
+    if (selectedFacility && !userLocation && cameraRef.current) {
+        cameraRef.current.setCamera({
+            centerCoordinate: [selectedFacility.longitude, selectedFacility.latitude],
+            zoomLevel: 15,
+            animationDuration: 1000,
+        });
+    }
+  }, [selectedFacility, userLocation]);
 
   const handleZoomIn = async () => {
     if (cameraRef.current) {
@@ -185,6 +247,12 @@ export const FacilityMapView: React.FC = () => {
       }
   };
 
+  const navigateToDetails = () => {
+      if (selectedFacility) {
+          navigation.navigate('FacilityDetails', { facilityId: selectedFacility.id });
+      }
+  };
+
   return (
     <View style={styles.container}>
       <Mapbox.MapView 
@@ -206,6 +274,22 @@ export const FacilityMapView: React.FC = () => {
         />
         
         <Mapbox.UserLocation visible={true} showsUserHeadingIndicator={true} />
+
+        {/* Route Line */}
+        {routeGeoJSON && (
+            <Mapbox.ShapeSource id="routeSource" shape={{ type: 'Feature', geometry: routeGeoJSON, properties: {} }}>
+                <Mapbox.LineLayer
+                    id="routeLine"
+                    style={{
+                        lineColor: '#4A90E2',
+                        lineWidth: 4,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                        lineOpacity: 0.8,
+                    }}
+                />
+            </Mapbox.ShapeSource>
+        )}
 
         <Mapbox.ShapeSource
           id="facilitiesSource"
@@ -303,27 +387,36 @@ export const FacilityMapView: React.FC = () => {
             facility={selectedFacility} 
             showDistance={true} 
             distance={selectedFacility.distance}
-            onPress={() => {
-            }}
+            onPress={navigateToDetails}
             style={styles.card}
           />
+           {routeInfo && (
+              <View style={styles.routeInfoBadge}>
+                  <MaterialCommunityIcons name="car" size={16} color="white" />
+                  <Text style={styles.routeInfoText}>
+                      {Math.round(routeInfo.duration / 60)} min • {(routeInfo.distance / 1000).toFixed(1)} km
+                  </Text>
+              </View>
+           )}
         </View>
       )}
       
-      <View style={[styles.legend, { top: insets.top + 16 }]}>
-         <View style={styles.legendItem}>
-             <View style={[styles.dot, { backgroundColor: '#2196F3' }]} />
-             <Text style={styles.legendText}>Hospital</Text>
-         </View>
-         <View style={styles.legendItem}>
-             <View style={[styles.dot, { backgroundColor: '#4CAF50' }]} />
-             <Text style={styles.legendText}>Health Center</Text>
-         </View>
-         <View style={styles.legendItem}>
-            <Text style={{color: '#FFD700', fontSize: 12, marginRight: 6}}>★</Text>
-            <Text style={styles.legendText}>YAKAP</Text>
-         </View>
-      </View>
+      {!selectedFacility && (
+          <View style={[styles.legend, { top: insets.top + 16 }]}>
+             <View style={styles.legendItem}>
+                 <View style={[styles.dot, { backgroundColor: '#2196F3' }]} />
+                 <Text style={styles.legendText}>Hospital</Text>
+             </View>
+             <View style={styles.legendItem}>
+                 <View style={[styles.dot, { backgroundColor: '#4CAF50' }]} />
+                 <Text style={styles.legendText}>Health Center</Text>
+             </View>
+             <View style={styles.legendItem}>
+                <Text style={{color: '#FFD700', fontSize: 12, marginRight: 6}}>★</Text>
+                <Text style={styles.legendText}>YAKAP</Text>
+             </View>
+          </View>
+      )}
     </View>
   );
 };
@@ -370,6 +463,23 @@ const styles = StyleSheet.create({
   },
   card: {
     elevation: 8,
+  },
+  routeInfoBadge: {
+      position: 'absolute',
+      top: -40,
+      alignSelf: 'center',
+      backgroundColor: '#4A90E2',
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
+      elevation: 4,
+  },
+  routeInfoText: {
+      color: 'white',
+      fontWeight: 'bold',
+      marginLeft: 6,
   },
   legend: {
     position: 'absolute',

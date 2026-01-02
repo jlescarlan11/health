@@ -10,15 +10,17 @@ import {
   Share,
   Dimensions,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { FacilitiesStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
+import { selectFacility } from '../store/facilitiesSlice';
 import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
@@ -52,7 +54,8 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
 
 export const FacilityDetailsScreen = () => {
   const route = useRoute<FacilityDetailsRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
+  const dispatch = useDispatch();
   const { facilityId } = route.params || { facilityId: '' };
 
   const facility = useSelector((state: RootState) =>
@@ -90,7 +93,7 @@ export const FacilityDetailsScreen = () => {
     }
   };
 
-  const handleDirections = () => {
+  const openExternalMaps = () => {
     const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
     const latLng = `${facility.latitude},${facility.longitude}`;
     const label = facility.name;
@@ -100,6 +103,30 @@ export const FacilityDetailsScreen = () => {
     });
 
     if (url) Linking.openURL(url).catch(() => alert('Failed to open maps.'));
+  };
+
+  const openInAppMap = () => {
+      dispatch(selectFacility(facility.id));
+      // @ts-ignore - navigation types need update for this specific flow if strict
+      navigation.navigate('FacilityDirectory', { initialViewMode: 'map' });
+  };
+
+  const handleDirections = () => {
+    Alert.alert(
+      'Get Directions',
+      'Choose navigation method',
+      [
+        {
+          text: 'In-App Map',
+          onPress: openInAppMap
+        },
+        {
+          text: 'External Maps',
+          onPress: openExternalMaps
+        },
+        { text: 'Cancel', style: 'cancel' }
+      ]
+    );
   };
 
   const handleShare = async () => {
@@ -263,7 +290,7 @@ export const FacilityDetailsScreen = () => {
           {/* Map Preview */}
           <View style={styles.mapSection}>
             <Text style={styles.sectionTitle}>Location Preview</Text>
-            <TouchableOpacity onPress={handleDirections} style={styles.mapContainer}>
+            <TouchableOpacity onPress={openInAppMap} style={styles.mapContainer}>
               <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} resizeMode="cover" />
                <View style={styles.mapOverlay}>
                 <Ionicons name="map" size={32} color="white" />

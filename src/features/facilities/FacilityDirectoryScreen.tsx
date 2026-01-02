@@ -7,6 +7,7 @@ import {
   Text,
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
+import { useRoute, RouteProp } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { debounce } from 'lodash';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ import { AppDispatch, RootState } from '../../store';
 import { fetchFacilities, setFilters, updateDistances } from '../../store/facilitiesSlice';
 import { FacilityListView, FacilityMapView } from '../../components/features/facilities';
 import StandardHeader from '../../components/common/StandardHeader';
+import { FacilitiesStackParamList } from '../../navigation/types';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -35,10 +37,20 @@ export const FacilityDirectoryScreen = () => {
   fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'FacilityDirectoryScreen.tsx:31', message: 'Component function entry', data: { componentDefined: true, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' } }) }).catch(() => {});
   // #endregion
   const theme = useTheme();
+  const route = useRoute<RouteProp<FacilitiesStackParamList, 'FacilityDirectory'>>();
   const dispatch = useDispatch<AppDispatch>();
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+
+  // Handle initialViewMode param
+  useEffect(() => {
+    if (route.params?.initialViewMode) {
+      setViewMode(route.params.initialViewMode);
+      // Optional: Clear the param so it doesn't stick if we navigate back and forth without intent,
+      // but strictly navigating *to* here with the param is usually explicit.
+    }
+  }, [route.params?.initialViewMode]);
 
   // Load initial data
   useEffect(() => {
