@@ -7,7 +7,7 @@ describe('detectEmergency', () => {
     expect(result.score).toBe(10);
     expect(result.matchedKeywords).toContain('chest pain');
     expect(result.overrideResponse).toBeDefined();
-    expect(result.overrideResponse?.recommended_level).toBe('Emergency');
+    expect(result.overrideResponse?.recommended_level).toBe('emergency');
   });
 
   it('should detect moderate severity emergency keywords (score > 7)', () => {

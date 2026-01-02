@@ -49,24 +49,24 @@ describe('MainHomeScreen', () => {
     expect(getByText('Check Symptoms')).toBeTruthy();
     expect(getByText('Find Facilities')).toBeTruthy();
     expect(getByText('YAKAP Enrollment')).toBeTruthy();
-    expect(getByLabelText('Emergency Button')).toBeTruthy();
+    expect(getByLabelText('Emergency Call')).toBeTruthy();
   });
 
   it('navigates to AiChat when Check Symptoms is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('Check Symptoms'));
-    expect(mockNavigate).toHaveBeenCalledWith('AiChat');
+    expect(mockNavigate).toHaveBeenCalledWith('Check', { screen: 'NavigatorHome' });
   });
 
   it('navigates to FacilityDirectory when Find Facilities is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('Find Facilities'));
-    expect(mockNavigate).toHaveBeenCalledWith('FacilityDirectory');
+    expect(mockNavigate).toHaveBeenCalledWith('Find', { screen: 'FacilityDirectory' });
   });
 
   it('navigates to YakapEnrollment when YAKAP Enrollment is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('YAKAP Enrollment'));
-    expect(mockNavigate).toHaveBeenCalledWith('YakapEnrollment');
+    expect(mockNavigate).toHaveBeenCalledWith('YAKAP', { screen: 'YakapEnrollment' });
   });
 });
