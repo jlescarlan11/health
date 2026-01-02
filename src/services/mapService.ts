@@ -1,5 +1,16 @@
-import Mapbox from '@rnmapbox/maps';
 import { FeatureCollection, LineString } from 'geojson';
+import Constants from 'expo-constants';
+
+let Mapbox: any = null;
+const isExpoGo = Constants.appOwnership === 'expo';
+
+if (!isExpoGo) {
+    try {
+        Mapbox = require('@rnmapbox/maps');
+    } catch (error) {
+        console.warn('Mapbox native module not found in service');
+    }
+}
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 
@@ -52,7 +63,7 @@ export const getDirections = async (
 
 export const downloadOfflineMap = async (
   name: string = 'NagaCity',
-  styleUrl: string = Mapbox.StyleURL.Street
+  styleUrl: string = Mapbox?.StyleURL?.Street || 'mapbox://styles/mapbox/streets-v11'
 ) => {
   if (!Mapbox) return;
 
@@ -65,10 +76,10 @@ export const downloadOfflineMap = async (
         minZoom: 10,
         maxZoom: 16,
       },
-      (region, status) => {
+      (region: any, status: any) => {
         console.log(`Offline pack ${name} progress: ${status.percentage}`);
       },
-      (region, error) => {
+      (region: any, error: any) => {
         console.error(`Offline pack ${name} error:`, error);
       }
     );

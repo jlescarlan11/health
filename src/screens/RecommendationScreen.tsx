@@ -12,6 +12,7 @@ import { FacilityCard } from '../components/common/FacilityCard';
 import { DisclaimerBanner } from '../components/common/DisclaimerBanner';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
+import { useUserLocation } from '../hooks';
 
 type ScreenProps = CheckStackScreenProps<'Recommendation'>;
 
@@ -20,6 +21,9 @@ const RecommendationScreen = () => {
     const navigation = useNavigation<ScreenProps['navigation']>();
     const theme = useTheme();
     
+    // Try to get location to improve sorting
+    useUserLocation({ watch: false });
+
     const { assessmentData } = route.params;
     const { facilities } = useSelector((state: RootState) => state.facilities);
     

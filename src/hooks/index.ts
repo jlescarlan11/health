@@ -1,2 +1,3 @@
 // Barrel export file for src/hooks
 export * from './reduxHooks';
+export * from './useUserLocation';

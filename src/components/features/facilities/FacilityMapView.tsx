@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert, Platform, Dimensions } from 'react-native';
-import * as Location from 'expo-location';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { RootState } from '../../../store';
@@ -16,19 +16,29 @@ import { getDirections, downloadOfflineMap } from '../../../services/mapService'
 // Lazy load Mapbox to prevent module load errors
 let Mapbox: any = null;
 let mapboxImportError: Error | null = null;
+const isExpoGo = Constants.appOwnership === 'expo';
 
-try {
-  Mapbox = require('@rnmapbox/maps');
-} catch (error: any) {
-  mapboxImportError = error;
-  console.warn('@rnmapbox/maps native module not available:', error?.message);
+if (!isExpoGo) {
+  try {
+    Mapbox = require('@rnmapbox/maps');
+  } catch (error: any) {
+    mapboxImportError = error;
+    console.warn('@rnmapbox/maps native module not available:', error?.message);
+  }
+} else {
+    console.log('Running in Expo Go - Mapbox disabled');
 }
 
 // Initialize Mapbox if available
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (Mapbox && MAPBOX_TOKEN) {
-  Mapbox.setAccessToken(MAPBOX_TOKEN);
-} else if (!MAPBOX_TOKEN) {
+  try {
+    Mapbox.setAccessToken(MAPBOX_TOKEN);
+  } catch (error) {
+     console.warn('Failed to set Mapbox access token:', error);
+     Mapbox = null; // Disable Mapbox if initialization fails
+  }
+} else if (Mapbox && !MAPBOX_TOKEN) {
   console.warn('Mapbox token not found. Map may not render correctly.');
 }
 
@@ -40,9 +50,8 @@ export const FacilityMapView: React.FC = () => {
   const navigation = useNavigation<any>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { facilities, selectedFacilityId } = useSelector((state: RootState) => state.facilities);
+  const { facilities, selectedFacilityId, userLocation } = useSelector((state: RootState) => state.facilities);
   
-  const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const [routeGeoJSON, setRouteGeoJSON] = useState<LineString | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ duration: number; distance: number } | null>(null);
   
@@ -59,12 +68,16 @@ export const FacilityMapView: React.FC = () => {
             Map View Unavailable
           </Text>
           <Text variant="bodyMedium" style={{ textAlign: 'center', color: theme.colors.error }}>
-            @rnmapbox native module not available.{'\n'}
-            {mapboxImportError?.message || 'Please rebuild your app with a development build.'}
+            {isExpoGo 
+              ? 'Mapbox is not supported in Expo Go.' 
+              : '@rnmapbox native module not available.'}
+            {'\n'}
+            {mapboxImportError?.message}
           </Text>
           <Text variant="bodySmall" style={{ marginTop: 16, textAlign: 'center', color: theme.colors.onSurfaceVariant }}>
-            This feature requires a custom development build.{'\n'}
-            Run: npx expo prebuild && npx expo run:android (or run:ios)
+            {isExpoGo 
+              ? 'Please use a development build to view the map.\nRun: npx expo run:android' 
+              : 'Please rebuild your app with a development build.\nRun: npx expo run:android'}
           </Text>
         </View>
       </View>
@@ -100,27 +113,15 @@ export const FacilityMapView: React.FC = () => {
   }, [facilities]);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({});
-          setUserLocation(location);
-        }
-        
-        // Initiate offline map download
-        downloadOfflineMap();
-      } catch (error) {
-        console.error('Error getting location:', error);
-      }
-    })();
+    // Initiate offline map download
+    downloadOfflineMap();
   }, []);
 
   // Fetch route when facility is selected and user location is available
   useEffect(() => {
     if (selectedFacility && userLocation) {
       const fetchRoute = async () => {
-        const start: [number, number] = [userLocation.coords.longitude, userLocation.coords.latitude];
+        const start: [number, number] = [userLocation.longitude, userLocation.latitude];
         const end: [number, number] = [selectedFacility.longitude, selectedFacility.latitude];
         const result = await getDirections(start, end);
         
@@ -194,7 +195,7 @@ export const FacilityMapView: React.FC = () => {
   const handleCenterOnUser = () => {
     if (userLocation && cameraRef.current) {
       cameraRef.current.setCamera({
-        centerCoordinate: [userLocation.coords.longitude, userLocation.coords.latitude],
+        centerCoordinate: [userLocation.longitude, userLocation.latitude],
         zoomLevel: 15,
         animationDuration: 1000,
       });

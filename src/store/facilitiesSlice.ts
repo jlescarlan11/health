@@ -16,6 +16,7 @@ interface FacilitiesState {
   facilities: Facility[];
   filteredFacilities: Facility[];
   selectedFacilityId: string | null;
+  userLocation: { latitude: number; longitude: number } | null;
   filters: FacilityFilters;
   isLoading: boolean;
   error: string | null;
@@ -28,6 +29,7 @@ const initialState: FacilitiesState = {
   facilities: [],
   filteredFacilities: [],
   selectedFacilityId: null,
+  userLocation: null,
   filters: {},
   isLoading: false,
   error: null,
@@ -53,18 +55,22 @@ const facilitiesSlice = createSlice({
     selectFacility: (state, action: PayloadAction<string | null>) => {
       state.selectedFacilityId = action.payload;
     },
-    updateDistances: (state, action: PayloadAction<{ latitude: number; longitude: number }>) => {
-      const { latitude, longitude } = action.payload;
+    setUserLocation: (state, action: PayloadAction<{ latitude: number; longitude: number } | null>) => {
+      state.userLocation = action.payload;
       
-      const updateDistance = (f: Facility) => {
-        f.distance = calculateDistance(latitude, longitude, f.latitude, f.longitude);
-      };
+      if (action.payload) {
+        const { latitude, longitude } = action.payload;
+        
+        const updateDistance = (f: Facility) => {
+          f.distance = calculateDistance(latitude, longitude, f.latitude, f.longitude);
+        };
 
-      state.facilities.forEach(updateDistance);
-      state.filteredFacilities.forEach(updateDistance);
-      
-      // Sort filtered facilities by distance
-      state.filteredFacilities.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+        state.facilities.forEach(updateDistance);
+        state.filteredFacilities.forEach(updateDistance);
+        
+        // Sort filtered facilities by distance
+        state.filteredFacilities.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity));
+      }
     },
     setFilters: (state, action: PayloadAction<FacilityFilters>) => {
       state.filters = { ...state.filters, ...action.payload };
@@ -170,5 +176,5 @@ const facilitiesSlice = createSlice({
   },
 });
 
-export const { selectFacility, setFilters, clearFilters, updateDistances } = facilitiesSlice.actions;
+export const { selectFacility, setFilters, clearFilters, setUserLocation } = facilitiesSlice.actions;
 export default facilitiesSlice.reducer;

@@ -8,17 +8,17 @@ import {
 } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import * as Location from 'expo-location';
 import { debounce } from 'lodash';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { AppDispatch, RootState } from '../../store';
-import { fetchFacilities, setFilters, updateDistances } from '../../store/facilitiesSlice';
+import { fetchFacilities, setFilters } from '../../store/facilitiesSlice';
 import { FacilityListView, FacilityMapView } from '../../components/features/facilities';
 import StandardHeader from '../../components/common/StandardHeader';
 import { FacilitiesStackParamList } from '../../navigation/types';
+import { useUserLocation } from '../../hooks';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -52,26 +52,16 @@ export const FacilityDirectoryScreen = () => {
     }
   }, [route.params?.initialViewMode]);
 
+  // Use the custom hook for location management
+  // It will automatically update the Redux store with the user's location
+  // We only watch for live updates when in map mode
+  useUserLocation({ watch: viewMode === 'map' });
+
   // Load initial data
   useEffect(() => {
     dispatch(fetchFacilities({ page: 1, refresh: true }));
-
-    // Request location and update distances
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        try {
-          let location = await Location.getCurrentPositionAsync({});
-          dispatch(updateDistances({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude
-          }));
-        } catch (e) {
-          console.warn('Error getting location', e);
-        }
-      }
-    })();
   }, [dispatch]);
+
 
   // Debounce search dispatch
   const debouncedDispatch = React.useMemo(

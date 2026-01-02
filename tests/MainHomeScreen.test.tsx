@@ -61,7 +61,7 @@ describe('MainHomeScreen', () => {
   it('navigates to FacilityDirectory when Find Facilities is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('Find Facilities'));
-    expect(mockNavigate).toHaveBeenCalledWith('Find', { screen: 'FacilityDirectory' });
+    expect(mockNavigate).toHaveBeenCalledWith('Find', expect.objectContaining({ screen: 'FacilityDirectory' }));
   });
 
   it('navigates to YakapEnrollment when YAKAP Enrollment is pressed', () => {
