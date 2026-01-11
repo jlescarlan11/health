@@ -34,7 +34,7 @@ const FacilitiesNavigator = () => {
         name="FacilityDetails"
         component={FacilityDetailsScreen}
         options={{
-          header: () => <StandardHeader title="Facility Details" showBackButton />,
+          headerShown: false,
         }}
       />
     </Stack.Navigator>

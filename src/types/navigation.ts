@@ -11,7 +11,7 @@ export type CheckStackParamList = {
 };
 
 export type FacilitiesStackParamList = {
-  FacilityDirectory: { initialViewMode?: 'list' | 'map'; filter?: 'yakap' };
+  FacilityDirectory: { filter?: 'yakap' };
   FacilityDetails: { facilityId: string };
 };
 

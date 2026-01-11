@@ -26,13 +26,7 @@ import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus } from '../utils';
 import { useTheme } from 'react-native-paper';
-
-// Mock location hook - replace with actual implementation
-const useUserLocation = () => ({
-  latitude: 13.6226, // Naga City Hall latitude for example
-  longitude: 123.186, // Naga City Hall longitude for example
-  error: null,
-});
+import { useUserLocation } from '../hooks';
 
 type FacilityDetailsRouteProp = FacilitiesStackScreenProps<'FacilityDetails'>['route'];
 
@@ -65,7 +59,11 @@ export const FacilityDetailsScreen = () => {
     state.facilities.facilities.find((f) => f.id === facilityId)
   );
 
-  const { latitude: userLat, longitude: userLon } = useUserLocation();
+  const { location, errorMsg, permissionStatus, requestPermission } = useUserLocation();
+  const reduxLocation = useSelector((state: RootState) => state.facilities.userLocation);
+
+  const userLat = location?.coords.latitude || reduxLocation?.latitude;
+  const userLon = location?.coords.longitude || reduxLocation?.longitude;
 
   const [isImageViewerVisible, setImageViewerVisible] = useState(false);
 
@@ -76,13 +74,13 @@ export const FacilityDetailsScreen = () => {
 
   if (!facility) {
     return (
-      <SafeAreaView style={[styles.centered, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
         <StandardHeader title="Details" showBackButton />
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.onSurfaceVariant }]}>Facility not found.</Text>
           <Button title="Go Back" onPress={() => navigation.goBack()} />
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -108,28 +106,8 @@ export const FacilityDetailsScreen = () => {
     if (url) Linking.openURL(url).catch(() => alert('Failed to open maps.'));
   };
 
-  const openInAppMap = () => {
-      dispatch(selectFacility(facility.id));
-      // @ts-ignore - navigation types need update for this specific flow if strict
-      navigation.navigate('FacilityDirectory', { initialViewMode: 'map' });
-  };
-
   const handleDirections = () => {
-    Alert.alert(
-      'Get Directions',
-      'Choose navigation method',
-      [
-        {
-          text: 'In-App Map',
-          onPress: openInAppMap
-        },
-        {
-          text: 'External Maps',
-          onPress: openExternalMaps
-        },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+    openExternalMaps();
   };
 
   const handleShare = async () => {
@@ -145,13 +123,8 @@ export const FacilityDetailsScreen = () => {
 
   const { isOpen, text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
   
-  // Use a static map image for preview. Replace YOUR_API_KEY with an actual key or use a placeholder if needed.
-  // Note: For this demo, we'll assume a placeholder or valid URL construction.
-  // Ideally, use a library like react-native-maps for interactive maps, but static image is requested for preview.
-  const mapPreviewUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${facility.latitude},${facility.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${facility.latitude},${facility.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`;
-
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader
         title={facility.name}
         showBackButton
@@ -239,11 +212,21 @@ export const FacilityDetailsScreen = () => {
             <View style={styles.infoTextContainer}>
               <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Address</Text>
               <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>{facility.address}</Text>
-              {distance !== null && (
+              {distance !== null ? (
                 <View style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
                   <Ionicons name="navigate-circle-outline" size={14} color={theme.colors.onSurfaceVariant} />
                   <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>{formatDistance(distance)} away</Text>
                 </View>
+              ) : (
+                (permissionStatus === 'denied' || errorMsg) && (
+                  <TouchableOpacity 
+                    onPress={requestPermission} 
+                    style={[styles.distanceBadge, { backgroundColor: theme.colors.errorContainer }]}
+                  >
+                    <Ionicons name="location-off" size={14} color={theme.colors.error} />
+                    <Text style={[styles.distanceText, { color: theme.colors.error }]}>Enable location to see distance</Text>
+                  </TouchableOpacity>
+                )
               )}
             </View>
           </View>
@@ -289,21 +272,9 @@ export const FacilityDetailsScreen = () => {
               ))}
             </View>
           </View>
-
-          {/* Map Preview */}
-          <View style={styles.mapSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Location Preview</Text>
-            <TouchableOpacity onPress={openInAppMap} style={[styles.mapContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-              <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} resizeMode="cover" />
-               <View style={styles.mapOverlay}>
-                <Ionicons name="map" size={32} color="white" />
-                <Text style={styles.mapOverlayText}>Tap to view full map</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -472,31 +443,6 @@ const styles = StyleSheet.create({
   serviceText: {
     fontSize: 14,
     flex: 1,
-  },
-  mapSection: {
-    marginBottom: 20,
-  },
-  mapContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    position: 'relative',
-    height: 180,
-  },
-  mapPreview: {
-    width: '100%',
-    height: '100%',
-  },
-  mapOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  mapOverlayText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-    marginTop: 8,
   },
 });
 

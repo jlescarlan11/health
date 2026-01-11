@@ -53,7 +53,12 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
         )}
       </View>
       <View style={styles.titleContainer}>
-        <Text style={[styles.title, { color: theme.colors.onSurface }, titleStyle]} accessibilityRole="header">
+        <Text
+          style={[styles.title, { color: theme.colors.onSurface }, titleStyle]}
+          accessibilityRole="header"
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {title}
         </Text>
       </View>

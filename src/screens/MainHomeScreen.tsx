@@ -11,7 +11,6 @@ import { setHasSeenDisclaimer } from '../store/settingsSlice';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
-import { EmergencyButton } from '../components/common/EmergencyButton';
 
 type MainHomeNavigationProp = TabScreenProps<'Home'>['navigation'];
 
@@ -186,14 +185,6 @@ export const MainHomeScreen = () => {
         </View>
       </ScrollView>
 
-      <View style={styles.fabContainer}>
-        <EmergencyButton
-          onPress={() =>
-            Alert.alert('Emergency', 'Call 911 or visit the nearest emergency room immediately.')
-          }
-        />
-      </View>
-
       <Portal>
         <Dialog visible={showDisclaimer} onDismiss={() => {}} dismissable={false} style={{ backgroundColor: theme.colors.surface }}>
           <Dialog.Title accessibilityRole="header" style={{ color: theme.colors.onSurface }}>Welcome to HEALTH</Dialog.Title>
@@ -260,11 +251,5 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 14,
-  },
-  fabContainer: {
-    position: 'absolute',
-    bottom: 16,
-    right: 16,
-    left: 16,
   },
 });

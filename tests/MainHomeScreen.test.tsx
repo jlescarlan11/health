@@ -49,7 +49,6 @@ describe('MainHomeScreen', () => {
     expect(getByText('Check Symptoms')).toBeTruthy();
     expect(getByText('Find Facilities')).toBeTruthy();
     expect(getByText('YAKAP Enrollment')).toBeTruthy();
-    expect(getByLabelText('Emergency Call')).toBeTruthy();
   });
 
   it('navigates to AiChat when Check Symptoms is pressed', () => {

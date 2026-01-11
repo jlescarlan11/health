@@ -112,14 +112,13 @@ const RecommendationScreen = () => {
         if (url) Linking.openURL(url);
     };
 
-    const handleViewOnMap = (facilityId: string) => {
-        // Navigate to Find tab
+    const handleViewDetails = (facilityId: string) => {
+        // Navigate to details screen instead of map
+        // Since we are in CheckNavigator, we might need to go to Find navigator or just push details if it's available
+        // Usually FacilitiesNavigator handles details.
         navigation.navigate('Find', {
-            screen: 'FacilityDirectory',
-            params: { 
-                // We would ideally pass a param to highlight this facility
-                // For now, just going to the list/map is the requirement
-             } 
+            screen: 'FacilityDetails',
+            params: { facilityId } 
         });
     };
 
@@ -238,17 +237,9 @@ const RecommendationScreen = () => {
                             facility={facility} 
                             showDistance={true}
                             distance={facility.distance}
-                            onPress={() => handleViewOnMap(facility.id)}
+                            onPress={() => handleViewDetails(facility.id)}
                         />
                         <View style={[styles.actionRow, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.outlineVariant }]}>
-                            <Button 
-                                icon="map" 
-                                mode="text" 
-                                compact 
-                                onPress={() => handleViewOnMap(facility.id)}
-                            >
-                                Map
-                            </Button>
                             <Button 
                                 icon="phone" 
                                 mode="text" 
@@ -275,18 +266,6 @@ const RecommendationScreen = () => {
                         No matching facilities found nearby.
                      </Text>
                 )}
-
-                {/* Mini Map Preview */}
-                <Text variant="titleMedium" style={styles.sectionTitle}>Location Preview</Text>
-                <Surface style={[styles.mapPreview, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
-                    <View style={[styles.mapPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
-                        <MaterialCommunityIcons name="map-marker-radius" size={48} color={theme.colors.primary} />
-                        <Text style={{ color: theme.colors.secondary, marginTop: 8 }}>Map Preview Area</Text>
-                        <Button mode="outlined" style={{ marginTop: 12 }} onPress={() => navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })}>
-                            Open Full Map
-                        </Button>
-                    </View>
-                </Surface>
 
                 {/* Disclaimer */}
                 <View style={styles.footer}>

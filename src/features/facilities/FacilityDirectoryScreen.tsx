@@ -15,7 +15,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import { AppDispatch, RootState } from '../../store';
 import { fetchFacilities, setFilters } from '../../store/facilitiesSlice';
-import { FacilityListView, FacilityMapView } from '../../components/features/facilities';
+import { FacilityListView } from '../../components/features/facilities';
 import StandardHeader from '../../components/common/StandardHeader';
 import { FacilitiesStackParamList } from '../../navigation/types';
 import { useUserLocation } from '../../hooks';
@@ -39,14 +39,12 @@ export const FacilityDirectoryScreen = () => {
   const theme = useTheme();
   const route = useRoute<RouteProp<FacilitiesStackParamList, 'FacilityDirectory'>>();
   const dispatch = useDispatch<AppDispatch>();
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
 
   // Use the custom hook for location management
   // It will automatically update the Redux store with the user's location
-  // We only watch for live updates when in map mode
-  useUserLocation({ watch: viewMode === 'map' });
+  useUserLocation({ watch: false });
 
   // Load initial data
   useEffect(() => {
@@ -96,15 +94,12 @@ export const FacilityDirectoryScreen = () => {
     }
   };
 
-  // Handle route params (initialViewMode, filter)
+  // Handle route params (filter)
   useEffect(() => {
-    if (route.params?.initialViewMode) {
-      setViewMode(route.params.initialViewMode);
-    }
     if (route.params?.filter) {
       handleFilterPress(route.params.filter);
     }
-  }, [route.params?.initialViewMode, route.params?.filter]);
+  }, [route.params?.filter]);
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -120,12 +115,6 @@ export const FacilityDirectoryScreen = () => {
             icon={searchQuery ? "close" : "magnify"}
             onIconPress={searchQuery ? handleClearSearch : undefined}
           />
-          <TouchableOpacity 
-            onPress={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
-            style={[styles.viewToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, borderWidth: 1 }]}
-          >
-            <Ionicons name={viewMode === 'list' ? "map-outline" : "list-outline"} size={28} color={theme.colors.primary} />
-          </TouchableOpacity>
         </View>
 
         <View style={styles.filterContainer}>
@@ -145,11 +134,7 @@ export const FacilityDirectoryScreen = () => {
           </ScrollView>
         </View>
 
-        {viewMode === 'list' ? (
-           <FacilityListView />
-        ) : (
-          <FacilityMapView />
-        )}
+        <FacilityListView />
       </View>
     </SafeAreaView>
   );
@@ -174,13 +159,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E2E3', // SurfaceVariant
     backgroundColor: '#fff', // Keep searchbar white
-  },
-  viewToggle: {
-    marginLeft: 12,
-    padding: 8,
-    borderRadius: 8,
-    // Add elevation/shadow to match searchbar if desired, or keep flat
-    elevation: 0, 
   },
   filterContainer: {
     marginBottom: 8,
