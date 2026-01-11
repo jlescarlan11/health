@@ -25,6 +25,7 @@ const NavigatorHomeScreen = () => {
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [symptom, setSymptom] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
@@ -251,13 +252,17 @@ const NavigatorHomeScreen = () => {
               <TextInput
                 mode="outlined"
                 label="Symptom Details"
-                placeholder="e.g., I have had a high fever for 2 days..."
+                placeholder={isInputFocused ? "e.g., I have had a high fever for 2 days..." : ""}
                 multiline
                 numberOfLines={4}
                 maxLength={500}
                 value={symptom}
                 onChangeText={setSymptom}
-                onFocus={handleInputFocus}
+                onFocus={() => {
+                  setIsInputFocused(true);
+                  handleInputFocus();
+                }}
+                onBlur={() => setIsInputFocused(false)}
                 style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
                 outlineStyle={{ borderRadius: 12, borderWidth: 1.5 }}
                 activeOutlineColor={theme.colors.primary}
