@@ -116,16 +116,16 @@ const YakapHomeScreen = () => {
         </View>
 
         {/* Eligibility Banner */}
-        <Card style={styles.eligibilityBanner}>
+        <Card style={[styles.eligibilityBanner, { backgroundColor: theme.colors.primaryContainer }]}>
           <Card.Content style={styles.eligibilityContent}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <MaterialCommunityIcons
                 name="party-popper"
                 size={24}
-                color="#2E7D32"
+                color={theme.colors.primary}
                 style={{ marginRight: 8 }}
               />
-              <Text variant="titleLarge" style={styles.eligibilityTitle}>
+              <Text variant="titleLarge" style={[styles.eligibilityTitle, { color: theme.colors.primary }]}>
                 Every Filipino is Eligible!
               </Text>
             </View>
@@ -145,7 +145,11 @@ const YakapHomeScreen = () => {
             {enrollmentStatus === 'completed' ? (
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                  <Chip icon="check" style={styles.enrolledChip} textStyle={{ color: '#1B5E20' }}>
+                  <Chip 
+                    icon="check" 
+                    style={[styles.enrolledChip, { backgroundColor: theme.colors.primaryContainer }]} 
+                    textStyle={{ color: theme.colors.onPrimaryContainer }}
+                  >
                     Enrolled
                   </Chip>
                   <Text style={{ marginLeft: 10, color: 'gray' }}>Enjoy your benefits!</Text>
@@ -221,7 +225,7 @@ const YakapHomeScreen = () => {
             mode="outlined"
             icon="check-decagram"
             onPress={navigateToEligibility}
-            style={styles.actionBtn}
+            style={[styles.actionBtn, { borderColor: theme.colors.primary }]}
           >
             Check Eligibility
           </Button>
@@ -229,7 +233,7 @@ const YakapHomeScreen = () => {
             mode="outlined"
             icon="hospital-marker"
             onPress={navigateToFacilities}
-            style={styles.actionBtn}
+            style={[styles.actionBtn, { borderColor: theme.colors.primary }]}
           >
             Find YAKAP Clinics
           </Button>
@@ -286,7 +290,6 @@ const YakapHomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     paddingBottom: 24,
@@ -308,14 +311,12 @@ const styles = StyleSheet.create({
   },
   eligibilityBanner: {
     margin: 16,
-    backgroundColor: '#E8F5E9', // Light green
   },
   eligibilityContent: {
     alignItems: 'center',
   },
   eligibilityTitle: {
     fontWeight: 'bold',
-    color: '#2E7D32',
     marginBottom: 4,
     textAlign: 'center',
   },
@@ -356,7 +357,6 @@ const styles = StyleSheet.create({
   enrolledChip: {
     alignSelf: 'flex-start',
     marginBottom: 10,
-    backgroundColor: '#C8E6C9',
   },
   statusButton: {
     marginTop: 10,
@@ -365,9 +365,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
-  actionBtn: {
-    borderColor: '#6200ee',
-  },
+  actionBtn: {},
 });
 
 export default YakapHomeScreen;

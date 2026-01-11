@@ -53,6 +53,7 @@ export const MainHomeScreen = () => {
     subtitle,
     icon,
     color,
+    iconColor,
     onPress,
     testID,
   }: {
@@ -60,6 +61,7 @@ export const MainHomeScreen = () => {
     subtitle: string;
     icon: any;
     color: string;
+    iconColor?: string;
     onPress: () => void;
     testID?: string;
   }) => {
@@ -83,7 +85,7 @@ export const MainHomeScreen = () => {
 
     return (
       <Card
-        style={styles.card}
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}
         onPress={onPress}
         testID={testID}
         accessible={true}
@@ -111,11 +113,11 @@ export const MainHomeScreen = () => {
               return null;
             })()}
             {/* #endregion */}
-            <MaterialCommunityIcons name={icon} size={32} color="white" />
+            <MaterialCommunityIcons name={icon} size={32} color={iconColor || theme.colors.onPrimary} />
           </View>
           <View style={styles.textContainer}>
-            <Title style={styles.cardTitle}>{title}</Title>
-            <Paragraph style={styles.cardSubtitle}>{subtitle}</Paragraph>
+            <Title style={[styles.cardTitle, { color: theme.colors.onSurface }]}>{title}</Title>
+            <Paragraph style={[styles.cardSubtitle, { color: theme.colors.onSurfaceVariant }]}>{subtitle}</Paragraph>
           </View>
           {/* #region agent log */}
           {(() => {
@@ -146,7 +148,7 @@ export const MainHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <HomeHero />
 
@@ -155,7 +157,8 @@ export const MainHomeScreen = () => {
             title="Check Symptoms"
             subtitle="AI-powered health assessment"
             icon="stethoscope"
-            color="#4CAF50"
+            color={theme.colors.primary}
+            iconColor={theme.colors.onPrimary}
             onPress={() => {
               navigation.navigate('Check', { screen: 'NavigatorHome' });
             }}
@@ -164,7 +167,8 @@ export const MainHomeScreen = () => {
             title="Find Facilities"
             subtitle="Locate nearby health centers"
             icon="hospital-marker"
-            color="#2196F3"
+            color={theme.colors.secondary}
+            iconColor={theme.colors.onSecondary}
             onPress={() => {
               navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} });
             }}
@@ -173,7 +177,8 @@ export const MainHomeScreen = () => {
             title="YAKAP Enrollment"
             subtitle="Register for healthcare benefits"
             icon="card-account-details"
-            color="#FF9800"
+            color={theme.colors.primary}
+            iconColor={theme.colors.onPrimary}
             onPress={() => {
               navigation.navigate('YAKAP', { screen: 'YakapEnrollment' });
             }}
@@ -217,7 +222,6 @@ export const MainHomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   scrollContent: {
     paddingBottom: 40, // Reduced padding to minimize space while clearing emergency button
@@ -228,7 +232,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   card: {
-    backgroundColor: 'white',
     borderRadius: 12,
     elevation: 2,
     shadowColor: '#000',
@@ -258,7 +261,6 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#666',
   },
   fabContainer: {
     position: 'absolute',

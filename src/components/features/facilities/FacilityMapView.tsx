@@ -282,7 +282,7 @@ export const FacilityMapView: React.FC = () => {
                 <Mapbox.LineLayer
                     id="routeLine"
                     style={{
-                        lineColor: '#4A90E2',
+                        lineColor: theme.colors.primary,
                         lineWidth: 4,
                         lineCap: 'round',
                         lineJoin: 'round',
@@ -341,9 +341,9 @@ export const FacilityMapView: React.FC = () => {
               circleColor: [
                 'match',
                 ['get', 'type'],
-                'Hospital', '#2196F3', // Blue for Hospital
-                'Health Center', '#4CAF50', // Green for Health Center
-                '#4CAF50' // Default Green
+                'Hospital', theme.colors.secondary,
+                'Health Center', theme.colors.primary,
+                theme.colors.primary
               ],
               circleRadius: 10,
             }}
@@ -355,7 +355,7 @@ export const FacilityMapView: React.FC = () => {
             filter={['all', ['!', ['has', 'point_count']], ['==', ['get', 'yakapAccredited'], true]]}
             style={{
               textField: '★', // Unicode Star
-              textColor: '#FFD700', // Gold
+              textColor: theme.colors.secondary,
               textSize: 14,
               textAllowOverlap: true,
               textIgnorePlacement: true,
@@ -368,16 +368,16 @@ export const FacilityMapView: React.FC = () => {
       </Mapbox.MapView>
 
       <View style={[styles.controls, { top: insets.top + 16 }]}>
-        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnUser} accessibilityLabel="Center on my location">
+        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleCenterOnUser} accessibilityLabel="Center on my location">
           <MaterialCommunityIcons name="crosshairs-gps" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={handleCenterOnNaga} accessibilityLabel="Center on Naga City">
+        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleCenterOnNaga} accessibilityLabel="Center on Naga City">
             <MaterialCommunityIcons name="compass" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={handleZoomIn} accessibilityLabel="Zoom in">
+        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleZoomIn} accessibilityLabel="Zoom in">
             <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={handleZoomOut} accessibilityLabel="Zoom out">
+        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleZoomOut} accessibilityLabel="Zoom out">
             <MaterialCommunityIcons name="minus" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
       </View>
@@ -392,9 +392,9 @@ export const FacilityMapView: React.FC = () => {
             style={styles.card}
           />
            {routeInfo && (
-              <View style={styles.routeInfoBadge}>
-                  <MaterialCommunityIcons name="car" size={16} color="white" />
-                  <Text style={styles.routeInfoText}>
+              <View style={[styles.routeInfoBadge, { backgroundColor: theme.colors.primary }]}>
+                  <MaterialCommunityIcons name="car" size={16} color={theme.colors.onPrimary} />
+                  <Text style={[styles.routeInfoText, { color: theme.colors.onPrimary }]}>
                       {Math.round(routeInfo.duration / 60)} min • {(routeInfo.distance / 1000).toFixed(1)} km
                   </Text>
               </View>
@@ -403,18 +403,18 @@ export const FacilityMapView: React.FC = () => {
       )}
       
       {!selectedFacility && (
-          <View style={[styles.legend, { top: insets.top + 16 }]}>
+          <View style={[styles.legend, { top: insets.top + 16, backgroundColor: theme.colors.surface }]}>
              <View style={styles.legendItem}>
-                 <View style={[styles.dot, { backgroundColor: '#2196F3' }]} />
-                 <Text style={styles.legendText}>Hospital</Text>
+                 <View style={[styles.dot, { backgroundColor: theme.colors.secondary }]} />
+                 <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>Hospital</Text>
              </View>
              <View style={styles.legendItem}>
-                 <View style={[styles.dot, { backgroundColor: '#4CAF50' }]} />
-                 <Text style={styles.legendText}>Health Center</Text>
+                 <View style={[styles.dot, { backgroundColor: theme.colors.primary }]} />
+                 <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>Health Center</Text>
              </View>
              <View style={styles.legendItem}>
-                <Text style={{color: '#FFD700', fontSize: 12, marginRight: 6}}>★</Text>
-                <Text style={styles.legendText}>YAKAP</Text>
+                <Text style={{color: theme.colors.secondary, fontSize: 12, marginRight: 6}}>★</Text>
+                <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>YAKAP</Text>
              </View>
           </View>
       )}
@@ -442,7 +442,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   controlButton: {
-    backgroundColor: 'white',
     padding: 10,
     borderRadius: 8,
     elevation: 4,
@@ -469,7 +468,6 @@ const styles = StyleSheet.create({
       position: 'absolute',
       top: -40,
       alignSelf: 'center',
-      backgroundColor: '#4A90E2',
       paddingHorizontal: 12,
       paddingVertical: 6,
       borderRadius: 20,
@@ -478,14 +476,12 @@ const styles = StyleSheet.create({
       elevation: 4,
   },
   routeInfoText: {
-      color: 'white',
       fontWeight: 'bold',
       marginLeft: 6,
   },
   legend: {
     position: 'absolute',
     left: 16,
-    backgroundColor: 'white',
     padding: 12,
     borderRadius: 8,
     elevation: 4,
@@ -508,6 +504,5 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#333',
   },
 });

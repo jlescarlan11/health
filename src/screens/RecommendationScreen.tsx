@@ -138,12 +138,12 @@ const RecommendationScreen = () => {
     const isMentalHealth = recommendation.isMentalHealth;
 
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right']}>
+        <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
             <ScrollView contentContainerStyle={styles.content}>
                 
                 {/* Emergency Alert */}
                 {isEmergency && (
-                    <View style={styles.emergencyBanner}>
+                    <View style={[styles.emergencyBanner, { backgroundColor: theme.colors.error }]}>
                         <View style={styles.emergencyHeader}>
                             <MaterialCommunityIcons name="alert-octagon" size={48} color="white" />
                             <View style={styles.emergencyTextContainer}>
@@ -192,7 +192,7 @@ const RecommendationScreen = () => {
 
                 {/* Recommendation Card */}
                 {!isMentalHealth && (
-                    <Card style={styles.card}>
+                    <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                         <Card.Content style={styles.cardHeader}>
                             <Avatar.Icon 
                                 size={64} 
@@ -212,9 +212,9 @@ const RecommendationScreen = () => {
                         </Card.Content>
                         <Divider style={styles.divider} />
                         <Card.Content>
-                            <Text variant="bodyMedium" style={styles.reasoning}>{recommendation.reasoning}</Text>
+                            <Text variant="bodyMedium" style={[styles.reasoning, { color: theme.colors.onSurface }]}>{recommendation.reasoning}</Text>
                             {recommendation.red_flags && recommendation.red_flags.length > 0 && (
-                                <View style={styles.redFlags}>
+                                <View style={[styles.redFlags, { backgroundColor: theme.colors.errorContainer }]}>
                                     <Text style={{ color: theme.colors.error, fontWeight: 'bold', marginBottom: 4 }}>
                                         <MaterialCommunityIcons name="alert" size={16} /> Important Alerts:
                                     </Text>
@@ -240,7 +240,7 @@ const RecommendationScreen = () => {
                             distance={facility.distance}
                             onPress={() => handleViewOnMap(facility.id)}
                         />
-                        <View style={styles.actionRow}>
+                        <View style={[styles.actionRow, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.outlineVariant }]}>
                             <Button 
                                 icon="map" 
                                 mode="text" 
@@ -271,15 +271,15 @@ const RecommendationScreen = () => {
                 ))}
 
                 {recommendedFacilities.length === 0 && (
-                     <Text style={{ textAlign: 'center', color: '#666', marginBottom: 20 }}>
+                     <Text style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant, marginBottom: 20 }}>
                         No matching facilities found nearby.
                      </Text>
                 )}
 
                 {/* Mini Map Preview */}
                 <Text variant="titleMedium" style={styles.sectionTitle}>Location Preview</Text>
-                <Surface style={styles.mapPreview} elevation={1}>
-                    <View style={styles.mapPlaceholder}>
+                <Surface style={[styles.mapPreview, { backgroundColor: theme.colors.surfaceVariant }]} elevation={1}>
+                    <View style={[styles.mapPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
                         <MaterialCommunityIcons name="map-marker-radius" size={48} color={theme.colors.primary} />
                         <Text style={{ color: theme.colors.secondary, marginTop: 8 }}>Map Preview Area</Text>
                         <Button mode="outlined" style={{ marginTop: 12 }} onPress={() => navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })}>
@@ -299,13 +299,12 @@ const RecommendationScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f8f9fa' },
+    container: { flex: 1 },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     loadingText: { marginTop: 16 },
     content: { padding: 16, paddingBottom: 40 },
     
     emergencyBanner: {
-        backgroundColor: '#b00020',
         padding: 16,
         borderRadius: 12,
         marginBottom: 24,
@@ -326,12 +325,12 @@ const styles = StyleSheet.create({
     mhTitle: { marginLeft: 12, fontWeight: 'bold' },
     mhButton: { marginTop: 8 },
 
-    card: { marginBottom: 24, borderRadius: 12, backgroundColor: 'white' },
+    card: { marginBottom: 24, borderRadius: 12 },
     cardHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
     recTextContainer: { marginLeft: 16, flex: 1 },
-    reasoning: { lineHeight: 22, color: '#444' },
+    reasoning: { lineHeight: 22 },
     divider: { marginVertical: 8 },
-    redFlags: { marginTop: 16, padding: 12, backgroundColor: '#ffebee', borderRadius: 8 },
+    redFlags: { marginTop: 16, padding: 12, borderRadius: 8 },
     
     sectionTitle: { marginBottom: 12, fontWeight: 'bold', marginTop: 8 },
     
@@ -339,7 +338,6 @@ const styles = StyleSheet.create({
     actionRow: { 
         flexDirection: 'row', 
         justifyContent: 'space-around', 
-        backgroundColor: 'white', 
         borderBottomLeftRadius: 12, 
         borderBottomRightRadius: 12,
         marginTop: -8, // tuck under the card
@@ -347,11 +345,10 @@ const styles = StyleSheet.create({
         paddingBottom: 4,
         elevation: 1,
         borderTopWidth: 1,
-        borderTopColor: '#eee'
     },
     
-    mapPreview: { height: 180, borderRadius: 12, overflow: 'hidden', marginBottom: 24, backgroundColor: '#e0e0e0' },
-    mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#eee' },
+    mapPreview: { height: 180, borderRadius: 12, overflow: 'hidden', marginBottom: 24 },
+    mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     
     footer: { marginTop: 16 }
 });

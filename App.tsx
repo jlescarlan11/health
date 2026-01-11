@@ -14,6 +14,7 @@ import { OfflineBanner } from './src/components/common';
 import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { RootStackParamList } from './src/types/navigation';
+import { theme } from './src/theme';
 
 const prefix = Linking.createURL('/');
 
@@ -122,7 +123,7 @@ export default function App() {
     <StoreProvider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
-          <PaperProvider>
+          <PaperProvider theme={theme}>
             <NavigationContainer linking={linking}>
               <AppContent />
             </NavigationContainer>

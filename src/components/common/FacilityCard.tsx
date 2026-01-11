@@ -61,7 +61,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       <Card.Title
         title={facility.name}
         subtitle={(
-          <View style={styles.typeContainer}>
+          <View style={[styles.typeContainer, { backgroundColor: theme.colors.primaryContainer }]}>
             <Text style={[styles.typeText, { color: theme.colors.primary }]}>
               {formatFacilityType(facility.type)}
             </Text>
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
   },
   typeContainer: {
     marginTop: 4,
-    backgroundColor: '#E6F4F1', // Light teal/primary background
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 2,

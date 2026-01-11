@@ -113,3 +113,6 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
         *   `FacilityMapView`: Uses Redux location state for centering and routing.
         *   `RecommendationScreen`: Fetches location to ensure nearest facility recommendations are accurate.
     *   **Files Created/Modified:** `src/hooks/useUserLocation.ts`, `src/store/facilitiesSlice.ts`, `src/features/facilities/FacilityDirectoryScreen.tsx`, `src/components/features/facilities/FacilityMapView.tsx`.
+*   **Color Palette Update:** Implemented a unified color system across the app.
+    *   **Palette:** Background `#F5F7F8`, Primary `#379777` (Green), Secondary `#F4CE14` (Yellow), Text/Surface `#45474B`.
+    *   **Implementation:** Created `src/theme/index.ts` defining a custom React Native Paper theme. Refactored major screens and components (`App.tsx`, `MainHomeScreen`, `FacilityDetailsScreen`, `FacilityMapView`, `YakapHomeScreen`, etc.) to use `useTheme` and dynamic colors instead of hardcoded hex values.

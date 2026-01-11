@@ -2,11 +2,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
+import { useTheme } from 'react-native-paper';
 import HeroSection from './HeroSection';
 import { RootState } from '../../store';
 
 const HomeHero: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
+  const theme = useTheme();
 
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', {
@@ -19,11 +21,11 @@ const HomeHero: React.FC = () => {
   const greeting = user ? `Kumusta, ${user.displayName || 'User'}!` : 'Kumusta!';
 
   return (
-    <HeroSection colors={['#A8D0E6', '#FFFFFF']} height={220}>
+    <HeroSection colors={[theme.colors.primaryContainer, theme.colors.background]} height={220}>
       <View style={styles.container}>
-        <Text style={styles.date}>{formattedDate}</Text>
-        <Text style={styles.greeting}>{greeting}</Text>
-        <Text style={styles.subtitle}>How can we help you today?</Text>
+        <Text style={[styles.date, { color: theme.colors.onPrimaryContainer }]}>{formattedDate}</Text>
+        <Text style={[styles.greeting, { color: theme.colors.primary }]}>{greeting}</Text>
+        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>How can we help you today?</Text>
       </View>
     </HeroSection>
   );
@@ -38,18 +40,15 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 16,
-    color: '#333',
     fontWeight: '500',
   },
   greeting: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#1A237E', 
     marginTop: 4,
   },
   subtitle: {
     fontSize: 18,
-    color: '#555',
     marginTop: 8,
   },
 });

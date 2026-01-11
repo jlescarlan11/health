@@ -25,6 +25,7 @@ import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus } from '../utils';
+import { useTheme } from 'react-native-paper';
 
 // Mock location hook - replace with actual implementation
 const useUserLocation = () => ({
@@ -39,6 +40,7 @@ const { width } = Dimensions.get('window');
 const IMAGE_HEIGHT = 250;
 
 const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
+  const theme = useTheme();
   const getIconName = (service: string) => {
     const s = service.toLowerCase();
     if (s.includes('consultation')) return 'healing';
@@ -49,10 +51,11 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
     return 'local-hospital';
   };
 
-  return <MaterialIcons name={getIconName(serviceName)} size={24} color="#4A90E2" style={styles.serviceIcon} />;
+  return <MaterialIcons name={getIconName(serviceName)} size={24} color={theme.colors.primary} style={styles.serviceIcon} />;
 };
 
 export const FacilityDetailsScreen = () => {
+  const theme = useTheme();
   const route = useRoute<FacilityDetailsRouteProp>();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
@@ -73,10 +76,10 @@ export const FacilityDetailsScreen = () => {
 
   if (!facility) {
     return (
-      <SafeAreaView style={styles.centered}>
+      <SafeAreaView style={[styles.centered, { backgroundColor: theme.colors.background }]}>
         <StandardHeader title="Details" showBackButton />
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Facility not found.</Text>
+          <Text style={[styles.errorText, { color: theme.colors.onSurfaceVariant }]}>Facility not found.</Text>
           <Button title="Go Back" onPress={() => navigation.goBack()} />
         </View>
       </SafeAreaView>
@@ -148,13 +151,13 @@ export const FacilityDetailsScreen = () => {
   const mapPreviewUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${facility.latitude},${facility.longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${facility.latitude},${facility.longitude}&key=YOUR_GOOGLE_MAPS_API_KEY`;
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
       <StandardHeader
         title={facility.name}
         showBackButton
         rightActions={
           <TouchableOpacity onPress={handleShare} style={styles.headerShareButton}>
-            <Ionicons name="share-outline" size={24} color="#000" />
+            <Ionicons name="share-outline" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
         }
       />
@@ -167,7 +170,7 @@ export const FacilityDetailsScreen = () => {
         >
           <Image
             source={images.length > 0 ? { uri: images[0].uri } : require('../../assets/icon.png')}
-            style={styles.headerImage}
+            style={[styles.headerImage, { backgroundColor: theme.colors.surfaceVariant }]}
             resizeMode="cover"
           />
           {images.length > 0 && (
@@ -191,14 +194,14 @@ export const FacilityDetailsScreen = () => {
           {/* Header Info */}
           <View style={styles.headerSection}>
             <View style={styles.titleRow}>
-              <Text style={styles.facilityName}>{facility.name}</Text>
+              <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>{facility.name}</Text>
               {facility.yakapAccredited && (
-                <View style={styles.yakapBadge}>
+                <View style={[styles.yakapBadge, { backgroundColor: theme.colors.primary }]}>
                   <Text style={styles.yakapText}>YAKAP</Text>
                 </View>
               )}
             </View>
-            <Text style={styles.facilityType}>{facility.type}</Text>
+            <Text style={[styles.facilityType, { color: theme.colors.onSurfaceVariant }]}>{facility.type}</Text>
           </View>
 
           {/* Quick Actions */}
@@ -226,20 +229,20 @@ export const FacilityDetailsScreen = () => {
             />
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
           {/* Location */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="location-outline" size={24} color="#4A90E2" />
+              <Ionicons name="location-outline" size={24} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={styles.sectionLabel}>Address</Text>
-              <Text style={styles.infoText}>{facility.address}</Text>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Address</Text>
+              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>{facility.address}</Text>
               {distance !== null && (
-                <View style={styles.distanceBadge}>
-                  <Ionicons name="navigate-circle-outline" size={14} color="#555" />
-                  <Text style={styles.distanceText}>{formatDistance(distance)} away</Text>
+                <View style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
+                  <Ionicons name="navigate-circle-outline" size={14} color={theme.colors.onSurfaceVariant} />
+                  <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>{formatDistance(distance)} away</Text>
                 </View>
               )}
             </View>
@@ -248,13 +251,13 @@ export const FacilityDetailsScreen = () => {
           {/* Hours */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="time-outline" size={24} color="#4A90E2" />
+              <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={styles.sectionLabel}>Operating Hours</Text>
-              <Text style={styles.infoText}>{facility.hours || 'Hours not available'}</Text>
-              <View style={[styles.openStatus, { backgroundColor: openStatusColor === 'green' ? '#E8F5E9' : '#FFEBEE' }]}>
-                <Text style={[styles.openStatusText, { color: openStatusColor === 'green' ? '#2E7D32' : '#C62828' }]}>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Operating Hours</Text>
+              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>{facility.hours || 'Hours not available'}</Text>
+              <View style={[styles.openStatus, { backgroundColor: openStatusColor === 'green' ? theme.colors.primaryContainer : theme.colors.errorContainer }]}>
+                <Text style={[styles.openStatusText, { color: openStatusColor === 'green' ? theme.colors.primary : theme.colors.error }]}>
                   {openStatusText}
                 </Text>
               </View>
@@ -264,24 +267,24 @@ export const FacilityDetailsScreen = () => {
           {/* Phone */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="call-outline" size={24} color="#4A90E2" />
+              <Ionicons name="call-outline" size={24} color={theme.colors.primary} />
             </View>
             <TouchableOpacity onPress={handleCall} style={styles.infoTextContainer}>
-              <Text style={styles.sectionLabel}>Phone</Text>
-              <Text style={[styles.infoText, styles.linkText]}>{facility.phone || 'Not available'}</Text>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Phone</Text>
+              <Text style={[styles.infoText, styles.linkText, { color: theme.colors.primary }]}>{facility.phone || 'Not available'}</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
           {/* Services */}
           <View style={styles.servicesSection}>
-            <Text style={styles.sectionTitle}>Services</Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Services</Text>
             <View style={styles.servicesGrid}>
               {facility.services.map((service, index) => (
-                <View key={index} style={styles.serviceItem}>
+                <View key={index} style={[styles.serviceItem, { backgroundColor: theme.colors.surfaceVariant }]}>
                   <ServiceIcon serviceName={service} />
-                  <Text style={styles.serviceText}>{service}</Text>
+                  <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>{service}</Text>
                 </View>
               ))}
             </View>
@@ -289,8 +292,8 @@ export const FacilityDetailsScreen = () => {
 
           {/* Map Preview */}
           <View style={styles.mapSection}>
-            <Text style={styles.sectionTitle}>Location Preview</Text>
-            <TouchableOpacity onPress={openInAppMap} style={styles.mapContainer}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Location Preview</Text>
+            <TouchableOpacity onPress={openInAppMap} style={[styles.mapContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
               <Image source={{ uri: mapPreviewUrl }} style={styles.mapPreview} resizeMode="cover" />
                <View style={styles.mapOverlay}>
                 <Ionicons name="map" size={32} color="white" />
@@ -307,7 +310,6 @@ export const FacilityDetailsScreen = () => {
 const styles = StyleSheet.create({
   centered: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   errorContainer: {
     flex: 1,
@@ -317,11 +319,9 @@ const styles = StyleSheet.create({
   errorText: {
     marginBottom: 20,
     fontSize: 16,
-    color: '#666',
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   headerShareButton: {
     padding: 8,
@@ -332,7 +332,6 @@ const styles = StyleSheet.create({
   headerImage: {
     width: width,
     height: IMAGE_HEIGHT,
-    backgroundColor: '#F5F5F5',
   },
   galleryIndicator: {
     position: 'absolute',
@@ -366,12 +365,10 @@ const styles = StyleSheet.create({
   facilityName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
     marginRight: 10,
     flexShrink: 1,
   },
   yakapBadge: {
-    backgroundColor: '#4CAF50',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -384,7 +381,6 @@ const styles = StyleSheet.create({
   },
   facilityType: {
     fontSize: 16,
-    color: '#666',
     fontWeight: '500',
   },
   actionButtons: {
@@ -398,7 +394,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#F0F0F0',
     marginBottom: 24,
   },
   infoSection: {
@@ -416,25 +411,21 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    color: '#888',
     marginBottom: 4,
     textTransform: 'uppercase',
     fontWeight: '600',
   },
   infoText: {
     fontSize: 16,
-    color: '#333',
     lineHeight: 24,
   },
   linkText: {
-    color: '#4A90E2',
     fontWeight: '500',
   },
   distanceBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
-    backgroundColor: '#F5F5F5',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -442,7 +433,6 @@ const styles = StyleSheet.create({
   },
   distanceText: {
     fontSize: 13,
-    color: '#555',
     marginLeft: 4,
   },
   openStatus: {
@@ -462,7 +452,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 16,
   },
   servicesGrid: {
@@ -474,7 +463,6 @@ const styles = StyleSheet.create({
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9F9',
     padding: 12,
     borderRadius: 8,
   },
@@ -483,7 +471,6 @@ const styles = StyleSheet.create({
   },
   serviceText: {
     fontSize: 14,
-    color: '#444',
     flex: 1,
   },
   mapSection: {
@@ -494,7 +481,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     height: 180,
-    backgroundColor: '#E0E0E0',
   },
   mapPreview: {
     width: '100%',

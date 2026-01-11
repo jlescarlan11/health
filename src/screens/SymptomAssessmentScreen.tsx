@@ -138,22 +138,22 @@ const SymptomAssessmentScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 }]}>
         
         <View style={styles.initialSymptomContainer}>
-            <Text variant="titleMedium" style={styles.label}>Initial Symptoms:</Text>
+            <Text variant="titleMedium" style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Initial Symptoms:</Text>
             <Text variant="bodyMedium" style={styles.symptomText}>{initialSymptom}</Text>
         </View>
 
         <View style={styles.progressContainer}>
-            <Text variant="bodySmall" style={styles.progressText}>
+            <Text variant="bodySmall" style={[styles.progressText, { color: theme.colors.onSurfaceVariant }]}>
                 Question {currentStep + 1} of {questions.length}
             </Text>
             <ProgressBar 
                 progress={(currentStep + 1) / questions.length} 
                 color={theme.colors.primary} 
-                style={styles.progressBar} 
+                style={[styles.progressBar, { backgroundColor: theme.colors.surfaceVariant }]} 
             />
         </View>
 
@@ -180,7 +180,7 @@ const SymptomAssessmentScreen = () => {
                             onChangeText={txt => setAnswers(prev => ({...prev, [currentQuestion.id]: txt}))}
                             placeholder="Type your answer..."
                             multiline
-                            style={styles.textInput}
+                            style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
                         />
                     )}
 
@@ -208,22 +208,22 @@ const SymptomAssessmentScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   loadingText: { marginTop: 16, fontSize: 16 },
   content: { padding: 16 },
   
   initialSymptomContainer: { marginBottom: 20 },
-  label: { fontWeight: 'bold', color: '#666', marginBottom: 4 },
+  label: { fontWeight: 'bold', marginBottom: 4 },
   symptomText: { fontSize: 16 },
 
   progressContainer: { marginBottom: 16 },
-  progressText: { textAlign: 'right', color: '#666', marginBottom: 4 },
-  progressBar: { height: 8, borderRadius: 4, backgroundColor: '#e0e0e0' },
+  progressText: { textAlign: 'right', marginBottom: 4 },
+  progressBar: { height: 8, borderRadius: 4 },
 
   card: { borderRadius: 12, elevation: 4, marginBottom: 16 },
   questionText: { marginBottom: 24, fontWeight: '500' },
-  textInput: { backgroundColor: 'white', minHeight: 80 },
+  textInput: { minHeight: 80 },
   
   nextButton: { marginTop: 24 },
   

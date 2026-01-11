@@ -2,11 +2,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSelector } from 'react-redux';
+import { useTheme } from 'react-native-paper';
 import HeroSection from './HeroSection';
 import { RootState } from '../../store';
 
 const ProfileHero: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
+  const theme = useTheme();
 
   const getInitials = (name: string | null | undefined) => {
     if (!name) return 'U';
@@ -26,13 +28,13 @@ const ProfileHero: React.FC = () => {
     : 'N/A';
 
   return (
-    <HeroSection colors={['#C3AED6', '#FFFFFF']} height={250}>
+    <HeroSection colors={[theme.colors.secondaryContainer, theme.colors.background]} height={250}>
       <View style={styles.container}>
-        <View style={styles.avatar}>
-          <Text style={styles.initials}>{getInitials(user?.displayName)}</Text>
+        <View style={[styles.avatar, { backgroundColor: theme.colors.primary }]}>
+          <Text style={[styles.initials, { color: theme.colors.onPrimary }]}>{getInitials(user?.displayName)}</Text>
         </View>
-        <Text style={styles.phone}>{user?.phoneNumber || 'No phone number'}</Text>
-        <Text style={styles.memberSince}>Member since {memberSince}</Text>
+        <Text style={[styles.phone, { color: theme.colors.onSurface }]}>{user?.phoneNumber || 'No phone number'}</Text>
+        <Text style={[styles.memberSince, { color: theme.colors.onSurfaceVariant }]}>Member since {memberSince}</Text>
       </View>
     </HeroSection>
   );
@@ -49,7 +51,6 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: '#6A1B9A',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -59,16 +60,13 @@ const styles = StyleSheet.create({
   initials: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   phone: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#333',
   },
   memberSince: {
     fontSize: 14,
-    color: '#666',
     marginTop: 6,
   },
 });
