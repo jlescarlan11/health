@@ -25,19 +25,19 @@ const CrisisSupportScreen = () => {
   };
 
   const ResourceCard = ({ resource }: { resource: MentalHealthResource }) => (
-    <Card style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]} elevation={0}>
+    <Card mode="outlined" style={styles.card}>
       <Card.Content>
-        <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+        <Text variant="titleLarge" style={[styles.resourceName, { color: theme.colors.primary }]}>
           {resource.name}
         </Text>
-        <Text variant="bodyMedium" style={{ marginBottom: 8, color: theme.colors.onSurfaceVariant }}>
+        <Text variant="bodyMedium" style={styles.resourceDesc}>
           {resource.description}
         </Text>
         <Button 
           mode="contained" 
           icon="phone" 
           onPress={() => handleCall(resource.number)}
-          style={{ marginTop: 8 }}
+          style={styles.callButton}
           buttonColor={theme.colors.error}
         >
           Call {resource.number}
@@ -54,24 +54,26 @@ const CrisisSupportScreen = () => {
             icon="close"
             size={24}
             onPress={() => navigation.goBack()}
-            style={{ position: 'absolute', right: 0, top: 0 }}
+            style={styles.closeButton}
           />
-          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.primary }]}>
-            You Are Not Alone
-          </Text>
-          <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-            Help is available. Please reach out to one of these free, confidential services.
-          </Text>
+          <View style={styles.titleSection}>
+            <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.primary }]}>
+              You Are Not Alone
+            </Text>
+            <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+              Confidential support is available 24/7. Please reach out to these services.
+            </Text>
+          </View>
         </View>
 
-        <Surface style={[styles.alertBox, { backgroundColor: theme.colors.secondaryContainer, borderLeftColor: theme.colors.secondary }]} elevation={0}>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSecondaryContainer }}>
+        <Surface style={[styles.alertBox, { backgroundColor: theme.colors.errorContainer }]} elevation={0}>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onErrorContainer, textAlign: 'center', lineHeight: 20 }}>
             If you are in immediate danger or have a medical emergency, please go to the nearest hospital immediately.
           </Text>
         </Surface>
 
-        <Text variant="titleLarge" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-          Crisis Hotlines
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          CRISIS HOTLINES
         </Text>
 
         {MENTAL_HEALTH_RESOURCES.map((resource, index) => (
@@ -83,7 +85,6 @@ const CrisisSupportScreen = () => {
             mode="outlined" 
             onPress={() => navigation.goBack()}
             style={styles.backButton}
-            textColor={theme.colors.primary}
           >
             I'm safe, go back
           </Button>
@@ -98,35 +99,57 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 24,
+    padding: 20,
+    paddingVertical: 24,
     paddingBottom: 40,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: 32,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+    marginRight: -8,
+    marginTop: -8,
+  },
+  titleSection: {
     alignItems: 'center',
-    position: 'relative',
+    paddingHorizontal: 8,
   },
   title: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 16,
+    fontWeight: '900',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   subtitle: {
     textAlign: 'center',
+    lineHeight: 24,
   },
   alertBox: {
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 24,
-    borderLeftWidth: 4,
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 32,
   },
   sectionTitle: {
-    fontWeight: '600',
+    fontWeight: 'bold',
     marginBottom: 16,
+    letterSpacing: 1,
+    color: '#666',
   },
   card: {
     marginBottom: 16,
-    borderWidth: 1,
+    borderRadius: 16,
+  },
+  resourceName: {
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  resourceDesc: {
+    marginBottom: 16,
+    color: '#555',
+    lineHeight: 20,
+  },
+  callButton: {
+    borderRadius: 12,
   },
   footer: {
     marginTop: 24,
@@ -134,6 +157,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     width: '100%',
+    borderRadius: 12,
   },
 });
 

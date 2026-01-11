@@ -61,14 +61,20 @@ describe('EnrollmentGuideScreen', () => {
   it('renders correctly when pathway is selected', () => {
     store = createTestStore({
       enrollment: {
+        enrollmentStatus: 'in_progress',
         selectedPathway: 'egovph',
         currentStep: 0,
         completedSteps: [],
         uploadedDocuments: {},
+        data: {},
+        completionDate: null
       },
       auth: {
         isLoggedIn: false,
-        user: null
+        user: null,
+        loading: false,
+        error: null,
+        initialized: true
       }
     });
 
@@ -82,14 +88,20 @@ describe('EnrollmentGuideScreen', () => {
   it('navigates back if no pathway selected', () => {
      store = createTestStore({
       enrollment: {
+        enrollmentStatus: 'idle',
         selectedPathway: null,
         currentStep: 0,
         completedSteps: [],
         uploadedDocuments: {},
+        data: {},
+        completionDate: null
       },
       auth: {
         isLoggedIn: false,
-        user: null
+        user: null,
+        loading: false,
+        error: null,
+        initialized: true
       }
     });
     

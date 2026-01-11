@@ -366,6 +366,11 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   actionBtn: {},
+  heroDesc: {
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.8,
+  },
 });
 
 export default YakapHomeScreen;

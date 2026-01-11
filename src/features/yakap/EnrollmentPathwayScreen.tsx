@@ -112,11 +112,11 @@ export const EnrollmentPathwayScreen = () => {
           <Card
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
-            style={[
+            style={StyleSheet.flatten([
               styles.card,
               { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
               pathway.recommended && { borderColor: theme.colors.primary, borderWidth: 2 }
-            ]}
+            ])}
           >
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderTitle}>
@@ -156,7 +156,7 @@ export const EnrollmentPathwayScreen = () => {
       <Modal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
-        contentContainerStyle={[styles.modalContent, { backgroundColor: theme.colors.surface }]}
+        contentContainerStyle={StyleSheet.flatten([styles.modalContent, { backgroundColor: theme.colors.surface }])}
       >
         <Text variant="headlineSmall" style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Confirm Selection</Text>
         <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>

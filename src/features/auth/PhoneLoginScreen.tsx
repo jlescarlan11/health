@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +24,7 @@ export const PhoneLoginScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
   const dispatch = useDispatch();
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const validatePhone = (phone: string) => {
     // Remove non-digits just in case, though keyboard type helps
@@ -36,6 +37,12 @@ export const PhoneLoginScreen = () => {
       return 'Phone number must start with 9.';
     }
     return null;
+  };
+
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
   };
 
   const handleSendOTP = async () => {
@@ -82,10 +89,15 @@ export const PhoneLoginScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoid}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView 
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent} 
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.header}>
             <Text variant="headlineMedium" style={styles.title}>Welcome to HEALTH</Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
@@ -111,6 +123,7 @@ export const PhoneLoginScreen = () => {
                   placeholder="9123456789"
                   errorText={inputError}
                   autoFocus
+                  onFocus={handleInputFocus}
                 />
               </View>
             </View>
@@ -194,3 +207,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
+
+export default PhoneLoginScreen;

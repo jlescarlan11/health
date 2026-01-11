@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Button, Card, RadioButton, TextInput, ProgressBar, ActivityIndicator, useTheme } from 'react-native-paper';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { CheckStackScreenProps } from '../types/navigation';
@@ -23,6 +23,8 @@ const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
+  const scrollViewRef = useRef<ScrollView>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -30,6 +32,10 @@ const SymptomAssessmentScreen = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Header height for KeyboardAvoidingView offset
+  const headerHeight = 60;
+  const keyboardVerticalOffset = Platform.OS === 'ios' ? headerHeight + insets.top : 0;
 
   useEffect(() => {
     // Check for immediate escalation
@@ -72,17 +78,11 @@ const SymptomAssessmentScreen = () => {
   };
 
   const handleNext = () => {
-    // 1. Immediate Emergency Check on current answer
     const currentAnswer = currentQuestion ? answers[currentQuestion.id] : '';
-    // Check specifically the new answer, or we could check the whole context. 
-    // Checking the specific answer is usually enough for "I have chest pain now"
     const emergencyCheck = detectEmergency(currentAnswer);
     
     if (emergencyCheck.isEmergency) {
-        // Log detection
         console.log("Emergency detected during assessment:", emergencyCheck.matchedKeywords);
-        
-        // Terminate and navigate immediately
         const partialData = {
             symptoms: initialSymptom,
             answers: { ...answers, [currentQuestion?.id || 'last']: currentAnswer }
@@ -102,8 +102,6 @@ const SymptomAssessmentScreen = () => {
     if (currentStep > 0) {
       setCurrentStep(curr => curr - 1);
     } else {
-        // Optional: warn user before exiting? 
-        // For now, we just go back to the previous screen (NavigatorHome)
         navigation.goBack();
     }
   };
@@ -114,6 +112,12 @@ const SymptomAssessmentScreen = () => {
         answers: answers
     };
     navigation.navigate('Recommendation', { assessmentData });
+  };
+
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 150);
   };
 
   const currentQuestion = questions[currentStep];
@@ -139,70 +143,100 @@ const SymptomAssessmentScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: 24 }]}>
-        
-        <View style={styles.initialSymptomContainer}>
-            <Text variant="titleMedium" style={[styles.label, { color: theme.colors.onSurfaceVariant }]}>Initial Symptoms:</Text>
-            <Text variant="bodyMedium" style={styles.symptomText}>{initialSymptom}</Text>
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+      >
+        <ScrollView 
+          ref={scrollViewRef}
+          contentContainerStyle={[styles.content, { paddingBottom: 40 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          
+          <View style={styles.header}>
+              <Text variant="labelLarge" style={[styles.label, { color: theme.colors.primary }]}>Initial Assessment</Text>
+              <Text variant="bodyMedium" style={[styles.symptomText, { color: theme.colors.onSurfaceVariant }]}>"{initialSymptom}"</Text>
+          </View>
 
-        <View style={styles.progressContainer}>
-            <Text variant="bodySmall" style={[styles.progressText, { color: theme.colors.onSurfaceVariant }]}>
-                Question {currentStep + 1} of {questions.length}
-            </Text>
-            <ProgressBar 
-                progress={(currentStep + 1) / questions.length} 
-                color={theme.colors.primary} 
-                style={[styles.progressBar, { backgroundColor: theme.colors.surfaceVariant }]} 
-            />
-        </View>
+          <View style={styles.progressSection}>
+              <View style={styles.progressHeader}>
+                  <Text variant="titleSmall" style={[styles.progressTitle, { color: theme.colors.onSurface }]}>Progress</Text>
+                  <Text variant="labelMedium" style={[styles.progressText, { color: theme.colors.onSurfaceVariant }]}>
+                      Step {currentStep + 1} of {questions.length}
+                  </Text>
+              </View>
+              <ProgressBar 
+                  progress={(currentStep + 1) / questions.length} 
+                  color={theme.colors.primary} 
+                  style={[styles.progressBar, { backgroundColor: theme.colors.surfaceVariant }]} 
+              />
+          </View>
 
-        {currentQuestion && (
-            <Card style={styles.card}>
-                <Card.Content>
-                    <Text variant="headlineSmall" style={styles.questionText}>
-                        {currentQuestion.text}
-                    </Text>
-                    
-                    {currentQuestion.type === 'choice' && currentQuestion.options ? (
-                        <RadioButton.Group 
-                            onValueChange={val => setAnswers(prev => ({...prev, [currentQuestion.id]: val}))} 
-                            value={currentAnswer}
-                        >
-                            {currentQuestion.options.map(opt => (
-                                <RadioButton.Item key={opt} label={opt} value={opt} />
-                            ))}
-                        </RadioButton.Group>
-                    ) : (
-                        <TextInput
-                            mode="outlined"
-                            value={currentAnswer}
-                            onChangeText={txt => setAnswers(prev => ({...prev, [currentQuestion.id]: txt}))}
-                            placeholder="Type your answer..."
-                            multiline
-                            style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
-                        />
-                    )}
+          {currentQuestion && (
+              <Card mode="outlined" style={styles.card}>
+                  <Card.Content>
+                      <Text variant="headlineSmall" style={styles.questionText}>
+                          {currentQuestion.text}
+                      </Text>
+                      
+                      <View style={styles.answerContainer}>
+                          {currentQuestion.type === 'choice' && currentQuestion.options ? (
+                              <RadioButton.Group 
+                                  onValueChange={val => setAnswers(prev => ({...prev, [currentQuestion.id]: val}))} 
+                                  value={currentAnswer}
+                              >
+                                  {currentQuestion.options.map(opt => (
+                                      <RadioButton.Item 
+                                          key={opt} 
+                                          label={opt} 
+                                          value={opt} 
+                                          mode="android"
+                                          labelStyle={styles.radioLabel}
+                                      />
+                                  ))}
+                              </RadioButton.Group>
+                          ) : (
+                              <TextInput
+                                  mode="outlined"
+                                  value={currentAnswer}
+                                  onChangeText={txt => setAnswers(prev => ({...prev, [currentQuestion.id]: txt}))}
+                                  onFocus={handleInputFocus}
+                                  placeholder="Type your answer here..."
+                                  multiline
+                                  numberOfLines={3}
+                                  style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
+                              />
+                          )}
+                      </View>
 
-                    <Button 
-                        mode="contained" 
-                        onPress={handleNext} 
-                        style={styles.nextButton}
-                        disabled={!currentAnswer}
-                    >
-                        {currentStep === questions.length - 1 ? 'Finish Assessment' : 'Next'}
-                    </Button>
-                </Card.Content>
-            </Card>
-        )}
-        
-        <View style={styles.backButtonContainer}>
-            <Button mode="text" onPress={handleBack} icon="arrow-left">
-                {currentStep === 0 ? 'Back to Start' : 'Edit Previous Answer'}
-            </Button>
-        </View>
+                      <Button 
+                          mode="contained" 
+                          onPress={handleNext} 
+                          style={styles.nextButton}
+                          disabled={!currentAnswer}
+                          icon={currentStep === questions.length - 1 ? 'check' : 'chevron-right'}
+                      >
+                          {currentStep === questions.length - 1 ? 'Finish Assessment' : 'Next Question'}
+                      </Button>
+                  </Card.Content>
+              </Card>
+          )}
+          
+          <View style={styles.navigationActions}>
+              <Button 
+                  mode="text" 
+                  onPress={handleBack} 
+                  icon="arrow-left"
+                  textColor={theme.colors.onSurfaceVariant}
+              >
+                  {currentStep === 0 ? 'Start Over' : 'Go Back'}
+              </Button>
+          </View>
 
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -210,24 +244,28 @@ const SymptomAssessmentScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  loadingText: { marginTop: 16, fontSize: 16 },
-  content: { padding: 16 },
+  loadingText: { marginTop: 16, fontSize: 16, fontWeight: '500' },
+  content: { padding: 16, paddingVertical: 24 },
   
-  initialSymptomContainer: { marginBottom: 20 },
-  label: { fontWeight: 'bold', marginBottom: 4 },
-  symptomText: { fontSize: 16 },
+  header: { marginBottom: 32, paddingHorizontal: 4 },
+  label: { fontWeight: 'bold', marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' },
+  symptomText: { fontSize: 16, fontStyle: 'italic', lineHeight: 22 },
 
-  progressContainer: { marginBottom: 16 },
-  progressText: { textAlign: 'right', marginBottom: 4 },
-  progressBar: { height: 8, borderRadius: 4 },
+  progressSection: { marginBottom: 32 },
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 },
+  progressTitle: { fontWeight: 'bold' },
+  progressText: { marginBottom: 0 },
+  progressBar: { height: 10, borderRadius: 5 },
 
-  card: { borderRadius: 12, elevation: 4, marginBottom: 16 },
-  questionText: { marginBottom: 24, fontWeight: '500' },
-  textInput: { minHeight: 80 },
+  card: { borderRadius: 16, marginBottom: 24, paddingVertical: 8 },
+  questionText: { marginBottom: 24, fontWeight: '700', lineHeight: 32 },
+  answerContainer: { marginBottom: 8 },
+  radioLabel: { fontSize: 16 },
+  textInput: { minHeight: 100, marginBottom: 8 },
   
-  nextButton: { marginTop: 24 },
+  nextButton: { marginTop: 16, borderRadius: 12, paddingVertical: 4 },
   
-  backButtonContainer: { alignItems: 'center' },
+  navigationActions: { alignItems: 'center', marginTop: 8 },
 });
 
 export default SymptomAssessmentScreen;

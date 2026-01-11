@@ -142,15 +142,16 @@ const RecommendationScreen = () => {
                 
                 {/* Emergency Alert */}
                 {isEmergency && (
-                    <View style={[styles.emergencyBanner, { backgroundColor: theme.colors.error }]}>
+                    <Surface style={[styles.emergencyBanner, { backgroundColor: theme.colors.error }]} elevation={4}>
                         <View style={styles.emergencyHeader}>
                             <MaterialCommunityIcons name="alert-octagon" size={48} color="white" />
                             <View style={styles.emergencyTextContainer}>
-                                <Text style={styles.emergencyTitle}>SEEK EMERGENCY CARE IMMEDIATELY</Text>
+                                <Text style={styles.emergencyTitle}>EMERGENCY DETECTED</Text>
+                                <Text style={styles.emergencySubtitle}>Seek care immediately</Text>
                             </View>
                         </View>
                         <Text style={styles.emergencyText}>
-                            Your symptoms indicate a potential medical emergency. Go to the nearest hospital immediately.
+                            Your symptoms indicate a potential medical emergency. Go to the nearest hospital or call 911 right now.
                         </Text>
                         <EmergencyButton 
                             onPress={() => handleCall('911')} 
@@ -158,52 +159,60 @@ const RecommendationScreen = () => {
                             buttonColor="white"
                             textColor={theme.colors.error}
                         />
-                    </View>
+                    </Surface>
                 )}
 
                 {/* Mental Health Support */}
                 {isMentalHealth && (
-                    <Surface style={[styles.mhBanner, { backgroundColor: theme.colors.tertiaryContainer }]} elevation={2}>
+                    <Surface style={[styles.mhBanner, { backgroundColor: theme.colors.tertiaryContainer }]} elevation={1}>
                         <View style={styles.mhHeader}>
-                            <MaterialCommunityIcons name="heart-pulse" size={40} color={theme.colors.onTertiaryContainer} />
-                            <Text variant="headlineSmall" style={[styles.mhTitle, { color: theme.colors.onTertiaryContainer }]}>
-                                We are here to help
+                            <MaterialCommunityIcons name="heart-pulse" size={32} color={theme.colors.onTertiaryContainer} />
+                            <Text variant="titleLarge" style={[styles.mhTitle, { color: theme.colors.onTertiaryContainer }]}>
+                                You're not alone
                             </Text>
                         </View>
-                        <Text style={{ color: theme.colors.onTertiaryContainer, marginBottom: 16 }}>
+                        <Text variant="bodyMedium" style={{ color: theme.colors.onTertiaryContainer, marginBottom: 16, lineHeight: 22 }}>
                             {recommendation.reasoning}
                         </Text>
-                        <Text style={{ fontWeight: 'bold', color: theme.colors.onTertiaryContainer }}>
-                            24/7 Crisis Hotline:
-                        </Text>
-                        <Button 
-                            icon="phone" 
-                            mode="contained" 
-                            buttonColor={theme.colors.tertiary}
-                            textColor={theme.colors.onTertiary}
-                            onPress={() => handleCall('09175584673')} // Example Hopeline PH
-                            style={styles.mhButton}
-                        >
-                            Call Hopeline: 0917-558-4673
-                        </Button>
+                        <Divider style={{ backgroundColor: theme.colors.tertiary, opacity: 0.2, marginBottom: 16 }} />
+                        <View style={styles.mhActionRow}>
+                            <View style={{ flex: 1 }}>
+                                <Text variant="labelLarge" style={{ color: theme.colors.onTertiaryContainer, fontWeight: 'bold' }}>
+                                    24/7 Crisis Hotline
+                                </Text>
+                                <Text variant="bodySmall" style={{ color: theme.colors.onTertiaryContainer }}>
+                                    Confidential support is available
+                                </Text>
+                            </View>
+                            <Button 
+                                icon="phone" 
+                                mode="contained" 
+                                buttonColor={theme.colors.tertiary}
+                                textColor={theme.colors.onTertiary}
+                                onPress={() => handleCall('09175584673')}
+                                style={styles.mhButton}
+                            >
+                                Call Now
+                            </Button>
+                        </View>
                     </Surface>
                 )}
 
                 {/* Recommendation Card */}
                 {!isMentalHealth && (
-                    <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
+                    <Card mode="outlined" style={[styles.card, { backgroundColor: theme.colors.surface }]}>
                         <Card.Content style={styles.cardHeader}>
                             <Avatar.Icon 
-                                size={64} 
+                                size={56} 
                                 icon={isEmergency ? "ambulance" : "hospital-building"} 
-                                style={{ backgroundColor: isEmergency ? theme.colors.error : theme.colors.primary }}
+                                style={{ backgroundColor: isEmergency ? theme.colors.errorContainer : theme.colors.primaryContainer }}
+                                color={isEmergency ? theme.colors.error : theme.colors.primary}
                             />
                             <View style={styles.recTextContainer}>
-                                <Text variant="titleMedium">Recommended Care</Text>
+                                <Text variant="labelLarge" style={{ color: theme.colors.onSurfaceVariant, letterSpacing: 1 }}>CARE LEVEL</Text>
                                 <Text variant="headlineSmall" style={{ 
                                     color: isEmergency ? theme.colors.error : theme.colors.primary, 
                                     fontWeight: 'bold',
-                                    flexWrap: 'wrap'
                                 }}>
                                     {recommendation.recommended_level}
                                 </Text>
@@ -211,14 +220,21 @@ const RecommendationScreen = () => {
                         </Card.Content>
                         <Divider style={styles.divider} />
                         <Card.Content>
-                            <Text variant="bodyMedium" style={[styles.reasoning, { color: theme.colors.onSurface }]}>{recommendation.reasoning}</Text>
+                            <Text variant="bodyLarge" style={[styles.reasoning, { color: theme.colors.onSurface }]}>
+                                {recommendation.reasoning}
+                            </Text>
                             {recommendation.red_flags && recommendation.red_flags.length > 0 && (
                                 <View style={[styles.redFlags, { backgroundColor: theme.colors.errorContainer }]}>
-                                    <Text style={{ color: theme.colors.error, fontWeight: 'bold', marginBottom: 4 }}>
-                                        <MaterialCommunityIcons name="alert" size={16} /> Important Alerts:
-                                    </Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                                        <MaterialCommunityIcons name="alert-circle" size={20} color={theme.colors.error} />
+                                        <Text variant="labelLarge" style={{ color: theme.colors.error, fontWeight: 'bold', marginLeft: 8 }}>
+                                            IMPORTANT ALERTS
+                                        </Text>
+                                    </View>
                                     {recommendation.red_flags.map((flag: string, idx: number) => (
-                                        <Text key={idx} style={{ color: theme.colors.error, marginLeft: 8 }}>• {flag}</Text>
+                                        <Text key={idx} variant="bodyMedium" style={{ color: theme.colors.onErrorContainer, marginLeft: 28, marginBottom: 4 }}>
+                                            • {flag}
+                                        </Text>
                                     ))}
                                 </View>
                             )}
@@ -227,49 +243,66 @@ const RecommendationScreen = () => {
                 )}
 
                 {/* Nearest Facilities */}
-                <Text variant="titleLarge" style={styles.sectionTitle}>
-                    {isEmergency ? "Nearest Hospitals" : "Recommended Facilities"}
-                </Text>
-                
-                {recommendedFacilities.map(facility => (
-                    <View key={facility.id} style={styles.facilityWrapper}>
-                        <FacilityCard 
-                            facility={facility} 
-                            showDistance={true}
-                            distance={facility.distance}
-                            onPress={() => handleViewDetails(facility.id)}
-                        />
-                        <View style={[styles.actionRow, { backgroundColor: theme.colors.surface, borderTopColor: theme.colors.outlineVariant }]}>
-                            <Button 
-                                icon="phone" 
-                                mode="text" 
-                                compact 
-                                disabled={!facility.phone}
-                                onPress={() => handleCall(facility.phone)}
-                            >
-                                Call
-                            </Button>
-                            <Button 
-                                icon="directions" 
-                                mode="text" 
-                                compact 
-                                onPress={() => handleDirections(facility)}
-                            >
-                                Directions
-                            </Button>
-                        </View>
-                    </View>
-                ))}
+                <View style={styles.facilitiesSection}>
+                    <Text variant="titleLarge" style={styles.sectionTitle}>
+                        {isEmergency ? "Nearest Emergency Care" : "Recommended Facilities"}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.sectionSubtitle}>
+                        Based on your current location and symptoms
+                    </Text>
+                    
+                    {recommendedFacilities.map(facility => (
+                        <Card key={facility.id} mode="elevated" style={styles.facilityCard}>
+                            <FacilityCard 
+                                facility={facility} 
+                                showDistance={true}
+                                distance={facility.distance}
+                                onPress={() => handleViewDetails(facility.id)}
+                            />
+                            <View style={[styles.actionRow, { borderTopColor: theme.colors.outlineVariant }]}>
+                                <Button 
+                                    icon="phone" 
+                                    mode="text" 
+                                    onPress={() => handleCall(facility.phone)}
+                                    disabled={!facility.phone}
+                                    style={styles.actionButton}
+                                >
+                                    Call
+                                </Button>
+                                <Divider style={{ width: 1, height: '60%' }} />
+                                <Button 
+                                    icon="directions" 
+                                    mode="text" 
+                                    onPress={() => handleDirections(facility)}
+                                    style={styles.actionButton}
+                                >
+                                    Directions
+                                </Button>
+                            </View>
+                        </Card>
+                    ))}
 
-                {recommendedFacilities.length === 0 && (
-                     <Text style={{ textAlign: 'center', color: theme.colors.onSurfaceVariant, marginBottom: 20 }}>
-                        No matching facilities found nearby.
-                     </Text>
-                )}
+                    {recommendedFacilities.length === 0 && (
+                         <Surface style={styles.emptyState} elevation={0}>
+                            <MaterialCommunityIcons name="map-marker-off" size={48} color={theme.colors.outline} />
+                            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
+                                No matching facilities found nearby.
+                            </Text>
+                         </Surface>
+                    )}
+                </View>
 
                 {/* Disclaimer */}
                 <View style={styles.footer}>
                      <DisclaimerBanner onAccept={() => {}} visible={true} />
+                     <Button 
+                        mode="outlined" 
+                        onPress={() => navigation.popToTop()} 
+                        style={styles.doneButton}
+                        icon="home"
+                     >
+                        Back to Home
+                     </Button>
                 </View>
 
             </ScrollView>
@@ -280,56 +313,57 @@ const RecommendationScreen = () => {
 const styles = StyleSheet.create({
     container: { flex: 1 },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    loadingText: { marginTop: 16 },
-    content: { padding: 16, paddingBottom: 40 },
+    loadingText: { marginTop: 16, fontWeight: '500' },
+    content: { padding: 16, paddingVertical: 24, paddingBottom: 60 },
     
     emergencyBanner: {
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 24,
-        elevation: 4
-    },
-    emergencyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-    emergencyTextContainer: { flex: 1, marginLeft: 12 },
-    emergencyTitle: { color: 'white', fontWeight: 'bold', fontSize: 20, flexWrap: 'wrap' },
-    emergencyText: { color: 'white', fontSize: 16, marginBottom: 16 },
-    emergencyButton: { marginVertical: 8 },
-    
-    mhBanner: {
         padding: 20,
         borderRadius: 16,
-        marginBottom: 24,
+        marginBottom: 32,
     },
-    mhHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+    emergencyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+    emergencyTextContainer: { flex: 1, marginLeft: 16 },
+    emergencyTitle: { color: 'white', fontWeight: '900', fontSize: 18, letterSpacing: 1 },
+    emergencySubtitle: { color: 'rgba(255,255,255,0.8)', fontSize: 14, fontWeight: 'bold' },
+    emergencyText: { color: 'white', fontSize: 16, marginBottom: 20, lineHeight: 22 },
+    emergencyButton: { borderRadius: 12 },
+    
+    mhBanner: {
+        padding: 24,
+        borderRadius: 20,
+        marginBottom: 32,
+    },
+    mhHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
     mhTitle: { marginLeft: 12, fontWeight: 'bold' },
-    mhButton: { marginTop: 8 },
+    mhActionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    mhButton: { borderRadius: 12 },
 
-    card: { marginBottom: 24, borderRadius: 12 },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8 },
+    card: { marginBottom: 32, borderRadius: 16, overflow: 'hidden' },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
     recTextContainer: { marginLeft: 16, flex: 1 },
-    reasoning: { lineHeight: 22 },
-    divider: { marginVertical: 8 },
-    redFlags: { marginTop: 16, padding: 12, borderRadius: 8 },
+    reasoning: { lineHeight: 24, marginBottom: 8 },
+    divider: { marginHorizontal: 16 },
+    redFlags: { marginTop: 16, padding: 16, borderRadius: 12 },
     
-    sectionTitle: { marginBottom: 12, fontWeight: 'bold', marginTop: 8 },
+    facilitiesSection: { marginBottom: 32 },
+    sectionTitle: { fontWeight: 'bold', marginBottom: 4 },
+    sectionSubtitle: { color: '#666', marginBottom: 16 },
     
-    facilityWrapper: { marginBottom: 16 },
+    facilityCard: { marginBottom: 16, borderRadius: 16, overflow: 'hidden' },
     actionRow: { 
         flexDirection: 'row', 
+        alignItems: 'center',
         justifyContent: 'space-around', 
-        borderBottomLeftRadius: 12, 
-        borderBottomRightRadius: 12,
-        marginTop: -8, // tuck under the card
-        paddingTop: 8,
-        paddingBottom: 4,
-        elevation: 1,
+        paddingVertical: 4,
         borderTopWidth: 1,
+        backgroundColor: 'rgba(0,0,0,0.02)'
     },
+    actionButton: { flex: 1 },
     
-    mapPreview: { height: 180, borderRadius: 12, overflow: 'hidden', marginBottom: 24 },
-    mapPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    emptyState: { padding: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 16 },
     
-    footer: { marginTop: 16 }
+    footer: { marginTop: 8 },
+    doneButton: { marginTop: 16, borderRadius: 12 }
 });
 
 export default RecommendationScreen;

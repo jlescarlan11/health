@@ -56,7 +56,7 @@ describe('FacilityDetailsScreen', () => {
     (useRoute as jest.Mock).mockReturnValue({
       params: { facilityId: '1' },
     });
-    (useSelector as jest.Mock).mockReturnValue(mockFacility);
+    (useSelector as unknown as jest.Mock).mockReturnValue(mockFacility);
     
     mockOpenURL.mockClear();
     mockShare.mockClear();

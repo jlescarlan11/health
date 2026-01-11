@@ -223,7 +223,7 @@ export const FacilityDetailsScreen = () => {
                     onPress={requestPermission} 
                     style={[styles.distanceBadge, { backgroundColor: theme.colors.errorContainer }]}
                   >
-                    <Ionicons name="location-off" size={14} color={theme.colors.error} />
+                    <Ionicons name="location" size={14} color={theme.colors.error} />
                     <Text style={[styles.distanceText, { color: theme.colors.error }]}>Enable location to see distance</Text>
                   </TouchableOpacity>
                 )
