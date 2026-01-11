@@ -85,7 +85,7 @@ export const MainHomeScreen = () => {
 
     return (
       <Card
-        style={[styles.card, { backgroundColor: theme.colors.surface }]}
+        style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
         onPress={onPress}
         testID={testID}
         accessible={true}
@@ -195,10 +195,10 @@ export const MainHomeScreen = () => {
       </View>
 
       <Portal>
-        <Dialog visible={showDisclaimer} onDismiss={() => {}} dismissable={false}>
-          <Dialog.Title accessibilityRole="header">Welcome to HEALTH</Dialog.Title>
+        <Dialog visible={showDisclaimer} onDismiss={() => {}} dismissable={false} style={{ backgroundColor: theme.colors.surface }}>
+          <Dialog.Title accessibilityRole="header" style={{ color: theme.colors.onSurface }}>Welcome to HEALTH</Dialog.Title>
           <Dialog.Content>
-            <Paragraph>
+            <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>
               This application provides health information and guidance but is not a substitute for
               professional medical advice, diagnosis, or treatment. Always seek the advice of your
               physician or other qualified health provider with any questions you may have regarding
@@ -209,6 +209,7 @@ export const MainHomeScreen = () => {
             <Button
               onPress={handleAcceptDisclaimer}
               accessibilityHint="Double tap to accept terms and continue"
+              textColor={theme.colors.primary}
             >
               I Understand
             </Button>
@@ -224,26 +225,24 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40, // Reduced padding to minimize space while clearing emergency button
+    paddingBottom: 40,
   },
   cardsContainer: {
     marginTop: 24,
-    paddingHorizontal: 20, // Apply padding here for cards, not to HomeHero
+    paddingHorizontal: 20,
     gap: 16,
   },
   card: {
     borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.22,
-    shadowRadius: 2.22,
+    elevation: 0, // Kanso: Simplify by removing shadow
+    borderWidth: 1, // Add subtle border for definition
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
   },
+
   iconContainer: {
     width: 56,
     height: 56,

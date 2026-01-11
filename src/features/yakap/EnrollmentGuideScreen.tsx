@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
-import { Checkbox, Button, ProgressBar, ActivityIndicator, Divider } from 'react-native-paper';
+import { Checkbox, Button, ProgressBar, ActivityIndicator, Divider, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
@@ -23,6 +23,7 @@ import { uploadFileToFirebase } from '../../services/storageService';
 const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const theme = useTheme(); // Use theme
   const user = useSelector(selectUser);
   const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
 
@@ -138,48 +139,48 @@ const EnrollmentGuideScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
       <StandardHeader title="Enrollment Guide" showBackButton />
       
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerSection}>
-          <Text style={styles.pathwayName}>{pathway.name}</Text>
-          <Text style={styles.stepCounter}>Step {currentStep + 1} of {totalSteps}</Text>
-          <ProgressBar progress={progress} color="#2E7D32" style={styles.progressBar} />
-          <Text style={styles.completionText}>{completionPercentage}% Completed</Text>
+          <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>{pathway.name}</Text>
+          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>Step {currentStep + 1} of {totalSteps}</Text>
+          <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
+          <Text style={[styles.completionText, { color: theme.colors.onSurfaceVariant }]}>{completionPercentage}% Completed</Text>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
             <View style={styles.stepHeader}>
-                <View style={styles.stepNumberBadge}>
-                    <Text style={styles.stepNumberText}>{currentStep + 1}</Text>
+                <View style={[styles.stepNumberBadge, { backgroundColor: theme.colors.primaryContainer }]}>
+                    <Text style={[styles.stepNumberText, { color: theme.colors.primary }]}>{currentStep + 1}</Text>
                 </View>
-                <Text style={styles.stepTitle}>Current Instruction</Text>
+                <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Current Instruction</Text>
             </View>
             
-            <Text style={styles.instructionText}>{currentStepData}</Text>
+            <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>{currentStepData}</Text>
             
             <Divider style={styles.divider} />
             
-            <View style={styles.tipsSection}>
-                <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color="#F57C00" />
-                <Text style={styles.tipsText}>
+            <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
+                <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={theme.colors.secondary} />
+                <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
                     Tip: Ensure all information provided matches your official documents to avoid delays.
                 </Text>
             </View>
 
             {/* Document Upload Section */}
             <View style={styles.uploadSection}>
-                <Text style={styles.uploadLabel}>Required Documents</Text>
-                <Text style={styles.uploadHint}>Attach any relevant files for this step (optional).</Text>
+                <Text style={[styles.uploadLabel, { color: theme.colors.onSurface }]}>Required Documents</Text>
+                <Text style={[styles.uploadHint, { color: theme.colors.onSurfaceVariant }]}>Attach any relevant files for this step (optional).</Text>
                 
                 {uploadedDocuments[currentStep] ? (
-                    <View style={styles.filePreview}>
-                        <MaterialCommunityIcons name="file-check" size={24} color="#2E7D32" />
-                        <Text style={styles.fileName} numberOfLines={1}>
+                    <View style={[styles.filePreview, { backgroundColor: theme.colors.primaryContainer }]}>
+                        <MaterialCommunityIcons name="file-check" size={24} color={theme.colors.primary} />
+                        <Text style={[styles.fileName, { color: theme.colors.primary }]} numberOfLines={1}>
                             Document Attached
                         </Text>
-                        <Button mode="text" onPress={handleUploadDocument} disabled={uploading}>
+                        <Button mode="text" onPress={handleUploadDocument} disabled={uploading} textColor={theme.colors.primary}>
                             Replace
                         </Button>
                     </View>
@@ -189,7 +190,8 @@ const EnrollmentGuideScreen = () => {
                         onPress={handleUploadDocument} 
                         loading={uploading}
                         icon="upload"
-                        style={styles.uploadButton}
+                        style={[styles.uploadButton, { borderColor: theme.colors.primary }]}
+                        textColor={theme.colors.primary}
                     >
                         Upload Document
                     </Button>
@@ -201,9 +203,9 @@ const EnrollmentGuideScreen = () => {
                 <Checkbox
                     status={completedSteps.includes(currentStep) ? 'checked' : 'unchecked'}
                     onPress={handleToggleComplete}
-                    color="#2E7D32"
+                    color={theme.colors.primary}
                 />
-                <Text style={styles.checkboxLabel}>Mark this step as completed</Text>
+                <Text style={[styles.checkboxLabel, { color: theme.colors.onSurface }]}>Mark this step as completed</Text>
             </TouchableOpacity>
         </View>
 
@@ -214,6 +216,7 @@ const EnrollmentGuideScreen = () => {
                 onPress={handlePrevious} 
                 disabled={currentStep === 0}
                 style={styles.navButton}
+                textColor={theme.colors.primary}
             >
                 Previous
             </Button>
@@ -221,7 +224,7 @@ const EnrollmentGuideScreen = () => {
                 mode="contained" 
                 onPress={handleNext} 
                 style={styles.navButton}
-                buttonColor="#2E7D32"
+                buttonColor={theme.colors.primary}
             >
                 {currentStep === totalSteps - 1 ? "Finish" : "Next"}
             </Button>
@@ -233,11 +236,12 @@ const EnrollmentGuideScreen = () => {
                 mode="text" 
                 onPress={handleSaveProgress}
                 icon="content-save"
+                textColor={theme.colors.primary}
             >
                 Save Progress manually
             </Button>
             {lastSaved && (
-                <Text style={styles.lastSavedText}>
+                <Text style={[styles.lastSavedText, { color: theme.colors.onSurfaceVariant }]}>
                     Last saved: {lastSaved.toLocaleTimeString()}
                 </Text>
             )}
@@ -251,7 +255,6 @@ const EnrollmentGuideScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     padding: 16,
@@ -263,12 +266,10 @@ const styles = StyleSheet.create({
   pathwayName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
     marginBottom: 8,
   },
   stepCounter: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 8,
   },
   progressBar: {
@@ -279,19 +280,14 @@ const styles = StyleSheet.create({
   },
   completionText: {
     fontSize: 12,
-    color: '#666',
     textAlign: 'right',
   },
   card: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    elevation: 0,
+    borderWidth: 1,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -302,7 +298,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E8F5E9',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -310,16 +305,13 @@ const styles = StyleSheet.create({
   stepNumberText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#2E7D32',
   },
   stepTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
   },
   instructionText: {
     fontSize: 16,
-    color: '#424242',
     lineHeight: 24,
     marginBottom: 16,
   },
@@ -328,7 +320,6 @@ const styles = StyleSheet.create({
   },
   tipsSection: {
     flexDirection: 'row',
-    backgroundColor: '#FFF3E0',
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
@@ -338,7 +329,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
-    color: '#EF6C00',
     lineHeight: 20,
   },
   uploadSection: {
@@ -348,20 +338,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
-    color: '#333',
   },
   uploadHint: {
     fontSize: 14,
-    color: '#666',
     marginBottom: 12,
   },
   uploadButton: {
-    borderColor: '#2E7D32',
   },
   filePreview: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
     padding: 12,
     borderRadius: 8,
   },
@@ -369,7 +355,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     marginRight: 8,
-    color: '#2E7D32',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -378,7 +363,6 @@ const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 16,
-    color: '#333',
   },
   navigationButtons: {
     flexDirection: 'row',
@@ -394,7 +378,6 @@ const styles = StyleSheet.create({
   },
   lastSavedText: {
     fontSize: 12,
-    color: '#999',
     marginTop: 4,
   },
 });

@@ -129,11 +129,11 @@ const NavigatorHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
          <View style={styles.header}>
             <Text variant="headlineMedium" style={[styles.branding, { color: theme.colors.primary }]}>HEALTH Navigator</Text>
-            <Text variant="bodyMedium" style={styles.subtitle}>AI-Powered Health Assistant for Naga City</Text>
+            <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>AI-Powered Health Assistant for Naga City</Text>
          </View>
 
          {!hasSeenDisclaimer && (
@@ -142,7 +142,7 @@ const NavigatorHomeScreen = () => {
            </View>
          )}
 
-         <Surface style={styles.inputSection} elevation={1}>
+         <Surface style={[styles.inputSection, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]} elevation={0}>
            <TextInput
              mode="outlined"
              label="Describe your symptoms"
@@ -152,7 +152,7 @@ const NavigatorHomeScreen = () => {
              maxLength={500}
              value={symptom}
              onChangeText={setSymptom}
-             style={styles.textInput}
+             style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
              right={<TextInput.Affix text={`${symptom.length}/500`} />}
            />
            
@@ -220,14 +220,14 @@ const NavigatorHomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
+  container: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingVertical: 16, paddingBottom: 80 },
   header: { alignItems: 'center', marginBottom: 20 },
   branding: { fontWeight: 'bold' },
-  subtitle: { color: '#5f6368', marginTop: 4 },
+  subtitle: { marginTop: 4 },
   disclaimerContainer: { marginBottom: 16 },
-  inputSection: { padding: 16, borderRadius: 12, backgroundColor: 'white', marginBottom: 24 },
-  textInput: { backgroundColor: 'white', marginBottom: 16 },
+  inputSection: { padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 24 },
+  textInput: { marginBottom: 16 },
   voiceContainer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: 48 },
   processingRow: { flexDirection: 'row', alignItems: 'center' },
   micButtonContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },

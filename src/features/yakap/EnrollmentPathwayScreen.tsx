@@ -114,6 +114,7 @@ export const EnrollmentPathwayScreen = () => {
             onPress={() => handlePathwaySelect(pathway)}
             style={[
               styles.card,
+              { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
               pathway.recommended && { borderColor: theme.colors.primary, borderWidth: 2 }
             ]}
           >
@@ -121,7 +122,7 @@ export const EnrollmentPathwayScreen = () => {
               <View style={styles.cardHeaderTitle}>
                 <Text variant="titleMedium" style={styles.cardTitle}>{pathway.name}</Text>
                 {pathway.recommended && (
-                  <Chip style={styles.recommendedChip} textStyle={styles.recommendedChipText}>Recommended</Chip>
+                  <Chip style={[styles.recommendedChip, { backgroundColor: theme.colors.primaryContainer }]} textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}>Recommended</Chip>
                 )}
               </View>
               <Text variant="bodySmall" style={{ color: theme.colors.secondary }}>
@@ -141,7 +142,7 @@ export const EnrollmentPathwayScreen = () => {
                 </View>
               </View>
               
-              <View style={styles.requirementsSection}>
+              <View style={[styles.requirementsSection, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Text variant="labelMedium" style={styles.detailLabel}>Requirements:</Text>
                 <Text variant="bodySmall" style={styles.requirementsText}>
                   {pathway.requirements.join(', ')}
@@ -155,13 +156,13 @@ export const EnrollmentPathwayScreen = () => {
       <Modal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
-        contentContainerStyle={styles.modalContent}
+        contentContainerStyle={[styles.modalContent, { backgroundColor: theme.colors.surface }]}
       >
-        <Text variant="headlineSmall" style={styles.modalTitle}>Confirm Selection</Text>
-        <Text variant="bodyMedium" style={styles.modalText}>
-          You have chosen <Text style={{ fontWeight: 'bold' }}>{selectedPathway?.name}</Text>.
+        <Text variant="headlineSmall" style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Confirm Selection</Text>
+        <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>
+          You have chosen <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>{selectedPathway?.name}</Text>.
         </Text>
-        <Text variant="bodyMedium" style={styles.modalText}>
+        <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>
           Do you want to proceed with this enrollment pathway?
         </Text>
 
@@ -199,6 +200,8 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     overflow: 'hidden', // For border radius
+    elevation: 0,
+    borderWidth: 1,
   },
   cardHeader: {
     marginBottom: 8,
@@ -214,12 +217,10 @@ const styles = StyleSheet.create({
   },
   recommendedChip: {
     height: 24,
-    backgroundColor: '#E8F5E9', // Light green
   },
   recommendedChipText: {
     fontSize: 10,
     lineHeight: 10,
-    color: '#2E7D32', // Dark green
     marginVertical: 0,
     marginHorizontal: 4,
   },
@@ -249,7 +250,6 @@ const styles = StyleSheet.create({
   },
   requirementsSection: {
     marginTop: 8,
-    backgroundColor: '#f5f5f5',
     padding: 8,
     borderRadius: 4,
   },
@@ -258,6 +258,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 24,
+    borderRadius: 12,
   },
   modalTitle: {
     marginBottom: 16,

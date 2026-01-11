@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from 'react-native-paper';
 
 type User = {
   uid: string;
@@ -14,6 +15,7 @@ type User = {
 } | null;
 
 const ProfileHero = ({ user }: { user: User }) => {
+  const theme = useTheme();
 
   const getInitials = (name: string) => {
     if (!name) return 'U';
@@ -33,16 +35,16 @@ const ProfileHero = ({ user }: { user: User }) => {
 
   return (
     <LinearGradient
-      colors={['#8A2BE2', '#FFFFFF']}
+      colors={[theme.colors.primaryContainer, theme.colors.background]}
       style={styles.container}
     >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
+      <View style={[styles.avatar, { borderColor: theme.colors.surface, backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.avatarText, { color: theme.colors.primary }]}>
           {user?.displayName ? getInitials(user.displayName) : 'U'}
         </Text>
       </View>
-      <Text style={styles.phoneNumber}>{user?.phoneNumber || 'No phone number'}</Text>
-      <Text style={styles.memberSince}>
+      <Text style={[styles.phoneNumber, { color: theme.colors.onSurface }]}>{user?.phoneNumber || 'No phone number'}</Text>
+      <Text style={[styles.memberSince, { color: theme.colors.onSurfaceVariant }]}>
         {user?.metadata?.creationTime
           ? formatDate(user.metadata.creationTime)
           : 'Member since long ago'}
@@ -62,27 +64,23 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 2,
-    borderColor: '#FFF',
+    borderWidth: 4,
+    elevation: 2,
   },
   avatarText: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#333',
   },
   phoneNumber: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 4,
   },
   memberSince: {
     fontSize: 14,
-    color: '#555',
   },
 });
 

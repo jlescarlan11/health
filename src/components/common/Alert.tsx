@@ -30,8 +30,8 @@ export const Alert: React.FC<AlertProps> = ({
       icon = 'information';
       break;
     case 'warning':
-      backgroundColor = '#FFF3E0'; // Orange-ish
-      color = '#E65100';
+      backgroundColor = theme.colors.secondaryContainer;
+      color = theme.colors.onSecondaryContainer;
       icon = 'alert';
       break;
     case 'error':

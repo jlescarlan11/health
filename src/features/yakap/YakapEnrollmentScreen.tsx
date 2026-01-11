@@ -10,21 +10,22 @@ type NavigationProp = NativeStackNavigationProp<YakapStackParamList, 'YakapEnrol
 
 export const YakapEnrollmentScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+  const theme = useTheme();
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Title style={styles.headerTitle}>Welcome to YAKAP Enrollment</Title>
-          <Paragraph style={styles.headerSubtitle}>
+          <Title style={[styles.headerTitle, { color: theme.colors.primary }]}>Welcome to YAKAP Enrollment</Title>
+          <Paragraph style={[styles.headerSubtitle, { color: theme.colors.onSurfaceVariant }]}>
             Your journey to free healthcare starts here. Follow the steps below to register for the YAKAP Program.
           </Paragraph>
         </View>
 
-        <Card style={styles.card}>
+        <Card style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
           <Card.Content>
-            <Title>Step 1: Check Eligibility</Title>
-            <Paragraph>
+            <Title style={{ color: theme.colors.onSurface }}>Step 1: Check Eligibility</Title>
+            <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>
               Find out if you are eligible for the YAKAP Program and what documents you need.
             </Paragraph>
           </Card.Content>
@@ -33,16 +34,17 @@ export const YakapEnrollmentScreen = () => {
               mode="contained" 
               onPress={() => navigation.navigate('EligibilityChecker')}
               style={styles.button}
+              buttonColor={theme.colors.primary}
             >
               Check Now
             </Button>
           </Card.Actions>
         </Card>
 
-        <Card style={styles.card}>
+        <Card style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
           <Card.Content>
-            <Title>Step 2: Choose Pathway</Title>
-            <Paragraph>
+            <Title style={{ color: theme.colors.onSurface }}>Step 2: Choose Pathway</Title>
+            <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>
               Select the most convenient way for you to register (Online, App, or Walk-in).
             </Paragraph>
           </Card.Content>
@@ -51,7 +53,7 @@ export const YakapEnrollmentScreen = () => {
               mode="contained" 
               onPress={() => navigation.navigate('EnrollmentPathway')}
               style={styles.button}
-              buttonColor="#00695C"
+              buttonColor={theme.colors.primary}
             >
               Select Pathway
             </Button>
@@ -60,7 +62,7 @@ export const YakapEnrollmentScreen = () => {
         
         {/* Placeholder for future steps or direct access if already started */}
         <View style={styles.infoSection}>
-            <Text style={styles.infoText}>
+            <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
                 Already started? Go to your profile to check your status.
             </Text>
         </View>
@@ -73,7 +75,6 @@ export const YakapEnrollmentScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   content: {
     padding: 16,
@@ -91,11 +92,11 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#666',
   },
   card: {
     marginBottom: 16,
-    elevation: 4,
+    elevation: 0,
+    borderWidth: 1,
   },
   button: {
     marginTop: 8,
@@ -105,6 +106,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   infoText: {
-    color: '#888',
   },
 });

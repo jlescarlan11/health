@@ -59,7 +59,7 @@ const EnrollmentCompletionScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
       <StandardHeader title="Congratulations" />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -67,21 +67,21 @@ const EnrollmentCompletionScreen = () => {
           <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
             <MaterialCommunityIcons name="check-decagram" size={100} color={theme.colors.primary} />
           </Animated.View>
-          <Text variant="headlineMedium" style={styles.title}>You're all set!</Text>
-          <Text variant="bodyLarge" style={styles.subtitle}>
+          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onSurface }]}>You're all set!</Text>
+          <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
             Your YAKAP enrollment has been successfully recorded. You can now start enjoying your healthcare benefits.
           </Text>
         </View>
 
-        <Card style={styles.benefitsCard}>
+        <Card style={[styles.benefitsCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
           <Card.Content>
-            <Text variant="titleMedium" style={styles.benefitsHeader}>Your YAKAP Benefits Summary:</Text>
+            <Text variant="titleMedium" style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}>Your YAKAP Benefits Summary:</Text>
             {YAKAP_BENEFITS.map((benefit) => (
               <View key={benefit.id} style={styles.benefitItem}>
-                <MaterialCommunityIcons name="check-circle-outline" size={20} color="#4CAF50" style={styles.benefitIcon} />
+                <MaterialCommunityIcons name="check-circle-outline" size={20} color={theme.colors.primary} style={styles.benefitIcon} />
                 <View style={styles.benefitTextContent}>
-                  <Text variant="labelLarge">{benefit.category}</Text>
-                  <Text variant="bodySmall" style={styles.benefitDesc}>{benefit.description}</Text>
+                  <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>{benefit.category}</Text>
+                  <Text variant="bodySmall" style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>{benefit.description}</Text>
                 </View>
               </View>
             ))}
@@ -95,6 +95,7 @@ const EnrollmentCompletionScreen = () => {
             onPress={navigateToFacilities}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
+            buttonColor={theme.colors.primary}
           >
             Find Nearest YAKAP Clinic
           </Button>
@@ -105,6 +106,7 @@ const EnrollmentCompletionScreen = () => {
             onPress={handleShare}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
+            textColor={theme.colors.primary}
           >
             Share Achievement
           </Button>
@@ -113,6 +115,7 @@ const EnrollmentCompletionScreen = () => {
             mode="text" 
             onPress={handleBackToHome}
             style={styles.backButton}
+            textColor={theme.colors.onSurfaceVariant}
           >
             Back to YAKAP Home
           </Button>
@@ -127,7 +130,8 @@ const EnrollmentCompletionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    // Background handled by SafeAreaView if theme is passed or style below
+    backgroundColor: '#F5F7F8', // Fallback to theme background
   },
   scrollContent: {
     padding: 20,
@@ -142,7 +146,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 20,
     textAlign: 'center',
-    color: '#333',
   },
   subtitle: {
     textAlign: 'center',
@@ -153,8 +156,8 @@ const styles = StyleSheet.create({
   benefitsCard: {
     width: '100%',
     marginVertical: 20,
-    elevation: 2,
-    backgroundColor: '#F9F9F9',
+    elevation: 0,
+    borderWidth: 1,
   },
   benefitsHeader: {
     fontWeight: 'bold',
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   benefitDesc: {
-    opacity: 0.6,
+    opacity: 0.8,
   },
   actionContainer: {
     width: '100%',

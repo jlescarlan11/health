@@ -25,12 +25,12 @@ const CrisisSupportScreen = () => {
   };
 
   const ResourceCard = ({ resource }: { resource: MentalHealthResource }) => (
-    <Card style={styles.card} elevation={2}>
+    <Card style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]} elevation={0}>
       <Card.Content>
         <Text variant="titleMedium" style={{ fontWeight: 'bold', color: theme.colors.primary }}>
           {resource.name}
         </Text>
-        <Text variant="bodyMedium" style={{ marginBottom: 8 }}>
+        <Text variant="bodyMedium" style={{ marginBottom: 8, color: theme.colors.onSurfaceVariant }}>
           {resource.description}
         </Text>
         <Button 
@@ -47,7 +47,7 @@ const CrisisSupportScreen = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: '#F2F2F2' }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <IconButton
@@ -59,18 +59,18 @@ const CrisisSupportScreen = () => {
           <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.primary }]}>
             You Are Not Alone
           </Text>
-          <Text variant="bodyLarge" style={styles.subtitle}>
+          <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
             Help is available. Please reach out to one of these free, confidential services.
           </Text>
         </View>
 
-        <Surface style={styles.alertBox} elevation={0}>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onPrimaryContainer }}>
+        <Surface style={[styles.alertBox, { backgroundColor: theme.colors.secondaryContainer, borderLeftColor: theme.colors.secondary }]} elevation={0}>
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSecondaryContainer }}>
             If you are in immediate danger or have a medical emergency, please go to the nearest hospital immediately.
           </Text>
         </Surface>
 
-        <Text variant="titleLarge" style={styles.sectionTitle}>
+        <Text variant="titleLarge" style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
           Crisis Hotlines
         </Text>
 
@@ -83,6 +83,7 @@ const CrisisSupportScreen = () => {
             mode="outlined" 
             onPress={() => navigation.goBack()}
             style={styles.backButton}
+            textColor={theme.colors.primary}
           >
             I'm safe, go back
           </Button>
@@ -112,15 +113,12 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
-    color: '#555',
   },
   alertBox: {
     padding: 16,
     borderRadius: 8,
-    backgroundColor: '#E8F0FE', // Light blue
     marginBottom: 24,
     borderLeftWidth: 4,
-    borderLeftColor: '#1976D2',
   },
   sectionTitle: {
     fontWeight: '600',
@@ -128,7 +126,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 16,
-    backgroundColor: 'white',
+    borderWidth: 1,
   },
   footer: {
     marginTop: 24,

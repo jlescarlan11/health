@@ -122,9 +122,9 @@ export const FacilityDirectoryScreen = () => {
           />
           <TouchableOpacity 
             onPress={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
-            style={styles.viewToggle}
+            style={[styles.viewToggle, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant, borderWidth: 1 }]}
           >
-            <Ionicons name={viewMode === 'list' ? "map-outline" : "list-outline"} size={28} color="#2E9B95" />
+            <Ionicons name={viewMode === 'list' ? "map-outline" : "list-outline"} size={28} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -135,8 +135,9 @@ export const FacilityDirectoryScreen = () => {
                 key={filter.id}
                 selected={activeFilter === filter.id}
                 onPress={() => handleFilterPress(filter.id)}
-                style={styles.chip}
+                style={[styles.chip, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
                 showSelectedOverlay
+                mode="outlined"
               >
                 {filter.label}
               </Chip>
@@ -157,7 +158,7 @@ export const FacilityDirectoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    // Background color is handled by global theme in App.tsx but good to keep if needed, removed here to rely on SafeAreaView context or parent
   },
   contentContainer: {
     flex: 1,
@@ -166,20 +167,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    // Removed white background/elevation to blend with screen
   },
   searchBar: {
     flex: 1,
-    elevation: 0,
+    elevation: 0, // Kanso: Flat
+    borderWidth: 1,
+    borderColor: '#E0E2E3', // SurfaceVariant
     backgroundColor: '#fff', // Keep searchbar white
   },
   viewToggle: {
     marginLeft: 12,
     padding: 8,
-    backgroundColor: '#fff',
     borderRadius: 8,
     // Add elevation/shadow to match searchbar if desired, or keep flat
-    elevation: 1, 
+    elevation: 0, 
   },
   filterContainer: {
     marginBottom: 8,
@@ -189,7 +190,6 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginRight: 8,
-    backgroundColor: '#fff', // Ensure chips have background if container doesn't
   },
   center: {
     flex: 1,

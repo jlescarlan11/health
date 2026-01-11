@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { useTheme } from 'react-native-paper';
 
 interface StandardHeaderProps {
   title: string;
@@ -21,6 +22,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   titleStyle,
 }) => {
   const navigation = useNavigation();
+  const theme = useTheme();
   // #region agent log
   const containerHeight = styles.container.height;
   const containerPaddingHorizontal = styles.container.paddingHorizontal;
@@ -36,7 +38,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   };
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }, style]}>
       <View style={styles.leftContainer}>
         {showBackButton && (
           <TouchableOpacity
@@ -46,12 +48,12 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
             accessibilityLabel="Go back"
             accessibilityHint="Navigates to the previous screen"
           >
-            <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
         )}
       </View>
       <View style={styles.titleContainer}>
-        <Text style={[styles.title, titleStyle]} accessibilityRole="header">
+        <Text style={[styles.title, { color: theme.colors.onSurface }, titleStyle]} accessibilityRole="header">
           {title}
         </Text>
       </View>
@@ -67,9 +69,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 60,
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
   },
   leftContainer: {
     width: '20%',
@@ -91,7 +91,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
     textAlign: 'center',
   },
 });
