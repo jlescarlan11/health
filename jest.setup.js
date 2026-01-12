@@ -41,6 +41,27 @@ jest.mock('@react-native-community/netinfo', () => ({
   }),
 }));
 
+// Mock expo-location
+jest.mock('expo-location', () => ({
+  requestForegroundPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  getCurrentPositionAsync: jest.fn(() => Promise.resolve({
+    coords: {
+      latitude: 13.6218,
+      longitude: 123.1948,
+      accuracy: 5,
+      altitude: 0,
+      altitudeAccuracy: 5,
+      heading: 0,
+      speed: 0,
+    },
+    timestamp: Date.now(),
+  })),
+  watchPositionAsync: jest.fn(() => Promise.resolve({ remove: jest.fn() })),
+  Accuracy: {
+    Balanced: 3,
+  },
+}));
+
 // Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');

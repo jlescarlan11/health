@@ -8,6 +8,7 @@ import { Linking, Share } from 'react-native';
 // Mocks
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
+  useDispatch: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('@react-navigation/native', () => ({

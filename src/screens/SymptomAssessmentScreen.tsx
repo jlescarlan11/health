@@ -14,7 +14,7 @@ import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
-import { InputCard } from '../components/common';
+import { InputCard, TypingIndicator } from '../components/common';
 
 type ScreenRouteProp = CheckStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = CheckStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -44,6 +44,7 @@ const SymptomAssessmentScreen = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -148,12 +149,6 @@ const SymptomAssessmentScreen = () => {
   }, [navigation, handleBack]);
 
   useEffect(() => {
-    // Initial messages
-    const initialMessages: Message[] = [
-      { id: 'report', text: `YOUR INITIAL REPORT:\n${initialSymptom || 'Not specified'}`, sender: 'assistant' }
-    ];
-    setMessages(initialMessages);
-
     // Check for immediate escalation
     const emergencyCheck = detectEmergency(initialSymptom || '');
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
@@ -179,11 +174,14 @@ const SymptomAssessmentScreen = () => {
         const parsed = JSON.parse(jsonMatch[0]);
         if (parsed.questions && Array.isArray(parsed.questions)) {
            setQuestions(parsed.questions);
-           // Add first question to messages
+           // Add combined first message to conversation
            if (parsed.questions.length > 0) {
-             setMessages(prev => [...prev, {
-               id: parsed.questions[0].id,
-               text: parsed.questions[0].text,
+             const firstQ = parsed.questions[0];
+             const combinedText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I'd like to ask a few clarifying questions.\n\n${firstQ.text}`;
+             
+             setMessages([{
+               id: 'intro',
+               text: combinedText,
                sender: 'assistant'
              }]);
            }
@@ -203,7 +201,7 @@ const SymptomAssessmentScreen = () => {
 
   const handleNext = (answerText?: string) => {
     const finalAnswer = answerText || inputText;
-    if (!finalAnswer.trim()) return;
+    if (!finalAnswer.trim() || isTyping) return;
 
     const currentQuestion = questions[currentStep];
     if (!currentQuestion) return;
@@ -213,7 +211,9 @@ const SymptomAssessmentScreen = () => {
     setAnswers(newAnswers);
     
     // Add user message
-    const userMsg: Message = { id: `user-${currentStep}`, text: finalAnswer, sender: 'user' };
+    const userMsg: Message = { id: `user-${currentStep}-${Date.now()}`, text: finalAnswer, sender: 'user' };
+    setMessages(prev => [...prev, userMsg]);
+    setInputText('');
     
     // Check for emergency
     const emergencyCheck = detectEmergency(finalAnswer);
@@ -223,29 +223,49 @@ const SymptomAssessmentScreen = () => {
             symptoms: initialSymptom,
             answers: newAnswers
         };
-        setMessages(prev => [...prev, userMsg]);
         navigation.navigate('Recommendation', { assessmentData: partialData });
         return;
     }
 
-    // Move to next step or finish
-    if (currentStep < questions.length - 1) {
-      const nextStep = currentStep + 1;
-      const nextQuestion = questions[nextStep];
-      const assistantMsg: Message = { id: nextQuestion.id, text: nextQuestion.text, sender: 'assistant' };
-      
-      setMessages(prev => [...prev, userMsg, assistantMsg]);
-      setCurrentStep(nextStep);
-      setInputText('');
-      
-      // Scroll to end
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    } else {
-      setMessages(prev => [...prev, userMsg]);
-      finishAssessment(newAnswers);
-    }
+    // Move to next step or finish with a thoughtful delay
+    setIsTyping(true);
+    
+    const delay = 1500; // 1.5 seconds delay for a more natural feel
+    
+    setTimeout(() => {
+      if (currentStep < questions.length - 1) {
+        const nextStep = currentStep + 1;
+        const nextQuestion = questions[nextStep];
+        
+        // Random acknowledgments for a more conversational feel
+        const acknowledgments = [
+          "I understand.",
+          "Thank you for that information.",
+          "Got it, thanks.",
+          "I see. That's helpful to know.",
+          "Okay, thank you for clarifying."
+        ];
+        const ack = acknowledgments[Math.floor(Math.random() * acknowledgments.length)];
+        
+        const assistantMsg: Message = { 
+          id: nextQuestion.id, 
+          text: `${ack}\n\n${nextQuestion.text}`, 
+          sender: 'assistant' 
+        };
+        
+        setMessages(prev => [...prev, assistantMsg]);
+        setIsTyping(false);
+        setCurrentStep(nextStep);
+        
+        // Scroll to end
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      } else {
+        setIsTyping(false);
+        finishAssessment(newAnswers);
+      }
+    }, delay);
   };
 
   const finishAssessment = (finalAnswers: Record<string, string>) => {
@@ -282,6 +302,23 @@ const SymptomAssessmentScreen = () => {
       </View>
     );
   }
+
+  const renderTypingIndicator = () => {
+    return (
+      <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+        <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+          <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+        </View>
+        <View style={[
+          styles.bubble,
+          styles.assistantBubble,
+          { backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 12 }
+        ]}>
+          <TypingIndicator />
+        </View>
+      </View>
+    );
+  };
 
   const renderMessage = (message: Message) => {
     const isAssistant = message.sender === 'assistant';
@@ -331,6 +368,7 @@ const SymptomAssessmentScreen = () => {
         >
           <View style={styles.messagesContainer}>
             {messages.map(renderMessage)}
+            {isTyping && renderTypingIndicator()}
           </View>
         </ScrollView>
 
@@ -341,11 +379,12 @@ const SymptomAssessmentScreen = () => {
                 {currentQuestion.options.map((opt) => (
                   <Chip
                     key={opt}
-                    onPress={() => handleNext(opt)}
+                    onPress={() => !isTyping && handleNext(opt)}
                     style={styles.choiceChip}
                     mode="flat"
                     compact
                     showSelectedOverlay
+                    disabled={isTyping}
                   >
                     {opt}
                   </Chip>
@@ -364,6 +403,7 @@ const SymptomAssessmentScreen = () => {
             isRecording={isRecording}
             isProcessingAudio={isProcessingAudio}
             onVoicePress={isRecording ? stopRecording : startRecording}
+            disabled={isTyping}
           />
         </View>
       </KeyboardAvoidingView>

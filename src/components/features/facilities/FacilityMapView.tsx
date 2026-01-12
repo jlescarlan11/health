@@ -495,14 +495,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  legendText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-});
+      dot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        marginRight: 8,
+      },
+      legendText: {
+        fontSize: 12,
+        fontWeight: '600',
+      },
+    });
+    
