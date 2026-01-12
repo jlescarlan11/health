@@ -16,6 +16,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
+import HeroSection from '../../components/heroes/HeroSection';
 import { YAKAP_BENEFITS, YAKAP_FAQS, ELIGIBILITY_INFO, YakapBenefit } from './yakapContent';
 import { YakapStackParamList } from '../../navigation/types';
 
@@ -81,48 +82,37 @@ const YakapHomeScreen = () => {
         rightActions={<IconButton icon="information" onPress={showEligibility} />}
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        style={{ backgroundColor: theme.colors.background }}
+      >
         {/* Hero Section */}
-        <View style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer }]}>
-          <View style={styles.logoPlaceholder}>
-            <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
-          </View>
-          <Text variant="headlineMedium" style={styles.heroTitle}>
-            YAKAP Program
-          </Text>
-          <Text variant="titleMedium" style={styles.heroSubtitle}>
-            Yaman, Kalinga, at Pag-aaruga
-          </Text>
-          <Text style={styles.heroDesc}>
-            Free primary care, medicines, and lab tests for every Naga City resident.
-          </Text>
-          
-          <View style={styles.heroDivider} />
-
-          <View style={styles.eligibilityContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
-              <MaterialCommunityIcons
-                name="party-popper"
-                size={20}
-                color={theme.colors.primary}
-                style={{ marginRight: 8 }}
-              />
-              <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                Every Filipino is Eligible!
-              </Text>
+        <HeroSection
+          colors={[theme.colors.primaryContainer, theme.colors.background]}
+          height={240}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.logoPlaceholder}>
+              <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
             </View>
-            <Text variant="bodySmall" style={{ textAlign: 'center', opacity: 0.8 }}>
-              No age limits. No income restrictions. Just healthcare for all.
+            <Text variant="headlineMedium" style={styles.heroTitle}>
+              YAKAP Program
+            </Text>
+            <Text variant="titleMedium" style={styles.heroSubtitle}>
+              Yaman, Kalinga, at Pag-aaruga
+            </Text>
+            <Text style={styles.heroDesc}>
+              Free primary care, medicines, and lab tests for every Naga City resident.
             </Text>
           </View>
-        </View>
+        </HeroSection>
 
         {/* Start Enrollment Call to Action */}
-        <Card style={styles.ctaCard}>
+        <Card style={[styles.ctaCard, { backgroundColor: theme.colors.background, elevation: 0 }]}>
           <Card.Content>
             <Text variant="titleLarge" style={styles.ctaTitle}>Get Started</Text>
             <Text variant="bodyMedium" style={styles.ctaDesc}>
-              Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
+              Every Filipino is eligible—no age limits or income restrictions. Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
             </Text>
             <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
               Start Enrollment Guide
@@ -143,14 +133,12 @@ const YakapHomeScreen = () => {
           <Text variant="titleLarge" style={styles.sectionHeader}>
             Key Benefits
           </Text>
-          <Card style={{ marginHorizontal: 16, borderRadius: 16 }}>
+          <Card style={{ marginHorizontal: 16, borderRadius: 16, backgroundColor: theme.colors.background, elevation: 0 }}>
             <Card.Content style={styles.benefitsList}>
               {YAKAP_BENEFITS.map((benefit, index) => renderBenefitItem(benefit, index))}
             </Card.Content>
           </Card>
         </View>
-
-
 
         {/* FAQs */}
         <View style={styles.section}>
@@ -165,9 +153,15 @@ const YakapHomeScreen = () => {
               expanded={expandedId === faq.id}
               onPress={() => handleAccordionPress(faq.id)}
               titleNumberOfLines={2}
+              style={{ backgroundColor: theme.colors.background }}
               left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
             >
-              <List.Item title={faq.answer} titleNumberOfLines={10} descriptionNumberOfLines={10} />
+              <List.Item 
+                title={faq.answer} 
+                titleNumberOfLines={10} 
+                descriptionNumberOfLines={10}
+                style={{ backgroundColor: theme.colors.background }}
+              />
             </List.Accordion>
           ))}
         </View>
@@ -205,11 +199,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 24,
   },
-  heroSection: {
+  heroContent: {
     alignItems: 'center',
-    padding: 30,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    justifyContent: 'center',
+    flex: 1,
+    paddingHorizontal: 20,
   },
   logoPlaceholder: {
     marginBottom: 10,
@@ -220,11 +214,15 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     opacity: 0.7,
   },
+  heroDesc: {
+    textAlign: 'center',
+    marginTop: 10,
+    opacity: 0.8,
+  },
   ctaCard: {
     marginHorizontal: 16,
     marginBottom: 16,
-    marginTop: 16,
-    elevation: 2,
+    marginTop: 8,
   },
   ctaTitle: {
     fontWeight: 'bold',
@@ -277,20 +275,6 @@ const styles = StyleSheet.create({
     height: 1,
     width: '100%',
     opacity: 0.1,
-  },
-  heroDesc: {
-    textAlign: 'center',
-    marginTop: 10,
-    opacity: 0.8,
-  },
-  heroDivider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    width: '100%',
-    marginVertical: 16,
-  },
-  eligibilityContainer: {
-    alignItems: 'center',
   },
 });
 
