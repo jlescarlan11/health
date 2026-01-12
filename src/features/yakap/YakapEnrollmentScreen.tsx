@@ -59,13 +59,6 @@ export const YakapEnrollmentScreen = () => {
             </Button>
           </Card.Actions>
         </Card>
-        
-        {/* Placeholder for future steps or direct access if already started */}
-        <View style={styles.infoSection}>
-            <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
-                Already started? Go to your profile to check your status.
-            </Text>
-        </View>
 
       </ScrollView>
     </SafeAreaView>

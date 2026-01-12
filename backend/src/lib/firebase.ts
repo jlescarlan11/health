@@ -18,5 +18,4 @@ if (!admin.apps.length) {
   }
 }
 
-export const firebaseAuth = admin.auth();
 export default admin;

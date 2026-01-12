@@ -16,7 +16,6 @@ import {
   completeEnrollment 
 } from '../../store/enrollmentSlice';
 import { ENROLLMENT_PATHWAYS } from './yakapContent';
-import { selectUser } from '../../store/authSlice';
 
 import { uploadFileToFirebase } from '../../services/storageService';
 
@@ -24,8 +23,6 @@ const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const theme = useTheme(); // Use theme
-  const user = useSelector(selectUser);
-  const isLoggedIn = useSelector((state: RootState) => state.auth.isLoggedIn);
 
   const { selectedPathway, currentStep, completedSteps, uploadedDocuments } = useSelector(
     (state: RootState) => state.enrollment
@@ -50,20 +47,16 @@ const EnrollmentGuideScreen = () => {
   const progress = totalSteps > 0 ? (currentStep + 1) / totalSteps : 0;
   const completionPercentage = Math.round((completedSteps.length / totalSteps) * 100);
 
-  // Auto-save functionality
+  // Auto-save functionality (Simulated)
   useEffect(() => {
-    if (isLoggedIn && user) {
-      const interval = setInterval(() => {
-        // Simulate saving to backend
-        setLastSaved(new Date());
-        // In a real app, we would dispatch a thunk to sync with backend here
-        // dispatch(syncEnrollmentProgress());
-        console.log('Auto-saving progress...');
-      }, 30000); // 30 seconds
+    const interval = setInterval(() => {
+      // Simulate saving progress locally
+      setLastSaved(new Date());
+      console.log('Auto-saving progress locally...');
+    }, 30000); // 30 seconds
 
-      return () => clearInterval(interval);
-    }
-  }, [isLoggedIn, user]);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
@@ -94,10 +87,6 @@ const EnrollmentGuideScreen = () => {
   };
 
   const handleSaveProgress = () => {
-    if (!isLoggedIn) {
-      Alert.alert("Authentication Required", "Please log in to save your progress permanently.");
-      return;
-    }
     // Simulate manual save
     setLastSaved(new Date());
     Alert.alert("Success", "Progress saved successfully.");
@@ -115,7 +104,7 @@ const EnrollmentGuideScreen = () => {
       setUploading(true);
       
       const asset = result.assets[0];
-      const userId = user?.uid || 'guest';
+      const userId = 'local_user';
       // Path format: enrollment/{userId}/{pathwayId}/step_{stepIndex}/{fileName}
       const storagePath = `enrollment/${userId}/${selectedPathway}/step_${currentStep}/${asset.name}`;
 

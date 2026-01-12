@@ -1,8 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
+import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER, createMigrate } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import authReducer from './authSlice';
 import facilitiesReducer from './facilitiesSlice';
 import navigationReducer from './navigationSlice';
 import enrollmentReducer from './enrollmentSlice';
@@ -10,7 +9,6 @@ import offlineReducer from './offlineSlice';
 import settingsReducer from './settingsSlice';
 
 // Re-export reducers for convenience
-export { default as authReducer } from './authSlice';
 export { default as facilitiesReducer } from './facilitiesSlice';
 export { default as navigationReducer } from './navigationSlice';
 export { default as enrollmentReducer } from './enrollmentSlice';
@@ -18,7 +16,6 @@ export { default as offlineReducer } from './offlineSlice';
 export { default as settingsReducer } from './settingsSlice';
 
 const rootReducer = combineReducers({
-  auth: authReducer,
   facilities: facilitiesReducer,
   navigation: navigationReducer,
   enrollment: enrollmentReducer,
@@ -26,10 +23,23 @@ const rootReducer = combineReducers({
   settings: settingsReducer,
 });
 
+const migrations = {
+  1: (state: any) => {
+    // Surgical removal of legacy auth state if it exists
+    if (state && state.auth) {
+      const { auth, ...rest } = state;
+      return rest;
+    }
+    return state;
+  },
+};
+
 const persistConfig = {
   key: 'root',
+  version: 1,
   storage: AsyncStorage,
-  whitelist: ['auth', 'settings', 'enrollment'],
+  whitelist: ['settings', 'enrollment'],
+  migrate: createMigrate(migrations, { debug: false }),
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

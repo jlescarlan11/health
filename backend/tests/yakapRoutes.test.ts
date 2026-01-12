@@ -28,25 +28,16 @@ describe('YAKAP Routes', () => {
   });
 
   describe('POST /api/yakap/enrollment', () => {
-    it('should enroll user', async () => {
+    it('should enroll user without authentication', async () => {
       prismaMock.userEnrollment.findUnique.mockResolvedValue(null);
       prismaMock.userEnrollment.create.mockResolvedValue(mockEnrollment);
 
       const response = await request(app)
         .post('/api/yakap/enrollment')
-        .set('Authorization', 'Bearer valid-token')
         .send({ user_id: 'test-uid', phone_number: '1234567890' });
 
       expect(response.status).toBe(201);
       expect(response.body.user_id).toBe('test-uid');
-    });
-
-    it('should return 401 if unauthorized', async () => {
-      const response = await request(app)
-        .post('/api/yakap/enrollment')
-        .send({ user_id: 'test-uid', phone_number: '1234567890' });
-
-      expect(response.status).toBe(401);
     });
 
     it('should return 409 if already enrolled', async () => {
@@ -54,7 +45,6 @@ describe('YAKAP Routes', () => {
 
       const response = await request(app)
         .post('/api/yakap/enrollment')
-        .set('Authorization', 'Bearer valid-token')
         .send({ user_id: 'test-uid', phone_number: '1234567890' });
 
       expect(response.status).toBe(409);
@@ -66,19 +56,10 @@ describe('YAKAP Routes', () => {
       prismaMock.userEnrollment.findUnique.mockResolvedValue(mockEnrollment);
 
       const response = await request(app)
-        .get('/api/yakap/enrollment/test-uid')
-        .set('Authorization', 'Bearer valid-token');
+        .get('/api/yakap/enrollment/test-uid');
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe('1');
-    });
-
-    it('should return 403 if trying to access another user', async () => {
-      const response = await request(app)
-        .get('/api/yakap/enrollment/other-uid')
-        .set('Authorization', 'Bearer valid-token');
-
-      expect(response.status).toBe(403);
     });
   });
 });

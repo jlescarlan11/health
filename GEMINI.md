@@ -129,6 +129,13 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     *   **Visual Consistency:** Removed redundant placeholders in favor of consistent floating labels across the app.
     *   **Files Modified:** `src/components/common/InputCard.tsx`, `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
 
+*   **Authentication Removal & Redux Fix:** Completely removed all authentication-related functionality, screens, and logic.
+    *   **UI/UX:** Removed the "Me" tab, Profile screen, and login flows (Phone/OTP). Simplified greetings in `HomeHero` and removed the profile button from `CustomHeader`.
+    *   **Redux Implementation:** Deleted `authSlice`, updated `rootReducer`, and implemented a Redux Persist migration (Version 1) to surgically purge legacy `auth` state, resolving the "unexpected key" warning.
+    *   **Backend:** Removed authentication middleware from all routes. YAKAP enrollment is now a public flow.
+    *   **Cleanup:** Removed `@react-native-firebase/auth` dependency and purged auth references from `API.md` and `google-services.json`.
+    *   **Files Modified:** `src/store/index.ts`, `App.tsx`, `src/navigation/TabNavigator.tsx`, `src/types/navigation.ts`, `backend/src/routes/yakapRoutes.ts`, etc.
+
 *   **Recommendation & Facility UI Overhaul:** Significantly improved the UI of the recommendation results and facility listings for better clarity and visual appeal.
     *   **Recommendation Card:** Implemented a new design for the recommendation card with care-level specific color palettes (e.g., soft greens for Health Center). Refined typography for "YOUR CONDITION" and "RECOMMENDED ACTION" headers using uppercase labels with increased letter spacing.
     *   **Critical Alerts:** Redesigned the "Watch for" / Red Flags section with a distinctive semi-transparent background and bold warning icons to ensure high visibility of critical safety information.

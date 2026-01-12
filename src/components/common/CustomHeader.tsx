@@ -1,27 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
-import { Appbar, Avatar, useTheme } from 'react-native-paper';
-import { useSelector } from 'react-redux';
+import { Appbar, useTheme } from 'react-native-paper';
 import { StackHeaderProps } from '@react-navigation/stack';
-import { RootState } from '../../store';
 
 export const CustomHeader = ({ navigation, back }: StackHeaderProps) => {
   const theme = useTheme();
-  const { user, isLoggedIn } = useSelector((state: RootState) => state.auth);
-
-  const handleProfilePress = () => {
-    navigation.navigate('Profile');
-  };
-
-  const getInitials = (name?: string) => {
-    if (!name) return '';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   return (
     <Appbar.Header style={{ backgroundColor: theme.colors.surface }} elevated>
@@ -37,31 +19,6 @@ export const CustomHeader = ({ navigation, back }: StackHeaderProps) => {
           letterSpacing: 1 
         }} 
       />
-      <View style={{ marginRight: 16 }}>
-        <TouchableOpacity 
-          onPress={handleProfilePress} 
-          accessibilityRole="button" 
-          accessibilityLabel={isLoggedIn && user?.displayName ? `Profile, logged in as ${user.displayName}` : "Profile, not logged in"}
-          accessibilityHint="Double tap to view profile settings"
-          style={{ padding: 4 }} // Enhance touch target
-        >
-          {isLoggedIn && user?.displayName ? (
-            <Avatar.Text 
-              size={40} 
-              label={getInitials(user.displayName)} 
-              style={{ backgroundColor: theme.colors.primaryContainer }}
-              color={theme.colors.onPrimaryContainer}
-            />
-          ) : (
-            <Avatar.Icon 
-              size={40} 
-              icon="account" 
-              style={{ backgroundColor: theme.colors.surfaceVariant }}
-              color={theme.colors.onSurfaceVariant}
-            />
-          )}
-        </TouchableOpacity>
-      </View>
     </Appbar.Header>
   );
 };

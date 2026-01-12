@@ -30,15 +30,12 @@ export type TabParamList = {
   Check: NavigatorScreenParams<CheckStackParamList>;
   Find: NavigatorScreenParams<FacilitiesStackParamList>;
   YAKAP: NavigatorScreenParams<YakapStackParamList>;
-  Me: undefined;
 };
 
 // Define the parameters for the root stack
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
   NotFound: undefined;
-  PhoneLogin: undefined;
-  OTPVerification: { verificationId: string; phoneNumber:string };
   PrivacyPolicy: undefined;
   TermsOfService: undefined;
 };

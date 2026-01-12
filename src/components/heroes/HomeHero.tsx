@@ -1,13 +1,9 @@
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useSelector } from 'react-redux';
 import { useTheme } from 'react-native-paper';
 import HeroSection from './HeroSection';
-import { RootState } from '../../store';
 
 const HomeHero: React.FC = () => {
-  const user = useSelector((state: RootState) => state.auth.user);
   const theme = useTheme();
 
   const today = new Date();
@@ -18,7 +14,7 @@ const HomeHero: React.FC = () => {
     day: 'numeric',
   });
 
-  const greeting = user ? `Kumusta, ${user.displayName || 'User'}!` : 'Kumusta!';
+  const greeting = 'Kumusta!';
 
   return (
     <HeroSection colors={[theme.colors.primaryContainer, theme.colors.background]} height={220}>

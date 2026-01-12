@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import * as yakapService from '../services/yakapService';
-import { AuthRequest } from '../middleware/auth';
 
 export const getInfo = (_req: Request, res: Response) => {
   try {
@@ -12,23 +11,12 @@ export const getInfo = (_req: Request, res: Response) => {
   }
 };
 
-export const enroll = async (req: AuthRequest, res: Response) => {
+export const enroll = async (req: Request, res: Response) => {
   try {
-    const authUserId = req.user?.uid;
     const { user_id, phone_number } = req.body;
-
-    if (!authUserId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
 
     if (!user_id || !phone_number) {
       res.status(400).json({ error: 'User ID and phone number are required' });
-      return;
-    }
-
-    if (authUserId !== user_id) {
-      res.status(403).json({ error: 'Forbidden: Cannot enroll for another user' });
       return;
     }
 
@@ -47,23 +35,11 @@ export const enroll = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getStatus = async (req: AuthRequest, res: Response) => {
+export const getStatus = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.uid;
     const paramUserId = req.params.userId;
 
-    if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    // Ensure user can only check their own status, unless admin (not implemented yet)
-    if (userId !== paramUserId) {
-      res.status(403).json({ error: 'Forbidden' });
-      return;
-    }
-
-    const enrollment = await yakapService.getEnrollmentStatus(userId);
+    const enrollment = await yakapService.getEnrollmentStatus(paramUserId);
     
     if (!enrollment) {
       res.status(404).json({ error: 'Enrollment not found' });
@@ -77,28 +53,17 @@ export const getStatus = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const updateStep = async (req: AuthRequest, res: Response) => {
+export const updateStep = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.uid;
     const paramUserId = req.params.userId;
     const { step, pathway, documents } = req.body;
-
-    if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    if (userId !== paramUserId) {
-      res.status(403).json({ error: 'Forbidden' });
-      return;
-    }
 
     if (step === undefined) {
       res.status(400).json({ error: 'Step is required' });
       return;
     }
 
-    const updatedEnrollment = await yakapService.updateEnrollmentStep(userId, step, pathway, documents);
+    const updatedEnrollment = await yakapService.updateEnrollmentStep(paramUserId, step, pathway, documents);
     res.json(updatedEnrollment);
   } catch (error) {
     console.error('Error updating enrollment step:', error);
@@ -106,22 +71,11 @@ export const updateStep = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const complete = async (req: AuthRequest, res: Response) => {
+export const complete = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.uid;
     const paramUserId = req.params.userId;
 
-    if (!userId) {
-      res.status(401).json({ error: 'Unauthorized' });
-      return;
-    }
-
-    if (userId !== paramUserId) {
-      res.status(403).json({ error: 'Forbidden' });
-      return;
-    }
-
-    const completedEnrollment = await yakapService.completeEnrollment(userId);
+    const completedEnrollment = await yakapService.completeEnrollment(paramUserId);
     res.json(completedEnrollment);
   } catch (error) {
     console.error('Error completing enrollment:', error);

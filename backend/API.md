@@ -141,16 +141,13 @@ Response:
 }
 ```
 
-### Enroll User (Protected)
+### Enroll User
 POST `/yakap/enrollment`
-
-Headers:
-- `Authorization`: `Bearer <firebase_token>`
 
 Body:
 ```json
 {
-  "user_id": "firebase_uid",
+  "user_id": "unique_id",
   "phone_number": "09123456789"
 }
 ```
@@ -164,11 +161,8 @@ Response:
 }
 ```
 
-### Get Enrollment Status (Protected)
+### Get Enrollment Status
 GET `/yakap/enrollment/:userId`
-
-Headers:
-- `Authorization`: `Bearer <firebase_token>`
 
 Response:
 ```json

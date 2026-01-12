@@ -5,7 +5,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
 
 import { MainHomeScreen } from '../screens/MainHomeScreen';
-import { ProfileScreen } from '../features';
 import CheckNavigator from './CheckNavigator';
 import FacilitiesNavigator from './FacilitiesNavigator';
 import YakapNavigator from './YakapNavigator';
@@ -33,8 +32,6 @@ const TabNavigator = () => {
             iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'YAKAP') {
             iconName = focused ? 'shield-checkmark' : 'shield-checkmark-outline';
-          } else if (route.name === 'Me') {
-            iconName = focused ? 'person' : 'person-outline';
           }
 
           return <TabBarIcon name={iconName} size={size} color={color} focused={focused} />;
@@ -72,11 +69,6 @@ const TabNavigator = () => {
         name="YAKAP"
         component={YakapNavigator}
         options={{ headerShown: false, tabBarLabel: 'YAKAP' }}
-      />
-      <Tab.Screen
-        name="Me"
-        component={ProfileScreen}
-        options={{ headerShown: false, tabBarLabel: 'Me' }}
       />
     </Tab.Navigator>
   );

@@ -4,7 +4,6 @@ import EnrollmentGuideScreen from '../EnrollmentGuideScreen';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import enrollmentReducer from '../../../store/enrollmentSlice';
-import authReducer from '../../../store/authSlice';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
 
@@ -42,7 +41,6 @@ describe('EnrollmentGuideScreen', () => {
     return configureStore({
       reducer: {
         enrollment: enrollmentReducer,
-        auth: authReducer,
       },
       preloadedState: initialState,
     });
@@ -68,13 +66,6 @@ describe('EnrollmentGuideScreen', () => {
         uploadedDocuments: {},
         data: {},
         completionDate: null
-      },
-      auth: {
-        isLoggedIn: false,
-        user: null,
-        loading: false,
-        error: null,
-        initialized: true
       }
     });
 
@@ -95,13 +86,6 @@ describe('EnrollmentGuideScreen', () => {
         uploadedDocuments: {},
         data: {},
         completionDate: null
-      },
-      auth: {
-        isLoggedIn: false,
-        user: null,
-        loading: false,
-        error: null,
-        initialized: true
       }
     });
     
