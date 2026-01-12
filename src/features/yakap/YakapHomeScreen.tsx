@@ -117,12 +117,20 @@ const YakapHomeScreen = () => {
         {/* Start Enrollment Call to Action */}
         <Card style={styles.ctaCard}>
           <Card.Content>
-            <Text variant="titleLarge" style={styles.ctaTitle}>How to Enroll</Text>
+            <Text variant="titleLarge" style={styles.ctaTitle}>Get Started</Text>
             <Text variant="bodyMedium" style={styles.ctaDesc}>
               Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
             </Text>
             <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
               Start Enrollment Guide
+            </Button>
+            <Button
+              mode="contained-tonal"
+              icon="hospital-marker"
+              onPress={navigateToFacilities}
+              style={{ marginTop: 12, borderRadius: 8 }}
+            >
+              Find YAKAP Clinics
             </Button>
           </Card.Content>
         </Card>
@@ -137,17 +145,7 @@ const YakapHomeScreen = () => {
           </View>
         </View>
 
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <Button
-            mode="outlined"
-            icon="hospital-marker"
-            onPress={navigateToFacilities}
-            style={[styles.actionBtn, { borderColor: theme.colors.primary }]}
-          >
-            Find YAKAP Clinics
-          </Button>
-        </View>
+
 
         {/* FAQs */}
         <View style={styles.section}>
@@ -274,11 +272,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     lineHeight: 16,
   },
-  actionButtons: {
-    padding: 16,
-    gap: 10,
-  },
-  actionBtn: {},
   heroDesc: {
     textAlign: 'center',
     marginTop: 10,
