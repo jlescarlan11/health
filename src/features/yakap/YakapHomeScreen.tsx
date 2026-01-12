@@ -218,7 +218,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   ctaCard: {
-    margin: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
     marginTop: 0,
     elevation: 2,
   },
@@ -234,7 +235,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   eligibilityBanner: {
-    margin: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
   },
   eligibilityContent: {
     alignItems: 'center',
