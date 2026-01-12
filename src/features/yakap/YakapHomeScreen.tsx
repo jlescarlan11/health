@@ -92,19 +92,6 @@ const YakapHomeScreen = () => {
           </Text>
         </View>
 
-        {/* Start Enrollment Call to Action */}
-        <Card style={styles.ctaCard}>
-          <Card.Content>
-            <Text variant="titleLarge" style={styles.ctaTitle}>How to Enroll</Text>
-            <Text variant="bodyMedium" style={styles.ctaDesc}>
-              Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
-            </Text>
-            <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
-              Start Enrollment Guide
-            </Button>
-          </Card.Content>
-        </Card>
-
         {/* Eligibility Banner */}
         <Card style={[styles.eligibilityBanner, { backgroundColor: theme.colors.primaryContainer }]}>
           <Card.Content style={styles.eligibilityContent}>
@@ -122,6 +109,19 @@ const YakapHomeScreen = () => {
             <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
               No age limits. No income restrictions. Just healthcare for all.
             </Text>
+          </Card.Content>
+        </Card>
+
+        {/* Start Enrollment Call to Action */}
+        <Card style={styles.ctaCard}>
+          <Card.Content>
+            <Text variant="titleLarge" style={styles.ctaTitle}>How to Enroll</Text>
+            <Text variant="bodyMedium" style={styles.ctaDesc}>
+              Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
+            </Text>
+            <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
+              Start Enrollment Guide
+            </Button>
           </Card.Content>
         </Card>
 
@@ -219,6 +219,7 @@ const styles = StyleSheet.create({
   },
   ctaCard: {
     margin: 16,
+    marginTop: 0,
     elevation: 2,
   },
   ctaTitle: {
@@ -234,7 +235,6 @@ const styles = StyleSheet.create({
   },
   eligibilityBanner: {
     margin: 16,
-    marginTop: 0,
   },
   eligibilityContent: {
     alignItems: 'center',
