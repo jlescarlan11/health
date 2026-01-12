@@ -363,14 +363,6 @@ const SymptomAssessmentScreen = () => {
         </ScrollView>
 
         <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
-          {questions.length > 0 && (
-            <View style={styles.progressSubtle}>
-               <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, opacity: 0.8 }}>
-                  Question {currentStep + 1} of {questions.length}
-               </Text>
-            </View>
-          )}
-
           {currentQuestion?.type === 'choice' && currentQuestion.options && (
             <View style={styles.choiceContainer}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.choiceScrollContent}>
@@ -403,6 +395,8 @@ const SymptomAssessmentScreen = () => {
                 style={[styles.textInput, { backgroundColor: 'transparent' }]}
                 underlineColor="transparent"
                 activeUnderlineColor="transparent"
+                cursorColor={theme.colors.primary}
+                selectionColor={theme.colors.primary + '40'}
                 dense
               />
 
@@ -427,7 +421,7 @@ const SymptomAssessmentScreen = () => {
                 )}
                 
                 <IconButton
-                  icon={currentStep === questions.length - 1 ? 'check-circle' : 'send'}
+                  icon="send"
                   size={24}
                   iconColor={inputText.trim() ? theme.colors.primary : theme.colors.outline}
                   disabled={!inputText.trim() || isRecording || isProcessingAudio}

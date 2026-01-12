@@ -8,6 +8,7 @@ import { TabScreenProps } from '../types/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { setHasSeenDisclaimer } from '../store/settingsSlice';
+import { resetEnrollment } from '../store/enrollmentSlice';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -45,6 +46,13 @@ export const MainHomeScreen = () => {
   const handleAcceptDisclaimer = async () => {
     dispatch(setHasSeenDisclaimer(true));
     setShowDisclaimer(false);
+  };
+
+  const handleResetOnboarding = () => {
+    dispatch(setHasSeenDisclaimer(false));
+    dispatch(resetEnrollment());
+    setShowDisclaimer(true);
+    Alert.alert('Success', 'Onboarding and enrollment states have been reset.');
   };
 
   const FeatureCard = ({
@@ -183,6 +191,20 @@ export const MainHomeScreen = () => {
             }}
           />
         </View>
+
+        {__DEV__ && (
+          <View style={styles.devContainer}>
+            <Button
+              mode="outlined"
+              onPress={handleResetOnboarding}
+              style={[styles.resetButton, { borderColor: theme.colors.outline }]}
+              textColor={theme.colors.secondary}
+              icon="refresh"
+            >
+              Reset Onboarding (Dev)
+            </Button>
+          </View>
+        )}
       </ScrollView>
 
       <Portal>
@@ -251,5 +273,14 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: 14,
+  },
+  devContainer: {
+    marginTop: 32,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  resetButton: {
+    width: '100%',
+    borderRadius: 8,
   },
 });
