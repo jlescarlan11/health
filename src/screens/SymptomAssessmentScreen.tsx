@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Animated, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, RadioButton, ProgressBar, ActivityIndicator, useTheme, IconButton, TextInput, Card } from 'react-native-paper';
+import { Text, ActivityIndicator, useTheme, IconButton, TextInput, Card, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -25,6 +25,12 @@ interface Question {
   options?: string[];
 }
 
+interface Message {
+  id: string;
+  text: string;
+  sender: 'assistant' | 'user';
+}
+
 const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
@@ -38,12 +44,14 @@ const SymptomAssessmentScreen = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [messages, setMessages] = useState<Message[]>([]);
 
   // Voice Input State
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [inputText, setInputText] = useState('');
 
   // Animation for recording indicator
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -84,6 +92,9 @@ const SymptomAssessmentScreen = () => {
 
     const keyboardShowListener = Keyboard.addListener(showEvent, () => {
       setIsKeyboardVisible(true);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     });
 
     const keyboardHideListener = Keyboard.addListener(hideEvent, () => {
@@ -130,10 +141,7 @@ const SymptomAssessmentScreen = () => {
       // Simulation of STT (Replace with actual API call)
       setTimeout(() => {
         const simulatedText = "I have been feeling this way for a few days.";
-        setAnswers(prev => ({
-          ...prev, 
-          [questions[currentStep].id]: (prev[questions[currentStep].id] || '') + (prev[questions[currentStep].id] ? ' ' : '') + simulatedText
-        }));
+        setInputText(prev => prev + (prev ? ' ' : '') + simulatedText);
         setIsProcessingAudio(false);
         setRecording(null);
       }, 1500);
@@ -145,20 +153,15 @@ const SymptomAssessmentScreen = () => {
   };
 
   const handleBack = useCallback(() => {
-    if (currentStep > 0) {
-      setCurrentStep(curr => curr - 1);
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-    } else {
-      Alert.alert(
-        'Cancel Assessment',
-        'Are you sure you want to start over? Your progress will be lost.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() }
-        ]
-      );
-    }
-  }, [currentStep, navigation]);
+    Alert.alert(
+      'Cancel Assessment',
+      'Are you sure you want to start over? Your progress will be lost.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() }
+      ]
+    );
+  }, [navigation]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -173,6 +176,12 @@ const SymptomAssessmentScreen = () => {
   }, [navigation, handleBack]);
 
   useEffect(() => {
+    // Initial messages
+    const initialMessages: Message[] = [
+      { id: 'report', text: `YOUR INITIAL REPORT:\n${initialSymptom || 'Not specified'}`, sender: 'assistant' }
+    ];
+    setMessages(initialMessages);
+
     // Check for immediate escalation
     const emergencyCheck = detectEmergency(initialSymptom || '');
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
@@ -198,6 +207,14 @@ const SymptomAssessmentScreen = () => {
         const parsed = JSON.parse(jsonMatch[0]);
         if (parsed.questions && Array.isArray(parsed.questions)) {
            setQuestions(parsed.questions);
+           // Add first question to messages
+           if (parsed.questions.length > 0) {
+             setMessages(prev => [...prev, {
+               id: parsed.questions[0].id,
+               text: parsed.questions[0].text,
+               sender: 'assistant'
+             }]);
+           }
         } else {
            throw new Error('Invalid response format');
         }
@@ -212,33 +229,57 @@ const SymptomAssessmentScreen = () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = (answerText?: string) => {
+    const finalAnswer = answerText || inputText;
+    if (!finalAnswer.trim()) return;
+
     const currentQuestion = questions[currentStep];
-    const currentAnswer = currentQuestion ? answers[currentQuestion.id] : '';
-    const emergencyCheck = detectEmergency(currentAnswer);
+    if (!currentQuestion) return;
+
+    // Save answer
+    const newAnswers = { ...answers, [currentQuestion.id]: finalAnswer };
+    setAnswers(newAnswers);
     
+    // Add user message
+    const userMsg: Message = { id: `user-${currentStep}`, text: finalAnswer, sender: 'user' };
+    
+    // Check for emergency
+    const emergencyCheck = detectEmergency(finalAnswer);
     if (emergencyCheck.isEmergency) {
         console.log("Emergency detected during assessment:", emergencyCheck.matchedKeywords);
         const partialData = {
             symptoms: initialSymptom,
-            answers: { ...answers, [currentQuestion?.id || 'last']: currentAnswer }
+            answers: newAnswers
         };
+        setMessages(prev => [...prev, userMsg]);
         navigation.navigate('Recommendation', { assessmentData: partialData });
         return;
     }
 
+    // Move to next step or finish
     if (currentStep < questions.length - 1) {
-      setCurrentStep(curr => curr + 1);
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      const nextStep = currentStep + 1;
+      const nextQuestion = questions[nextStep];
+      const assistantMsg: Message = { id: nextQuestion.id, text: nextQuestion.text, sender: 'assistant' };
+      
+      setMessages(prev => [...prev, userMsg, assistantMsg]);
+      setCurrentStep(nextStep);
+      setInputText('');
+      
+      // Scroll to end
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     } else {
-      finishAssessment();
+      setMessages(prev => [...prev, userMsg]);
+      finishAssessment(newAnswers);
     }
   };
 
-  const finishAssessment = () => {
+  const finishAssessment = (finalAnswers: Record<string, string>) => {
     const assessmentData = {
         symptoms: initialSymptom,
-        answers: answers
+        answers: finalAnswers
     };
     navigation.navigate('Recommendation', { assessmentData });
   };
@@ -250,7 +291,6 @@ const SymptomAssessmentScreen = () => {
   };
 
   const currentQuestion = questions[currentStep];
-  const currentAnswer = currentQuestion ? answers[currentQuestion.id] : '';
 
   if (loading) {
     return (
@@ -271,8 +311,37 @@ const SymptomAssessmentScreen = () => {
     );
   }
 
+  const renderMessage = (message: Message) => {
+    const isAssistant = message.sender === 'assistant';
+    return (
+      <View key={message.id} style={[
+        styles.messageWrapper,
+        isAssistant ? styles.assistantWrapper : styles.userWrapper
+      ]}>
+        {isAssistant && (
+          <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+            <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+          </View>
+        )}
+        <View style={[
+          styles.bubble,
+          isAssistant ? 
+            [styles.assistantBubble, { backgroundColor: theme.colors.surface }] : 
+            [styles.userBubble, { backgroundColor: theme.colors.primary }]
+        ]}>
+          <Text style={[
+            styles.messageText,
+            { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary }
+          ]}>
+            {message.text}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
@@ -280,158 +349,95 @@ const SymptomAssessmentScreen = () => {
       >
         <ScrollView 
           ref={scrollViewRef}
-          contentContainerStyle={[styles.content, { paddingBottom: 20 }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            isKeyboardVisible && { paddingBottom: 40 }
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          
-          <View style={[styles.reportCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={[styles.reportIconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-              <MaterialCommunityIcons name="chat-outline" size={20} color={theme.colors.primary} />
-            </View>
-            <View style={styles.reportContent}>
-              <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: '700' }}>YOUR INITIAL REPORT</Text>
-              <Text variant="bodyMedium" style={styles.reportText}>{initialSymptom || 'Not specified'}</Text>
-            </View>
+          <View style={styles.messagesContainer}>
+            {messages.map(renderMessage)}
           </View>
-
-          <View style={styles.progressSection}>
-              <View style={styles.progressHeader}>
-                  <Text variant="titleSmall" style={[styles.progressTitle, { color: theme.colors.onSurface }]}>Progress</Text>
-                  <Text variant="labelMedium" style={[styles.progressText, { color: theme.colors.onSurfaceVariant }]}>
-                      Step {currentStep + 1} of {questions.length}
-                  </Text>
-              </View>
-              <ProgressBar 
-                  progress={questions.length > 0 ? (currentStep + 1) / questions.length : 0} 
-                  color={theme.colors.primary} 
-                  style={[styles.progressBar, { backgroundColor: theme.colors.surfaceVariant }]} 
-              />
-          </View>
-
-          {currentQuestion && (
-            <>
-              <Text variant="titleLarge" style={styles.questionText}>
-                  {currentQuestion.text}
-              </Text>
-              
-              <Card mode="outlined" style={styles.card}>
-                  <Card.Content style={styles.cardContent}>
-                  <View style={styles.answerContainer}>
-                      {currentQuestion.type === 'choice' && currentQuestion.options ? (
-                          <RadioButton.Group 
-                              onValueChange={val => setAnswers(prev => ({...prev, [currentQuestion.id]: val}))} 
-                              value={currentAnswer}
-                          >
-                              {currentQuestion.options.map(opt => (
-                                  <View key={opt} style={styles.radioItem}>
-                                    <RadioButton.Item 
-                                        label={opt} 
-                                        value={opt} 
-                                        mode="android"
-                                        labelStyle={styles.radioLabel}
-                                        style={styles.radioInner}
-                                        color={theme.colors.primary}
-                                    />
-                                  </View>
-                              ))}
-                          </RadioButton.Group>
-                      ) : (
-                          <TextInput
-                              mode="outlined"
-                              value={currentAnswer}
-                              onChangeText={txt => setAnswers(prev => ({...prev, [currentQuestion.id]: txt}))}
-                              onFocus={handleInputFocus}
-                              placeholder="Describe your symptoms in detail..."
-                              multiline
-                              numberOfLines={4}
-                              style={styles.textInput}
-                              outlineStyle={{ borderRadius: 12, borderWidth: 1.5 }}
-                              activeOutlineColor={theme.colors.primary}
-                          />
-                      )}
-                  </View>
-
-                  {currentQuestion.type === 'choice' ? (
-                      <Button 
-                          variant="primary"
-                          title={currentStep === questions.length - 1 ? 'Finish Assessment' : 'Next Question'} 
-                          onPress={handleNext} 
-                          style={styles.fullButton}
-                          disabled={!currentAnswer}
-                      />
-                  ) : (
-                      <View style={styles.actionRow}>
-                          <View style={styles.voiceActions}>
-                            {isProcessingAudio ? (
-                              <View style={styles.processingRow}>
-                                <ActivityIndicator size="small" color={theme.colors.primary} />
-                              </View>
-                            ) : (
-                              <View style={styles.micButtonRow}>
-                                <View style={styles.micButtonContainer}>
-                                  {isRecording && (
-                                    <Animated.View
-                                      style={[styles.recordingPulse, { opacity: fadeAnim, backgroundColor: theme.colors.error }]}
-                                    />
-                                  )}
-                                  <IconButton
-                                    icon={isRecording ? 'stop' : 'microphone'}
-                                    mode="contained"
-                                    containerColor={isRecording ? theme.colors.error : theme.colors.primaryContainer}
-                                    iconColor={isRecording ? theme.colors.onError : theme.colors.onPrimaryContainer}
-                                    size={24}
-                                    onPress={isRecording ? stopRecording : startRecording}
-                                    accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Voice Input'}
-                                  />
-                                </View>
-                              </View>
-                            )}
-                          </View>
-
-                          <Button 
-                              variant="primary"
-                              title={currentStep === questions.length - 1 ? 'Finish Assessment' : 'Next Question'} 
-                              onPress={handleNext} 
-                              style={styles.inlineSubmitButton}
-                              labelStyle={{ fontSize: 14 }}
-                              contentStyle={styles.inlineSubmitContent}
-                              disabled={!currentAnswer || isRecording || isProcessingAudio}
-                          />
-                      </View>
-                  )}
-                  </Card.Content>
-              </Card>
-            </>
-          )}
-
-          <View style={styles.buttonContainer}>
-            {currentStep > 0 && (
-              <Button 
-                variant="outline"
-                title="Previous"
-                onPress={handleBack}
-                style={styles.flexButton}
-                icon="arrow-left"
-              />
-            )}
-          </View>
-          
-          {currentStep === 0 && (
-            <View style={styles.navigationActions}>
-                <Button 
-                    mode="text" 
-                    title="Cancel & Start Over"
-                    onPress={handleBack} 
-                    icon="close"
-                    variant="outline"
-                    style={styles.cancelButton}
-                    labelStyle={{ color: theme.colors.error }}
-                />
-            </View>
-          )}
-
         </ScrollView>
+
+        <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
+          {questions.length > 0 && (
+            <View style={styles.progressSubtle}>
+               <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, opacity: 0.8 }}>
+                  Question {currentStep + 1} of {questions.length}
+               </Text>
+            </View>
+          )}
+
+          {currentQuestion?.type === 'choice' && currentQuestion.options && (
+            <View style={styles.choiceContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.choiceScrollContent}>
+                {currentQuestion.options.map((opt) => (
+                  <Chip
+                    key={opt}
+                    onPress={() => handleNext(opt)}
+                    style={styles.choiceChip}
+                    mode="flat"
+                    compact
+                    showSelectedOverlay
+                  >
+                    {opt}
+                  </Chip>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          <Card mode="outlined" style={[styles.inputCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.outlineVariant }]}>
+            <View style={styles.inputRow}>
+              <TextInput
+                mode="flat"
+                placeholder="Type your answer..."
+                multiline
+                numberOfLines={1}
+                value={inputText}
+                onChangeText={setInputText}
+                onFocus={handleInputFocus}
+                style={[styles.textInput, { backgroundColor: 'transparent' }]}
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                dense
+              />
+
+              <View style={styles.actionIcons}>
+                {isProcessingAudio ? (
+                  <ActivityIndicator size="small" color={theme.colors.primary} style={styles.iconMargin} />
+                ) : (
+                  <View style={styles.micContainer}>
+                    {isRecording && (
+                      <Animated.View
+                        style={[styles.recordingPulse, { opacity: fadeAnim, backgroundColor: theme.colors.error }]}
+                      />
+                    )}
+                    <IconButton
+                      icon={isRecording ? 'stop' : 'microphone'}
+                      size={24}
+                      iconColor={isRecording ? theme.colors.error : theme.colors.onSurfaceVariant}
+                      onPress={isRecording ? stopRecording : startRecording}
+                      style={styles.iconButton}
+                    />
+                  </View>
+                )}
+                
+                <IconButton
+                  icon={currentStep === questions.length - 1 ? 'check-circle' : 'send'}
+                  size={24}
+                  iconColor={inputText.trim() ? theme.colors.primary : theme.colors.outline}
+                  disabled={!inputText.trim() || isRecording || isProcessingAudio}
+                  onPress={() => handleNext()}
+                  style={styles.iconButton}
+                />
+              </View>
+            </View>
+          </Card>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -442,85 +448,96 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   loadingText: { marginTop: 16, fontWeight: 'bold' },
   loadingSubtext: { marginTop: 4, opacity: 0.7 },
-  content: { padding: 16 },
   
-  reportCard: {
-    flexDirection: 'row',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(55, 151, 119, 0.1)',
-    marginBottom: 24,
-    alignItems: 'center',
-  },
-  reportIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
+  messagesContainer: { flex: 1 },
+  
+  messageWrapper: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-end' },
+  assistantWrapper: { justifyContent: 'flex-start' },
+  userWrapper: { justifyContent: 'flex-end' },
+  
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 8,
+    marginBottom: 4,
   },
-  reportContent: { flex: 1 },
-  reportText: { fontWeight: '500', marginTop: 2 },
+  bubble: {
+    maxWidth: '80%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  assistantBubble: {
+    borderBottomLeftRadius: 4,
+  },
+  userBubble: {
+    borderBottomRightRadius: 4,
+  },
+  messageText: { fontSize: 16, lineHeight: 22 },
 
-  progressSection: { marginBottom: 24 },
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 },
-  progressTitle: { fontWeight: '700' },
-  progressText: { marginBottom: 0 },
-  progressBar: { height: 8, borderRadius: 4 },
-
-  card: { padding: 0, marginBottom: 24, borderRadius: 16, overflow: 'hidden' },
-  cardContent: { padding: 12 },
-  questionText: { marginBottom: 16, fontWeight: '700', lineHeight: 28 },
-  answerContainer: { marginBottom: 8 },
-  radioItem: {
-    borderRadius: 12,
+  inputSection: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  progressSubtle: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  choiceContainer: {
+    marginBottom: 12,
+  },
+  choiceScrollContent: {
+    paddingHorizontal: 4,
+    gap: 8,
+  },
+  choiceChip: {
+    height: 36,
+  },
+  inputCard: { 
+    borderRadius: 28, 
+    overflow: 'hidden', 
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-    marginBottom: 8,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    overflow: 'hidden',
   },
-  radioInner: { paddingVertical: 4 },
-  radioLabel: { fontSize: 16 },
-  textInput: { backgroundColor: 'transparent', marginBottom: 4 },
-  
-  actionRow: { 
+  inputRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    justifyContent: 'space-between',
-    marginTop: 12,
+    paddingHorizontal: 4,
   },
-  voiceActions: { 
-    flex: 0.15,
-    justifyContent: 'center',
+  textInput: { 
+    flex: 1, 
+    fontSize: 15,
+    maxHeight: 120,
+    paddingHorizontal: 12,
   },
-  inlineSubmitButton: { 
-    flex: 0.85,
-    borderRadius: 12,
-    marginLeft: 8,
+  actionIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 4,
   },
-  inlineSubmitContent: {
-    height: 44,
-  },
-  processingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  micButtonRow: { flexDirection: 'row', alignItems: 'center' },
-  micButtonContainer: { position: 'relative', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  micContainer: { position: 'relative', width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  iconButton: { margin: 0 },
+  iconMargin: { marginHorizontal: 8 },
   recordingPulse: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     position: 'absolute',
     opacity: 0.3,
   },
-
-  buttonContainer: { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  flexButton: { flex: 1 },
-  fullButton: { borderRadius: 12, height: 48, justifyContent: 'center' },
-  
-  navigationActions: { alignItems: 'center' },
-  cancelButton: { borderColor: 'transparent' },
 });
+
+
 
 export default SymptomAssessmentScreen;
