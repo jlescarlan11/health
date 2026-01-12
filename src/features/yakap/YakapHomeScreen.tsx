@@ -16,7 +16,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
-import { YAKAP_BENEFITS, YAKAP_FAQS, ELIGIBILITY_INFO } from './yakapContent';
+import { YAKAP_BENEFITS, YAKAP_FAQS, ELIGIBILITY_INFO, YakapBenefit } from './yakapContent';
 import { YakapStackParamList } from '../../navigation/types';
 
 type YakapScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'YakapHome'>;
@@ -49,11 +49,11 @@ const YakapHomeScreen = () => {
     });
   };
 
-  const renderBenefitCard = (benefit: any) => (
+  const renderBenefitCard = (benefit: YakapBenefit) => (
     <Card key={benefit.id} style={styles.benefitCard}>
       <Card.Content>
         <MaterialCommunityIcons
-          name="medical-bag"
+          name={benefit.icon as any}
           size={32}
           color={theme.colors.primary}
           style={styles.benefitIcon}
