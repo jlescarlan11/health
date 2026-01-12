@@ -49,13 +49,13 @@ const YakapHomeScreen = () => {
     });
   };
 
-  const renderBenefitCard = (benefit: YakapBenefit) => (
-    <Card key={benefit.id} style={styles.benefitCard}>
-      <Card.Content style={styles.benefitCardContent}>
-        <View style={styles.benefitIconContainer}>
+  const renderBenefitItem = (benefit: YakapBenefit, index: number) => (
+    <View key={benefit.id}>
+      <View style={styles.benefitItemContent}>
+        <View style={[styles.benefitIconContainer, { backgroundColor: theme.colors.primaryContainer, padding: 10, borderRadius: 12 }]}>
           <MaterialCommunityIcons
             name={benefit.icon as any}
-            size={32}
+            size={24}
             color={theme.colors.primary}
           />
         </View>
@@ -67,8 +67,11 @@ const YakapHomeScreen = () => {
             {benefit.description}
           </Text>
         </View>
-      </Card.Content>
-    </Card>
+      </View>
+      {index < YAKAP_BENEFITS.length - 1 && (
+        <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
+      )}
+    </View>
   );
 
   return (
@@ -125,7 +128,7 @@ const YakapHomeScreen = () => {
               Start Enrollment Guide
             </Button>
             <Button
-              mode="contained-tonal"
+              mode="outlined"
               icon="hospital-marker"
               onPress={navigateToFacilities}
               style={{ marginTop: 12, borderRadius: 8 }}
@@ -140,9 +143,11 @@ const YakapHomeScreen = () => {
           <Text variant="titleLarge" style={styles.sectionHeader}>
             Key Benefits
           </Text>
-          <View style={styles.benefitsGrid}>
-            {YAKAP_BENEFITS.map(renderBenefitCard)}
-          </View>
+          <Card style={{ marginHorizontal: 16, borderRadius: 16 }}>
+            <Card.Content style={styles.benefitsList}>
+              {YAKAP_BENEFITS.map((benefit, index) => renderBenefitItem(benefit, index))}
+            </Card.Content>
+          </Card>
         </View>
 
 
@@ -241,27 +246,22 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: 'bold',
   },
-  benefitsGrid: {
+  benefitsList: {
     paddingHorizontal: 16,
-    flexDirection: 'column',
-    gap: 12,
+    paddingVertical: 8,
   },
-  benefitCard: {
-    width: '100%',
-    height: 'auto',
-  },
-  benefitCardContent: {
+  benefitItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
   },
   benefitIconContainer: {
     marginRight: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   benefitTextContainer: {
     flex: 1,
-  },
-  benefitIcon: {
-    // Removed marginBottom and alignSelf as they are handled by container
   },
   benefitTitle: {
     fontWeight: 'bold',
@@ -270,7 +270,13 @@ const styles = StyleSheet.create({
   },
   benefitDesc: {
     textAlign: 'left',
-    lineHeight: 16,
+    lineHeight: 18,
+    opacity: 0.8,
+  },
+  divider: {
+    height: 1,
+    width: '100%',
+    opacity: 0.1,
   },
   heroDesc: {
     textAlign: 'center',
