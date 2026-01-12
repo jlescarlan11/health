@@ -160,17 +160,6 @@ export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
   }
 ];
 
-export const ELIGIBILITY_INFO = {
-  mainText: 'All Filipino citizens with a PhilHealth Identification Number (PIN) are eligible to enroll in the YAKAP Program.',
-  points: [
-    'Must be a Filipino citizen.',
-    'Must have a valid PhilHealth Identification Number (PIN).',
-    'Includes both Principal members and their qualified dependents.',
-    'No age restrictions.',
-    'No income restrictions (covers both direct and indirect contributors).'
-  ]
-};
-
 export const YAKAP_FAQS: YakapFAQ[] = [
   {
     id: 'what_is_yakap',

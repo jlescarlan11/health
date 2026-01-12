@@ -5,19 +5,14 @@ import {
   Card,
   Button,
   List,
-  IconButton,
   useTheme,
-  Portal,
-  Dialog,
-  Paragraph,
 } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import StandardHeader from '../../components/common/StandardHeader';
 import HeroSection from '../../components/heroes/HeroSection';
-import { YAKAP_BENEFITS, YAKAP_FAQS, ELIGIBILITY_INFO, YakapBenefit } from './yakapContent';
+import { YAKAP_BENEFITS, YAKAP_FAQS, YakapBenefit } from './yakapContent';
 import { YakapStackParamList } from '../../navigation/types';
 
 type YakapScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'YakapHome'>;
@@ -27,10 +22,6 @@ const YakapHomeScreen = () => {
   const navigation = useNavigation<YakapScreenNavigationProp>();
   
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [isEligibilityDialogVisible, setIsEligibilityDialogVisible] = useState(false);
-
-  const showEligibility = () => setIsEligibilityDialogVisible(true);
-  const hideEligibility = () => setIsEligibilityDialogVisible(false);
 
   const handleAccordionPress = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
@@ -77,11 +68,6 @@ const YakapHomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <StandardHeader
-        title="YAKAP"
-        rightActions={<IconButton icon="information" onPress={showEligibility} />}
-      />
-
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: theme.colors.background }}
@@ -89,7 +75,7 @@ const YakapHomeScreen = () => {
         {/* Hero Section */}
         <HeroSection
           colors={[theme.colors.primaryContainer, theme.colors.background]}
-          height={240}
+          height={280}
         >
           <View style={styles.heroContent}>
             <View style={styles.logoPlaceholder}>
@@ -166,28 +152,6 @@ const YakapHomeScreen = () => {
           ))}
         </View>
       </ScrollView>
-
-      <Portal>
-        <Dialog visible={isEligibilityDialogVisible} onDismiss={hideEligibility}>
-          <Dialog.Title>Eligibility Criteria</Dialog.Title>
-          <Dialog.Content>
-            <Paragraph style={{ fontWeight: 'bold', marginBottom: 8 }}>
-              {ELIGIBILITY_INFO.mainText}
-            </Paragraph>
-            <ScrollView style={{ maxHeight: 200 }}>
-              {ELIGIBILITY_INFO.points.map((point, index) => (
-                <View key={index} style={{ flexDirection: 'row', marginBottom: 4 }}>
-                  <Text style={{ marginRight: 8 }}>•</Text>
-                  <Text>{point}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={hideEligibility}>Close</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </View>
   );
 };
