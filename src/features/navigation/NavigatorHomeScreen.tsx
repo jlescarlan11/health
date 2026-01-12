@@ -32,9 +32,10 @@ const NavigatorHomeScreen = () => {
 
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
-  // Adjusted keyboard offset - often headers are already accounted for by React Navigation
-  // Reduced to be more conservative and prevent excessive space
-  const keyboardVerticalOffset = Platform.OS === 'ios' ? insets.top : 0;
+  // Adjusted keyboard offset to account for StandardHeader (60px) and status bar (insets.top)
+  // Added a 20px buffer to lift it slightly more
+  const headerHeight = 60;
+  const keyboardVerticalOffset = Platform.OS === 'ios' ? headerHeight + insets.top + 20 : 0;
 
   // Animation for recording indicator
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -177,7 +178,7 @@ const NavigatorHomeScreen = () => {
           ref={scrollViewRef}
           contentContainerStyle={[
             styles.scrollContent,
-            isKeyboardVisible && { paddingBottom: Platform.OS === 'ios' ? 20 : 40 }
+            isKeyboardVisible && { paddingBottom: Platform.OS === 'ios' ? 120 : 140 }
           ]} 
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -317,7 +318,7 @@ const NavigatorHomeScreen = () => {
 };
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 100 },
+  scrollContent: { paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 60 },
   emergencyLayoutContainer: { marginBottom: 24 },
   emergencyCard: { borderRadius: 16, elevation: 0 },
   emergencyCardContent: { padding: 16 },
@@ -328,7 +329,7 @@ const styles = StyleSheet.create({
   welcomeText: { fontWeight: 'bold', textAlign: 'left' },
   subtitle: { marginTop: 8, lineHeight: 20 },
   disclaimerContainer: { marginBottom: 24 },
-  inputCard: { padding: 0, marginBottom: 24, borderRadius: 16, overflow: 'hidden' },
+  inputCard: { padding: 0, marginBottom: 16, borderRadius: 16, overflow: 'hidden' },
   textInput: { marginBottom: 4 },
   actionRow: { 
     flexDirection: 'row', 
