@@ -3,7 +3,7 @@ export interface YakapBenefit {
   category: string;
   description: string;
   items: string[];
-  icon?: string; // Placeholder for icon name
+  icon: string;
 }
 
 export interface EnrollmentPathway {
@@ -34,7 +34,8 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
       'Health profiling',
       'Management of chronic conditions',
       'Health education and counseling'
-    ]
+    ],
+    icon: 'doctor'
   },
   {
     id: 'lab_tests',
@@ -48,7 +49,8 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
       'Sputum Microscopy',
       'Fasting Blood Sugar',
       'Lipid Profile'
-    ]
+    ],
+    icon: 'flask'
   },
   {
     id: 'medicines',
@@ -60,7 +62,8 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
       'Antibiotics (as prescribed)',
       'Vitamins and supplements for nutritional deficiencies',
       'Asthma medications'
-    ]
+    ],
+    icon: 'pill'
   },
   {
     id: 'screenings',
@@ -71,7 +74,8 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
       'Colonoscopy (Colorectal Cancer)',
       'CT Scans (as indicated)',
       'Cervical Cancer Screening (Pap smear / VIA)'
-    ]
+    ],
+    icon: 'radiology-box'
   }
 ];
 
