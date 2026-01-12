@@ -39,17 +39,23 @@ Facility Levels (strictly use these enum values for "recommended_level"):
 JSON Schema:
 {
   "recommended_level": "self_care" | "health_center" | "hospital" | "emergency",
-  "confidence_score": 0.0 to 1.0, // A float representing your confidence in this assessment.
-  "ambiguity_detected": boolean, // Set to true if symptoms are vague, conflicting, or insufficient.
-  "follow_up_questions": ["Question 1?", "Question 2?"], // 2-4 questions to clarify severity or duration. Empty if diagnosis is clear.
-  "assessment_summary": "A concise summary of the assessment and why this level of care is recommended.",
-  "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"] // Empty array if none.
+  "confidence_score": 0.0 to 1.0,
+  "ambiguity_detected": boolean,
+  "follow_up_questions": ["Question 1?", "Question 2?"],
+  "condition_summary": "A concise explanation (1-2 sentences) of what the symptoms might indicate, without a definitive diagnosis.",
+  "recommended_action": "A clear, direct instruction on what the user should do next.",
+  "key_concerns": ["Bullet point 1", "Bullet point 2"], // Specific concerns based on symptoms.
+  "critical_warnings": ["Warning 1"], // High-priority warnings (e.g., infection risk, dehydration signs).
+  "relevant_services": ["Service 1", "Service 2"], // 2-3 specific services to look for at the facility (e.g., "Wound Care", "X-Ray").
+  "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"]
 }
 
 Rules:
 1. **Safety First:** If ANY red flag is present (chest pain, severe bleeding, unconsciousness, stroke signs, suicide risk), "recommended_level" MUST be "emergency".
-2. **Follow-up:** If the user's input is vague (e.g., "my stomach hurts"), provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
-3. **Tone:** Empathetic, professional, calm.
+2. **Follow-up:** If the user's input is vague, provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
+3. **Condition vs Action:** Keep "condition_summary" focused on the 'what' and "recommended_action" focused on the 'what to do'.
+4. **Relevant Services:** Use standard medical service names used in Naga City facilities.
+5. **Tone:** Empathetic, professional, calm.
 `;
 
 

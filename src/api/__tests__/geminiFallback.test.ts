@@ -59,7 +59,7 @@ describe('GeminiClient Fallback Strategy', () => {
 
     const result = await client.assessSymptoms("mild headache");
     expect(result.recommended_level).toBe("health_center");
-    expect(result.assessment_summary).toContain("upgraded");
+    expect(result.recommended_action).toContain("upgraded");
   });
 
   test('should upgrade Health Center to Hospital if ambiguity is detected', async () => {
@@ -88,7 +88,7 @@ describe('GeminiClient Fallback Strategy', () => {
 
     const result = await client.assessSymptoms("chest pain");
     expect(result.recommended_level).toBe("emergency");
-    expect(result.assessment_summary).toContain("Upgraded to Emergency");
+    expect(result.recommended_action).toContain("Upgraded to Emergency");
   });
 
   test('should NOT upgrade if confidence is high and no ambiguity', async () => {
@@ -103,6 +103,6 @@ describe('GeminiClient Fallback Strategy', () => {
 
     const result = await client.assessSymptoms("mild headache");
     expect(result.recommended_level).toBe("self_care");
-    expect(result.assessment_summary).not.toContain("upgraded");
+    expect(result.recommended_action).not.toContain("upgraded");
   });
 });

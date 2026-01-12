@@ -23,7 +23,12 @@ export interface ChatMessage {
 export interface AssessmentResponse {
   recommended_level: "self_care" | "health_center" | "hospital" | "emergency";
   follow_up_questions: string[];
-  assessment_summary: string;
+  assessment_summary?: string;
+  condition_summary: string;
+  recommended_action: string;
+  key_concerns: string[];
+  critical_warnings: string[];
+  relevant_services: string[];
   red_flags: string[];
   confidence_score?: number;
   ambiguity_detected?: boolean;
@@ -121,7 +126,11 @@ export class GeminiClient {
       return {
         recommended_level: json.recommended_level,
         follow_up_questions: json.follow_up_questions || [],
-        assessment_summary: json.assessment_summary || "No summary provided.",
+        condition_summary: json.condition_summary || json.assessment_summary || "Based on your symptoms, we've analyzed your condition.",
+        recommended_action: json.recommended_action || "Please follow the recommended level of care.",
+        key_concerns: json.key_concerns || [],
+        critical_warnings: json.critical_warnings || [],
+        relevant_services: json.relevant_services || [],
         red_flags: json.red_flags || [],
         confidence_score: json.confidence_score,
         ambiguity_detected: json.ambiguity_detected,
@@ -147,9 +156,11 @@ export class GeminiClient {
       return {
         recommended_level: "emergency",
         follow_up_questions: [],
-        assessment_summary:
-          emergency.overrideResponse?.assessment_summary ||
-          "Critical symptoms detected. Immediate care required.",
+        condition_summary: "Critical symptoms detected that require immediate medical attention.",
+        recommended_action: "Go to the nearest emergency room or call emergency services (911) immediately.",
+        key_concerns: emergency.matchedKeywords.map(k => `Urgent: ${k}`),
+        critical_warnings: ["Life-threatening condition possible"],
+        relevant_services: ["Emergency Care", "Trauma Support"],
         red_flags: emergency.matchedKeywords,
         confidence_score: 1.0,
       };
@@ -160,8 +171,11 @@ export class GeminiClient {
       return {
         recommended_level: "emergency",
         follow_up_questions: [],
-        assessment_summary:
-          mhCrisis.message || "Mental health crisis detected. Help is available.",
+        condition_summary: "Your symptoms indicate a mental health crisis.",
+        recommended_action: "Please reach out to a crisis hotline or go to the nearest hospital immediately.",
+        key_concerns: ["Risk of self-harm or severe distress"],
+        critical_warnings: ["You are not alone. Professional help is available now."],
+        relevant_services: ["Mental Health Support", "Crisis Intervention"],
         red_flags: mhCrisis.matchedKeywords,
         confidence_score: 1.0,
       };
@@ -219,7 +233,7 @@ export class GeminiClient {
         if (parsed.red_flags && parsed.red_flags.length > 0 && parsed.recommended_level !== "emergency") {
            console.log("[GeminiClient] Red flags detected but not Emergency. Upgrading to Emergency.");
            parsed.recommended_level = "emergency";
-           parsed.assessment_summary += " (Upgraded to Emergency due to detected red flags).";
+           parsed.recommended_action += " (Upgraded to Emergency due to detected red flags).";
            currentLevelIdx = 3;
         }
 
@@ -232,7 +246,7 @@ export class GeminiClient {
           console.log(`[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Conf: ${isLowConfidence}, Ambiguous: ${isAmbiguous}`);
           
           parsed.recommended_level = nextLevel;
-          parsed.assessment_summary += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
+          parsed.recommended_action += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
         }
         // -----------------------------------
 

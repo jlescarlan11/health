@@ -128,3 +128,11 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     *   **Layout Optimization:** Removed gaps between the input card and bottom navigation for a more cohesive feel, with a subtle 8px spacing for balance.
     *   **Visual Consistency:** Removed redundant placeholders in favor of consistent floating labels across the app.
     *   **Files Modified:** `src/components/common/InputCard.tsx`, `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
+
+*   **Recommendation & Facility UI Overhaul:** Significantly improved the UI of the recommendation results and facility listings for better clarity and visual appeal.
+    *   **Recommendation Card:** Implemented a new design for the recommendation card with care-level specific color palettes (e.g., soft greens for Health Center). Refined typography for "YOUR CONDITION" and "RECOMMENDED ACTION" headers using uppercase labels with increased letter spacing.
+    *   **Critical Alerts:** Redesigned the "Watch for" / Red Flags section with a distinctive semi-transparent background and bold warning icons to ensure high visibility of critical safety information.
+    *   **Facility Card Refinement:** Modernized `FacilityCard` with a cleaner, flatter design. Repositioned YAKAP badges and distance indicators for better balance, and updated service chips to use the primary container palette for a cohesive look.
+    *   **Japanese Design System Alignment:** All components now strictly adhere to the Washi/Tokiwa-iro/Kitsune-iro palette, providing a professional and localized experience for Naga City residents.
+    *   **Files Modified:** `src/screens/RecommendationScreen.tsx`, `src/components/common/FacilityCard.tsx`.
+
