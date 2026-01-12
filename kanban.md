@@ -1,56 +1,19 @@
-# Kanban: Yakap Feature Simplification
+# Kanban Board - Yakap UI/UX Improvements
 
-Refactor the YAKAP enrollment feature into a purely informational, step-by-step guide. Remove all authentication, persistence, and state-saving logic to ensure a fresh experience on every visit.
+## Todo
 
-## Task 1: State Management Simplification
-**Goal:** Strip the Redux slice of persistent data and remove it from the persistence whitelist.
+### Streamline Enrollment Actions
+- **Task**: Simplify the user journey by removing redundant eligibility checks and strengthening the primary call-to-action.
+    - **Subtask**: Locate `src/features/yakap/YakapHomeScreen.tsx` and identify the bottom action buttons section.
+    - **Subtask**: Remove the "Check Eligibility" button (`Button` with `icon="check-decagram"`) and its associated `onPress` handler if no longer used.
+    - **Subtask**: Locate the "How to Enroll" CTA card in the same file.
+    - **Subtask**: Update the button text from "View Enrollment Guide" to "Start Enrollment Guide" to imply immediate action.
 
-- **Task: Refactor `src/store/enrollmentSlice.ts`**
-    - Subtask: Remove `enrollmentStatus`, `completedSteps`, `uploadedDocuments`, `data`, and `completionDate` from the state interface.
-    - Subtask: Simplify `initialState` to only include `selectedPathway` and `currentStep`.
-    - Subtask: Remove obsolete reducers: `updateEnrollmentData`, `toggleStepCompletion`, `setUploadedDocument`, `completeEnrollment`, `failEnrollment`.
-    - Subtask: Keep `startEnrollment` (to set pathway), `setStep`, and `resetEnrollment`.
-
-- **Task: Update Store Configuration in `src/store/index.ts`**
-    - Subtask: Remove `'enrollment'` from the `persistConfig.whitelist` array.
-
-## Task 2: UI Refactoring - Home Screen
-**Goal:** Remove enrollment status tracking and force a fresh start.
-
-- **Task: Refactor `src/features/yakap/YakapHomeScreen.tsx`**
-    - Subtask: Remove the "Enrollment Status" card and all associated conditional rendering logic (e.g., checking `enrollmentStatus`).
-    - Subtask: Simplify `navigateToEnrollment` to always call `dispatch(resetEnrollment())` and then navigate to `EligibilityChecker`.
-    - Subtask: Remove the dev-mode "Reset Progress" button as it becomes redundant.
-    - Subtask: Ensure the "Start Enrollment" button is always visible and labeled clearly as starting an informational guide.
-
-## Task 3: UI Refactoring - Enrollment Guide
-**Goal:** Convert the guide into a pure instruction viewer.
-
-- **Task: Refactor `src/features/yakap/EnrollmentGuideScreen.tsx`**
-    - Subtask: Remove `completedSteps` and `uploadedDocuments` from selectors.
-    - Subtask: Remove document upload UI (the "Required Documents" section and upload button).
-    - Subtask: Remove the "Mark this step as completed" checkbox and its logic.
-    - Subtask: Remove "Save Progress" button and auto-save `useEffect` interval logic.
-    - Subtask: Remove `uploadFileToFirebase` import and usage.
-    - Subtask: Update `handleNext` to navigate to `EnrollmentCompletion` instead of dispatching `completeEnrollment`.
-
-- **Task: Refactor `src/features/yakap/EnrollmentCompletionScreen.tsx`**
-    - Subtask: Remove any logic that implies data was actually saved or recorded (e.g., "successfully recorded" text).
-    - Subtask: Update text to focus on the informational value of having completed the guide.
-
-## Task 4: Navigation & Flow Cleanup
-**Goal:** Remove intermediate or redundant screens and ensure a smooth informational flow.
-
-- **Task: Simplify `src/features/yakap/EligibilityCheckerScreen.tsx`**
-    - Subtask: Ensure no Redux dispatch calls for persistence are present.
-    - Subtask: Verify the flow correctly transitions to `EnrollmentPathway`.
-
-- **Task: Simplify `src/features/yakap/EnrollmentPathwayScreen.tsx`**
-    - Subtask: Verify `dispatch(startEnrollment(id))` only sets the pathway and doesn't trigger side effects.
-
-- **Task: Cleanup Unused Components**
-    - [x] Subtask: Remove `src/features/yakap/YakapEnrollmentScreen.tsx` if it's no longer reachable or used.
-    - [x] Subtask: Update `src/navigation/YakapNavigator.tsx` to remove the `YakapEnrollment` screen if deleted.
-- **Task: Final Verification**
-    - Subtask: Run the app and verify the YAKAP flow works from start to finish without saving progress between sessions or app reloads.
-    - Subtask: Check for any remaining references to authentication or user IDs in the Yakap feature and remove them.
+### Refactor Key Benefits Layout
+- **Task**: Improve the discoverability of program benefits by replacing the horizontal scroll with a vertical layout.
+    - **Subtask**: Modify the "Key Benefits" section in `src/features/yakap/YakapHomeScreen.tsx`.
+    - **Subtask**: Remove the `ScrollView` component wrapping the benefit cards (specifically the `horizontal` prop).
+    - **Subtask**: Change the container style to use a 2-column grid layout (e.g., `flexDirection: 'row'`, `flexWrap: 'wrap'`).
+    - **Subtask**: Update `styles.benefitCard` to remove the fixed width of `200px` and instead use a percentage-based width (e.g., `48%`) or `flex: 1` with margins.
+    - **Subtask**: Adjust `styles.benefitCard` height if necessary to accommodate wrapped text in a vertical layout.
+    - **Subtask**: Ensure proper spacing (gap/margin) between cards in the new grid layout.

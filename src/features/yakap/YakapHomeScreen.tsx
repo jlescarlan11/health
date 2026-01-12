@@ -100,7 +100,7 @@ const YakapHomeScreen = () => {
               Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
             </Text>
             <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
-              View Enrollment Guide
+              Start Enrollment Guide
             </Button>
           </Card.Content>
         </Card>
@@ -141,14 +141,6 @@ const YakapHomeScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <Button
-            mode="outlined"
-            icon="check-decagram"
-            onPress={navigateToEnrollment}
-            style={[styles.actionBtn, { borderColor: theme.colors.primary }]}
-          >
-            Check Eligibility
-          </Button>
           <Button
             mode="outlined"
             icon="hospital-marker"
