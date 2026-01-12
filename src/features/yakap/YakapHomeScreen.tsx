@@ -51,19 +51,22 @@ const YakapHomeScreen = () => {
 
   const renderBenefitCard = (benefit: YakapBenefit) => (
     <Card key={benefit.id} style={styles.benefitCard}>
-      <Card.Content>
-        <MaterialCommunityIcons
-          name={benefit.icon as any}
-          size={32}
-          color={theme.colors.primary}
-          style={styles.benefitIcon}
-        />
-        <Text variant="titleMedium" style={styles.benefitTitle}>
-          {benefit.category}
-        </Text>
-        <Text variant="bodySmall" style={styles.benefitDesc}>
-          {benefit.description}
-        </Text>
+      <Card.Content style={styles.benefitCardContent}>
+        <View style={styles.benefitIconContainer}>
+          <MaterialCommunityIcons
+            name={benefit.icon as any}
+            size={32}
+            color={theme.colors.primary}
+          />
+        </View>
+        <View style={styles.benefitTextContainer}>
+          <Text variant="titleMedium" style={styles.benefitTitle}>
+            {benefit.category}
+          </Text>
+          <Text variant="bodySmall" style={styles.benefitDesc}>
+            {benefit.description}
+          </Text>
+        </View>
       </Card.Content>
     </Card>
   );
@@ -90,27 +93,26 @@ const YakapHomeScreen = () => {
           <Text style={styles.heroDesc}>
             Free primary care, medicines, and lab tests for every Naga City resident.
           </Text>
-        </View>
+          
+          <View style={styles.heroDivider} />
 
-        {/* Eligibility Banner */}
-        <Card style={[styles.eligibilityBanner, { backgroundColor: theme.colors.primaryContainer }]}>
-          <Card.Content style={styles.eligibilityContent}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.eligibilityContainer}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
               <MaterialCommunityIcons
                 name="party-popper"
-                size={24}
+                size={20}
                 color={theme.colors.primary}
                 style={{ marginRight: 8 }}
               />
-              <Text variant="titleLarge" style={[styles.eligibilityTitle, { color: theme.colors.primary }]}>
+              <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
                 Every Filipino is Eligible!
               </Text>
             </View>
-            <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
+            <Text variant="bodySmall" style={{ textAlign: 'center', opacity: 0.8 }}>
               No age limits. No income restrictions. Just healthcare for all.
             </Text>
-          </Card.Content>
-        </Card>
+          </View>
+        </View>
 
         {/* Start Enrollment Call to Action */}
         <Card style={styles.ctaCard}>
@@ -166,8 +168,6 @@ const YakapHomeScreen = () => {
             </List.Accordion>
           ))}
         </View>
-
-        <View style={{ height: 24 }} />
       </ScrollView>
 
       <Portal>
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   ctaCard: {
     marginHorizontal: 16,
     marginBottom: 16,
-    marginTop: 0,
+    marginTop: 16,
     elevation: 2,
   },
   ctaTitle: {
@@ -234,19 +234,6 @@ const styles = StyleSheet.create({
   ctaButton: {
     borderRadius: 8,
   },
-  eligibilityBanner: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  eligibilityContent: {
-    alignItems: 'center',
-  },
-  eligibilityTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
   section: {
     marginTop: 10,
     marginBottom: 10,
@@ -258,26 +245,33 @@ const styles = StyleSheet.create({
   },
   benefitsGrid: {
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: 'column',
     gap: 12,
   },
   benefitCard: {
-    width: '48%',
-    height: 180,
-    justifyContent: 'center',
+    width: '100%',
+    height: 'auto',
+  },
+  benefitCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  benefitIconContainer: {
+    marginRight: 16,
+  },
+  benefitTextContainer: {
+    flex: 1,
   },
   benefitIcon: {
-    marginBottom: 10,
-    alignSelf: 'center',
+    // Removed marginBottom and alignSelf as they are handled by container
   },
   benefitTitle: {
     fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 5,
+    textAlign: 'left',
+    marginBottom: 2,
   },
   benefitDesc: {
-    textAlign: 'center',
+    textAlign: 'left',
     lineHeight: 16,
   },
   actionButtons: {
@@ -289,6 +283,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     opacity: 0.8,
+  },
+  heroDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    width: '100%',
+    marginVertical: 16,
+  },
+  eligibilityContainer: {
+    alignItems: 'center',
   },
 });
 
