@@ -13,6 +13,7 @@ interface ButtonProps {
   icon?: string;
   style?: ViewStyle;
   labelStyle?: TextStyle;
+  contentStyle?: ViewStyle;
   mode?: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal';
   accessibilityLabel?: string;
   accessibilityHint?: string;
@@ -28,6 +29,7 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   style,
   labelStyle,
+  contentStyle,
   accessibilityLabel,
   accessibilityHint,
   accessibilityRole = 'button',
@@ -71,6 +73,7 @@ export const Button: React.FC<ButtonProps> = ({
       textColor={textColor}
       style={[styles.button, style]}
       labelStyle={[styles.label, labelStyle]}
+      contentStyle={contentStyle}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityHint={accessibilityHint}
       accessibilityRole={accessibilityRole}
