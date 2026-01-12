@@ -49,9 +49,8 @@ Refactor the YAKAP enrollment feature into a purely informational, step-by-step 
     - Subtask: Verify `dispatch(startEnrollment(id))` only sets the pathway and doesn't trigger side effects.
 
 - **Task: Cleanup Unused Components**
-    - Subtask: Remove `src/features/yakap/YakapEnrollmentScreen.tsx` if it's no longer reachable or used.
-    - Subtask: Update `src/navigation/YakapNavigator.tsx` to remove the `YakapEnrollment` screen if deleted.
-
+    - [x] Subtask: Remove `src/features/yakap/YakapEnrollmentScreen.tsx` if it's no longer reachable or used.
+    - [x] Subtask: Update `src/navigation/YakapNavigator.tsx` to remove the `YakapEnrollment` screen if deleted.
 - **Task: Final Verification**
     - Subtask: Run the app and verify the YAKAP flow works from start to finish without saving progress between sessions or app reloads.
     - Subtask: Check for any remaining references to authentication or user IDs in the Yakap feature and remove them.

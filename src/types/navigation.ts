@@ -17,10 +17,9 @@ export type FacilitiesStackParamList = {
 
 export type YakapStackParamList = {
   YakapHome: undefined;
-  YakapEnrollment: undefined;
   EligibilityChecker: undefined;
   EnrollmentPathway: undefined;
-  EnrollmentGuide: undefined;
+  EnrollmentGuide: { pathwayId: string };
   EnrollmentCompletion: undefined;
 };
 

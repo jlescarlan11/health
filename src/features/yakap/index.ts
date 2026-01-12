@@ -1,4 +1,3 @@
-export * from './YakapEnrollmentScreen';
 export { default as YakapHomeScreen } from './YakapHomeScreen';
 export * from './yakapContent';
 export * from './EligibilityCheckerScreen';

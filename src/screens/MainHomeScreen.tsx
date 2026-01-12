@@ -167,7 +167,7 @@ export const MainHomeScreen = () => {
             color={theme.colors.primary}
             iconColor={theme.colors.onPrimary}
             onPress={() => {
-              navigation.navigate('YAKAP', { screen: 'YakapEnrollment' });
+              navigation.navigate('YAKAP', { screen: 'YakapHome' });
             }}
           />
         </View>

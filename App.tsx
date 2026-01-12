@@ -40,7 +40,7 @@ const linking: any = {
           },
           YAKAP: {
             screens: {
-              YakapEnrollment: 'yakap',
+              YakapHome: 'yakap',
             },
           },
         },

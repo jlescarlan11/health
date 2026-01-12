@@ -4,21 +4,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import facilitiesReducer from './facilitiesSlice';
 import navigationReducer from './navigationSlice';
-import enrollmentReducer from './enrollmentSlice';
 import offlineReducer from './offlineSlice';
 import settingsReducer from './settingsSlice';
 
 // Re-export reducers for convenience
 export { default as facilitiesReducer } from './facilitiesSlice';
 export { default as navigationReducer } from './navigationSlice';
-export { default as enrollmentReducer } from './enrollmentSlice';
 export { default as offlineReducer } from './offlineSlice';
 export { default as settingsReducer } from './settingsSlice';
 
 const rootReducer = combineReducers({
   facilities: facilitiesReducer,
   navigation: navigationReducer,
-  enrollment: enrollmentReducer,
   offline: offlineReducer,
   settings: settingsReducer,
 });

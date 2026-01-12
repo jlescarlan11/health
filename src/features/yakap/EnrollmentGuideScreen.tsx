@@ -1,27 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { Button, ProgressBar, Divider, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
-import { RootState } from '../../store';
 import { ENROLLMENT_PATHWAYS } from './yakapContent';
+import { YakapStackParamList } from '../../navigation/types';
 
 const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+  const route = useRoute<RouteProp<YakapStackParamList, 'EnrollmentGuide'>>();
   const theme = useTheme();
 
-  const { selectedPathway } = useSelector(
-    (state: RootState) => state.enrollment
-  );
+  const { pathwayId } = route.params;
   
   const [currentStep, setCurrentStep] = useState(0);
 
-  const pathway = ENROLLMENT_PATHWAYS.find(p => p.id === selectedPathway);
+  const pathway = ENROLLMENT_PATHWAYS.find(p => p.id === pathwayId);
   
   useEffect(() => {
     if (!pathway) {

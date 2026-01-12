@@ -4,13 +4,11 @@ import { Text, useTheme, Chip, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useDispatch } from 'react-redux';
 
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import { YakapStackParamList } from '../../navigation/types';
-import { startEnrollment } from '../../store/enrollmentSlice';
 
 import StandardHeader from '../../components/common/StandardHeader';
 
@@ -70,7 +68,6 @@ type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<YakapStackParam
 export const EnrollmentPathwayScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<EnrollmentPathwayScreenNavigationProp>();
-  const dispatch = useDispatch();
   const [selectedPathway, setSelectedPathway] = useState<Pathway | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -81,9 +78,8 @@ export const EnrollmentPathwayScreen = () => {
 
   const handleProceed = () => {
     if (selectedPathway) {
-      dispatch(startEnrollment(selectedPathway.id));
       setModalVisible(false);
-      navigation.navigate('EnrollmentGuide');
+      navigation.navigate('EnrollmentGuide', { pathwayId: selectedPathway.id });
     }
   };
 

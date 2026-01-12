@@ -13,20 +13,17 @@ import {
 } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useDispatch } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { YAKAP_BENEFITS, YAKAP_FAQS, ELIGIBILITY_INFO } from './yakapContent';
 import { YakapStackParamList } from '../../navigation/types';
-import { resetEnrollment } from '../../store/enrollmentSlice';
 
 type YakapScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'YakapHome'>;
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<YakapScreenNavigationProp>();
-  const dispatch = useDispatch();
   
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isEligibilityDialogVisible, setIsEligibilityDialogVisible] = useState(false);
@@ -40,7 +37,6 @@ const YakapHomeScreen = () => {
 
   const navigateToEnrollment = () => {
     // Always start fresh for the informational guide
-    dispatch(resetEnrollment());
     navigation.navigate('EligibilityChecker');
   };
 
