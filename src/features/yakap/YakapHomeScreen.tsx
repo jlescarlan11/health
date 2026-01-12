@@ -130,13 +130,9 @@ const YakapHomeScreen = () => {
           <Text variant="titleLarge" style={styles.sectionHeader}>
             Key Benefits
           </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.benefitsScroll}
-          >
+          <View style={styles.benefitsGrid}>
             {YAKAP_BENEFITS.map(renderBenefitCard)}
-          </ScrollView>
+          </View>
         </View>
 
         {/* Action Buttons */}
@@ -257,12 +253,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontWeight: 'bold',
   },
-  benefitsScroll: {
-    paddingLeft: 16,
+  benefitsGrid: {
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
   },
   benefitCard: {
-    width: 200,
-    marginRight: 10,
+    width: '48%',
     height: 180,
     justifyContent: 'center',
   },
