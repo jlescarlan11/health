@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Animated, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, useTheme, IconButton, TextInput, Card, Chip } from 'react-native-paper';
+import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,6 +14,7 @@ import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
+import { InputCard } from '../components/common';
 
 type ScreenRouteProp = CheckStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = CheckStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -53,38 +54,9 @@ const SymptomAssessmentScreen = () => {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [inputText, setInputText] = useState('');
 
-  // Animation for recording indicator
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
   // Header height for KeyboardAvoidingView offset
   const headerHeight = 60;
   const keyboardVerticalOffset = headerHeight + insets.top;
-
-  useEffect(() => {
-    let animation: Animated.CompositeAnimation | null = null;
-    if (isRecording) {
-      animation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim, {
-            toValue: 0.3,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      animation.start();
-    } else {
-      fadeAnim.setValue(0);
-    }
-    return () => {
-      if (animation) animation.stop();
-    };
-  }, [isRecording, fadeAnim]);
 
   useEffect(() => {
     const showEvent = Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow';
@@ -351,7 +323,7 @@ const SymptomAssessmentScreen = () => {
           ref={scrollViewRef}
           contentContainerStyle={[
             styles.scrollContent,
-            isKeyboardVisible && { paddingBottom: 60 }
+            isKeyboardVisible && { paddingBottom: 20 }
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -382,55 +354,17 @@ const SymptomAssessmentScreen = () => {
             </View>
           )}
 
-          <Card mode="outlined" style={[styles.inputCard, { backgroundColor: theme.colors.background, borderColor: theme.colors.outlineVariant }]}>
-            <View style={styles.inputRow}>
-              <TextInput
-                mode="flat"
-                placeholder="Type your answer..."
-                multiline
-                numberOfLines={1}
-                value={inputText}
-                onChangeText={setInputText}
-                onFocus={handleInputFocus}
-                style={[styles.textInput, { backgroundColor: 'transparent' }]}
-                underlineColor="transparent"
-                activeUnderlineColor="transparent"
-                cursorColor={theme.colors.primary}
-                selectionColor={theme.colors.primary + '40'}
-                dense
-              />
-
-              <View style={styles.actionIcons}>
-                {isProcessingAudio ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} style={styles.iconMargin} />
-                ) : (
-                  <View style={styles.micContainer}>
-                    {isRecording && (
-                      <Animated.View
-                        style={[styles.recordingPulse, { opacity: fadeAnim, backgroundColor: theme.colors.error }]}
-                      />
-                    )}
-                    <IconButton
-                      icon={isRecording ? 'stop' : 'microphone'}
-                      size={24}
-                      iconColor={isRecording ? theme.colors.error : theme.colors.onSurfaceVariant}
-                      onPress={isRecording ? stopRecording : startRecording}
-                      style={styles.iconButton}
-                    />
-                  </View>
-                )}
-                
-                <IconButton
-                  icon="send"
-                  size={24}
-                  iconColor={inputText.trim() ? theme.colors.primary : theme.colors.outline}
-                  disabled={!inputText.trim() || isRecording || isProcessingAudio}
-                  onPress={() => handleNext()}
-                  style={styles.iconButton}
-                />
-              </View>
-            </View>
-          </Card>
+          <InputCard
+            value={inputText}
+            onChangeText={setInputText}
+            onSubmit={() => handleNext()}
+            label="Type your answer..."
+            placeholder=""
+            onFocus={handleInputFocus}
+            isRecording={isRecording}
+            isProcessingAudio={isProcessingAudio}
+            onVoicePress={isRecording ? stopRecording : startRecording}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -501,37 +435,6 @@ const styles = StyleSheet.create({
   },
   choiceChip: {
     height: 36,
-  },
-  inputCard: { 
-    borderRadius: 28, 
-    overflow: 'hidden', 
-    borderWidth: 1,
-  },
-  inputRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingHorizontal: 4,
-  },
-  textInput: { 
-    flex: 1, 
-    fontSize: 15,
-    maxHeight: 120,
-    paddingHorizontal: 12,
-  },
-  actionIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 4,
-  },
-  micContainer: { position: 'relative', width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  iconButton: { margin: 0 },
-  iconMargin: { marginHorizontal: 8 },
-  recordingPulse: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    position: 'absolute',
-    opacity: 0.3,
   },
 });
 

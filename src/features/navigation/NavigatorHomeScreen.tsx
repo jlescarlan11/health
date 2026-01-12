@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Animated, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, TextInput, Button, Chip, useTheme, ActivityIndicator, IconButton, Card } from 'react-native-paper';
+import { Text, Button, Chip, useTheme, Card } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { SlideToCall } from '../../components/common/SlideToCall';
-import { DisclaimerBanner } from '../../components/common/DisclaimerBanner';
-import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
-import { setHasSeenDisclaimer } from '../../store/settingsSlice';
+import { InputCard } from '../../components/common';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 
 type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
@@ -18,8 +16,6 @@ const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 
 const NavigatorHomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
-  const dispatch = useAppDispatch();
-  const hasSeenDisclaimer = useAppSelector(state => state.settings.hasSeenDisclaimer);
   
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -33,38 +29,8 @@ const NavigatorHomeScreen = () => {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Adjusted keyboard offset to account for StandardHeader (60px) and status bar (insets.top)
-  // Added a 20px buffer to lift it slightly more
   const headerHeight = 60;
-  const keyboardVerticalOffset = headerHeight + insets.top + 20;
-
-  // Animation for recording indicator
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    let animation: Animated.CompositeAnimation | null = null;
-    if (isRecording) {
-      animation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim, {
-            toValue: 0.3,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      animation.start();
-    } else {
-      fadeAnim.setValue(0);
-    }
-    return () => {
-      if (animation) animation.stop();
-    };
-  }, [isRecording, fadeAnim]);
+  const keyboardVerticalOffset = headerHeight + insets.top;
 
   useEffect(() => {
     const showEvent = Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow';
@@ -145,10 +111,6 @@ const NavigatorHomeScreen = () => {
     navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
   };
 
-  const handleDisclaimerAccept = () => {
-    dispatch(setHasSeenDisclaimer(true));
-  };
-
   const handleEmergencyCall = () => {
     Alert.alert(
       "Emergency Call",
@@ -176,9 +138,10 @@ const NavigatorHomeScreen = () => {
       >
         <ScrollView 
           ref={scrollViewRef}
+          style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollContent,
-            isKeyboardVisible && { paddingBottom: Platform.OS === 'ios' ? 120 : 140 }
+            isKeyboardVisible && { paddingBottom: 20 }
           ]} 
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -208,12 +171,6 @@ const NavigatorHomeScreen = () => {
                 Describe your symptoms and our AI will guide you to the right care.
               </Text>
             </View>
-
-            {!hasSeenDisclaimer && (
-              <View style={styles.disclaimerContainer}>
-                <DisclaimerBanner visible={true} onAccept={handleDisclaimerAccept} />
-              </View>
-            )}
 
             <View style={styles.quickActions}>
               <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -249,80 +206,34 @@ const NavigatorHomeScreen = () => {
               </View>
             </View>
           </View>
-
-          <View style={[styles.anchoredInputContainer, { backgroundColor: theme.colors.surface }]}>
-            <Card mode="outlined" style={styles.inputCard}>
-              <Card.Content style={{ padding: 12 }}>
-                <TextInput
-                  mode="outlined"
-                  label="Symptom Details"
-                  placeholder={isInputFocused ? "e.g., I have had a high fever for 2 days..." : ""}
-                  multiline
-                  numberOfLines={4}
-                  maxLength={500}
-                  value={symptom}
-                  onChangeText={setSymptom}
-                  onFocus={() => {
-                    setIsInputFocused(true);
-                    handleInputFocus();
-                  }}
-                  onBlur={() => setIsInputFocused(false)}
-                  style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
-                  outlineStyle={{ borderRadius: 12, borderWidth: 1.5 }}
-                  activeOutlineColor={theme.colors.primary}
-                  right={<TextInput.Affix text={`${symptom.length}/500`} />}
-                />
-
-                <View style={styles.actionRow}>
-                  <View style={styles.voiceActions}>
-                    {isProcessingAudio ? (
-                      <View style={styles.processingRow}>
-                        <ActivityIndicator size="small" color={theme.colors.primary} />
-                      </View>
-                    ) : (
-                      <View style={styles.micButtonRow}>
-                        <View style={styles.micButtonContainer}>
-                          {isRecording && (
-                            <Animated.View
-                              style={[styles.recordingPulse, { opacity: fadeAnim, backgroundColor: theme.colors.error }]}
-                            />
-                          )}
-                          <IconButton
-                            icon={isRecording ? 'stop' : 'microphone'}
-                            mode="contained"
-                            containerColor={isRecording ? theme.colors.error : theme.colors.primaryContainer}
-                            iconColor={isRecording ? theme.colors.onError : theme.colors.onPrimaryContainer}
-                            size={24}
-                            onPress={isRecording ? stopRecording : startRecording}
-                            accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Voice Input'}
-                          />
-                        </View>
-                      </View>
-                    )}
-                  </View>
-
-                  <Button
-                    mode="contained"
-                    onPress={handleSubmit}
-                    style={styles.inlineSubmitButton}
-                    contentStyle={styles.inlineSubmitContent}
-                    disabled={!symptom.trim() || isRecording || isProcessingAudio}
-                    labelStyle={{ fontSize: 14 }}
-                  >
-                    Start Assessment
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-          </View>
         </ScrollView>
+
+        <View style={[styles.anchoredInputContainer, { backgroundColor: theme.colors.surface }]}>
+          <InputCard
+            value={symptom}
+            onChangeText={setSymptom}
+            onSubmit={handleSubmit}
+            label="Symptom Details"
+            placeholder=""
+            maxLength={500}
+            onFocus={() => {
+              setIsInputFocused(true);
+              handleInputFocus();
+            }}
+            onBlur={() => setIsInputFocused(false)}
+            isRecording={isRecording}
+            isProcessingAudio={isProcessingAudio}
+            onVoicePress={isRecording ? stopRecording : startRecording}
+          />
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 0, paddingVertical: 24, paddingBottom: 0 },
+  scrollView: { flex: 1 },
+  scrollContent: { paddingHorizontal: 0, paddingVertical: 24 },
   mainContent: { paddingHorizontal: 16 },
   emergencyLayoutContainer: { marginBottom: 24 },
   emergencyCard: { borderRadius: 16, elevation: 0 },
@@ -333,11 +244,10 @@ const styles = StyleSheet.create({
   heroSection: { marginBottom: 24 },
   welcomeText: { fontWeight: 'bold', textAlign: 'left' },
   subtitle: { marginTop: 8, lineHeight: 20 },
-  disclaimerContainer: { marginBottom: 24 },
   anchoredInputContainer: {
     paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 24,
+    paddingBottom: 8,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     elevation: 8,
@@ -345,36 +255,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-  },
-  inputCard: { padding: 0, marginBottom: 0, borderRadius: 16, overflow: 'hidden' },
-  textInput: { marginBottom: 4 },
-  actionRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between',
-    marginTop: 12,
-  },
-  voiceActions: { 
-    flex: 0.15,
-    justifyContent: 'center',
-  },
-  inlineSubmitButton: { 
-    flex: 0.85,
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  inlineSubmitContent: {
-    height: 44,
-  },
-  processingRow: { flexDirection: 'row', alignItems: 'center' },
-  micButtonRow: { flexDirection: 'row', alignItems: 'center' },
-  micButtonContainer: { position: 'relative', width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  recordingPulse: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    position: 'absolute',
-    opacity: 0.3,
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },

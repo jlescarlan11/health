@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, Dialog, Paragraph, Portal, Title, useTheme } from 'react-native-paper';
+import { Card, Paragraph, Title, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { TabScreenProps } from '../types/navigation';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { setHasSeenDisclaimer } from '../store/settingsSlice';
-import { resetEnrollment } from '../store/enrollmentSlice';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -18,14 +16,8 @@ type MainHomeNavigationProp = TabScreenProps<'Home'>['navigation'];
 export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
   const theme = useTheme();
-  const dispatch = useDispatch();
-  const hasSeenDisclaimer = useSelector((state: RootState) => state.settings.hasSeenDisclaimer);
-  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   useEffect(() => {
-    if (!hasSeenDisclaimer) {
-      setShowDisclaimer(true);
-    }
     // #region agent log
     fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
       method: 'POST',
@@ -33,7 +25,7 @@ export const MainHomeScreen = () => {
       body: JSON.stringify({
         location: 'MainHomeScreen.tsx:30',
         message: 'MainHomeScreen mounted',
-        data: { platform: Platform.OS, hasSeenDisclaimer, iconLibrary: '@expo/vector-icons' },
+        data: { platform: Platform.OS, iconLibrary: '@expo/vector-icons' },
         timestamp: Date.now(),
         sessionId: 'debug-session',
         runId: 'post-fix',
@@ -41,19 +33,7 @@ export const MainHomeScreen = () => {
       }),
     }).catch(() => {});
     // #endregion
-  }, [hasSeenDisclaimer]);
-
-  const handleAcceptDisclaimer = async () => {
-    dispatch(setHasSeenDisclaimer(true));
-    setShowDisclaimer(false);
-  };
-
-  const handleResetOnboarding = () => {
-    dispatch(setHasSeenDisclaimer(false));
-    dispatch(resetEnrollment());
-    setShowDisclaimer(true);
-    Alert.alert('Success', 'Onboarding and enrollment states have been reset.');
-  };
+  }, []);
 
   const FeatureCard = ({
     title,
@@ -191,44 +171,7 @@ export const MainHomeScreen = () => {
             }}
           />
         </View>
-
-        {__DEV__ && (
-          <View style={styles.devContainer}>
-            <Button
-              mode="outlined"
-              onPress={handleResetOnboarding}
-              style={[styles.resetButton, { borderColor: theme.colors.outline }]}
-              textColor={theme.colors.secondary}
-              icon="refresh"
-            >
-              Reset Onboarding (Dev)
-            </Button>
-          </View>
-        )}
       </ScrollView>
-
-      <Portal>
-        <Dialog visible={showDisclaimer} onDismiss={() => {}} dismissable={false} style={{ backgroundColor: theme.colors.surface }}>
-          <Dialog.Title accessibilityRole="header" style={{ color: theme.colors.onSurface }}>Welcome to HEALTH</Dialog.Title>
-          <Dialog.Content>
-            <Paragraph style={{ color: theme.colors.onSurfaceVariant }}>
-              This application provides health information and guidance but is not a substitute for
-              professional medical advice, diagnosis, or treatment. Always seek the advice of your
-              physician or other qualified health provider with any questions you may have regarding
-              a medical condition.
-            </Paragraph>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button
-              onPress={handleAcceptDisclaimer}
-              accessibilityHint="Double tap to accept terms and continue"
-              textColor={theme.colors.primary}
-            >
-              I Understand
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
     </SafeAreaView>
   );
 };

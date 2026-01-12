@@ -9,7 +9,6 @@ import { CheckStackParamList, CheckStackScreenProps } from '../types/navigation'
 import { geminiClient } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
-import { DisclaimerBanner } from '../components/common/DisclaimerBanner';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
@@ -292,9 +291,8 @@ const RecommendationScreen = () => {
                     )}
                 </View>
 
-                {/* Disclaimer */}
+                {/* Footer Actions */}
                 <View style={styles.footer}>
-                     <DisclaimerBanner onAccept={() => {}} visible={true} />
                      <Button 
                         mode="outlined" 
                         onPress={() => navigation.popToTop()} 

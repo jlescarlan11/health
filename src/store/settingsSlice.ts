@@ -6,7 +6,6 @@ interface SettingsState {
   highContrastMode: boolean;
   notificationsEnabled: boolean;
   language: 'en' | 'fil';
-  hasSeenDisclaimer: boolean;
 }
 
 const initialState: SettingsState = {
@@ -15,7 +14,6 @@ const initialState: SettingsState = {
   highContrastMode: false,
   notificationsEnabled: true,
   language: 'en',
-  hasSeenDisclaimer: false,
 };
 
 const settingsSlice = createSlice({
@@ -37,9 +35,6 @@ const settingsSlice = createSlice({
     setLanguage: (state, action: PayloadAction<SettingsState['language']>) => {
       state.language = action.payload;
     },
-    setHasSeenDisclaimer: (state, action: PayloadAction<boolean>) => {
-      state.hasSeenDisclaimer = action.payload;
-    },
   },
 });
 
@@ -48,7 +43,6 @@ export const {
   setFontSize, 
   setHighContrastMode, 
   toggleNotifications, 
-  setLanguage, 
-  setHasSeenDisclaimer 
+  setLanguage 
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

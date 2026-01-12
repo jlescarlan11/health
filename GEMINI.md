@@ -116,3 +116,15 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 *   **Color Palette Update:** Implemented a unified color system across the app.
     *   **Palette:** Background `#F5F7F8`, Primary `#379777` (Green), Secondary `#F4CE14` (Yellow), Text/Surface `#45474B`.
     *   **Implementation:** Created `src/theme/index.ts` defining a custom React Native Paper theme. Refactored major screens and components (`App.tsx`, `MainHomeScreen`, `FacilityDetailsScreen`, `FacilityMapView`, `YakapHomeScreen`, etc.) to use `useTheme` and dynamic colors instead of hardcoded hex values.
+
+## Recent Updates (Jan 12, 2026)
+*   **Input Field Refinement:** Enhanced the `InputCard` component used in AI Navigator and Symptom Assessment.
+    *   **Floating Labels:** Implemented `mode="outlined"` with floating labels that transition to the border on focus, improving clarity and alignment.
+    *   **Dynamic Height:** The input field now automatically expands from a single line (40px) up to three lines (approx. 100px) based on content.
+    *   **External Action Buttons:** The microphone and send buttons are now positioned outside the `TextInput` border for better clarity.
+    *   **Interaction Logic:** Initially displays only the microphone button; when text is entered, it is replaced by the send button.
+    *   **Button UI Refinement:** Replaced borders with subtle background highlights. The action buttons have been resized to a compact 40px for better balance. The recording indicator features a polished "breathing" animation that smoothly pulses both scale and opacity.
+    *   **Vertical Alignment:** Refined `minHeight`, `lineHeight`, and `textContent` padding to ensure text is perfectly centered vertically and starts as a true single line.
+    *   **Layout Optimization:** Removed gaps between the input card and bottom navigation for a more cohesive feel, with a subtle 8px spacing for balance.
+    *   **Visual Consistency:** Removed redundant placeholders in favor of consistent floating labels across the app.
+    *   **Files Modified:** `src/components/common/InputCard.tsx`, `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
