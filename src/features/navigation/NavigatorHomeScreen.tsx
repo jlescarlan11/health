@@ -35,7 +35,7 @@ const NavigatorHomeScreen = () => {
   // Adjusted keyboard offset to account for StandardHeader (60px) and status bar (insets.top)
   // Added a 20px buffer to lift it slightly more
   const headerHeight = 60;
-  const keyboardVerticalOffset = Platform.OS === 'ios' ? headerHeight + insets.top + 20 : 0;
+  const keyboardVerticalOffset = headerHeight + insets.top + 20;
 
   // Animation for recording indicator
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -168,7 +168,7 @@ const NavigatorHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right', 'bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}

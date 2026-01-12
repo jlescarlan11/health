@@ -58,7 +58,7 @@ const SymptomAssessmentScreen = () => {
 
   // Header height for KeyboardAvoidingView offset
   const headerHeight = 60;
-  const keyboardVerticalOffset = Platform.OS === 'ios' ? headerHeight + insets.top : 0;
+  const keyboardVerticalOffset = headerHeight + insets.top;
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -341,9 +341,9 @@ const SymptomAssessmentScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right', 'bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardVerticalOffset={keyboardVerticalOffset}
       >
@@ -351,7 +351,7 @@ const SymptomAssessmentScreen = () => {
           ref={scrollViewRef}
           contentContainerStyle={[
             styles.scrollContent,
-            isKeyboardVisible && { paddingBottom: 40 }
+            isKeyboardVisible && { paddingBottom: 60 }
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
