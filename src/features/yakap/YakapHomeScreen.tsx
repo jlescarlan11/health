@@ -7,34 +7,27 @@ import {
   List,
   IconButton,
   useTheme,
-  ProgressBar,
-  Chip,
   Portal,
   Dialog,
   Paragraph,
 } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
-import { RootState } from '../../store';
 import { YAKAP_BENEFITS, YAKAP_FAQS, ELIGIBILITY_INFO } from './yakapContent';
 import { YakapStackParamList } from '../../navigation/types';
 import { resetEnrollment } from '../../store/enrollmentSlice';
 
-// We need to define a type that allows navigation to other stacks (like Find tab)
-// For simplicity we'll use any for the navigate call to cross-stacks
 type YakapScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'YakapHome'>;
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<YakapScreenNavigationProp>();
   const dispatch = useDispatch();
-  const { enrollmentStatus, currentStep, selectedPathway } = useSelector(
-    (state: RootState) => state.enrollment,
-  );
+  
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isEligibilityDialogVisible, setIsEligibilityDialogVisible] = useState(false);
 
@@ -46,20 +39,8 @@ const YakapHomeScreen = () => {
   };
 
   const navigateToEnrollment = () => {
-    // If enrollment is already in progress, go to the guide directly
-    if (enrollmentStatus === 'in_progress' && selectedPathway) {
-      navigation.navigate('EnrollmentGuide');
-    } else {
-      // Start fresh
-      navigation.navigate('EligibilityChecker');
-    }
-  };
-
-  const handleReset = () => {
+    // Always start fresh for the informational guide
     dispatch(resetEnrollment());
-  };
-
-  const navigateToEligibility = () => {
     navigation.navigate('EligibilityChecker');
   };
 
@@ -115,6 +96,19 @@ const YakapHomeScreen = () => {
           </Text>
         </View>
 
+        {/* Start Enrollment Call to Action */}
+        <Card style={styles.ctaCard}>
+          <Card.Content>
+            <Text variant="titleLarge" style={styles.ctaTitle}>How to Enroll</Text>
+            <Text variant="bodyMedium" style={styles.ctaDesc}>
+              Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
+            </Text>
+            <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
+              View Enrollment Guide
+            </Button>
+          </Card.Content>
+        </Card>
+
         {/* Eligibility Banner */}
         <Card style={[styles.eligibilityBanner, { backgroundColor: theme.colors.primaryContainer }]}>
           <Card.Content style={styles.eligibilityContent}>
@@ -132,76 +126,6 @@ const YakapHomeScreen = () => {
             <Text variant="bodyMedium" style={{ textAlign: 'center' }}>
               No age limits. No income restrictions. Just healthcare for all.
             </Text>
-          </Card.Content>
-        </Card>
-
-        {/* Enrollment Status */}
-        <Card style={styles.statusCard}>
-          <Card.Title
-            title="Enrollment Status"
-            left={(props) => <MaterialCommunityIcons {...props} name="card-account-details" />}
-          />
-          <Card.Content>
-            {enrollmentStatus === 'completed' ? (
-              <View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                  <Chip 
-                    icon="check" 
-                    style={[styles.enrolledChip, { backgroundColor: theme.colors.primaryContainer }]} 
-                    textStyle={{ color: theme.colors.onPrimaryContainer }}
-                  >
-                    Enrolled
-                  </Chip>
-                  <Text style={{ marginLeft: 10, color: 'gray' }}>Enjoy your benefits!</Text>
-                </View>
-                <Button mode="contained" onPress={() => {}} style={styles.statusButton}>
-                  View My Benefits
-                </Button>
-
-                {__DEV__ && (
-                  <Button
-                    mode="text"
-                    onPress={handleReset}
-                    textColor={theme.colors.error}
-                    style={{ marginTop: 8 }}
-                    icon="refresh"
-                  >
-                    Reset Progress (Dev Mode)
-                  </Button>
-                )}
-              </View>
-            ) : enrollmentStatus === 'in_progress' ? (
-              <View>
-                <Text style={{ marginBottom: 10 }}>Enrollment in progress...</Text>
-                <ProgressBar
-                  progress={0.5}
-                  color={theme.colors.primary}
-                  style={{ height: 8, borderRadius: 4 }}
-                />
-                <Button mode="contained" onPress={navigateToEnrollment} style={styles.statusButton}>
-                  Continue Enrollment
-                </Button>
-
-                {__DEV__ && (
-                  <Button
-                    mode="text"
-                    onPress={handleReset}
-                    textColor={theme.colors.error}
-                    style={{ marginTop: 8 }}
-                    icon="refresh"
-                  >
-                    Reset (Dev Mode)
-                  </Button>
-                )}
-              </View>
-            ) : (
-              <View>
-                <Text style={{ marginBottom: 10 }}>You are not enrolled yet.</Text>
-                <Button mode="contained" onPress={navigateToEnrollment}>
-                  Start Enrollment
-                </Button>
-              </View>
-            )}
           </Card.Content>
         </Card>
 
@@ -224,7 +148,7 @@ const YakapHomeScreen = () => {
           <Button
             mode="outlined"
             icon="check-decagram"
-            onPress={navigateToEligibility}
+            onPress={navigateToEnrollment}
             style={[styles.actionBtn, { borderColor: theme.colors.primary }]}
           >
             Check Eligibility
@@ -309,8 +233,24 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     opacity: 0.7,
   },
+  ctaCard: {
+    margin: 16,
+    elevation: 2,
+  },
+  ctaTitle: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  ctaDesc: {
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  ctaButton: {
+    borderRadius: 8,
+  },
   eligibilityBanner: {
     margin: 16,
+    marginTop: 0,
   },
   eligibilityContent: {
     alignItems: 'center',
@@ -335,7 +275,7 @@ const styles = StyleSheet.create({
   benefitCard: {
     width: 200,
     marginRight: 10,
-    height: 180, // Increased height to fit text
+    height: 180,
     justifyContent: 'center',
   },
   benefitIcon: {
@@ -350,16 +290,6 @@ const styles = StyleSheet.create({
   benefitDesc: {
     textAlign: 'center',
     lineHeight: 16,
-  },
-  statusCard: {
-    margin: 16,
-  },
-  enrolledChip: {
-    alignSelf: 'flex-start',
-    marginBottom: 10,
-  },
-  statusButton: {
-    marginTop: 10,
   },
   actionButtons: {
     padding: 16,

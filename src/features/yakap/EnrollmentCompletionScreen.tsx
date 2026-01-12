@@ -38,7 +38,7 @@ const EnrollmentCompletionScreen = () => {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: 'I just completed my YAKAP enrollment! 🎉 Now I have access to free primary care consultations, laboratory tests, and essential medicines in Naga City. Check out the HEALTH app to enroll too!',
+        message: 'I just finished learning how to enroll in YAKAP! 🎉 This program provides free primary care, lab tests, and medicines in Naga City. Check out the HEALTH app to see how you can benefit too!',
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -60,22 +60,22 @@ const EnrollmentCompletionScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
-      <StandardHeader title="Congratulations" />
+      <StandardHeader title="Guide Completed" />
       
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.celebrationContainer}>
           <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
             <MaterialCommunityIcons name="check-decagram" size={100} color={theme.colors.primary} />
           </Animated.View>
-          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onSurface }]}>You're all set!</Text>
+          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onSurface }]}>Guide Completed</Text>
           <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-            Your YAKAP enrollment has been successfully recorded. You can now start enjoying your healthcare benefits.
+            You have finished the informational walkthrough. You now have all the details needed to visit a health center and complete your official enrollment.
           </Text>
         </View>
 
         <Card style={[styles.benefitsCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
           <Card.Content>
-            <Text variant="titleMedium" style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}>Your YAKAP Benefits Summary:</Text>
+            <Text variant="titleMedium" style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}>YAKAP Program Benefits:</Text>
             {YAKAP_BENEFITS.map((benefit) => (
               <View key={benefit.id} style={styles.benefitItem}>
                 <MaterialCommunityIcons name="check-circle-outline" size={20} color={theme.colors.primary} style={styles.benefitIcon} />
@@ -108,7 +108,7 @@ const EnrollmentCompletionScreen = () => {
             contentStyle={styles.buttonContent}
             textColor={theme.colors.primary}
           >
-            Share Achievement
+            Share this Guide
           </Button>
 
           <Button 
@@ -130,8 +130,7 @@ const EnrollmentCompletionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // Background handled by SafeAreaView if theme is passed or style below
-    backgroundColor: '#F5F7F8', // Fallback to theme background
+    backgroundColor: '#F5F7F8',
   },
   scrollContent: {
     padding: 20,

@@ -32,13 +32,21 @@ const migrations = {
     }
     return state;
   },
+  2: (state: any) => {
+    // Purge enrollment state when migrating to version 2
+    if (state && state.enrollment) {
+      const { enrollment, ...rest } = state;
+      return rest;
+    }
+    return state;
+  },
 };
 
 const persistConfig = {
   key: 'root',
-  version: 1,
+  version: 2,
   storage: AsyncStorage,
-  whitelist: ['settings', 'enrollment'],
+  whitelist: ['settings'],
   migrate: createMigrate(migrations, { debug: false }),
 };
 

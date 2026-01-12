@@ -76,6 +76,7 @@ const RecommendationScreen = () => {
                 critical_warnings: [],
                 relevant_services: ["Consultation"],
                 red_flags: [],
+                follow_up_questions: [],
                 confidence_score: 0.5,
             });
         } finally {
@@ -185,7 +186,7 @@ const RecommendationScreen = () => {
 
                 {/* Recommendation Card */}
                 <Card 
-                    mode="flat" 
+                    mode="outlined" 
                     style={[
                         styles.card, 
                         { 

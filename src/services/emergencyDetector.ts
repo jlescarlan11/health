@@ -83,6 +83,11 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
     overrideResponse = {
       recommended_level: "emergency",
       assessment_summary: `CRITICAL: Potential life-threatening condition detected based on keywords (${matchedKeywords.join(", ")}). Immediate medical attention is required.`,
+      condition_summary: `CRITICAL: Potential life-threatening condition detected based on keywords (${matchedKeywords.join(", ")}).`,
+      recommended_action: "Go to the nearest emergency room immediately.",
+      key_concerns: matchedKeywords.map(k => `Urgent symptom: ${k}`),
+      critical_warnings: ["Immediate medical attention required", "Do not delay care"],
+      relevant_services: ["Emergency Room", "Trauma Center", "Ambulance"],
       red_flags: matchedKeywords,
       follow_up_questions: []
     };

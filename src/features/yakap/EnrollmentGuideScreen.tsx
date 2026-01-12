@@ -1,39 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import * as DocumentPicker from 'expo-document-picker';
-import { Checkbox, Button, ProgressBar, ActivityIndicator, Divider, useTheme } from 'react-native-paper';
+import { Button, ProgressBar, Divider, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { RootState } from '../../store';
-import { 
-  setStep, 
-  toggleStepCompletion, 
-  setUploadedDocument, 
-  completeEnrollment 
-} from '../../store/enrollmentSlice';
 import { ENROLLMENT_PATHWAYS } from './yakapContent';
-
-import { uploadFileToFirebase } from '../../services/storageService';
 
 const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  const theme = useTheme(); // Use theme
+  const theme = useTheme();
 
-  const { selectedPathway, currentStep, completedSteps, uploadedDocuments } = useSelector(
+  const { selectedPathway } = useSelector(
     (state: RootState) => state.enrollment
   );
-
-  const [uploading, setUploading] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  
+  const [currentStep, setCurrentStep] = useState(0);
 
   const pathway = ENROLLMENT_PATHWAYS.find(p => p.id === selectedPathway);
   
-  // Safety check: if no pathway selected, go back
   useEffect(() => {
     if (!pathway) {
       navigation.goBack();
@@ -45,85 +34,19 @@ const EnrollmentGuideScreen = () => {
   const totalSteps = pathway.steps.length;
   const currentStepData = pathway.steps[currentStep];
   const progress = totalSteps > 0 ? (currentStep + 1) / totalSteps : 0;
-  const completionPercentage = Math.round((completedSteps.length / totalSteps) * 100);
-
-  // Auto-save functionality (Simulated)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // Simulate saving progress locally
-      setLastSaved(new Date());
-      console.log('Auto-saving progress locally...');
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
-  }, []);
 
   const handleNext = () => {
     if (currentStep < totalSteps - 1) {
-      dispatch(setStep(currentStep + 1));
+      setCurrentStep(currentStep + 1);
     } else {
-        // Option to finish?
-        Alert.alert(
-            "Enrollment Completed",
-            "Congratulations! You have completed the enrollment guide.",
-            [
-                { text: "OK", onPress: () => {
-                    dispatch(completeEnrollment());
-                    navigation.goBack();
-                }}
-            ]
-        );
+      // @ts-ignore - navigation to completion
+      navigation.navigate('EnrollmentCompletion');
     }
   };
 
   const handlePrevious = () => {
     if (currentStep > 0) {
-      dispatch(setStep(currentStep - 1));
-    }
-  };
-
-  const handleToggleComplete = () => {
-    dispatch(toggleStepCompletion(currentStep));
-  };
-
-  const handleSaveProgress = () => {
-    // Simulate manual save
-    setLastSaved(new Date());
-    Alert.alert("Success", "Progress saved successfully.");
-  };
-
-  const handleUploadDocument = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
-        copyToCacheDirectory: true,
-      });
-
-      if (result.canceled) return;
-
-      setUploading(true);
-      
-      const asset = result.assets[0];
-      const userId = 'local_user';
-      // Path format: enrollment/{userId}/{pathwayId}/step_{stepIndex}/{fileName}
-      const storagePath = `enrollment/${userId}/${selectedPathway}/step_${currentStep}/${asset.name}`;
-
-      try {
-        const downloadUrl = await uploadFileToFirebase(asset.uri, storagePath);
-        
-        dispatch(setUploadedDocument({ stepIndex: currentStep, url: downloadUrl }));
-        Alert.alert("Upload Successful", `Document ${asset.name} attached to this step.`);
-      } catch (uploadError) {
-        console.error(uploadError);
-        Alert.alert("Upload Failed", "Could not upload the document. Please try again.");
-      } finally {
-        setUploading(false);
-      }
-
-    } catch (error) {
-      console.error(error);
-      setUploading(false);
-      Alert.alert("Error", "Failed to select document.");
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -136,7 +59,6 @@ const EnrollmentGuideScreen = () => {
           <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>{pathway.name}</Text>
           <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>Step {currentStep + 1} of {totalSteps}</Text>
           <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
-          <Text style={[styles.completionText, { color: theme.colors.onSurfaceVariant }]}>{completionPercentage}% Completed</Text>
         </View>
 
         <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
@@ -144,7 +66,7 @@ const EnrollmentGuideScreen = () => {
                 <View style={[styles.stepNumberBadge, { backgroundColor: theme.colors.primaryContainer }]}>
                     <Text style={[styles.stepNumberText, { color: theme.colors.primary }]}>{currentStep + 1}</Text>
                 </View>
-                <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Current Instruction</Text>
+                <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Instruction</Text>
             </View>
             
             <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>{currentStepData}</Text>
@@ -157,48 +79,8 @@ const EnrollmentGuideScreen = () => {
                     Tip: Ensure all information provided matches your official documents to avoid delays.
                 </Text>
             </View>
-
-            {/* Document Upload Section */}
-            <View style={styles.uploadSection}>
-                <Text style={[styles.uploadLabel, { color: theme.colors.onSurface }]}>Required Documents</Text>
-                <Text style={[styles.uploadHint, { color: theme.colors.onSurfaceVariant }]}>Attach any relevant files for this step (optional).</Text>
-                
-                {uploadedDocuments[currentStep] ? (
-                    <View style={[styles.filePreview, { backgroundColor: theme.colors.primaryContainer }]}>
-                        <MaterialCommunityIcons name="file-check" size={24} color={theme.colors.primary} />
-                        <Text style={[styles.fileName, { color: theme.colors.primary }]} numberOfLines={1}>
-                            Document Attached
-                        </Text>
-                        <Button mode="text" onPress={handleUploadDocument} disabled={uploading} textColor={theme.colors.primary}>
-                            Replace
-                        </Button>
-                    </View>
-                ) : (
-                    <Button 
-                        mode="outlined" 
-                        onPress={handleUploadDocument} 
-                        loading={uploading}
-                        icon="upload"
-                        style={[styles.uploadButton, { borderColor: theme.colors.primary }]}
-                        textColor={theme.colors.primary}
-                    >
-                        Upload Document
-                    </Button>
-                )}
-            </View>
-
-            {/* Completion Checkbox */}
-            <TouchableOpacity style={styles.checkboxContainer} onPress={handleToggleComplete}>
-                <Checkbox
-                    status={completedSteps.includes(currentStep) ? 'checked' : 'unchecked'}
-                    onPress={handleToggleComplete}
-                    color={theme.colors.primary}
-                />
-                <Text style={[styles.checkboxLabel, { color: theme.colors.onSurface }]}>Mark this step as completed</Text>
-            </TouchableOpacity>
         </View>
 
-        {/* Navigation Buttons */}
         <View style={styles.navigationButtons}>
             <Button 
                 mode="outlined" 
@@ -219,21 +101,11 @@ const EnrollmentGuideScreen = () => {
             </Button>
         </View>
 
-        {/* Save Progress & Status */}
-        <View style={styles.footer}>
-            <Button 
-                mode="text" 
-                onPress={handleSaveProgress}
-                icon="content-save"
-                textColor={theme.colors.primary}
-            >
-                Save Progress manually
-            </Button>
-            {lastSaved && (
-                <Text style={[styles.lastSavedText, { color: theme.colors.onSurfaceVariant }]}>
-                    Last saved: {lastSaved.toLocaleTimeString()}
-                </Text>
-            )}
+        <View style={styles.infoBox}>
+            <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.onSurfaceVariant} />
+            <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
+                This is an informational guide. Progress is not saved between sessions.
+            </Text>
         </View>
 
       </ScrollView>
@@ -267,14 +139,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0',
     marginBottom: 8,
   },
-  completionText: {
-    fontSize: 12,
-    textAlign: 'right',
-  },
   card: {
     borderRadius: 12,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 24,
     elevation: 0,
     borderWidth: 1,
   },
@@ -320,39 +188,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-  uploadSection: {
-    marginBottom: 16,
-  },
-  uploadLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  uploadHint: {
-    fontSize: 14,
-    marginBottom: 12,
-  },
-  uploadButton: {
-  },
-  filePreview: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-  },
-  fileName: {
-    flex: 1,
-    marginLeft: 8,
-    marginRight: 8,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  checkboxLabel: {
-    fontSize: 16,
-  },
   navigationButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -362,12 +197,17 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 4,
   },
-  footer: {
+  infoBox: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
   },
-  lastSavedText: {
+  infoText: {
     fontSize: 12,
-    marginTop: 4,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
 

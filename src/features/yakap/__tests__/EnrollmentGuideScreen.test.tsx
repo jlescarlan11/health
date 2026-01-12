@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import EnrollmentGuideScreen from '../EnrollmentGuideScreen';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -15,10 +15,6 @@ jest.mock('@react-navigation/native', () => ({
     goBack: mockGoBack,
     navigate: jest.fn(),
   }),
-}));
-
-jest.mock('expo-document-picker', () => ({
-  getDocumentAsync: jest.fn(),
 }));
 
 jest.mock('../../../components/common/StandardHeader', () => {
@@ -43,7 +39,7 @@ describe('EnrollmentGuideScreen', () => {
         enrollment: enrollmentReducer,
       },
       preloadedState: initialState,
-    });
+    } as any);
   };
 
   const renderComponent = (store: any) => (
@@ -59,13 +55,8 @@ describe('EnrollmentGuideScreen', () => {
   it('renders correctly when pathway is selected', () => {
     store = createTestStore({
       enrollment: {
-        enrollmentStatus: 'in_progress',
         selectedPathway: 'egovph',
         currentStep: 0,
-        completedSteps: [],
-        uploadedDocuments: {},
-        data: {},
-        completionDate: null
       }
     });
 
@@ -79,13 +70,8 @@ describe('EnrollmentGuideScreen', () => {
   it('navigates back if no pathway selected', () => {
      store = createTestStore({
       enrollment: {
-        enrollmentStatus: 'idle',
         selectedPathway: null,
         currentStep: 0,
-        completedSteps: [],
-        uploadedDocuments: {},
-        data: {},
-        completionDate: null
       }
     });
     
