@@ -168,7 +168,7 @@ const NavigatorHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -183,134 +183,138 @@ const NavigatorHomeScreen = () => {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.emergencyLayoutContainer}>
-            <Card mode="contained" style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}>
-              <Card.Content style={styles.emergencyCardContent}>
-                <View style={styles.emergencyTextContent}>
-                  <Text variant="titleLarge" style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}>
-                    Emergency?
-                  </Text>
-                  <Text variant="bodyMedium" style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}>
-                    Call 911 immediately if you need urgent care.
-                  </Text>
+          <View style={styles.mainContent}>
+            <View style={styles.emergencyLayoutContainer}>
+              <Card mode="contained" style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}>
+                <Card.Content style={styles.emergencyCardContent}>
+                  <View style={styles.emergencyTextContent}>
+                    <Text variant="titleLarge" style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}>
+                      Emergency?
+                    </Text>
+                    <Text variant="bodyMedium" style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}>
+                      Call 911 immediately if you need urgent care.
+                    </Text>
+                  </View>
+                  <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
+                </Card.Content>
+              </Card>
+            </View>
+
+            <View style={styles.heroSection}>
+              <Text variant="headlineSmall" style={[styles.welcomeText, { color: theme.colors.onBackground }]}>
+                How are you feeling today?
+              </Text>
+              <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+                Describe your symptoms and our AI will guide you to the right care.
+              </Text>
+            </View>
+
+            {!hasSeenDisclaimer && (
+              <View style={styles.disclaimerContainer}>
+                <DisclaimerBanner visible={true} onAccept={handleDisclaimerAccept} />
+              </View>
+            )}
+
+            <View style={styles.quickActions}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Common Symptoms
+              </Text>
+              <View style={styles.chipContainer}>
+                {QUICK_SYMPTOMS.map((s) => {
+                  let icon = 'medical-bag';
+                  if (s === 'Fever') icon = 'thermometer';
+                  if (s === 'Cough') icon = 'bacteria';
+                  if (s === 'Headache') icon = 'head-alert';
+                  if (s === 'Stomach Pain') icon = 'stomach';
+                  if (s === 'Injury') icon = 'bandage';
+
+                  return (
+                    <Chip
+                      key={s}
+                      icon={icon}
+                      onPress={() =>
+                        setSymptom((prev) => {
+                          const newText = prev ? `${prev}, ${s}` : s;
+                          return newText.length > 500 ? prev : newText;
+                        })
+                      }
+                      style={styles.chip}
+                      mode="flat"
+                      showSelectedOverlay
+                    >
+                      {s}
+                    </Chip>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.anchoredInputContainer, { backgroundColor: theme.colors.surface }]}>
+            <Card mode="outlined" style={styles.inputCard}>
+              <Card.Content style={{ padding: 12 }}>
+                <TextInput
+                  mode="outlined"
+                  label="Symptom Details"
+                  placeholder={isInputFocused ? "e.g., I have had a high fever for 2 days..." : ""}
+                  multiline
+                  numberOfLines={4}
+                  maxLength={500}
+                  value={symptom}
+                  onChangeText={setSymptom}
+                  onFocus={() => {
+                    setIsInputFocused(true);
+                    handleInputFocus();
+                  }}
+                  onBlur={() => setIsInputFocused(false)}
+                  style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
+                  outlineStyle={{ borderRadius: 12, borderWidth: 1.5 }}
+                  activeOutlineColor={theme.colors.primary}
+                  right={<TextInput.Affix text={`${symptom.length}/500`} />}
+                />
+
+                <View style={styles.actionRow}>
+                  <View style={styles.voiceActions}>
+                    {isProcessingAudio ? (
+                      <View style={styles.processingRow}>
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                      </View>
+                    ) : (
+                      <View style={styles.micButtonRow}>
+                        <View style={styles.micButtonContainer}>
+                          {isRecording && (
+                            <Animated.View
+                              style={[styles.recordingPulse, { opacity: fadeAnim, backgroundColor: theme.colors.error }]}
+                            />
+                          )}
+                          <IconButton
+                            icon={isRecording ? 'stop' : 'microphone'}
+                            mode="contained"
+                            containerColor={isRecording ? theme.colors.error : theme.colors.primaryContainer}
+                            iconColor={isRecording ? theme.colors.onError : theme.colors.onPrimaryContainer}
+                            size={24}
+                            onPress={isRecording ? stopRecording : startRecording}
+                            accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Voice Input'}
+                          />
+                        </View>
+                      </View>
+                    )}
+                  </View>
+
+                  <Button
+                    mode="contained"
+                    onPress={handleSubmit}
+                    style={styles.inlineSubmitButton}
+                    contentStyle={styles.inlineSubmitContent}
+                    disabled={!symptom.trim() || isRecording || isProcessingAudio}
+                    labelStyle={{ fontSize: 14 }}
+                  >
+                    Start Assessment
+                  </Button>
                 </View>
-                <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
               </Card.Content>
             </Card>
           </View>
-
-          <View style={styles.heroSection}>
-            <Text variant="headlineSmall" style={[styles.welcomeText, { color: theme.colors.onBackground }]}>
-              How are you feeling today?
-            </Text>
-            <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-              Describe your symptoms and our AI will guide you to the right care.
-            </Text>
-          </View>
-
-          {!hasSeenDisclaimer && (
-            <View style={styles.disclaimerContainer}>
-              <DisclaimerBanner visible={true} onAccept={handleDisclaimerAccept} />
-            </View>
-          )}
-
-          <View style={styles.quickActions}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Common Symptoms
-            </Text>
-            <View style={styles.chipContainer}>
-              {QUICK_SYMPTOMS.map((s) => {
-                let icon = 'medical-bag';
-                if (s === 'Fever') icon = 'thermometer';
-                if (s === 'Cough') icon = 'bacteria';
-                if (s === 'Headache') icon = 'head-alert';
-                if (s === 'Stomach Pain') icon = 'stomach';
-                if (s === 'Injury') icon = 'bandage';
-
-                return (
-                  <Chip
-                    key={s}
-                    icon={icon}
-                    onPress={() =>
-                      setSymptom((prev) => {
-                        const newText = prev ? `${prev}, ${s}` : s;
-                        return newText.length > 500 ? prev : newText;
-                      })
-                    }
-                    style={styles.chip}
-                    mode="flat"
-                    showSelectedOverlay
-                  >
-                    {s}
-                  </Chip>
-                );
-              })}
-            </View>
-          </View>
-
-          <Card mode="outlined" style={styles.inputCard}>
-            <Card.Content style={{ padding: 12 }}>
-              <TextInput
-                mode="outlined"
-                label="Symptom Details"
-                placeholder={isInputFocused ? "e.g., I have had a high fever for 2 days..." : ""}
-                multiline
-                numberOfLines={4}
-                maxLength={500}
-                value={symptom}
-                onChangeText={setSymptom}
-                onFocus={() => {
-                  setIsInputFocused(true);
-                  handleInputFocus();
-                }}
-                onBlur={() => setIsInputFocused(false)}
-                style={[styles.textInput, { backgroundColor: theme.colors.surface }]}
-                outlineStyle={{ borderRadius: 12, borderWidth: 1.5 }}
-                activeOutlineColor={theme.colors.primary}
-                right={<TextInput.Affix text={`${symptom.length}/500`} />}
-              />
-
-              <View style={styles.actionRow}>
-                <View style={styles.voiceActions}>
-                  {isProcessingAudio ? (
-                    <View style={styles.processingRow}>
-                      <ActivityIndicator size="small" color={theme.colors.primary} />
-                    </View>
-                  ) : (
-                    <View style={styles.micButtonRow}>
-                      <View style={styles.micButtonContainer}>
-                        {isRecording && (
-                          <Animated.View
-                            style={[styles.recordingPulse, { opacity: fadeAnim, backgroundColor: theme.colors.error }]}
-                          />
-                        )}
-                        <IconButton
-                          icon={isRecording ? 'stop' : 'microphone'}
-                          mode="contained"
-                          containerColor={isRecording ? theme.colors.error : theme.colors.primaryContainer}
-                          iconColor={isRecording ? theme.colors.onError : theme.colors.onPrimaryContainer}
-                          size={24}
-                          onPress={isRecording ? stopRecording : startRecording}
-                          accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Voice Input'}
-                        />
-                      </View>
-                    </View>
-                  )}
-                </View>
-
-                <Button
-                  mode="contained"
-                  onPress={handleSubmit}
-                  style={styles.inlineSubmitButton}
-                  contentStyle={styles.inlineSubmitContent}
-                  disabled={!symptom.trim() || isRecording || isProcessingAudio}
-                  labelStyle={{ fontSize: 14 }}
-                >
-                  Start Assessment
-                </Button>
-              </View>
-            </Card.Content>
-          </Card>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -318,7 +322,8 @@ const NavigatorHomeScreen = () => {
 };
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingVertical: 24, paddingBottom: 60 },
+  scrollContent: { paddingHorizontal: 0, paddingVertical: 24, paddingBottom: 0 },
+  mainContent: { paddingHorizontal: 16 },
   emergencyLayoutContainer: { marginBottom: 24 },
   emergencyCard: { borderRadius: 16, elevation: 0 },
   emergencyCardContent: { padding: 16 },
@@ -329,7 +334,19 @@ const styles = StyleSheet.create({
   welcomeText: { fontWeight: 'bold', textAlign: 'left' },
   subtitle: { marginTop: 8, lineHeight: 20 },
   disclaimerContainer: { marginBottom: 24 },
-  inputCard: { padding: 0, marginBottom: 16, borderRadius: 16, overflow: 'hidden' },
+  anchoredInputContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+  inputCard: { padding: 0, marginBottom: 0, borderRadius: 16, overflow: 'hidden' },
   textInput: { marginBottom: 4 },
   actionRow: { 
     flexDirection: 'row', 
