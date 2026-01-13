@@ -39,6 +39,7 @@ const RecommendationScreen = () => {
             header: () => (
                 <StandardHeader 
                     title="Recommendation" 
+                    showBackButton
                 />
             ),
         });
@@ -298,6 +299,21 @@ const RecommendationScreen = () => {
                     </View>
                 )}
 
+                {/* Restart Section */}
+                <View style={styles.restartSection}>
+                    <Divider style={styles.restartDivider} />
+                    <Text variant="bodyMedium" style={[styles.restartText, { color: theme.colors.onSurfaceVariant }]}>
+                        Need to check other symptoms?
+                    </Text>
+                    <Button 
+                        title="Start New Assessment" 
+                        onPress={() => navigation.navigate('NavigatorHome')}
+                        variant="primary"
+                        style={styles.restartButton}
+                        icon="refresh"
+                    />
+                </View>
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -307,7 +323,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     loadingText: { marginTop: 16, fontWeight: '500' },
-    content: { padding: 16, paddingVertical: 12, paddingBottom: 24 },
+    content: { padding: 16, paddingVertical: 12, paddingBottom: 40 },
     
     emergencyBanner: {
         padding: 16,
@@ -393,6 +409,22 @@ const styles = StyleSheet.create({
     sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },
     
     emptyState: { padding: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: 'transparent' },
+
+    restartSection: {
+        marginTop: 8,
+        alignItems: 'center',
+    },
+    restartDivider: {
+        width: '100%',
+        marginBottom: 24,
+    },
+    restartText: {
+        marginBottom: 16,
+        fontWeight: '600',
+    },
+    restartButton: {
+        width: '100%',
+    },
 });
 
 export default RecommendationScreen;

@@ -131,7 +131,7 @@ const SymptomAssessmentScreen = () => {
       'Are you sure you want to start over? Your progress will be lost.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Start Over', style: 'destructive', onPress: () => navigation.navigate('NavigatorHome') }
+        { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() }
       ]
     );
   }, [navigation]);
@@ -143,7 +143,6 @@ const SymptomAssessmentScreen = () => {
           title="Assessment" 
           showBackButton 
           onBackPress={handleBack}
-          backRoute="NavigatorHome"
         />
       ),
     });

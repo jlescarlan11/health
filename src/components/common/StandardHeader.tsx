@@ -31,10 +31,10 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   const handleBackPress = () => {
     if (onBackPress) {
       onBackPress();
+    } else if (navigation.canGoBack()) {
+      navigation.goBack();
     } else if (backRoute) {
       navigation.navigate(backRoute, backParams);
-    } else {
-      navigation.goBack();
     }
   };
 

@@ -75,10 +75,10 @@ export const FacilityDetailsScreen = () => {
   if (!facility) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
-        <StandardHeader title="Details" showBackButton backRoute="FacilityDirectory" />
+        <StandardHeader title="Details" showBackButton />
         <View style={styles.errorContainer}>
           <Text style={[styles.errorText, { color: theme.colors.onSurfaceVariant }]}>Facility not found.</Text>
-          <Button title="Go Back" onPress={() => navigation.navigate('FacilityDirectory')} />
+          <Button title="Go Back" onPress={() => navigation.goBack()} />
         </View>
       </View>
     );
@@ -128,7 +128,6 @@ export const FacilityDetailsScreen = () => {
       <StandardHeader
         title={facility.name}
         showBackButton
-        backRoute="FacilityDirectory"
         rightActions={
           <TouchableOpacity onPress={handleShare} style={styles.headerShareButton}>
             <Ionicons name="share-outline" size={24} color={theme.colors.onSurface} />

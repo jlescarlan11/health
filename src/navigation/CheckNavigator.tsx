@@ -23,14 +23,14 @@ const CheckNavigator = () => {
         name="SymptomAssessment"
         component={SymptomAssessmentScreen}
         options={{
-          header: () => <StandardHeader title="Assessment" showBackButton backRoute="NavigatorHome" />,
+          header: () => <StandardHeader title="Assessment" showBackButton />,
         }}
       />
       <Stack.Screen
         name="Recommendation"
         component={RecommendationScreen}
         options={{
-          header: () => <StandardHeader title="Recommendation" />,
+          header: () => <StandardHeader title="Recommendation" showBackButton />,
         }}
       />
       <Stack.Screen
