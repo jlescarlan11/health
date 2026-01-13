@@ -75,7 +75,7 @@ const YakapHomeScreen = () => {
         {/* Hero Section */}
         <HeroSection
           colors={[theme.colors.primaryContainer, theme.colors.background]}
-          height={280}
+          height={320}
         >
           <View style={styles.heroContent}>
             <View style={styles.logoPlaceholder}>
@@ -88,31 +88,25 @@ const YakapHomeScreen = () => {
               Yaman, Kalinga, at Pag-aaruga
             </Text>
             <Text style={styles.heroDesc}>
-              Free primary care, medicines, and lab tests for every Naga City resident.
+              Every Filipino is eligible—no age limits or income restrictions. Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
             </Text>
           </View>
         </HeroSection>
 
-        {/* Start Enrollment Call to Action */}
-        <Card style={[styles.ctaCard, { backgroundColor: theme.colors.background, elevation: 0 }]}>
-          <Card.Content>
-            <Text variant="titleLarge" style={styles.ctaTitle}>Get Started</Text>
-            <Text variant="bodyMedium" style={styles.ctaDesc}>
-              Every Filipino is eligible—no age limits or income restrictions. Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
-            </Text>
-            <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
-              Start Enrollment Guide
-            </Button>
-            <Button
-              mode="outlined"
-              icon="hospital-marker"
-              onPress={navigateToFacilities}
-              style={{ marginTop: 12, borderRadius: 8 }}
-            >
-              Find YAKAP Clinics
-            </Button>
-          </Card.Content>
-        </Card>
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
+          <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
+            Start Enrollment Guide
+          </Button>
+          <Button
+            mode="outlined"
+            icon="hospital-marker"
+            onPress={navigateToFacilities}
+            style={styles.secondaryButton}
+          >
+            Find YAKAP Clinics
+          </Button>
+        </View>
 
         {/* Benefits Summary */}
         <View style={styles.section}>
@@ -183,20 +177,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
     opacity: 0.8,
   },
-  ctaCard: {
+  actionButtonsContainer: {
     marginHorizontal: 16,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  ctaTitle: {
-    fontWeight: 'bold',
+    marginTop: 16,
     marginBottom: 8,
   },
-  ctaDesc: {
-    marginBottom: 16,
-    lineHeight: 20,
-  },
   ctaButton: {
+    borderRadius: 8,
+  },
+  secondaryButton: {
+    marginTop: 12,
     borderRadius: 8,
   },
   section: {
