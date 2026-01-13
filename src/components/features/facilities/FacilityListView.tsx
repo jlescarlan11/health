@@ -54,6 +54,7 @@ export const FacilityListView: React.FC = () => {
   };
 
   const handleFacilityPress = (facility: Facility) => {
+    // @ts-ignore - FacilityDetails is now in Root stack
     navigation.navigate('FacilityDetails', { facilityId: facility.id });
   };
 

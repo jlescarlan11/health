@@ -5,7 +5,7 @@ import { Text, Card, Avatar, IconButton, useTheme, ActivityIndicator, Divider, S
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
-import { CheckStackParamList, CheckStackScreenProps } from '../types/navigation';
+import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
@@ -16,10 +16,10 @@ import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 
-type ScreenProps = CheckStackScreenProps<'Recommendation'>;
+type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
 const RecommendationScreen = () => {
-    const route = useRoute<RouteProp<CheckStackParamList, 'Recommendation'>>();
+    const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
     const navigation = useNavigation<ScreenProps['navigation']>();
     const theme = useTheme();
     const dispatch = useDispatch<AppDispatch>();
@@ -39,8 +39,6 @@ const RecommendationScreen = () => {
             header: () => (
                 <StandardHeader 
                     title="Recommendation" 
-                    showBackButton 
-                    onBackPress={() => navigation.popToTop()} 
                 />
             ),
         });
@@ -127,10 +125,7 @@ const RecommendationScreen = () => {
     };
 
     const handleViewDetails = (facilityId: string) => {
-        navigation.navigate('Find', {
-            screen: 'FacilityDetails',
-            params: { facilityId } 
-        });
+        navigation.navigate('FacilityDetails', { facilityId });
     };
 
     const getCareLevelInfo = (level: string) => {
@@ -300,6 +295,24 @@ const RecommendationScreen = () => {
                     </View>
                 )}
 
+                {/* Restart Section */}
+                <View style={styles.restartSection}>
+                    <Divider style={styles.restartDivider} />
+                    <Text variant="bodyMedium" style={[styles.restartText, { color: theme.colors.onSurfaceVariant }]}>
+                        Need to check other symptoms?
+                    </Text>
+                    <Button 
+                        title="Start New Assessment" 
+                        onPress={() => navigation.navigate('Main', {
+                            screen: 'Check',
+                            params: { screen: 'NavigatorHome' }
+                        })}
+                        variant="primary"
+                        style={styles.restartButton}
+                        icon="refresh"
+                    />
+                </View>
+
             </ScrollView>
         </SafeAreaView>
     );
@@ -309,7 +322,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     loadingText: { marginTop: 16, fontWeight: '500' },
-    content: { padding: 16, paddingVertical: 12, paddingBottom: 24 },
+    content: { padding: 16, paddingVertical: 12, paddingBottom: 40 },
     
     emergencyBanner: {
         padding: 16,
@@ -395,6 +408,22 @@ const styles = StyleSheet.create({
     sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },
     
     emptyState: { padding: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 16, backgroundColor: 'transparent' },
+
+    restartSection: {
+        marginTop: 8,
+        alignItems: 'center',
+    },
+    restartDivider: {
+        width: '100%',
+        marginBottom: 24,
+    },
+    restartText: {
+        marginBottom: 16,
+        fontWeight: '600',
+    },
+    restartButton: {
+        width: '100%',
+    },
 });
 
 export default RecommendationScreen;

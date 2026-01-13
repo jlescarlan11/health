@@ -30,13 +30,6 @@ const FacilitiesNavigator = () => {
           headerShown: false,
         }}
       />
-      <Stack.Screen
-        name="FacilityDetails"
-        component={FacilityDetailsScreen}
-        options={{
-          headerShown: false,
-        }}
-      />
     </Stack.Navigator>
   );
 };

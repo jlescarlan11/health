@@ -30,30 +30,31 @@ const linking: LinkingOptions<RootStackParamList> = {
             path: 'check',
             screens: {
               NavigatorHome: '',
-              SymptomAssessment: 'assessment',
-              Recommendation: 'recommendation',
-              CrisisSupport: 'crisis',
             }
           },
           Find: {
             path: 'find',
             screens: {
               FacilityDirectory: '',
-              FacilityDetails: 'details/:facilityId',
             }
           },
           YAKAP: {
             path: 'yakap',
             screens: {
               YakapHome: '',
-              EligibilityChecker: 'eligibility',
-              EnrollmentPathway: 'pathway',
-              EnrollmentGuide: 'guide/:pathwayId',
-              EnrollmentCompletion: 'completion',
             }
           },
         },
       },
+      SymptomAssessment: 'assessment',
+      Recommendation: 'recommendation',
+      CrisisSupport: 'crisis',
+      FacilityDetails: 'details/:facilityId',
+      YakapFaq: 'faq',
+      EligibilityChecker: 'eligibility',
+      EnrollmentPathway: 'pathway',
+      EnrollmentGuide: 'guide/:pathwayId',
+      EnrollmentCompletion: 'completion',
       NotFound: '*',
       PrivacyPolicy: 'privacy',
       TermsOfService: 'terms',
