@@ -55,7 +55,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'medicines',
     category: 'Essential Medicines',
-    description: 'Free essential medicines (up to ₱20,000/year) for conditions as prescribed by your doctor.',
+    description: 'Free essential medicines tailored to your specific medical condition and needs.',
     items: [
       'Hypertension and Diabetes medications',
       'Antibiotics and Asthma medications',
@@ -67,7 +67,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'screenings',
     category: 'Cancer Screenings',
-    description: 'Early detection cancer screenings with referral from your YAKAP Clinic.',
+    description: 'Early detection cancer screenings available for eligible patients.',
     items: [
       'Mammogram and Breast ultrasound',
       'Low-dose chest CT scan',

@@ -34,51 +34,34 @@ const YakapHomeScreen = () => {
     navigation.navigate('YakapFaq');
   };
 
-  const renderBenefitItem = (benefit: YakapBenefit, index: number) => {
-    // Function to render description with monetary highlight
-    const renderDescription = (text: string) => {
-      // Regex to find content in parentheses containing a number/currency
-      const parts = text.split(/(\(.*?\d+.*?\))/);
-      return parts.map((part, i) => {
-        if (part.match(/\(.*?\d+.*?\)/)) {
-          return (
-            <Text
-              key={i}
-              style={[
-                styles.benefitDesc,
-                { fontWeight: '600', color: theme.colors.primary },
-              ]}
-            >
-              {part}
-            </Text>
-          );
-        }
-        return (
-          <Text key={i} style={styles.benefitDesc}>
-            {part}
-          </Text>
-        );
-      });
-    };
-
+  const renderBenefitItem = (benefit: YakapBenefit) => {
     return (
-      <View key={benefit.id}>
-        <View style={styles.benefitItemContent}>
-          <View style={styles.benefitIconContainer}>
-            <MaterialCommunityIcons
-              name={benefit.icon as any}
-              size={24}
-              color={theme.colors.primary}
-            />
-          </View>
-          <View style={styles.benefitTextContainer}>
-            <Text style={styles.benefitTitle}>{benefit.category}</Text>
-            <Text style={styles.benefitDesc}>{renderDescription(benefit.description)}</Text>
-          </View>
+      <View
+        key={benefit.id}
+        style={[
+          styles.benefitCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outlineVariant,
+            borderWidth: 1,
+          },
+        ]}
+      >
+        <View style={styles.benefitIconContainer}>
+          <MaterialCommunityIcons
+            name={benefit.icon as any}
+            size={36}
+            color={theme.colors.primary}
+          />
         </View>
-        {index < YAKAP_BENEFITS.length - 1 && (
-          <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
-        )}
+        <View style={styles.benefitTextContainer}>
+          <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
+            {benefit.category}
+          </Text>
+          <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
+            {benefit.description}
+          </Text>
+        </View>
       </View>
     );
   };
@@ -126,11 +109,11 @@ const YakapHomeScreen = () => {
 
         {/* Benefits Summary */}
         <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionHeader}>
+          <Text variant="titleLarge" style={[styles.sectionHeader, { color: theme.colors.onSurface }]}>
             Key Benefits
           </Text>
           <View style={styles.benefitsList}>
-            {YAKAP_BENEFITS.map((benefit, index) => renderBenefitItem(benefit, index))}
+            {YAKAP_BENEFITS.map((benefit) => renderBenefitItem(benefit))}
           </View>
         </View>
 
@@ -200,38 +183,36 @@ const styles = StyleSheet.create({
   benefitsList: {
     paddingHorizontal: 16,
     paddingVertical: 8,
+    gap: 16,
   },
-  benefitItemContent: {
+  benefitCard: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 28,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
   },
   benefitIconContainer: {
     marginRight: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
+    width: 32,
   },
   benefitTextContainer: {
     flex: 1,
   },
   benefitTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     textAlign: 'left',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   benefitDesc: {
     fontSize: 14,
     fontWeight: '400',
     textAlign: 'left',
-    lineHeight: 24,
-    opacity: 0.8,
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-    opacity: 0.15,
+    lineHeight: 20,
+    opacity: 0.6,
   },
   footer: {
     alignItems: 'center',
