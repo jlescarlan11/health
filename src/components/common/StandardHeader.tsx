@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 
@@ -23,11 +23,6 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
 }) => {
   const navigation = useNavigation();
   const theme = useTheme();
-  // #region agent log
-  const containerHeight = styles.container.height;
-  const containerPaddingHorizontal = styles.container.paddingHorizontal;
-  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'StandardHeader.tsx:24', message: 'StandardHeader render', data: { height: containerHeight, paddingHorizontal: containerPaddingHorizontal, title, showBackButton, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'C' } }) }).catch(() => {});
-  // #endregion
 
   const handleBackPress = () => {
     if (onBackPress) {

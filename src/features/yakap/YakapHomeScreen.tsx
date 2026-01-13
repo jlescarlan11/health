@@ -1,110 +1,37 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
-  LayoutAnimation,
-  Platform,
-  UIManager,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import HeroSection from '../../components/heroes/HeroSection';
 import { Button } from '../../components/common/Button';
-import { YAKAP_BENEFITS, YAKAP_FAQS, YakapBenefit, YakapFAQ } from './yakapContent';
+import StandardHeader from '../../components/common/StandardHeader';
+import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
 import { YakapStackScreenProps } from '../../types/navigation';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-const FaqItem = ({
-  faq,
-  isExpanded,
-  onPress,
-  theme,
-}: {
-  faq: YakapFAQ;
-  isExpanded: boolean;
-  onPress: () => void;
-  theme: any;
-}) => (
-  <View style={styles.faqItemWrapper}>
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.6}
-      style={styles.faqHeader}
-      accessibilityRole="button"
-      accessibilityState={{ expanded: isExpanded }}
-    >
-      <Text
-        variant="titleMedium"
-        style={[
-          styles.faqQuestion,
-          { color: isExpanded ? theme.colors.primary : theme.colors.onSurface },
-        ]}
-      >
-        {faq.question}
-      </Text>
-      <MaterialCommunityIcons
-        name={isExpanded ? 'chevron-up' : 'chevron-down'}
-        size={24}
-        color={isExpanded ? theme.colors.primary : theme.colors.outline}
-      />
-    </TouchableOpacity>
-
-    {isExpanded && (
-      <View
-        style={[
-          styles.faqAnswerContainer,
-          {
-            backgroundColor: theme.colors.primaryContainer,
-            borderColor: theme.colors.outlineVariant,
-          },
-        ]}
-      >
-        <Text variant="bodyMedium" style={[styles.faqAnswer, { color: theme.colors.onSurface }]}>
-          {faq.answer}
-        </Text>
-      </View>
-    )}
-
-    {!isExpanded && (
-      <View style={[styles.faqDivider, { backgroundColor: theme.colors.outlineVariant }]} />
-    )}
-  </View>
-);
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const handleAccordionPress = (id: string) => {
-    LayoutAnimation.configureNext({
-      duration: 300,
-      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-      update: { type: LayoutAnimation.Types.easeInEaseOut },
-      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
-    });
-    setExpandedId(expandedId === id ? null : id);
-  };
-
   const navigateToEnrollment = () => {
-    // Always start fresh for the informational guide
     navigation.navigate('EligibilityChecker');
   };
 
   const navigateToFacilities = () => {
-    // Navigate to the Find tab, then to FacilityDirectory with filter
     navigation.navigate('Find', {
       screen: 'FacilityDirectory',
       params: { filter: 'yakap' },
     });
+  };
+
+  const navigateToFaq = () => {
+    navigation.navigate('YakapFaq');
   };
 
   const renderBenefitItem = (benefit: YakapBenefit, index: number) => (
@@ -117,7 +44,7 @@ const YakapHomeScreen = () => {
           ]}
         >
           <MaterialCommunityIcons
-            name={benefit.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
+            name={benefit.icon as any}
             size={24}
             color={theme.colors.primary}
           />
@@ -138,17 +65,15 @@ const YakapHomeScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <StandardHeader title="YAKAP" />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: theme.colors.background }}
       >
         {/* Hero Section */}
-        <HeroSection colors={[theme.colors.primaryContainer, theme.colors.background]} height={320}>
+        <HeroSection colors={[theme.colors.background, theme.colors.background]} height={220}>
           <View style={styles.heroContent}>
-            <View style={styles.logoPlaceholder}>
-              <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
-            </View>
             <Text variant="headlineMedium" style={styles.heroTitle}>
               YAKAP Program
             </Text>
@@ -172,7 +97,7 @@ const YakapHomeScreen = () => {
             title="Start Enrollment Guide"
           />
           <Button
-            variant="outline"
+            variant="text"
             onPress={navigateToFacilities}
             style={styles.secondaryButton}
             contentStyle={styles.buttonContent}
@@ -190,25 +115,18 @@ const YakapHomeScreen = () => {
           </View>
         </View>
 
-        {/* FAQs */}
-        <View style={styles.faqSection}>
-          <Text variant="titleLarge" style={styles.sectionHeader}>
-            Frequently Asked Questions
-          </Text>
-          <View style={styles.faqList}>
-            {YAKAP_FAQS.map((faq) => (
-              <FaqItem
-                key={faq.id}
-                faq={faq}
-                isExpanded={expandedId === faq.id}
-                onPress={() => handleAccordionPress(faq.id)}
-                theme={theme}
-              />
-            ))}
-          </View>
+        {/* FAQ Link */}
+        <View style={styles.footer}>
+          <Button
+            variant="text"
+            onPress={navigateToFaq}
+            title="Frequently Asked Questions"
+            labelStyle={[styles.faqLinkLabel, { color: theme.colors.outline }]}
+            icon="information-outline"
+          />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -217,16 +135,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   heroContent: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     flex: 1,
     paddingHorizontal: 20,
-  },
-  logoPlaceholder: {
-    marginBottom: 10,
   },
   heroTitle: {
     fontWeight: 'bold',
@@ -235,7 +150,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   heroDesc: {
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 10,
     opacity: 0.8,
   },
@@ -243,7 +158,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 8,
-    gap: 16,
+    gap: 12,
   },
   ctaButton: {
     borderRadius: 8,
@@ -255,7 +170,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   section: {
-    marginTop: 10,
+    marginTop: 24,
     marginBottom: 10,
   },
   sectionHeader: {
@@ -295,54 +210,15 @@ const styles = StyleSheet.create({
     width: '100%',
     opacity: 0.1,
   },
-  faqSection: {
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  faqList: {
-    paddingHorizontal: 16,
-  },
-  faqItemWrapper: {
-    marginBottom: 24,
-  },
-  faqHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  footer: {
     alignItems: 'center',
-    paddingVertical: 12,
+    marginTop: 32,
+    marginBottom: 20,
   },
-  faqQuestion: {
-    flex: 1,
-    marginRight: 16,
-    fontWeight: '600',
-    lineHeight: 22,
-  },
-  faqAnswerContainer: {
-    marginTop: 8,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    // Subtle shadow for expanded state
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  faqAnswer: {
-    lineHeight: 24,
-    opacity: 0.9,
-  },
-  faqDivider: {
-    height: 1,
-    marginTop: 12,
-    opacity: 0.3,
+  faqLinkLabel: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    opacity: 0.7,
   },
 });
 
