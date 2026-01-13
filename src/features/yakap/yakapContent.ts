@@ -55,7 +55,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'medicines',
     category: 'Essential Medicines',
-    description: 'Free essential medicines tailored to your specific medical needs.',
+    description: 'Free essential medicines with up to ₱20,000 annual coverage.',
     items: [
       'Hypertension and Diabetes medications',
       'Antibiotics and Asthma medications',
