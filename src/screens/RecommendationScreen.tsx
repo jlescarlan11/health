@@ -39,8 +39,6 @@ const RecommendationScreen = () => {
             header: () => (
                 <StandardHeader 
                     title="Recommendation" 
-                    showBackButton 
-                    onBackPress={() => navigation.popToTop()} 
                 />
             ),
         });

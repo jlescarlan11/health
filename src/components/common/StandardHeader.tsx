@@ -8,6 +8,8 @@ interface StandardHeaderProps {
   title: string;
   showBackButton?: boolean;
   onBackPress?: () => void;
+  backRoute?: string;
+  backParams?: any;
   rightActions?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
@@ -17,16 +19,20 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   title,
   showBackButton = false,
   onBackPress,
+  backRoute,
+  backParams,
   rightActions,
   style,
   titleStyle,
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const theme = useTheme();
 
   const handleBackPress = () => {
     if (onBackPress) {
       onBackPress();
+    } else if (backRoute) {
+      navigation.navigate(backRoute, backParams);
     } else {
       navigation.goBack();
     }
