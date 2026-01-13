@@ -145,7 +145,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
       <StandardHeader title="Eligibility Check" showBackButton />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {hasPhilHealth === null && (
@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
+    paddingBottom: 40,
     flexGrow: 1,
   },
   heroSection: {

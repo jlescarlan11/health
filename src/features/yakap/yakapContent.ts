@@ -28,7 +28,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'consultation',
     category: 'Primary Care Consultations',
-    description: 'Unlimited free primary care consultations with doctors at your registered YAKAP provider.',
+    description: 'Unlimited free primary care consultations with your registered provider.',
     items: [
       'General health check-ups',
       'Health profiling',
@@ -40,7 +40,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'lab_tests',
     category: 'Laboratory Tests',
-    description: 'Free laboratory tests and diagnostic services as recommended by your primary care provider.',
+    description: 'Free laboratory tests and diagnostics from your primary provider.',
     items: [
       'Complete Blood Count (CBC)',
       'Urinalysis',
@@ -55,7 +55,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'medicines',
     category: 'Essential Medicines',
-    description: 'Free essential medicines tailored to your specific medical condition and needs.',
+    description: 'Free essential medicines tailored to your specific medical needs.',
     items: [
       'Hypertension and Diabetes medications',
       'Antibiotics and Asthma medications',
@@ -67,7 +67,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'screenings',
     category: 'Cancer Screenings',
-    description: 'Early detection cancer screenings available for eligible patients.',
+    description: 'Early detection cancer screenings available for all eligible patients.',
     items: [
       'Mammogram and Breast ultrasound',
       'Low-dose chest CT scan',

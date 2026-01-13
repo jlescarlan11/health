@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 24, // Space for bottom tabs/safe area
+    paddingBottom: 40, // Space for bottom tabs/safe area
   },
   headerText: {
     marginBottom: 16,

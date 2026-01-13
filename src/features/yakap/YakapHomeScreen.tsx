@@ -5,7 +5,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme } from 'react-native-paper';
+import { Text, useTheme, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -38,19 +38,12 @@ const YakapHomeScreen = () => {
     return (
       <View
         key={benefit.id}
-        style={[
-          styles.benefitCard,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.outlineVariant,
-            borderWidth: 1,
-          },
-        ]}
+        style={styles.benefitCard}
       >
         <View style={styles.benefitIconContainer}>
           <MaterialCommunityIcons
             name={benefit.icon as any}
-            size={36}
+            size={28}
             color={theme.colors.primary}
           />
         </View>
@@ -113,7 +106,14 @@ const YakapHomeScreen = () => {
             Key Benefits
           </Text>
           <View style={styles.benefitsList}>
-            {YAKAP_BENEFITS.map((benefit) => renderBenefitItem(benefit))}
+            {YAKAP_BENEFITS.map((benefit, index) => (
+              <React.Fragment key={benefit.id}>
+                {renderBenefitItem(benefit)}
+                {index < YAKAP_BENEFITS.length - 1 && (
+                  <Divider style={{ backgroundColor: theme.colors.outlineVariant, opacity: 0.5 }} />
+                )}
+              </React.Fragment>
+            ))}
           </View>
         </View>
 
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 60,
+    paddingBottom: 40,
   },
   heroContent: {
     alignItems: 'flex-start',
@@ -182,21 +182,19 @@ const styles = StyleSheet.create({
   },
   benefitsList: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 16,
+    paddingVertical: 4,
   },
   benefitCard: {
     flexDirection: 'row',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
+    paddingVertical: 12,
+    alignItems: 'flex-start',
   },
   benefitIconContainer: {
     marginRight: 16,
+    marginTop: 2,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 32,
+    width: 28,
   },
   benefitTextContainer: {
     flex: 1,
@@ -216,8 +214,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 20,
+    marginTop: 24,
+    marginBottom: 0,
   },
   faqLinkLabel: {
     fontSize: 14,
