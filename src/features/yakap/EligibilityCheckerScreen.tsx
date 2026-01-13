@@ -3,11 +3,11 @@ import { View, ScrollView, StyleSheet, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, Card, useTheme, Divider, List } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { YakapStackScreenProps } from '../../types/navigation';
+import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
 
-type Props = YakapStackScreenProps<'EligibilityChecker'>;
+type Props = RootStackScreenProps<'EligibilityChecker'>;
 
 export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const theme = useTheme();

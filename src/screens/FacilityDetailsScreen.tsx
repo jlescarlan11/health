@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
-import { FacilitiesStackScreenProps } from '../types/navigation';
+import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { selectFacility } from '../store/facilitiesSlice';
 import { Button } from '../components/common/Button';
@@ -28,7 +28,7 @@ import { getOpenStatus } from '../utils';
 import { useTheme } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 
-type FacilityDetailsRouteProp = FacilitiesStackScreenProps<'FacilityDetails'>['route'];
+type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
 const { width } = Dimensions.get('window');
 const IMAGE_HEIGHT = 250;

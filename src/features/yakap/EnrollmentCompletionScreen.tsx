@@ -5,12 +5,12 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { YakapStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
 import { YAKAP_BENEFITS } from './yakapContent';
 
-type EnrollmentCompletionNavigationProp = StackNavigationProp<YakapStackParamList, 'EnrollmentCompletion'>;
+type EnrollmentCompletionNavigationProp = StackNavigationProp<RootStackParamList, 'EnrollmentCompletion'>;
 
 const EnrollmentCompletionScreen = () => {
   const theme = useTheme();

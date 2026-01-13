@@ -5,7 +5,7 @@ import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CheckStackScreenProps } from '../types/navigation';
+import { RootStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
@@ -16,8 +16,8 @@ import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
 import { InputCard, TypingIndicator } from '../components/common';
 
-type ScreenRouteProp = CheckStackScreenProps<'SymptomAssessment'>['route'];
-type NavigationProp = CheckStackScreenProps<'SymptomAssessment'>['navigation'];
+type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
+type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
 
 interface Question {
   id: string;

@@ -8,11 +8,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
 import { ENROLLMENT_PATHWAYS } from './yakapContent';
-import { YakapStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '../../types/navigation';
 
 const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<YakapStackParamList, 'EnrollmentGuide'>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'EnrollmentGuide'>>();
   const theme = useTheme();
 
   const { pathwayId } = route.params;

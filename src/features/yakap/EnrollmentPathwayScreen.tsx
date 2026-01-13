@@ -8,7 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
-import { YakapStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '../../types/navigation';
 
 import StandardHeader from '../../components/common/StandardHeader';
 
@@ -63,7 +63,7 @@ const pathways: Pathway[] = [
   },
 ];
 
-type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'EnrollmentPathway'>;
+type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EnrollmentPathway'>;
 
 export const EnrollmentPathwayScreen = () => {
   const theme = useTheme();

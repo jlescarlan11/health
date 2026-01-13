@@ -5,7 +5,7 @@ import { Text, Card, Avatar, IconButton, useTheme, ActivityIndicator, Divider, S
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
-import { CheckStackParamList, CheckStackScreenProps } from '../types/navigation';
+import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
@@ -16,10 +16,10 @@ import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 
-type ScreenProps = CheckStackScreenProps<'Recommendation'>;
+type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
 const RecommendationScreen = () => {
-    const route = useRoute<RouteProp<CheckStackParamList, 'Recommendation'>>();
+    const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
     const navigation = useNavigation<ScreenProps['navigation']>();
     const theme = useTheme();
     const dispatch = useDispatch<AppDispatch>();
@@ -39,7 +39,6 @@ const RecommendationScreen = () => {
             header: () => (
                 <StandardHeader 
                     title="Recommendation" 
-                    showBackButton
                 />
             ),
         });
@@ -126,10 +125,7 @@ const RecommendationScreen = () => {
     };
 
     const handleViewDetails = (facilityId: string) => {
-        navigation.navigate('Find', {
-            screen: 'FacilityDetails',
-            params: { facilityId } 
-        });
+        navigation.navigate('FacilityDetails', { facilityId });
     };
 
     const getCareLevelInfo = (level: string) => {
@@ -307,7 +303,10 @@ const RecommendationScreen = () => {
                     </Text>
                     <Button 
                         title="Start New Assessment" 
-                        onPress={() => navigation.navigate('NavigatorHome')}
+                        onPress={() => navigation.navigate('Main', {
+                            screen: 'Check',
+                            params: { screen: 'NavigatorHome' }
+                        })}
                         variant="primary"
                         style={styles.restartButton}
                         icon="refresh"

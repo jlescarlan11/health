@@ -10,23 +10,14 @@ export type AssessmentData = {
 // Define the parameters for each screen in the stack navigators
 export type CheckStackParamList = {
   NavigatorHome: undefined;
-  SymptomAssessment: { initialSymptom?: string };
-  Recommendation: { assessmentData: AssessmentData };
-  CrisisSupport: undefined;
 };
 
 export type FacilitiesStackParamList = {
   FacilityDirectory: { filter?: 'yakap' };
-  FacilityDetails: { facilityId: string };
 };
 
 export type YakapStackParamList = {
   YakapHome: undefined;
-  YakapFaq: undefined;
-  EligibilityChecker: undefined;
-  EnrollmentPathway: undefined;
-  EnrollmentGuide: { pathwayId: string };
-  EnrollmentCompletion: undefined;
 };
 
 // Define the parameters for each tab in the bottom tab navigator
@@ -40,6 +31,15 @@ export type TabParamList = {
 // Define the parameters for the root stack
 export type RootStackParamList = {
   Main: NavigatorScreenParams<TabParamList>;
+  SymptomAssessment: { initialSymptom?: string };
+  Recommendation: { assessmentData: AssessmentData };
+  CrisisSupport: undefined;
+  FacilityDetails: { facilityId: string };
+  YakapFaq: undefined;
+  EligibilityChecker: undefined;
+  EnrollmentPathway: undefined;
+  EnrollmentGuide: { pathwayId: string };
+  EnrollmentCompletion: undefined;
   NotFound: undefined;
   PrivacyPolicy: undefined;
   TermsOfService: undefined;

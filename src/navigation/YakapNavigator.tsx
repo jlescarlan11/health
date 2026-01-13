@@ -21,31 +21,6 @@ const YakapNavigator = () => {
         component={YakapHomeScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="YakapFaq"
-        component={YakapFaqScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EligibilityChecker"
-        component={EligibilityCheckerScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EnrollmentPathway"
-        component={EnrollmentPathwayScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EnrollmentGuide"
-        component={EnrollmentGuideScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="EnrollmentCompletion"
-        component={EnrollmentCompletionScreen}
-        options={{ headerShown: false }}
-      />
     </Stack.Navigator>
   );
 };
