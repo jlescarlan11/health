@@ -55,25 +55,24 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'medicines',
     category: 'Essential Medicines',
-    description: 'Free essential medicines tailored to your specific medical condition and needs.',
+    description: 'Free essential medicines (up to Php 20,000 annually) for conditions as prescribed by your doctor.',
     items: [
-      'Hypertension medications',
-      'Diabetes medications',
-      'Antibiotics (as prescribed)',
-      'Vitamins and supplements for nutritional deficiencies',
-      'Asthma medications'
+      'Hypertension and Diabetes medications',
+      'Antibiotics and Asthma medications',
+      '75 specific molecules in the GAMOT list',
+      'Prescribed for up to 3 months'
     ],
     icon: 'pill'
   },
   {
     id: 'screenings',
     category: 'Cancer Screenings',
-    description: 'Early detection cancer screenings available for eligible patients.',
+    description: 'Early detection cancer screenings with referral from your YAKAP Clinic.',
     items: [
-      'Mammography (Breast Cancer)',
-      'Colonoscopy (Colorectal Cancer)',
-      'CT Scans (as indicated)',
-      'Cervical Cancer Screening (Pap smear / VIA)'
+      'Mammogram and Breast ultrasound',
+      'Low-dose chest CT scan',
+      'Alpha fetoprotein and Liver ultrasound',
+      'Colonoscopy'
     ],
     icon: 'radiology-box'
   }
@@ -163,70 +162,72 @@ export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
 export const YAKAP_FAQS: YakapFAQ[] = [
   {
     id: 'what_is_yakap',
-    question: 'What is the YAKAP Program?',
-    answer: 'YAKAP (Yaman, Kalinga, at Pag-aaruga) is a government healthcare program designed to provide every Filipino with access to free primary care services, medicines, and laboratory tests through PhilHealth Konsulta.',
+    question: 'What is PhilHealth YAKAP?',
+    answer: 'PhilHealth YAKAP is a government program designed to keep Filipinos healthy through primary care. YAKAP clinics monitor member health for early disease detection and provide necessary medicines to prevent conditions from worsening and requiring hospitalization.',
     category: 'Basics'
   },
   {
-    id: 'who_eligible',
-    question: 'Who is eligible to join?',
-    answer: 'Every Filipino citizen registered with PhilHealth is eligible. This includes all membership categories: employed, self-employed, OFWs, senior citizens, and indigents.',
+    id: 'yakap_vs_konsulta',
+    question: 'How is it different from PhilHealth Konsulta?',
+    answer: 'YAKAP is the expanded and improved version of the PhilHealth Konsulta program, aiming to provide members with more comprehensive and complete healthcare coverage.',
+    category: 'Basics'
+  },
+  {
+    id: 'who_is_it_for',
+    question: 'Who can avail of PhilHealth YAKAP?',
+    answer: 'The program is available to every Filipino. To access free benefits and services, you simply need to register at your chosen PhilHealth-accredited YAKAP Clinic.',
     category: 'Eligibility'
   },
   {
-    id: 'cost',
-    question: 'Is there any cost to join?',
-    answer: 'No. Registration and availment of services under the YAKAP Program are free for eligible PhilHealth members at accredited government providers.',
+    id: 'benefits',
+    question: 'What are the benefits of the program?',
+    answer: 'Members receive free medical check-ups, laboratory tests, cancer screenings, and essential medicines from accredited pharmacies, all provided based on a doctor\'s assessment and recommendation.',
+    category: 'Benefits'
+  },
+  {
+    id: 'where_to_avail',
+    question: 'Where can I access these services?',
+    answer: 'Services are provided by accredited YAKAP Clinics. You can choose your preferred clinic for registration. Your dependents should also be registered, either at the same clinic or another one that is more convenient for them.',
+    category: 'Usage'
+  },
+  {
+    id: 'how_to_register',
+    question: 'How do I register for YAKAP?',
+    answer: 'If you have a PhilHealth Identification Number (PIN), you can register through the eGovPH app, PhilHealth Member Portal, any PhilHealth office, or directly at a YAKAP Clinic.',
+    category: 'Registration'
+  },
+  {
+    id: 'fees',
+    question: 'Are there any fees or payments required?',
+    answer: 'Benefits and services are free at accredited public YAKAP Clinics. However, if you register at a private YAKAP Clinic, they may charge a maximum fee of Php 900 per patient for the entire year.',
     category: 'Cost'
   },
   {
-    id: 'no_philhealth',
-    question: 'What if I don\'t have a PhilHealth ID yet?',
-    answer: 'You need to register with PhilHealth first. You can do this at any PhilHealth office or through the eGovPH app. Once you have your PIN, you can register for YAKAP.',
-    category: 'Registration'
+    id: 'cancer_tests',
+    question: 'Which cancer screening tests are covered?',
+    answer: 'Covered screenings include Mammogram, Breast ultrasound, Low-dose chest CT scan, Alpha fetoprotein, Liver ultrasound, and Colonoscopy. These require a referral from your YAKAP Clinic doctor.',
+    category: 'Benefits'
   },
   {
-    id: 'dependents',
-    question: 'Are my children covered?',
-    answer: 'Yes, qualified dependents declared in your PhilHealth record are covered. However, they must also be registered to a provider (can be the same or different from the principal) to avail of benefits.',
-    category: 'Coverage'
+    id: 'medicine_limit',
+    question: 'Is there a limit to the free medicines?',
+    answer: 'Yes, there is a Php 20,000 annual limit for free medicines per member. Qualified dependents have their own separate Php 20,000 annual limit. Any cost exceeding this limit will be covered by the member.',
+    category: 'Benefits'
   },
   {
-    id: 'medicines_covered',
-    question: 'What medicines can I get?',
-    answer: 'The program covers essential medicines for common conditions such as hypertension, diabetes, asthma, and infections, as prescribed by your YAKAP doctor.',
-    category: 'Services'
-  },
-  {
-    id: 'where_use',
-    question: 'Can I use my YAKAP benefits anywhere?',
-    answer: 'No. You must avail of the services at the specific accredited provider where you are registered. If you need to transfer, you can change your provider after a certain period.',
+    id: 'representative',
+    question: 'Can someone else pick up my medicines?',
+    answer: 'Yes. A representative can pick up your prescribed medicines by presenting an authorization letter, your valid ID, and their own valid government-issued ID.',
     category: 'Usage'
-  },
-  {
-    id: 'how_often',
-    question: 'How often can I get a check-up?',
-    answer: 'You are entitled to unlimited consultations throughout the year as needed by your medical condition.',
-    category: 'Usage'
-  },
-  {
-    id: 'cancer_screening',
-    question: 'How do I avail of cancer screening?',
-    answer: 'Consult with your YAKAP primary care doctor first. If you meet the criteria for screening (based on age, risk factors, etc.), they will refer you for the specific test (e.g., mammogram).',
-    category: 'Services'
-  },
-  {
-    id: 'check_status',
-    question: 'How do I know if I am already registered?',
-    answer: 'You can check your status via the PhilHealth Member Portal, the eGovPH app, or by checking your Member Data Record (MDR) which should list your assigned Konsulta provider.',
-    category: 'Registration'
   }
 ];
 
 export const OFFICIAL_CONTACTS = {
   philhealth_website: 'https://www.philhealth.gov.ph',
   egovph_website: 'https://e.gov.ph',
-  philhealth_hotline: '(02) 8441-7442',
+  philhealth_hotline: '(02) 866-225-88',
+  philhealth_sms_smart: '0998-857-2957',
+  philhealth_sms_globe: '0917-127-5987',
   philhealth_email: 'actioncenter@philhealth.gov.ph',
   yakap_info_url: 'https://www.philhealth.gov.ph/konsulta/' 
 };

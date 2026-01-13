@@ -1,14 +1,82 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
-import { Text, List, useTheme } from 'react-native-paper';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import HeroSection from '../../components/heroes/HeroSection';
 import { Button } from '../../components/common/Button';
-import { YAKAP_BENEFITS, YAKAP_FAQS, YakapBenefit } from './yakapContent';
+import { YAKAP_BENEFITS, YAKAP_FAQS, YakapBenefit, YakapFAQ } from './yakapContent';
 import { YakapStackScreenProps } from '../../types/navigation';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const FaqItem = ({
+  faq,
+  isExpanded,
+  onPress,
+  theme,
+}: {
+  faq: YakapFAQ;
+  isExpanded: boolean;
+  onPress: () => void;
+  theme: any;
+}) => (
+  <View style={styles.faqItemWrapper}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.6}
+      style={styles.faqHeader}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: isExpanded }}
+    >
+      <Text
+        variant="titleMedium"
+        style={[
+          styles.faqQuestion,
+          { color: isExpanded ? theme.colors.primary : theme.colors.onSurface },
+        ]}
+      >
+        {faq.question}
+      </Text>
+      <MaterialCommunityIcons
+        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+        size={24}
+        color={isExpanded ? theme.colors.primary : theme.colors.outline}
+      />
+    </TouchableOpacity>
+
+    {isExpanded && (
+      <View
+        style={[
+          styles.faqAnswerContainer,
+          {
+            backgroundColor: theme.colors.primaryContainer,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
+      >
+        <Text variant="bodyMedium" style={[styles.faqAnswer, { color: theme.colors.onSurface }]}>
+          {faq.answer}
+        </Text>
+      </View>
+    )}
+
+    {!isExpanded && (
+      <View style={[styles.faqDivider, { backgroundColor: theme.colors.outlineVariant }]} />
+    )}
+  </View>
+);
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
@@ -17,6 +85,12 @@ const YakapHomeScreen = () => {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleAccordionPress = (id: string) => {
+    LayoutAnimation.configureNext({
+      duration: 300,
+      create: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+      update: { type: LayoutAnimation.Types.easeInEaseOut },
+      delete: { type: LayoutAnimation.Types.easeInEaseOut, property: LayoutAnimation.Properties.opacity },
+    });
     setExpandedId(expandedId === id ? null : id);
   };
 
@@ -117,29 +191,21 @@ const YakapHomeScreen = () => {
         </View>
 
         {/* FAQs */}
-        <View style={styles.section}>
+        <View style={styles.faqSection}>
           <Text variant="titleLarge" style={styles.sectionHeader}>
             Frequently Asked Questions
           </Text>
-          {YAKAP_FAQS.slice(0, 5).map((faq) => (
-            <List.Accordion
-              key={faq.id}
-              title={faq.question}
-              id={faq.id}
-              expanded={expandedId === faq.id}
-              onPress={() => handleAccordionPress(faq.id)}
-              titleNumberOfLines={2}
-              style={{ backgroundColor: theme.colors.background }}
-              left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
-            >
-              <List.Item
-                title={faq.answer}
-                titleNumberOfLines={10}
-                descriptionNumberOfLines={10}
-                style={{ backgroundColor: theme.colors.background }}
+          <View style={styles.faqList}>
+            {YAKAP_FAQS.map((faq) => (
+              <FaqItem
+                key={faq.id}
+                faq={faq}
+                isExpanded={expandedId === faq.id}
+                onPress={() => handleAccordionPress(faq.id)}
+                theme={theme}
               />
-            </List.Accordion>
-          ))}
+            ))}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -151,7 +217,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   heroContent: {
     alignItems: 'center',
@@ -194,7 +260,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     marginLeft: 16,
-    marginBottom: 10,
+    marginBottom: 16,
     fontWeight: 'bold',
   },
   benefitsList: {
@@ -228,6 +294,55 @@ const styles = StyleSheet.create({
     height: 1,
     width: '100%',
     opacity: 0.1,
+  },
+  faqSection: {
+    marginTop: 24,
+    marginBottom: 32,
+  },
+  faqList: {
+    paddingHorizontal: 16,
+  },
+  faqItemWrapper: {
+    marginBottom: 24,
+  },
+  faqHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  faqQuestion: {
+    flex: 1,
+    marginRight: 16,
+    fontWeight: '600',
+    lineHeight: 22,
+  },
+  faqAnswerContainer: {
+    marginTop: 8,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    // Subtle shadow for expanded state
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  faqAnswer: {
+    lineHeight: 24,
+    opacity: 0.9,
+  },
+  faqDivider: {
+    height: 1,
+    marginTop: 12,
+    opacity: 0.3,
   },
 });
 
