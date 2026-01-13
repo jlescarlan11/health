@@ -74,7 +74,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     <Card 
       style={[styles.card, style, { backgroundColor: theme.colors.surface }]} 
       onPress={onPress} 
-      mode="flat"
+      mode="outlined"
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}

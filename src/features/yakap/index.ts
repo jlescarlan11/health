@@ -1,5 +1,5 @@
-export * from './YakapEnrollmentScreen';
 export { default as YakapHomeScreen } from './YakapHomeScreen';
+export { default as YakapFaqScreen } from './YakapFaqScreen';
 export * from './yakapContent';
 export * from './EligibilityCheckerScreen';
 export * from './EnrollmentPathwayScreen';

@@ -4,21 +4,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import facilitiesReducer from './facilitiesSlice';
 import navigationReducer from './navigationSlice';
-import enrollmentReducer from './enrollmentSlice';
 import offlineReducer from './offlineSlice';
 import settingsReducer from './settingsSlice';
 
 // Re-export reducers for convenience
 export { default as facilitiesReducer } from './facilitiesSlice';
 export { default as navigationReducer } from './navigationSlice';
-export { default as enrollmentReducer } from './enrollmentSlice';
 export { default as offlineReducer } from './offlineSlice';
 export { default as settingsReducer } from './settingsSlice';
 
 const rootReducer = combineReducers({
   facilities: facilitiesReducer,
   navigation: navigationReducer,
-  enrollment: enrollmentReducer,
   offline: offlineReducer,
   settings: settingsReducer,
 });
@@ -32,13 +29,21 @@ const migrations = {
     }
     return state;
   },
+  2: (state: any) => {
+    // Purge enrollment state when migrating to version 2
+    if (state && state.enrollment) {
+      const { enrollment, ...rest } = state;
+      return rest;
+    }
+    return state;
+  },
 };
 
 const persistConfig = {
   key: 'root',
-  version: 1,
+  version: 2,
   storage: AsyncStorage,
-  whitelist: ['settings', 'enrollment'],
+  whitelist: ['settings'],
   migrate: createMigrate(migrations, { debug: false }),
 };
 

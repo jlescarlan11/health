@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Linking, Alert } from 'react-native';
-import { Text, Button, Card, useTheme, IconButton, Surface } from 'react-native-paper';
+import { Text, Card, useTheme, IconButton, Surface } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MENTAL_HEALTH_RESOURCES, MentalHealthResource } from '../services/mentalHealthDetector';
+import { Button } from '../components/common/Button';
 
 const CrisisSupportScreen = () => {
   const theme = useTheme();
@@ -34,14 +35,12 @@ const CrisisSupportScreen = () => {
           {resource.description}
         </Text>
         <Button 
-          mode="contained" 
+          variant="danger" 
           icon="phone" 
           onPress={() => handleCall(resource.number)}
           style={styles.callButton}
-          buttonColor={theme.colors.error}
-        >
-          Call {resource.number}
-        </Button>
+          title={`Call ${resource.number}`}
+        />
       </Card.Content>
     </Card>
   );
@@ -82,12 +81,11 @@ const CrisisSupportScreen = () => {
 
         <View style={styles.footer}>
           <Button 
-            mode="outlined" 
+            variant="outline" 
             onPress={() => navigation.goBack()}
             style={styles.backButton}
-          >
-            I'm safe, go back
-          </Button>
+            title="I'm safe, go back"
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

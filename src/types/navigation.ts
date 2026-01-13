@@ -2,11 +2,16 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 
+export type AssessmentData = {
+  symptoms: string;
+  answers: Record<string, string>;
+};
+
 // Define the parameters for each screen in the stack navigators
 export type CheckStackParamList = {
   NavigatorHome: undefined;
   SymptomAssessment: { initialSymptom?: string };
-  Recommendation: { assessmentData: any }; // Replace 'any' with proper type later
+  Recommendation: { assessmentData: AssessmentData };
   CrisisSupport: undefined;
 };
 
@@ -17,10 +22,10 @@ export type FacilitiesStackParamList = {
 
 export type YakapStackParamList = {
   YakapHome: undefined;
-  YakapEnrollment: undefined;
+  YakapFaq: undefined;
   EligibilityChecker: undefined;
   EnrollmentPathway: undefined;
-  EnrollmentGuide: undefined;
+  EnrollmentGuide: { pathwayId: string };
   EnrollmentCompletion: undefined;
 };
 

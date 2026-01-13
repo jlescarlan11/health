@@ -1,8 +1,8 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { 
-  YakapEnrollmentScreen, 
   YakapHomeScreen, 
+  YakapFaqScreen,
   EligibilityCheckerScreen, 
   EnrollmentPathwayScreen,
   EnrollmentGuideScreen,
@@ -22,8 +22,8 @@ const YakapNavigator = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="YakapEnrollment"
-        component={YakapEnrollmentScreen}
+        name="YakapFaq"
+        component={YakapFaqScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

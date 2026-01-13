@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
-import { Text, Button, useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -8,6 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootState, AppDispatch } from '../../../store';
 import { fetchFacilities } from '../../../store/facilitiesSlice';
 import { FacilityCard } from '../../common/FacilityCard';
+import { Button } from '../../common/Button';
 import { FacilityCardSkeleton } from './FacilityCardSkeleton';
 import { FacilitiesStackScreenProps } from '../../../types/navigation';
 import { Facility } from '../../../types';
@@ -88,8 +89,8 @@ export const FacilityListView: React.FC = () => {
     if (error) {
        return (
          <View style={styles.center}>
-           <Text style={{ color: theme.colors.error }}>{error}</Text>
-           <Button onPress={() => loadFacilities(true)}>Retry</Button>
+           <Text style={{ color: theme.colors.error, marginBottom: 12 }}>{error}</Text>
+           <Button variant="outline" onPress={() => loadFacilities(true)} title="Retry" />
          </View>
        );
     }

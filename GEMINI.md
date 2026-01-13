@@ -143,3 +143,14 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     *   **Japanese Design System Alignment:** All components now strictly adhere to the Washi/Tokiwa-iro/Kitsune-iro palette, providing a professional and localized experience for Naga City residents.
     *   **Files Modified:** `src/screens/RecommendationScreen.tsx`, `src/components/common/FacilityCard.tsx`.
 
+*   **YAKAP Feature Finalization (Jan 13, 2026):**
+    *   **Stateless Refactor:** Verified and finalized the YAKAP enrollment flow as a purely informational, step-by-step guide.
+    *   **Persistence Removal:** Removed `enrollmentSlice` from Redux store and all references to `startEnrollment`/`dispatch`. The flow now relies solely on navigation parameters and local component state.
+    *   **Backend Cleanup:** Removed enrollment-related endpoints (`/enrollment`, `/enrollment/:userId`) and logic from `backend/src/routes/yakapRoutes.ts`, `controllers/yakapController.ts`, and `services/yakapService.ts` to ensure no user data is persisted.
+    *   **Verification:** Passed full TypeScript checks for both frontend and backend.
+
+*   **Button Standardization (Jan 13, 2026):**
+    *   **Shared Component Refactor:** Enhanced `src/components/common/Button.tsx` to include 'text' variant and support full native prop overrides (buttonColor, textColor).
+    *   **Global Implementation:** Replaced all direct `react-native-paper` Button usages with the shared component across all features (YAKAP, Facilities, Navigation, Screens) for visual consistency.
+    *   **Cleanup:** Removed dead code and unused styles related to legacy button implementations.
+
