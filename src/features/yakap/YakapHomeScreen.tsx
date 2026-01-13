@@ -34,35 +34,54 @@ const YakapHomeScreen = () => {
     navigation.navigate('YakapFaq');
   };
 
-  const renderBenefitItem = (benefit: YakapBenefit, index: number) => (
-    <View key={benefit.id}>
-      <View style={styles.benefitItemContent}>
-        <View
-          style={[
-            styles.benefitIconContainer,
-            { backgroundColor: theme.colors.primaryContainer, padding: 10, borderRadius: 12 },
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={benefit.icon as any}
-            size={24}
-            color={theme.colors.primary}
-          />
-        </View>
-        <View style={styles.benefitTextContainer}>
-          <Text variant="titleMedium" style={styles.benefitTitle}>
-            {benefit.category}
+  const renderBenefitItem = (benefit: YakapBenefit, index: number) => {
+    // Function to render description with monetary highlight
+    const renderDescription = (text: string) => {
+      // Regex to find content in parentheses containing a number/currency
+      const parts = text.split(/(\(.*?\d+.*?\))/);
+      return parts.map((part, i) => {
+        if (part.match(/\(.*?\d+.*?\)/)) {
+          return (
+            <Text
+              key={i}
+              style={[
+                styles.benefitDesc,
+                { fontWeight: '600', color: theme.colors.primary },
+              ]}
+            >
+              {part}
+            </Text>
+          );
+        }
+        return (
+          <Text key={i} style={styles.benefitDesc}>
+            {part}
           </Text>
-          <Text variant="bodySmall" style={styles.benefitDesc}>
-            {benefit.description}
-          </Text>
+        );
+      });
+    };
+
+    return (
+      <View key={benefit.id}>
+        <View style={styles.benefitItemContent}>
+          <View style={styles.benefitIconContainer}>
+            <MaterialCommunityIcons
+              name={benefit.icon as any}
+              size={24}
+              color={theme.colors.primary}
+            />
+          </View>
+          <View style={styles.benefitTextContainer}>
+            <Text style={styles.benefitTitle}>{benefit.category}</Text>
+            <Text style={styles.benefitDesc}>{renderDescription(benefit.description)}</Text>
+          </View>
         </View>
+        {index < YAKAP_BENEFITS.length - 1 && (
+          <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
+        )}
       </View>
-      {index < YAKAP_BENEFITS.length - 1 && (
-        <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -184,31 +203,35 @@ const styles = StyleSheet.create({
   },
   benefitItemContent: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
+    alignItems: 'flex-start',
+    paddingVertical: 28,
   },
   benefitIconContainer: {
     marginRight: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
   },
   benefitTextContainer: {
     flex: 1,
   },
   benefitTitle: {
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '600',
     textAlign: 'left',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   benefitDesc: {
+    fontSize: 14,
+    fontWeight: '400',
     textAlign: 'left',
-    lineHeight: 18,
+    lineHeight: 24,
     opacity: 0.8,
   },
   divider: {
     height: 1,
     width: '100%',
-    opacity: 0.1,
+    opacity: 0.15,
   },
   footer: {
     alignItems: 'center',
