@@ -155,7 +155,7 @@ const SymptomAssessmentScreen = () => {
 
     if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
       navigation.navigate('Recommendation', { 
-        assessmentData: { symptoms: initialSymptom, answers: {} } 
+        assessmentData: { symptoms: initialSymptom || '', answers: {} } 
       });
       return;
     }
@@ -220,7 +220,7 @@ const SymptomAssessmentScreen = () => {
     if (emergencyCheck.isEmergency) {
         console.log("Emergency detected during assessment:", emergencyCheck.matchedKeywords);
         const partialData = {
-            symptoms: initialSymptom,
+            symptoms: initialSymptom || '',
             answers: newAnswers
         };
         navigation.navigate('Recommendation', { assessmentData: partialData });
@@ -270,7 +270,7 @@ const SymptomAssessmentScreen = () => {
 
   const finishAssessment = (finalAnswers: Record<string, string>) => {
     const assessmentData = {
-        symptoms: initialSymptom,
+        symptoms: initialSymptom || '',
         answers: finalAnswers
     };
     navigation.navigate('Recommendation', { assessmentData });

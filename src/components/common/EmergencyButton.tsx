@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
-import { Button, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
+import { Button } from './Button';
 
 interface EmergencyButtonProps {
   onPress: () => void;
@@ -19,20 +20,18 @@ export const EmergencyButton: React.FC<EmergencyButtonProps> = ({
 
   return (
     <Button
-      mode="contained"
+      variant="danger"
       onPress={onPress}
       icon="phone-in-talk"
-      buttonColor={buttonColor || theme.colors.error}
-      textColor={textColor || theme.colors.onError}
+      buttonColor={buttonColor}
+      textColor={textColor}
       style={[styles.button, style]}
       contentStyle={styles.content}
       labelStyle={styles.label}
       accessibilityLabel="Emergency Call"
       accessibilityHint="Double tap to initiate an emergency call immediately"
-      accessibilityRole="button"
-    >
-      EMERGENCY CALL
-    </Button>
+      title="EMERGENCY CALL"
+    />
   );
 };
 

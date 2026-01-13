@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Button, useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
+import { Button } from './Button';
 
 interface Props {
   children: ReactNode;
@@ -58,13 +59,11 @@ const ErrorFallback = ({ error, onRetry }: { error: Error | null; onRetry: () =>
           </Text>
         </ScrollView>
         <Button
-          mode="contained"
+          variant="primary"
           onPress={onRetry}
           style={styles.button}
-          buttonColor={theme.colors.primary}
-        >
-          Try Again
-        </Button>
+          title="Try Again"
+        />
       </View>
     </View>
   );

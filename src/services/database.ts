@@ -2,6 +2,7 @@ import * as SQLite from 'expo-sqlite';
 import { Facility, EmergencyContact } from '../types';
 
 let db: SQLite.SQLiteDatabase | null = null;
+let initPromise: Promise<void> | null = null;
 
 // Migration function to add missing columns
 const migrateTableSchema = async (tableName: string, requiredColumns: { name: string; type: string }[]) => {
@@ -25,57 +26,64 @@ const migrateTableSchema = async (tableName: string, requiredColumns: { name: st
 };
 
 export const initDatabase = async () => {
-  try {
-    db = await SQLite.openDatabaseAsync('health_app.db');
+  if (initPromise) return initPromise;
 
-    // Create Facilities Table
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS facilities (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        type TEXT,
-        services TEXT,
-        address TEXT,
-        latitude REAL,
-        longitude REAL,
-        phone TEXT,
-        yakapAccredited INTEGER,
-        hours TEXT,
-        photoUrl TEXT,
-        lastUpdated INTEGER,
-        data TEXT
-      );
-    `);
+  initPromise = (async () => {
+    try {
+      db = await SQLite.openDatabaseAsync('health_app.db');
 
-    // Migrate facilities table schema (add missing columns if table already existed)
-    await migrateTableSchema('facilities', [
-      { name: 'lastUpdated', type: 'INTEGER' }
-    ]);
+      // Create Facilities Table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS facilities (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          type TEXT,
+          services TEXT,
+          address TEXT,
+          latitude REAL,
+          longitude REAL,
+          phone TEXT,
+          yakapAccredited INTEGER,
+          hours TEXT,
+          photoUrl TEXT,
+          lastUpdated INTEGER,
+          data TEXT
+        );
+      `);
 
-    // Create Emergency Contacts Table
-    await db.execAsync(`
-      CREATE TABLE IF NOT EXISTS emergency_contacts (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        category TEXT,
-        phone TEXT,
-        available24x7 INTEGER,
-        description TEXT,
-        lastUpdated INTEGER,
-        data TEXT
-      );
-    `);
+      // Migrate facilities table schema (add missing columns if table already existed)
+      await migrateTableSchema('facilities', [
+        { name: 'lastUpdated', type: 'INTEGER' }
+      ]);
 
-    // Migrate emergency_contacts table schema (add missing columns if table already existed)
-    await migrateTableSchema('emergency_contacts', [
-      { name: 'lastUpdated', type: 'INTEGER' }
-    ]);
+      // Create Emergency Contacts Table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS emergency_contacts (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          category TEXT,
+          phone TEXT,
+          available24x7 INTEGER,
+          description TEXT,
+          lastUpdated INTEGER,
+          data TEXT
+        );
+      `);
 
-    console.log('Database initialized successfully');
-  } catch (error) {
-    console.error('Error initializing database:', error);
-    throw error;
-  }
+      // Migrate emergency_contacts table schema (add missing columns if table already existed)
+      await migrateTableSchema('emergency_contacts', [
+        { name: 'lastUpdated', type: 'INTEGER' }
+      ]);
+
+      console.log('Database initialized successfully');
+    } catch (error) {
+      console.error('Error initializing database:', error);
+      initPromise = null; // Allow retry on failure
+      throw error;
+    }
+  })();
+
+  return initPromise;
 };
 
 export const saveFacilities = async (facilities: Facility[]) => {
@@ -85,11 +93,14 @@ export const saveFacilities = async (facilities: Facility[]) => {
   const timestamp = Date.now();
 
   try {
-    await db.withTransactionAsync(async () => {
-      const statement = await db!.prepareAsync(
-        `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`
-      );
+    // Start manual transaction
+    await db.execAsync('BEGIN TRANSACTION');
 
+    const statement = await db.prepareAsync(
+      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`
+    );
+
+    try {
       for (const facility of facilities) {
         await statement.executeAsync({
           $id: facility.id,
@@ -108,11 +119,21 @@ export const saveFacilities = async (facilities: Facility[]) => {
         });
       }
       
+      await db.execAsync('COMMIT');
+      console.log(`Saved ${facilities.length} facilities to offline storage`);
+    } catch (innerError) {
+      console.error('Error during facility save loop:', innerError);
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Failed to rollback facility transaction:', rollbackError);
+      }
+      throw innerError;
+    } finally {
       await statement.finalizeAsync();
-    });
-    console.log(`Saved ${facilities.length} facilities to offline storage`);
+    }
   } catch (error) {
-    console.error('Error saving facilities:', error);
+    console.error('Error in saveFacilities:', error);
     throw error;
   }
 };
@@ -140,8 +161,6 @@ export const getFacilities = async (): Promise<Facility[]> => {
           yakapAccredited: Boolean(row.yakapAccredited),
           hours: row.hours,
           photoUrl: row.photoUrl,
-          // We can attach metadata if needed, but Facility type doesn't have it yet.
-          // keeping it clean to return Facility objects.
         };
       } catch (e) {
         console.error('Error parsing facility row:', e);
@@ -191,11 +210,14 @@ export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
   const timestamp = Date.now();
 
   try {
-    await db.withTransactionAsync(async () => {
-      const statement = await db!.prepareAsync(
-        `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, lastUpdated, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $lastUpdated, $data)`
-      );
+    // Start manual transaction
+    await db.execAsync('BEGIN TRANSACTION');
 
+    const statement = await db.prepareAsync(
+      `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, lastUpdated, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $lastUpdated, $data)`
+    );
+
+    try {
       for (const contact of contacts) {
         await statement.executeAsync({
           $id: contact.id,
@@ -209,11 +231,21 @@ export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
         });
       }
       
+      await db.execAsync('COMMIT');
+      console.log(`Saved ${contacts.length} emergency contacts to offline storage`);
+    } catch (innerError) {
+      console.error('Error during emergency contact save loop:', innerError);
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Failed to rollback emergency contact transaction:', rollbackError);
+      }
+      throw innerError;
+    } finally {
       await statement.finalizeAsync();
-    });
-    console.log(`Saved ${contacts.length} emergency contacts to offline storage`);
+    }
   } catch (error) {
-    console.error('Error saving emergency contacts:', error);
+    console.error('Error in saveEmergencyContacts:', error);
     throw error;
   }
 };

@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { Button, ProgressBar, Divider, useTheme } from 'react-native-paper';
+import { ProgressBar, Divider, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
+import { Button } from '../../components/common/Button';
 import { ENROLLMENT_PATHWAYS } from './yakapContent';
 import { YakapStackParamList } from '../../navigation/types';
 
@@ -80,22 +81,18 @@ const EnrollmentGuideScreen = () => {
 
         <View style={styles.navigationButtons}>
             <Button 
-                mode="outlined" 
+                variant="outline" 
                 onPress={handlePrevious} 
                 disabled={currentStep === 0}
                 style={styles.navButton}
-                textColor={theme.colors.primary}
-            >
-                Previous
-            </Button>
+                title="Previous"
+            />
             <Button 
-                mode="contained" 
+                variant="primary" 
                 onPress={handleNext} 
                 style={styles.navButton}
-                buttonColor={theme.colors.primary}
-            >
-                {currentStep === totalSteps - 1 ? "Finish" : "Next"}
-            </Button>
+                title={currentStep === totalSteps - 1 ? "Finish" : "Next"}
+            />
         </View>
 
         <View style={styles.infoBox}>

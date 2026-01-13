@@ -149,3 +149,8 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     *   **Backend Cleanup:** Removed enrollment-related endpoints (`/enrollment`, `/enrollment/:userId`) and logic from `backend/src/routes/yakapRoutes.ts`, `controllers/yakapController.ts`, and `services/yakapService.ts` to ensure no user data is persisted.
     *   **Verification:** Passed full TypeScript checks for both frontend and backend.
 
+*   **Button Standardization (Jan 13, 2026):**
+    *   **Shared Component Refactor:** Enhanced `src/components/common/Button.tsx` to include 'text' variant and support full native prop overrides (buttonColor, textColor).
+    *   **Global Implementation:** Replaced all direct `react-native-paper` Button usages with the shared component across all features (YAKAP, Facilities, Navigation, Screens) for visual consistency.
+    *   **Cleanup:** Removed dead code and unused styles related to legacy button implementations.
+

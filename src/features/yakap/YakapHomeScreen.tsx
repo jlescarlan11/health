@@ -1,86 +1,74 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import React from 'react';
 import {
-  Text,
-  Card,
-  Button,
-  List,
-  useTheme,
-} from 'react-native-paper';
+  View,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Text, useTheme, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import HeroSection from '../../components/heroes/HeroSection';
-import { YAKAP_BENEFITS, YAKAP_FAQS, YakapBenefit } from './yakapContent';
-import { YakapStackParamList } from '../../navigation/types';
-
-type YakapScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'YakapHome'>;
+import { Button } from '../../components/common/Button';
+import StandardHeader from '../../components/common/StandardHeader';
+import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
+import { YakapStackScreenProps } from '../../types/navigation';
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
-  const navigation = useNavigation<YakapScreenNavigationProp>();
-  
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  const handleAccordionPress = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
+  const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
 
   const navigateToEnrollment = () => {
-    // Always start fresh for the informational guide
     navigation.navigate('EligibilityChecker');
   };
 
   const navigateToFacilities = () => {
-    // Navigate to the Find tab, then to FacilityDirectory with filter
-    // @ts-ignore - navigation types for cross-tab are complex, ensuring runtime works
     navigation.navigate('Find', {
       screen: 'FacilityDirectory',
       params: { filter: 'yakap' },
     });
   };
 
-  const renderBenefitItem = (benefit: YakapBenefit, index: number) => (
-    <View key={benefit.id}>
-      <View style={styles.benefitItemContent}>
-        <View style={[styles.benefitIconContainer, { backgroundColor: theme.colors.primaryContainer, padding: 10, borderRadius: 12 }]}>
+  const navigateToFaq = () => {
+    navigation.navigate('YakapFaq');
+  };
+
+  const renderBenefitItem = (benefit: YakapBenefit) => {
+    return (
+      <View
+        key={benefit.id}
+        style={styles.benefitCard}
+      >
+        <View style={styles.benefitIconContainer}>
           <MaterialCommunityIcons
             name={benefit.icon as any}
-            size={24}
+            size={28}
             color={theme.colors.primary}
           />
         </View>
         <View style={styles.benefitTextContainer}>
-          <Text variant="titleMedium" style={styles.benefitTitle}>
+          <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
             {benefit.category}
           </Text>
-          <Text variant="bodySmall" style={styles.benefitDesc}>
+          <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
             {benefit.description}
           </Text>
         </View>
       </View>
-      {index < YAKAP_BENEFITS.length - 1 && (
-        <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
-      )}
-    </View>
-  );
+    );
+  };
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
+    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+      <StandardHeader title="YAKAP" />
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: theme.colors.background }}
       >
         {/* Hero Section */}
-        <HeroSection
-          colors={[theme.colors.primaryContainer, theme.colors.background]}
-          height={280}
-        >
+        <HeroSection colors={[theme.colors.background, theme.colors.background]} height={220}>
           <View style={styles.heroContent}>
-            <View style={styles.logoPlaceholder}>
-              <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
-            </View>
             <Text variant="headlineMedium" style={styles.heroTitle}>
               YAKAP Program
             </Text>
@@ -88,71 +76,59 @@ const YakapHomeScreen = () => {
               Yaman, Kalinga, at Pag-aaruga
             </Text>
             <Text style={styles.heroDesc}>
-              Free primary care, medicines, and lab tests for every Naga City resident.
+              Every Filipino is eligible. Follow our step-by-step guide to learn how you can enroll
+              in the YAKAP program and start accessing free healthcare benefits.
             </Text>
           </View>
         </HeroSection>
 
-        {/* Start Enrollment Call to Action */}
-        <Card style={[styles.ctaCard, { backgroundColor: theme.colors.background, elevation: 0 }]}>
-          <Card.Content>
-            <Text variant="titleLarge" style={styles.ctaTitle}>Get Started</Text>
-            <Text variant="bodyMedium" style={styles.ctaDesc}>
-              Every Filipino is eligible—no age limits or income restrictions. Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
-            </Text>
-            <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
-              Start Enrollment Guide
-            </Button>
-            <Button
-              mode="outlined"
-              icon="hospital-marker"
-              onPress={navigateToFacilities}
-              style={{ marginTop: 12, borderRadius: 8 }}
-            >
-              Find YAKAP Clinics
-            </Button>
-          </Card.Content>
-        </Card>
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
+          <Button
+            variant="primary"
+            onPress={navigateToEnrollment}
+            style={styles.ctaButton}
+            contentStyle={styles.buttonContent}
+            title="Start Enrollment Guide"
+          />
+          <Button
+            variant="text"
+            onPress={navigateToFacilities}
+            style={styles.secondaryButton}
+            contentStyle={styles.buttonContent}
+            title="Find YAKAP Clinics"
+          />
+        </View>
 
         {/* Benefits Summary */}
         <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionHeader}>
+          <Text variant="titleLarge" style={[styles.sectionHeader, { color: theme.colors.onSurface }]}>
             Key Benefits
           </Text>
-          <Card style={{ marginHorizontal: 16, borderRadius: 16, backgroundColor: theme.colors.background, elevation: 0 }}>
-            <Card.Content style={styles.benefitsList}>
-              {YAKAP_BENEFITS.map((benefit, index) => renderBenefitItem(benefit, index))}
-            </Card.Content>
-          </Card>
+          <View style={styles.benefitsList}>
+            {YAKAP_BENEFITS.map((benefit, index) => (
+              <React.Fragment key={benefit.id}>
+                {renderBenefitItem(benefit)}
+                {index < YAKAP_BENEFITS.length - 1 && (
+                  <Divider style={{ backgroundColor: theme.colors.outlineVariant, opacity: 0.5 }} />
+                )}
+              </React.Fragment>
+            ))}
+          </View>
         </View>
 
-        {/* FAQs */}
-        <View style={styles.section}>
-          <Text variant="titleLarge" style={styles.sectionHeader}>
-            Frequently Asked Questions
-          </Text>
-          {YAKAP_FAQS.slice(0, 5).map((faq) => (
-            <List.Accordion
-              key={faq.id}
-              title={faq.question}
-              id={faq.id}
-              expanded={expandedId === faq.id}
-              onPress={() => handleAccordionPress(faq.id)}
-              titleNumberOfLines={2}
-              style={{ backgroundColor: theme.colors.background }}
-              left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
-            >
-              <List.Item 
-                title={faq.answer} 
-                titleNumberOfLines={10} 
-                descriptionNumberOfLines={10}
-                style={{ backgroundColor: theme.colors.background }}
-              />
-            </List.Accordion>
-          ))}
+        {/* FAQ Link */}
+        <View style={styles.footer}>
+          <Button
+            variant="text"
+            onPress={navigateToFaq}
+            title="Frequently Asked Questions"
+            labelStyle={[styles.faqLinkLabel, { color: theme.colors.outline }]}
+            icon="information-outline"
+          />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -161,16 +137,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   heroContent: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
     flex: 1,
     paddingHorizontal: 20,
-  },
-  logoPlaceholder: {
-    marginBottom: 10,
   },
   heroTitle: {
     fontWeight: 'bold',
@@ -179,66 +152,75 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   heroDesc: {
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 10,
     opacity: 0.8,
   },
-  ctaCard: {
+  actionButtonsContainer: {
     marginHorizontal: 16,
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  ctaTitle: {
-    fontWeight: 'bold',
+    marginTop: 16,
     marginBottom: 8,
-  },
-  ctaDesc: {
-    marginBottom: 16,
-    lineHeight: 20,
+    gap: 12,
   },
   ctaButton: {
     borderRadius: 8,
   },
+  secondaryButton: {
+    borderRadius: 8,
+  },
+  buttonContent: {
+    paddingVertical: 10,
+  },
   section: {
-    marginTop: 10,
+    marginTop: 24,
     marginBottom: 10,
   },
   sectionHeader: {
     marginLeft: 16,
-    marginBottom: 10,
+    marginBottom: 16,
     fontWeight: 'bold',
   },
   benefitsList: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
-  benefitItemContent: {
+  benefitCard: {
     flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 12,
+    alignItems: 'flex-start',
   },
   benefitIconContainer: {
     marginRight: 16,
+    marginTop: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    width: 28,
   },
   benefitTextContainer: {
     flex: 1,
   },
   benefitTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'left',
     marginBottom: 2,
   },
   benefitDesc: {
+    fontSize: 14,
+    fontWeight: '400',
     textAlign: 'left',
-    lineHeight: 18,
-    opacity: 0.8,
+    lineHeight: 20,
+    opacity: 0.6,
   },
-  divider: {
-    height: 1,
-    width: '100%',
-    opacity: 0.1,
+  footer: {
+    alignItems: 'center',
+    marginTop: 24,
+    marginBottom: 0,
+  },
+  faqLinkLabel: {
+    fontSize: 14,
+    textDecorationLine: 'underline',
+    opacity: 0.7,
   },
 });
 

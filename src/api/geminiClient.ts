@@ -258,9 +258,10 @@ export class GeminiClient {
 
         return parsed;
 
-      } catch (error: any) {
+      } catch (error) {
         attempt++;
-        console.error(`[GeminiClient] Request failed (Attempt ${attempt}):`, error.message);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error(`[GeminiClient] Request failed (Attempt ${attempt}):`, errorMessage);
 
         if (attempt >= MAX_RETRIES) {
           throw new Error(

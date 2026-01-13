@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Button, Chip, useTheme, Card } from 'react-native-paper';
+import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { CheckStackScreenProps } from '../../types/navigation';
