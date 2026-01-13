@@ -1,19 +1,19 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { Button as PaperButton, useTheme } from 'react-native-paper';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline' | 'text';
 
-interface ButtonProps {
+interface ButtonProps extends Omit<React.ComponentProps<typeof PaperButton>, 'children' | 'mode'> {
   onPress: () => void;
   title: string;
   variant?: ButtonVariant;
   loading?: boolean;
   disabled?: boolean;
   icon?: string;
-  style?: ViewStyle;
-  labelStyle?: TextStyle;
-  contentStyle?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
   mode?: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal';
   accessibilityLabel?: string;
   accessibilityHint?: string;
@@ -30,6 +30,7 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   labelStyle,
   contentStyle,
+  mode: modeProp,
   accessibilityLabel,
   accessibilityHint,
   accessibilityRole = 'button',
@@ -60,11 +61,17 @@ export const Button: React.FC<ButtonProps> = ({
       mode = 'outlined';
       textColor = theme.colors.primary;
       break;
+    case 'text':
+      mode = 'text';
+      textColor = theme.colors.primary;
+      break;
   }
+
+  const finalMode = modeProp || mode;
 
   return (
     <PaperButton
-      mode={mode}
+      mode={finalMode}
       onPress={onPress}
       loading={loading}
       disabled={disabled}

@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import NetInfo from '@react-native-community/netinfo';
 
@@ -13,12 +13,13 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { OfflineBanner } from './src/components/common';
 import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
+import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
 import { theme } from './src/theme';
 
 const prefix = Linking.createURL('/');
 
-const linking: any = {
+const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [prefix],
   config: {
     screens: {
@@ -26,51 +27,68 @@ const linking: any = {
         screens: {
           Home: 'home',
           Check: {
+            path: 'check',
             screens: {
-              NavigatorHome: 'chat',
+              NavigatorHome: '',
               SymptomAssessment: 'assessment',
-              Recommendation: 'recommendations',
-            },
+              Recommendation: 'recommendation',
+              CrisisSupport: 'crisis',
+            }
           },
           Find: {
+            path: 'find',
             screens: {
-              FacilityDirectory: 'facilities',
-              FacilityDetails: 'facilities/:facilityId',
-            },
+              FacilityDirectory: '',
+              FacilityDetails: 'details/:facilityId',
+            }
           },
           YAKAP: {
+            path: 'yakap',
             screens: {
-              YakapHome: 'yakap',
-            },
+              YakapHome: '',
+              EligibilityChecker: 'eligibility',
+              EnrollmentPathway: 'pathway',
+              EnrollmentGuide: 'guide/:pathwayId',
+              EnrollmentCompletion: 'completion',
+            }
           },
         },
       },
       NotFound: '*',
+      PrivacyPolicy: 'privacy',
+      TermsOfService: 'terms',
     },
   },
 };
 
 const AppContent = () => {
   useEffect(() => {
-    // Initial Sync Status Load
-    const loadSyncStatus = async () => {
-      const lastSync = await getLastSyncTime();
-      if (lastSync) {
-        store.dispatch(setLastSync(lastSync));
+    // Initialize Database and Sync
+    const startup = async () => {
+      try {
+        await initDatabase();
+        
+        // Initial Sync Status Load
+        const lastSync = await getLastSyncTime();
+        if (lastSync) {
+          store.dispatch(setLastSync(lastSync));
+        }
+
+        // Initial Sync
+        syncFacilities().catch((err) =>
+          console.log('Initial sync failed (likely offline or error):', err),
+        );
+      } catch (err) {
+        console.error('Startup initialization failed:', err);
       }
     };
-    loadSyncStatus();
+    
+    startup();
 
     // Network Listener
     const unsubscribe = NetInfo.addEventListener((state) => {
-      const isOffline = state.isConnected === false;
-      store.dispatch(setOfflineStatus(isOffline));
+      store.dispatch(setOfflineStatus(!state.isConnected));
     });
-
-    // Initial Sync
-    syncFacilities().catch((err) =>
-      console.log('Initial sync failed (likely offline or error):', err),
-    );
 
     return () => unsubscribe();
   }, []);

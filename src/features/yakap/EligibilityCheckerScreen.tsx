@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Button, Card, useTheme, Divider, List } from 'react-native-paper';
+import { Text, Card, useTheme, Divider, List } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { YakapStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
+import { Button } from '../../components/common/Button';
 
 type Props = YakapStackScreenProps<'EligibilityChecker'>;
 
@@ -38,22 +39,20 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           
           <View style={styles.buttonGroup}>
             <Button 
-                mode="contained" 
+                variant="primary" 
                 onPress={() => setHasPhilHealth(true)} 
                 style={styles.mainButton}
                 contentStyle={styles.buttonContent}
                 icon="check"
-            >
-                Yes, I have PhilHealth
-            </Button>
+                title="Yes, I have PhilHealth"
+            />
             <Button 
-                mode="outlined" 
+                variant="outline" 
                 onPress={() => setHasPhilHealth(false)} 
                 style={styles.secondaryButton}
                 contentStyle={styles.buttonContent}
-            >
-                No, I don't have it yet
-            </Button>
+                title="No, I don't have it yet"
+            />
           </View>
         </View>
       );
@@ -91,14 +90,13 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           </Card>
 
           <Button 
-            mode="contained" 
+            variant="primary" 
             onPress={() => navigation.navigate('EnrollmentPathway')}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
             icon="arrow-right"
-          >
-            Choose Enrollment Method
-          </Button>
+            title="Choose Enrollment Method"
+          />
         </View>
       );
     }
@@ -115,9 +113,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
              <Card.Title title="Option 1: Online Registration" left={(props) => <MaterialCommunityIcons {...props} name="web" />} />
              <Card.Content>
                 <Text variant="bodySmall" style={{marginBottom: 10}}>The fastest way if you have internet access.</Text>
-                <Button mode="text" onPress={handlePhilHealthLink} icon="open-in-new">
-                    Visit PhilHealth Website
-                </Button>
+                <Button variant="text" onPress={handlePhilHealthLink} icon="open-in-new" title="Visit PhilHealth Website" />
              </Card.Content>
           </Card>
 
@@ -125,9 +121,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
              <Card.Title title="Option 2: Visit Local Office" left={(props) => <MaterialCommunityIcons {...props} name="office-building" />} />
              <Card.Content>
                 <Text variant="bodySmall" style={{marginBottom: 10}}>Go to the nearest PhilHealth Local Health Insurance Office.</Text>
-                <Button mode="outlined" onPress={handleMap} icon="map-marker">
-                    Find Nearest Office
-                </Button>
+                <Button variant="outline" onPress={handleMap} icon="map-marker" title="Find Nearest Office" />
              </Card.Content>
           </Card>
 
@@ -140,12 +134,11 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           </View>
 
           <Button 
-            mode="text" 
+            variant="text" 
             onPress={() => navigation.goBack()}
             style={{marginTop: 20}}
-          >
-            Back to Home
-          </Button>
+            title="Back to Home"
+          />
         </View>
       );
     }

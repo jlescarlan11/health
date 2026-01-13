@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import {
   Text,
-  Card,
-  Button,
   List,
   useTheme,
 } from 'react-native-paper';
@@ -12,14 +10,13 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import HeroSection from '../../components/heroes/HeroSection';
+import { Button } from '../../components/common/Button';
 import { YAKAP_BENEFITS, YAKAP_FAQS, YakapBenefit } from './yakapContent';
-import { YakapStackParamList } from '../../navigation/types';
-
-type YakapScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'YakapHome'>;
+import { YakapStackScreenProps } from '../../types/navigation';
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
-  const navigation = useNavigation<YakapScreenNavigationProp>();
+  const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
   
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -34,7 +31,6 @@ const YakapHomeScreen = () => {
 
   const navigateToFacilities = () => {
     // Navigate to the Find tab, then to FacilityDirectory with filter
-    // @ts-ignore - navigation types for cross-tab are complex, ensuring runtime works
     navigation.navigate('Find', {
       screen: 'FacilityDirectory',
       params: { filter: 'yakap' },
@@ -46,7 +42,7 @@ const YakapHomeScreen = () => {
       <View style={styles.benefitItemContent}>
         <View style={[styles.benefitIconContainer, { backgroundColor: theme.colors.primaryContainer, padding: 10, borderRadius: 12 }]}>
           <MaterialCommunityIcons
-            name={benefit.icon as any}
+            name={benefit.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
             size={24}
             color={theme.colors.primary}
           />
@@ -95,17 +91,20 @@ const YakapHomeScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <Button mode="contained" onPress={navigateToEnrollment} style={styles.ctaButton}>
-            Start Enrollment Guide
-          </Button>
+          <Button 
+            variant="primary" 
+            onPress={navigateToEnrollment} 
+            style={styles.ctaButton}
+            contentStyle={styles.buttonContent}
+            title="Start Enrollment Guide"
+          />
           <Button
-            mode="outlined"
-            icon="hospital-marker"
+            variant="outline"
             onPress={navigateToFacilities}
             style={styles.secondaryButton}
-          >
-            Find YAKAP Clinics
-          </Button>
+            contentStyle={styles.buttonContent}
+            title="Find YAKAP Clinics"
+          />
         </View>
 
         {/* Benefits Summary */}
@@ -113,11 +112,9 @@ const YakapHomeScreen = () => {
           <Text variant="titleLarge" style={styles.sectionHeader}>
             Key Benefits
           </Text>
-          <Card style={{ marginHorizontal: 16, borderRadius: 16, backgroundColor: theme.colors.background, elevation: 0 }}>
-            <Card.Content style={styles.benefitsList}>
-              {YAKAP_BENEFITS.map((benefit, index) => renderBenefitItem(benefit, index))}
-            </Card.Content>
-          </Card>
+          <View style={styles.benefitsList}>
+            {YAKAP_BENEFITS.map((benefit, index) => renderBenefitItem(benefit, index))}
+          </View>
         </View>
 
         {/* FAQs */}
@@ -181,13 +178,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     marginBottom: 8,
+    gap: 16,
   },
   ctaButton: {
     borderRadius: 8,
   },
   secondaryButton: {
-    marginTop: 12,
     borderRadius: 8,
+  },
+  buttonContent: {
+    paddingVertical: 10,
   },
   section: {
     marginTop: 10,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Card, Button, Avatar, IconButton, useTheme, ActivityIndicator, Divider, Surface } from 'react-native-paper';
+import { Text, Card, Avatar, IconButton, useTheme, ActivityIndicator, Divider, Surface } from 'react-native-paper';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
@@ -9,6 +9,7 @@ import { CheckStackParamList, CheckStackScreenProps } from '../types/navigation'
 import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
+import { Button } from '../components/common/Button';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
@@ -289,9 +290,7 @@ const RecommendationScreen = () => {
                                 <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12 }}>
                                     No facilities found nearby.
                                 </Text>
-                                <Button mode="text" onPress={() => dispatch(fetchFacilities({ page: 1, refresh: true }))}>
-                                    Retry Loading
-                                </Button>
+                                <Button variant="text" onPress={() => dispatch(fetchFacilities({ page: 1, refresh: true }))} title="Retry Loading" />
                              </Surface>
                         )}
                         

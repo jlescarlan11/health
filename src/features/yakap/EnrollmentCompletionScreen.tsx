@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Share, Animated } from 'react-native';
-import { Text, Button, Card, useTheme } from 'react-native-paper';
+import { Text, Card, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { YakapStackParamList } from '../../navigation/types';
 import StandardHeader from '../../components/common/StandardHeader';
+import { Button } from '../../components/common/Button';
 import { YAKAP_BENEFITS } from './yakapContent';
 
 type EnrollmentCompletionNavigationProp = StackNavigationProp<YakapStackParamList, 'EnrollmentCompletion'>;
@@ -90,35 +91,30 @@ const EnrollmentCompletionScreen = () => {
 
         <View style={styles.actionContainer}>
           <Button 
-            mode="contained" 
+            variant="primary" 
             icon="hospital-marker" 
             onPress={navigateToFacilities}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
-            buttonColor={theme.colors.primary}
-          >
-            Find Nearest YAKAP Clinic
-          </Button>
+            title="Find Nearest YAKAP Clinic"
+          />
           
           <Button 
-            mode="outlined" 
+            variant="outline" 
             icon="share-variant" 
             onPress={handleShare}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
-            textColor={theme.colors.primary}
-          >
-            Share this Guide
-          </Button>
+            title="Share this Guide"
+          />
 
           <Button 
-            mode="text" 
+            variant="text" 
             onPress={handleBackToHome}
             style={styles.backButton}
-            textColor={theme.colors.onSurfaceVariant}
-          >
-            Back to YAKAP Home
-          </Button>
+            labelStyle={{ color: theme.colors.onSurfaceVariant }}
+            title="Back to YAKAP Home"
+          />
         </View>
         
         <View style={{ height: 120 }} />

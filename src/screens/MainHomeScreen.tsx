@@ -217,13 +217,4 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontSize: 14,
   },
-  devContainer: {
-    marginTop: 32,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  resetButton: {
-    width: '100%',
-    borderRadius: 8,
-  },
 });
