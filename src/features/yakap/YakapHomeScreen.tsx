@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
-import {
-  Text,
-  List,
-  useTheme,
-} from 'react-native-paper';
+import { Text, List, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -17,7 +13,7 @@ import { YakapStackScreenProps } from '../../types/navigation';
 const YakapHomeScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
-  
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleAccordionPress = (id: string) => {
@@ -40,7 +36,12 @@ const YakapHomeScreen = () => {
   const renderBenefitItem = (benefit: YakapBenefit, index: number) => (
     <View key={benefit.id}>
       <View style={styles.benefitItemContent}>
-        <View style={[styles.benefitIconContainer, { backgroundColor: theme.colors.primaryContainer, padding: 10, borderRadius: 12 }]}>
+        <View
+          style={[
+            styles.benefitIconContainer,
+            { backgroundColor: theme.colors.primaryContainer, padding: 10, borderRadius: 12 },
+          ]}
+        >
           <MaterialCommunityIcons
             name={benefit.icon as React.ComponentProps<typeof MaterialCommunityIcons>['name']}
             size={24}
@@ -64,15 +65,12 @@ const YakapHomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: theme.colors.background }}
       >
         {/* Hero Section */}
-        <HeroSection
-          colors={[theme.colors.primaryContainer, theme.colors.background]}
-          height={320}
-        >
+        <HeroSection colors={[theme.colors.primaryContainer, theme.colors.background]} height={320}>
           <View style={styles.heroContent}>
             <View style={styles.logoPlaceholder}>
               <MaterialCommunityIcons name="heart-pulse" size={60} color={theme.colors.primary} />
@@ -84,16 +82,17 @@ const YakapHomeScreen = () => {
               Yaman, Kalinga, at Pag-aaruga
             </Text>
             <Text style={styles.heroDesc}>
-              Every Filipino is eligible—no age limits or income restrictions. Follow our step-by-step guide to learn how you can enroll in the YAKAP program and start accessing free healthcare benefits.
+              Every Filipino is eligible. Follow our step-by-step guide to learn how you can enroll
+              in the YAKAP program and start accessing free healthcare benefits.
             </Text>
           </View>
         </HeroSection>
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <Button 
-            variant="primary" 
-            onPress={navigateToEnrollment} 
+          <Button
+            variant="primary"
+            onPress={navigateToEnrollment}
             style={styles.ctaButton}
             contentStyle={styles.buttonContent}
             title="Start Enrollment Guide"
@@ -133,9 +132,9 @@ const YakapHomeScreen = () => {
               style={{ backgroundColor: theme.colors.background }}
               left={(props) => <List.Icon {...props} icon="help-circle-outline" />}
             >
-              <List.Item 
-                title={faq.answer} 
-                titleNumberOfLines={10} 
+              <List.Item
+                title={faq.answer}
+                titleNumberOfLines={10}
                 descriptionNumberOfLines={10}
                 style={{ backgroundColor: theme.colors.background }}
               />
