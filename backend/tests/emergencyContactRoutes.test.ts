@@ -36,7 +36,7 @@ describe('Emergency Contact Routes', () => {
 
       expect(response.status).toBe(200);
       expect(prismaMock.emergencyContact.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { category: 'hotline' } })
+        expect.objectContaining({ where: { category: 'hotline' } }),
       );
     });
   });

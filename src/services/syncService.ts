@@ -7,7 +7,7 @@ import { syncCompleted, setOfflineStatus } from '../store/offlineSlice';
 
 export const syncFacilities = async () => {
   const state = await NetInfo.fetch();
-  
+
   if (!state.isConnected) {
     store.dispatch(setOfflineStatus(true));
     throw new Error('Cannot sync: Offline');
@@ -16,7 +16,7 @@ export const syncFacilities = async () => {
   try {
     console.log('Starting facilities sync...');
     const data = await fetchFacilitiesFromApi();
-    
+
     let facilitiesToSave = [];
     if (Array.isArray(data)) {
       facilitiesToSave = data;

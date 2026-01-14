@@ -1,5 +1,15 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER, createMigrate } from 'redux-persist';
+import {
+  persistStore,
+  persistReducer,
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+  createMigrate,
+} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import facilitiesReducer from './facilitiesSlice';

@@ -29,19 +29,36 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const renderBenefitsCard = () => (
     <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
       <Card.Content>
-          <Text variant="titleMedium" style={{ marginBottom: 10, color: theme.colors.onSurface }}>What you get:</Text>
-          <View style={styles.bulletRow}>
-              <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
-              <Text variant="bodyMedium" style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}>No age restrictions</Text>
-          </View>
-          <View style={styles.bulletRow}>
-              <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
-              <Text variant="bodyMedium" style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}>No income restrictions</Text>
-          </View>
-          <View style={styles.bulletRow}>
-              <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
-              <Text variant="bodyMedium" style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}>Covered dependents included</Text>
-          </View>
+        <Text variant="titleMedium" style={{ marginBottom: 10, color: theme.colors.onSurface }}>
+          What you get:
+        </Text>
+        <View style={styles.bulletRow}>
+          <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
+          <Text
+            variant="bodyMedium"
+            style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}
+          >
+            No age restrictions
+          </Text>
+        </View>
+        <View style={styles.bulletRow}>
+          <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
+          <Text
+            variant="bodyMedium"
+            style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}
+          >
+            No income restrictions
+          </Text>
+        </View>
+        <View style={styles.bulletRow}>
+          <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
+          <Text
+            variant="bodyMedium"
+            style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}
+          >
+            Covered dependents included
+          </Text>
+        </View>
       </Card.Content>
     </Card>
   );
@@ -49,32 +66,41 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const renderContent = () => {
     if (hasPhilHealth === null) {
       return (
-        <View>
-          <Text variant="headlineSmall" style={[styles.questionText, { color: theme.colors.onSurface }]}>
+        <View style={styles.centeredContent}>
+          <View style={styles.heroSection}>
+            <MaterialCommunityIcons name="shield-check" size={72} color={theme.colors.secondary} />
+          </View>
+
+          <Text
+            variant="headlineSmall"
+            style={[styles.questionText, { color: theme.colors.onSurface }]}
+          >
             Do you have a PhilHealth Identification Number (PIN)?
           </Text>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center', marginBottom: 12, opacity: 0.8 }}>
-            The YAKAP program is an additional benefit provided to all PhilHealth members.
+
+          <Text
+            variant="bodyMedium"
+            style={[styles.consolidatedSubText, { color: theme.colors.onSurfaceVariant }]}
+          >
+            The YAKAP program is an additional benefit for PhilHealth members and is required for
+            enrollment.
           </Text>
-          <Text variant="bodyMedium" style={[styles.subText, { color: theme.colors.onSurfaceVariant }]}>
-            This is required to enroll in the YAKAP Program.
-          </Text>
-          
+
           <View style={styles.buttonGroup}>
-            <Button 
-                variant="primary" 
-                onPress={() => setHasPhilHealth(true)} 
-                style={styles.mainButton}
-                contentStyle={styles.buttonContent}
-                icon="check"
-                title="Yes, I have PhilHealth"
+            <Button
+              variant="primary"
+              onPress={() => setHasPhilHealth(true)}
+              style={styles.mainButton}
+              contentStyle={styles.buttonContent}
+              icon="check"
+              title="Yes, I have PhilHealth"
             />
-            <Button 
-                variant="outline" 
-                onPress={() => setHasPhilHealth(false)} 
-                style={styles.secondaryButton}
-                contentStyle={styles.buttonContent}
-                title="No, I don't have it yet"
+            <Button
+              variant="outline"
+              onPress={() => setHasPhilHealth(false)}
+              style={styles.secondaryButton}
+              contentStyle={styles.buttonContent}
+              title="No, I don't have it yet"
             />
           </View>
         </View>
@@ -86,18 +112,27 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         <View>
           <View style={styles.successHeader}>
             <MaterialCommunityIcons name="check-circle" size={80} color={theme.colors.primary} />
-            <Text variant="headlineMedium" style={[styles.successTitle, { color: theme.colors.primary }]}>
-                You’re Eligible!
+            <Text
+              variant="headlineMedium"
+              style={[styles.successTitle, { color: theme.colors.primary }]}
+            >
+              You’re Eligible!
             </Text>
-            <Text variant="bodyLarge" style={[styles.successSubtitle, { color: theme.colors.onSurfaceVariant, opacity: 0.7 }]}>
-                Since you have a PhilHealth PIN, you can join YAKAP immediately.
+            <Text
+              variant="bodyLarge"
+              style={[
+                styles.successSubtitle,
+                { color: theme.colors.onSurfaceVariant, opacity: 0.7 },
+              ]}
+            >
+              Since you have a PhilHealth PIN, you can join YAKAP immediately.
             </Text>
           </View>
-          
+
           {renderBenefitsCard()}
 
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             onPress={() => navigation.navigate('EnrollmentPathway')}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
@@ -105,16 +140,16 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             title="Choose Enrollment Method"
           />
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onPress={() => navigation.goBack()}
             style={{ marginTop: 20 }}
             title="Back to Home"
           />
 
-          <Button 
-            variant="text" 
-            onPress={() => setHasPhilHealth(null)} 
+          <Button
+            variant="text"
+            onPress={() => setHasPhilHealth(null)}
             style={{ marginTop: 8, opacity: 0.7 }}
             title="Change my answer"
           />
@@ -126,67 +161,134 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
       return (
         <View>
           <View style={styles.successHeader}>
-            <MaterialCommunityIcons name="information-outline" size={80} color={theme.colors.secondary} />
-            <Text variant="headlineMedium" style={[styles.guidanceTitle, { color: theme.colors.secondary }]}>
-                Step 1: Obtain your PhilHealth PIN
+            <MaterialCommunityIcons
+              name="information-outline"
+              size={80}
+              color={theme.colors.secondary}
+            />
+            <Text
+              variant="headlineMedium"
+              style={[styles.guidanceTitle, { color: theme.colors.secondary }]}
+            >
+              Step 1: Obtain your PhilHealth PIN
             </Text>
           </View>
-          <Text variant="bodyLarge" style={[styles.guidanceText, { color: theme.colors.onSurfaceVariant, opacity: 0.7 }]}>
-            Every Filipino is eligible for PhilHealth. You just need to register to get your PIN, then you can join YAKAP.
+          <Text
+            variant="bodyLarge"
+            style={[styles.guidanceText, { color: theme.colors.onSurfaceVariant, opacity: 0.7 }]}
+          >
+            Every Filipino is eligible for PhilHealth. You just need to register to get your PIN,
+            then you can join YAKAP.
           </Text>
 
-          <Text variant="titleMedium" style={{ marginBottom: 16, color: theme.colors.onSurface, fontWeight: 'bold' }}>
+          <Text
+            variant="titleMedium"
+            style={{ marginBottom: 16, color: theme.colors.onSurface, fontWeight: 'bold' }}
+          >
             Choose your registration path:
           </Text>
 
           <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-             <Card.Title 
-                title="1. Online Registration" 
-                titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
-                left={(props) => <MaterialCommunityIcons {...props} name="numeric-1-circle" color={theme.colors.primary} />} 
-             />
-             <Card.Content>
-                <Text variant="bodySmall" style={{ marginBottom: 10, color: theme.colors.onSurfaceVariant }}>The fastest way if you have internet access.</Text>
-                <Button variant="text" onPress={handlePhilHealthLink} icon="open-in-new" title="Visit PhilHealth Website" />
-             </Card.Content>
+            <Card.Title
+              title="1. Online Registration"
+              titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
+              left={(props) => (
+                <MaterialCommunityIcons
+                  {...props}
+                  name="numeric-1-circle"
+                  color={theme.colors.primary}
+                />
+              )}
+            />
+            <Card.Content>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: 10, color: theme.colors.onSurfaceVariant }}
+              >
+                The fastest way if you have internet access.
+              </Text>
+              <Button
+                variant="text"
+                onPress={handlePhilHealthLink}
+                icon="open-in-new"
+                title="Visit PhilHealth Website"
+              />
+            </Card.Content>
           </Card>
 
           <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-             <Card.Title 
-                title="2. Visit Local Office" 
-                titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
-                left={(props) => <MaterialCommunityIcons {...props} name="numeric-2-circle" color={theme.colors.primary} />} 
-             />
-             <Card.Content>
-                <Text variant="bodySmall" style={{ marginBottom: 10, color: theme.colors.onSurfaceVariant }}>Go to the nearest PhilHealth Local Health Insurance Office.</Text>
-                <Button variant="outline" onPress={handleMap} icon="map-marker" title="Find Nearest Office" />
-             </Card.Content>
+            <Card.Title
+              title="2. Visit Local Office"
+              titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
+              left={(props) => (
+                <MaterialCommunityIcons
+                  {...props}
+                  name="numeric-2-circle"
+                  color={theme.colors.primary}
+                />
+              )}
+            />
+            <Card.Content>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: 10, color: theme.colors.onSurfaceVariant }}
+              >
+                Go to the nearest PhilHealth Local Health Insurance Office.
+              </Text>
+              <Button
+                variant="outline"
+                onPress={handleMap}
+                icon="map-marker"
+                title="Find Nearest Office"
+              />
+            </Card.Content>
           </Card>
 
-          <View style={{ marginVertical: 16, padding: 16, backgroundColor: theme.colors.primaryContainer, borderRadius: 12 }}>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onPrimaryContainer, textAlign: 'center', fontWeight: '500' }}>
+          <View
+            style={{
+              marginVertical: 16,
+              padding: 16,
+              backgroundColor: theme.colors.primaryContainer,
+              borderRadius: 12,
+            }}
+          >
+            <Text
+              variant="bodyMedium"
+              style={{
+                color: theme.colors.onPrimaryContainer,
+                textAlign: 'center',
+                fontWeight: '500',
+              }}
+            >
               Once you receive your PIN, return to this app to complete your YAKAP enrollment.
             </Text>
           </View>
 
           <View style={styles.helpSection}>
-             <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>Need Assistance?</Text>
-             <View style={styles.contactRow}>
-                <MaterialCommunityIcons name="phone" size={18} color={theme.colors.secondary} />
-                <Text variant="bodyMedium" style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}>Hotline: (02) 8441-7442</Text>
-             </View>
+            <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
+              Need Assistance?
+            </Text>
+            <View style={styles.contactRow}>
+              <MaterialCommunityIcons name="phone" size={18} color={theme.colors.secondary} />
+              <Text
+                variant="bodyMedium"
+                style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}
+              >
+                Hotline: (02) 8441-7442
+              </Text>
+            </View>
           </View>
 
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onPress={() => navigation.goBack()}
             style={{ marginTop: 32 }}
             title="Back to Home"
           />
 
-          <Button 
-            variant="text" 
-            onPress={() => setHasPhilHealth(null)} 
+          <Button
+            variant="text"
+            onPress={() => setHasPhilHealth(null)}
             style={{ marginTop: 8, opacity: 0.7 }}
             title="Change my answer"
           />
@@ -196,15 +298,15 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <StandardHeader title="Eligibility Check" showBackButton />
-      <ScrollView contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.colors.background }]}>
-        {hasPhilHealth === null && (
-             <View style={styles.heroSection}>
-                <MaterialCommunityIcons name="shield-check" size={60} color={theme.colors.secondary} />
-             </View>
-        )}
-        
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.colors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         {renderContent()}
       </ScrollView>
     </SafeAreaView>
@@ -220,16 +322,28 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     flexGrow: 1,
   },
+  centeredContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 20,
+    marginBottom: 32,
   },
   questionText: {
     textAlign: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     fontWeight: 'bold',
-    marginTop: 20,
+    fontSize: 24,
+    lineHeight: 32,
+  },
+  consolidatedSubText: {
+    textAlign: 'center',
+    marginBottom: 48,
+    opacity: 0.7,
+    lineHeight: 22,
+    paddingHorizontal: 12,
   },
   subText: {
     textAlign: 'center',

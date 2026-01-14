@@ -1,5 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, Modal as RNModal, TouchableWithoutFeedback, ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Modal as RNModal,
+  TouchableWithoutFeedback,
+  ViewStyle,
+} from 'react-native';
 import { Surface, useTheme, IconButton } from 'react-native-paper';
 
 interface ModalProps {
@@ -29,15 +35,16 @@ export const Modal: React.FC<ModalProps> = ({
       <TouchableWithoutFeedback onPress={dismissable ? onDismiss : undefined}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <Surface style={[styles.content, { backgroundColor: theme.colors.surface }, contentContainerStyle]}>
-               {dismissable && (
-                <IconButton
-                  icon="close"
-                  size={24}
-                  onPress={onDismiss}
-                  style={styles.closeButton}
-                />
-               )}
+            <Surface
+              style={[
+                styles.content,
+                { backgroundColor: theme.colors.surface },
+                contentContainerStyle,
+              ]}
+            >
+              {dismissable && (
+                <IconButton icon="close" size={24} onPress={onDismiss} style={styles.closeButton} />
+              )}
               {children}
             </Surface>
           </TouchableWithoutFeedback>

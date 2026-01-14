@@ -19,9 +19,13 @@ const HomeHero: React.FC = () => {
   return (
     <HeroSection colors={[theme.colors.primaryContainer, theme.colors.background]} height={220}>
       <View style={styles.container}>
-        <Text style={[styles.date, { color: theme.colors.onPrimaryContainer }]}>{formattedDate}</Text>
+        <Text style={[styles.date, { color: theme.colors.onPrimaryContainer }]}>
+          {formattedDate}
+        </Text>
         <Text style={[styles.greeting, { color: theme.colors.primary }]}>{greeting}</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>How can we help you today?</Text>
+        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+          How can we help you today?
+        </Text>
       </View>
     </HeroSection>
   );

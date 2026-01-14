@@ -10,12 +10,15 @@ import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
 import { YAKAP_BENEFITS } from './yakapContent';
 
-type EnrollmentCompletionNavigationProp = StackNavigationProp<RootStackParamList, 'EnrollmentCompletion'>;
+type EnrollmentCompletionNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'EnrollmentCompletion'
+>;
 
 const EnrollmentCompletionScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<EnrollmentCompletionNavigationProp>();
-  
+
   // Animation values
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -39,7 +42,8 @@ const EnrollmentCompletionScreen = () => {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: 'I just finished learning how to enroll in YAKAP! 🎉 This program provides free primary care, lab tests, and medicines in Naga City. Check out the HEALTH app to see how you can benefit too!',
+        message:
+          'I just finished learning how to enroll in YAKAP! 🎉 This program provides free primary care, lab tests, and medicines in Naga City. Check out the HEALTH app to see how you can benefit too!',
       });
     } catch (error) {
       console.error('Error sharing:', error);
@@ -51,7 +55,7 @@ const EnrollmentCompletionScreen = () => {
     // @ts-ignore - cross-tab navigation
     navigation.navigate('Find', {
       screen: 'FacilityDirectory',
-      params: { filter: 'yakap' }
+      params: { filter: 'yakap' },
     });
   };
 
@@ -60,29 +64,60 @@ const EnrollmentCompletionScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['top', 'left', 'right']}
+    >
       <StandardHeader title="Guide Completed" />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.celebrationContainer}>
           <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
             <MaterialCommunityIcons name="check-decagram" size={100} color={theme.colors.primary} />
           </Animated.View>
-          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onSurface }]}>Guide Completed</Text>
-          <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-            You have finished the informational walkthrough. You now have all the details needed to visit a health center and complete your official enrollment.
+          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onSurface }]}>
+            Guide Completed
+          </Text>
+          <Text
+            variant="bodyLarge"
+            style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+          >
+            You have finished the informational walkthrough. You now have all the details needed to
+            visit a health center and complete your official enrollment.
           </Text>
         </View>
 
-        <Card style={[styles.benefitsCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+        <Card
+          style={[
+            styles.benefitsCard,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+          ]}
+        >
           <Card.Content>
-            <Text variant="titleMedium" style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}>YAKAP Program Benefits:</Text>
+            <Text
+              variant="titleMedium"
+              style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}
+            >
+              YAKAP Program Benefits:
+            </Text>
             {YAKAP_BENEFITS.map((benefit) => (
               <View key={benefit.id} style={styles.benefitItem}>
-                <MaterialCommunityIcons name="check-circle-outline" size={20} color={theme.colors.primary} style={styles.benefitIcon} />
+                <MaterialCommunityIcons
+                  name="check-circle-outline"
+                  size={20}
+                  color={theme.colors.primary}
+                  style={styles.benefitIcon}
+                />
                 <View style={styles.benefitTextContent}>
-                  <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>{benefit.category}</Text>
-                  <Text variant="bodySmall" style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>{benefit.description}</Text>
+                  <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
+                    {benefit.category}
+                  </Text>
+                  <Text
+                    variant="bodySmall"
+                    style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}
+                  >
+                    {benefit.description}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -90,33 +125,33 @@ const EnrollmentCompletionScreen = () => {
         </Card>
 
         <View style={styles.actionContainer}>
-          <Button 
-            variant="primary" 
-            icon="hospital-marker" 
+          <Button
+            variant="primary"
+            icon="hospital-marker"
             onPress={navigateToFacilities}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
             title="Find Nearest YAKAP Clinic"
           />
-          
-          <Button 
-            variant="outline" 
-            icon="share-variant" 
+
+          <Button
+            variant="outline"
+            icon="share-variant"
             onPress={handleShare}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
             title="Share this Guide"
           />
 
-          <Button 
-            variant="text" 
+          <Button
+            variant="text"
             onPress={handleBackToHome}
             style={styles.backButton}
             labelStyle={{ color: theme.colors.onSurfaceVariant }}
             title="Back to YAKAP Home"
           />
         </View>
-        
+
         <View style={{ height: 120 }} />
       </ScrollView>
     </SafeAreaView>

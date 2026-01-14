@@ -12,7 +12,7 @@ export const theme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
-    
+
     // Primary - Using Green as it's safe for text and branding
     primary: palette.green,
     onPrimary: '#FFFFFF',
@@ -38,11 +38,11 @@ export const theme = {
     // Text (Outline/Borders)
     outline: '#747775',
     outlineVariant: '#C4C7C5',
-    
+
     // Elevation/Shadow
     shadow: '#000000',
     scrim: '#000000',
-    
+
     // Error (Functional - kept standard red or similar)
     error: '#BA1A1A',
     onError: '#FFFFFF',

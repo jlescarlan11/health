@@ -2,58 +2,56 @@ require('dotenv').config();
 
 module.exports = {
   expo: {
-    name: "health",
-    slug: "health",
-    version: "1.0.0",
-    orientation: "portrait",
-    icon: "./assets/icon.png",
-    userInterfaceStyle: "light",
+    name: 'health',
+    slug: 'health',
+    version: '1.0.0',
+    orientation: 'portrait',
+    icon: './assets/icon.png',
+    userInterfaceStyle: 'light',
     newArchEnabled: true,
     splash: {
-      image: "./assets/splash-icon.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff"
+      image: './assets/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff',
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.health.app",
-      googleServicesFile: "./GoogleService-Info.plist",
+      bundleIdentifier: 'com.health.app',
+      googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
-        UIBackgroundModes: [
-          "remote-notification"
-        ]
-      }
+        UIBackgroundModes: ['remote-notification'],
+      },
     },
     android: {
-      package: "com.health.app",
-      googleServicesFile: "./google-services.json",
+      package: 'com.health.app',
+      googleServicesFile: './google-services.json',
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+        foregroundImage: './assets/adaptive-icon.png',
+        backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
-      predictiveBackGestureEnabled: false
+      predictiveBackGestureEnabled: false,
     },
     web: {
-      favicon: "./assets/favicon.png"
+      favicon: './assets/favicon.png',
     },
     plugins: [
-      "expo-router",
+      'expo-router',
       [
-        "@rnmapbox/maps",
+        '@rnmapbox/maps',
         {
-          "RNMapboxMapsImpl": "mapbox",
-          "RNMapboxMapsDownloadToken": process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN
-        }
+          RNMapboxMapsImpl: 'mapbox',
+          RNMapboxMapsDownloadToken: process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN,
+        },
       ],
-      "expo-sqlite",
-      "@react-native-firebase/app",
-      "expo-system-ui"
+      'expo-sqlite',
+      '@react-native-firebase/app',
+      'expo-system-ui',
     ],
     extra: {
-      apiUrl: process.env.BACKEND_API_URL || "http://localhost:3000/api",
-      backendUrl: process.env.BACKEND_API_URL || "http://localhost:3000/api",
-      geminiApiKey: process.env.GEMINI_API_KEY
-    }
-  }
+      apiUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
+      backendUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
+      geminiApiKey: process.env.GEMINI_API_KEY,
+    },
+  },
 };

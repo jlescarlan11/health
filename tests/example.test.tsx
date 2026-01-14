@@ -6,7 +6,7 @@ test('renders correctly', () => {
   render(
     <View>
       <Text>Hello Test</Text>
-    </View>
+    </View>,
   );
   expect(screen.getByText('Hello Test')).toBeTruthy();
 });

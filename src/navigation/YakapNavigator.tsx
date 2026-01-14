@@ -1,12 +1,12 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { 
-  YakapHomeScreen, 
+import {
+  YakapHomeScreen,
   YakapFaqScreen,
-  EligibilityCheckerScreen, 
+  EligibilityCheckerScreen,
   EnrollmentPathwayScreen,
   EnrollmentGuideScreen,
-  EnrollmentCompletionScreen
+  EnrollmentCompletionScreen,
 } from '../features/yakap';
 import { YakapStackParamList } from './types';
 import StandardHeader from '../components/common/StandardHeader';
@@ -16,11 +16,7 @@ const Stack = createStackNavigator<YakapStackParamList>();
 const YakapNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="YakapHome">
-      <Stack.Screen
-        name="YakapHome"
-        component={YakapHomeScreen}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="YakapHome" component={YakapHomeScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };

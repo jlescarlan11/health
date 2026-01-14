@@ -46,7 +46,7 @@ describe('FacilityDetailsScreen', () => {
     yakapAccredited: true,
     hours: '24/7',
     photoUrl: 'http://example.com/photo.jpg',
-    operatingHours: { is24x7: true }
+    operatingHours: { is24x7: true },
   };
 
   beforeEach(() => {
@@ -58,14 +58,14 @@ describe('FacilityDetailsScreen', () => {
       params: { facilityId: '1' },
     });
     (useSelector as unknown as jest.Mock).mockReturnValue(mockFacility);
-    
+
     mockOpenURL.mockClear();
     mockShare.mockClear();
   });
 
   it('renders facility details correctly', () => {
     const { getByText } = render(<FacilityDetailsScreen />);
-    
+
     expect(getByText('Naga City Hospital')).toBeTruthy();
     expect(getByText('Public Hospital')).toBeTruthy();
     expect(getByText('YAKAP')).toBeTruthy(); // Badge
@@ -82,7 +82,7 @@ describe('FacilityDetailsScreen', () => {
 
   it('handles share button press', () => {
     const { getByText } = render(<FacilityDetailsScreen />);
-    // There are two share buttons (header and body). StandardHeader is mocked as string 'StandardHeader', 
+    // There are two share buttons (header and body). StandardHeader is mocked as string 'StandardHeader',
     // so it won't render the header button children unless we make it a functional mock component that renders children.
     // However, the body button "Share" should be findable.
     fireEvent.press(getByText('Share'));

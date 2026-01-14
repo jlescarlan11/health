@@ -46,7 +46,10 @@ export type RootStackParamList = {
 };
 
 // Define the props for each screen in the navigators
-export type RootStackScreenProps<T extends keyof RootStackParamList> = StackScreenProps<RootStackParamList, T>;
+export type RootStackScreenProps<T extends keyof RootStackParamList> = StackScreenProps<
+  RootStackParamList,
+  T
+>;
 
 export type TabScreenProps<T extends keyof TabParamList> = CompositeScreenProps<
   BottomTabScreenProps<TabParamList, T>,
@@ -59,10 +62,11 @@ export type CheckStackScreenProps<T extends keyof CheckStackParamList> = Composi
   TabScreenProps<keyof TabParamList>
 >;
 
-export type FacilitiesStackScreenProps<T extends keyof FacilitiesStackParamList> = CompositeScreenProps<
-  StackScreenProps<FacilitiesStackParamList, T>,
-  TabScreenProps<keyof TabParamList>
->;
+export type FacilitiesStackScreenProps<T extends keyof FacilitiesStackParamList> =
+  CompositeScreenProps<
+    StackScreenProps<FacilitiesStackParamList, T>,
+    TabScreenProps<keyof TabParamList>
+  >;
 
 export type YakapStackScreenProps<T extends keyof YakapStackParamList> = CompositeScreenProps<
   StackScreenProps<YakapStackParamList, T>,

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-12-30
 
 ### Added
+
 - Initial project scaffold.
 - Directory structure for `src/` (api, components, features, hooks, navigation, screens, services, store, types, utils).
 - Dedicated `backend` and `tests` directories.

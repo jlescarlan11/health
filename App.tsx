@@ -30,19 +30,19 @@ const linking: LinkingOptions<RootStackParamList> = {
             path: 'check',
             screens: {
               NavigatorHome: '',
-            }
+            },
           },
           Find: {
             path: 'find',
             screens: {
               FacilityDirectory: '',
-            }
+            },
           },
           YAKAP: {
             path: 'yakap',
             screens: {
               YakapHome: '',
-            }
+            },
           },
         },
       },
@@ -68,7 +68,7 @@ const AppContent = () => {
     const startup = async () => {
       try {
         await initDatabase();
-        
+
         // Initial Sync Status Load
         const lastSync = await getLastSyncTime();
         if (lastSync) {
@@ -83,7 +83,7 @@ const AppContent = () => {
         console.error('Startup initialization failed:', err);
       }
     };
-    
+
     startup();
 
     // Network Listener

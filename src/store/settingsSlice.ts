@@ -38,11 +38,6 @@ const settingsSlice = createSlice({
   },
 });
 
-export const { 
-  setTheme, 
-  setFontSize, 
-  setHighContrastMode, 
-  toggleNotifications, 
-  setLanguage 
-} = settingsSlice.actions;
+export const { setTheme, setFontSize, setHighContrastMode, toggleNotifications, setLanguage } =
+  settingsSlice.actions;
 export default settingsSlice.reducer;

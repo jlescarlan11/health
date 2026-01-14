@@ -58,7 +58,6 @@ Rules:
 5. **Tone:** Empathetic, professional, calm.
 `;
 
-
 export const CLARIFYING_QUESTIONS_PROMPT = `
 You are a medical triage AI. The user has described their symptoms.
 Your goal is to ask 2-4 relevant clarifying questions to better assess the severity and appropriate level of care.

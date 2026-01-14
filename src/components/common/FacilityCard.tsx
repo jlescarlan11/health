@@ -34,7 +34,7 @@ const formatFacilityType = (type: string): string => {
   if (!type) return '';
   return type
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };
 
@@ -56,24 +56,24 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   // Determine which services to show
   const displayServices = React.useMemo(() => {
     if (showAllServices) return facility.services;
-    
+
     if (relevantServices && relevantServices.length > 0) {
       // Prioritize relevant services if they exist in facility services
-      const relevant = facility.services.filter(s => 
-        relevantServices.some(rs => s.toLowerCase().includes(rs.toLowerCase()))
+      const relevant = facility.services.filter((s) =>
+        relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
       );
       if (relevant.length > 0) return relevant.slice(0, 3);
     }
-    
+
     return simplified ? facility.services.slice(0, 3) : facility.services.slice(0, 4);
   }, [facility.services, relevantServices, simplified, showAllServices]);
 
   const hasMoreServices = facility.services.length > displayServices.length;
 
   return (
-    <Card 
-      style={[styles.card, style, { backgroundColor: theme.colors.surface }]} 
-      onPress={onPress} 
+    <Card
+      style={[styles.card, style, { backgroundColor: theme.colors.surface }]}
+      onPress={onPress}
       mode="outlined"
       accessible={true}
       accessibilityRole="button"
@@ -89,12 +89,20 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               {formatFacilityType(facility.type)}
             </Text>
           </View>
-          
+
           <View style={styles.rightHeader}>
             {facility.yakapAccredited && (
-              <View style={[styles.yakapBadge, { backgroundColor: theme.colors.secondaryContainer }]}>
-                <MaterialCommunityIcons name="check-decagram" size={14} color={theme.colors.onSecondaryContainer} />
-                <Text style={[styles.yakapText, { color: theme.colors.onSecondaryContainer }]}>YAKAP</Text>
+              <View
+                style={[styles.yakapBadge, { backgroundColor: theme.colors.secondaryContainer }]}
+              >
+                <MaterialCommunityIcons
+                  name="check-decagram"
+                  size={14}
+                  color={theme.colors.onSecondaryContainer}
+                />
+                <Text style={[styles.yakapText, { color: theme.colors.onSecondaryContainer }]}>
+                  YAKAP
+                </Text>
               </View>
             )}
             {showDistance && distance !== undefined && (
@@ -111,41 +119,56 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               {statusText}
             </Text>
             {facility.hours && !facility.hours.includes('24/7') && (
-               <Text variant="labelSmall" style={{ marginLeft: 8, color: 'rgba(0,0,0,0.4)', fontWeight: '500' }}>
-                 {facility.hours}
-               </Text>
+              <Text
+                variant="labelSmall"
+                style={{ marginLeft: 8, color: 'rgba(0,0,0,0.4)', fontWeight: '500' }}
+              >
+                {facility.hours}
+              </Text>
             )}
           </View>
 
           <Text variant="bodySmall" numberOfLines={1} style={styles.address}>
             {facility.address}
           </Text>
-          
+
           <View style={styles.servicesRow}>
             {displayServices.map((service, index) => (
-              <View key={index} style={[styles.serviceChip, { backgroundColor: theme.colors.primaryContainer + '50' }]}>
-                 <MaterialCommunityIcons 
-                   name={getServiceIcon(service) as any} 
-                   size={14} 
-                   color={theme.colors.primary} 
-                 />
-                 <Text variant="labelSmall" style={[styles.serviceText, { color: theme.colors.onPrimaryContainer }]}>
-                   {service}
-                 </Text>
+              <View
+                key={index}
+                style={[
+                  styles.serviceChip,
+                  { backgroundColor: theme.colors.primaryContainer + '50' },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name={getServiceIcon(service) as any}
+                  size={14}
+                  color={theme.colors.primary}
+                />
+                <Text
+                  variant="labelSmall"
+                  style={[styles.serviceText, { color: theme.colors.onPrimaryContainer }]}
+                >
+                  {service}
+                </Text>
               </View>
             ))}
             {hasMoreServices && !showAllServices && (
-               <TouchableOpacity 
-                 style={styles.moreServices} 
-                 onPress={(e) => {
-                   e.stopPropagation();
-                   setShowAllServices(true);
-                 }}
-               >
-                  <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: 'bold' }}>
-                    +{facility.services.length - displayServices.length} more
-                  </Text>
-               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.moreServices}
+                onPress={(e) => {
+                  e.stopPropagation();
+                  setShowAllServices(true);
+                }}
+              >
+                <Text
+                  variant="labelSmall"
+                  style={{ color: theme.colors.primary, fontWeight: 'bold' }}
+                >
+                  +{facility.services.length - displayServices.length} more
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         </View>

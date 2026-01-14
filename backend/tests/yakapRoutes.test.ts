@@ -55,8 +55,7 @@ describe('YAKAP Routes', () => {
     it('should return status', async () => {
       prismaMock.userEnrollment.findUnique.mockResolvedValue(mockEnrollment);
 
-      const response = await request(app)
-        .get('/api/yakap/enrollment/test-uid');
+      const response = await request(app).get('/api/yakap/enrollment/test-uid');
 
       expect(response.status).toBe(200);
       expect(response.body.id).toBe('1');

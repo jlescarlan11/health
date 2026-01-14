@@ -25,12 +25,14 @@ pool.query('SELECT NOW()', (err, res) => {
   } else {
     console.log('✓ Database connection successful!');
     console.log('Current time from DB:', res.rows[0].now);
-    
+
     // Test Facility table
     pool.query('SELECT COUNT(*) FROM "Facility"', (err, res) => {
       if (err) {
         console.error('❌ Error querying Facility table:', err.message);
-        console.log('Note: This might mean the table does not exist. Run migrations: npx prisma migrate deploy');
+        console.log(
+          'Note: This might mean the table does not exist. Run migrations: npx prisma migrate deploy',
+        );
       } else {
         console.log(`✓ Facility table exists with ${res.rows[0].count} records`);
       }
@@ -38,6 +40,3 @@ pool.query('SELECT NOW()', (err, res) => {
     });
   }
 });
-
-
-

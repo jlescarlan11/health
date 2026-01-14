@@ -58,12 +58,7 @@ const ErrorFallback = ({ error, onRetry }: { error: Error | null; onRetry: () =>
             {error?.toString()}
           </Text>
         </ScrollView>
-        <Button
-          variant="primary"
-          onPress={onRetry}
-          style={styles.button}
-          title="Try Again"
-        />
+        <Button variant="primary" onPress={onRetry} style={styles.button} title="Try Again" />
       </View>
     </View>
   );

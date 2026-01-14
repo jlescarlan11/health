@@ -39,12 +39,15 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
           <Text variant="titleMedium" style={styles.title}>
             {title}
           </Text>
-          <Text variant="bodySmall" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+          <Text
+            variant="bodySmall"
+            style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+          >
             {subtitle}
           </Text>
         </View>
         <View style={styles.arrowContainer}>
-           <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceDisabled} />
+          <Icon source="chevron-right" size={24} color={theme.colors.onSurfaceDisabled} />
         </View>
       </TouchableOpacity>
     </Surface>

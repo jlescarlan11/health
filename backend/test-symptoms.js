@@ -25,7 +25,7 @@ const prisma = new PrismaClient({ adapter });
 async function testSymptoms() {
   try {
     console.log('\n1. Testing Prisma client initialization...');
-    
+
     console.log('\n2. Testing Symptom table query...');
     const symptoms = await prisma.symptom.findMany({
       take: 5,
@@ -33,23 +33,23 @@ async function testSymptoms() {
         name: 'asc',
       },
     });
-    
+
     console.log('✓ Query successful!');
     console.log(`Found ${symptoms.length} symptoms`);
-    
+
     if (symptoms.length > 0) {
       console.log('\nSample symptoms:');
-      symptoms.forEach(s => {
+      symptoms.forEach((s) => {
         console.log(`  - ${s.name} (${s.category})`);
       });
     } else {
       console.log('\n⚠️  Symptom table is empty. You may need to seed it:');
       console.log('   cd backend && npm run seed');
     }
-    
+
     const count = await prisma.symptom.count();
     console.log(`\nTotal symptoms in database: ${count}`);
-    
+
     await prisma.$disconnect();
     pool.end();
     console.log('\n✓ All tests passed!');
@@ -60,13 +60,13 @@ async function testSymptoms() {
     if (error.stack) {
       console.error('Stack:', error.stack);
     }
-    
+
     // Check if it's a table doesn't exist error
     if (error.message && error.message.includes('does not exist')) {
       console.log('\n⚠️  The Symptom table does not exist. You need to run migrations:');
       console.log('   cd backend && npx prisma migrate deploy');
     }
-    
+
     await prisma.$disconnect().catch(() => {});
     pool.end();
     process.exit(1);
@@ -74,6 +74,3 @@ async function testSymptoms() {
 }
 
 testSymptoms();
-
-
-

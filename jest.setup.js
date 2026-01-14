@@ -44,18 +44,20 @@ jest.mock('@react-native-community/netinfo', () => ({
 // Mock expo-location
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
-  getCurrentPositionAsync: jest.fn(() => Promise.resolve({
-    coords: {
-      latitude: 13.6218,
-      longitude: 123.1948,
-      accuracy: 5,
-      altitude: 0,
-      altitudeAccuracy: 5,
-      heading: 0,
-      speed: 0,
-    },
-    timestamp: Date.now(),
-  })),
+  getCurrentPositionAsync: jest.fn(() =>
+    Promise.resolve({
+      coords: {
+        latitude: 13.6218,
+        longitude: 123.1948,
+        accuracy: 5,
+        altitude: 0,
+        altitudeAccuracy: 5,
+        heading: 0,
+        speed: 0,
+      },
+      timestamp: Date.now(),
+    }),
+  ),
   watchPositionAsync: jest.fn(() => Promise.resolve({ remove: jest.fn() })),
   Accuracy: {
     Balanced: 3,
@@ -74,7 +76,7 @@ jest.mock('@expo/vector-icons', () => {
 // Mock react-native-vector-icons - return a proper component
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
   const React = require('react');
-  return ({ name, size, color, ...props }) => 
+  return ({ name, size, color, ...props }) =>
     React.createElement('Icon', { name, size, color, ...props });
 });
 

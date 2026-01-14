@@ -34,9 +34,9 @@ const CrisisSupportScreen = () => {
         <Text variant="bodyMedium" style={styles.resourceDesc}>
           {resource.description}
         </Text>
-        <Button 
-          variant="danger" 
-          icon="phone" 
+        <Button
+          variant="danger"
+          icon="phone"
           onPress={() => handleCall(resource.number)}
           style={styles.callButton}
           title={`Call ${resource.number}`}
@@ -59,15 +59,25 @@ const CrisisSupportScreen = () => {
             <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.primary }]}>
               You Are Not Alone
             </Text>
-            <Text variant="bodyLarge" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+            <Text
+              variant="bodyLarge"
+              style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+            >
               Confidential support is available 24/7. Please reach out to these services.
             </Text>
           </View>
         </View>
 
-        <Surface style={[styles.alertBox, { backgroundColor: theme.colors.errorContainer }]} elevation={0}>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onErrorContainer, textAlign: 'center', lineHeight: 20 }}>
-            If you are in immediate danger or have a medical emergency, please go to the nearest hospital immediately.
+        <Surface
+          style={[styles.alertBox, { backgroundColor: theme.colors.errorContainer }]}
+          elevation={0}
+        >
+          <Text
+            variant="bodyMedium"
+            style={{ color: theme.colors.onErrorContainer, textAlign: 'center', lineHeight: 20 }}
+          >
+            If you are in immediate danger or have a medical emergency, please go to the nearest
+            hospital immediately.
           </Text>
         </Surface>
 
@@ -80,8 +90,8 @@ const CrisisSupportScreen = () => {
         ))}
 
         <View style={styles.footer}>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onPress={() => navigation.goBack()}
             style={styles.backButton}
             title="I'm safe, go back"
