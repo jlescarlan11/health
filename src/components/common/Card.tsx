@@ -1,14 +1,18 @@
 import React from 'react';
-import { StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { Card as PaperCard, Text, useTheme } from 'react-native-paper';
 
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   title?: string;
   subtitle?: string;
   mode?: 'elevated' | 'outlined' | 'contained';
+  accessibilityRole?: 'button' | 'link' | 'none';
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
+  rippleColor?: string;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -18,11 +22,24 @@ export const Card: React.FC<CardProps> = ({
   title,
   subtitle,
   mode = 'elevated',
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
+  rippleColor,
 }) => {
   const theme = useTheme();
 
   return (
-    <PaperCard style={[styles.card, style]} onPress={onPress} mode={mode}>
+    <PaperCard
+      style={[styles.card, style]}
+      onPress={onPress}
+      mode={mode}
+      accessible={true}
+      accessibilityRole={accessibilityRole || (onPress ? 'button' : 'none')}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+      rippleColor={rippleColor}
+    >
       {(title || subtitle) && (
         <PaperCard.Title
           title={title}
