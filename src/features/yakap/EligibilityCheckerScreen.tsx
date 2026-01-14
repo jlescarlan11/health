@@ -1,7 +1,16 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Linking, Platform, LayoutAnimation } from 'react-native';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Linking,
+  Platform,
+  LayoutAnimation,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
@@ -170,7 +179,9 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             Choose your registration path:
           </Text>
 
-          <View
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handlePhilHealthLink}
             style={[
               styles.optionCard,
               {
@@ -179,27 +190,30 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               },
             ]}
           >
-            <Text
-              variant="titleMedium"
-              style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginBottom: 4 }}
-            >
-              1. Online Registration
-            </Text>
-            <Text
-              variant="bodySmall"
-              style={{ marginBottom: 16, color: theme.colors.onSurfaceVariant }}
-            >
-              The fastest way if you have internet access.
-            </Text>
-            <Button
-              variant="primary"
-              onPress={handlePhilHealthLink}
-              contentStyle={styles.buttonContent}
-              title="Visit PhilHealth Website"
-            />
-          </View>
+            <View style={styles.optionContent}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  variant="titleMedium"
+                  style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginBottom: 4 }}
+                >
+                  Online Registration
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  The fastest way if you have internet access.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.primary}
+                style={{ marginLeft: 8 }}
+              />
+            </View>
+          </TouchableOpacity>
 
-          <View
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleMap}
             style={[
               styles.optionCard,
               {
@@ -208,47 +222,26 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               },
             ]}
           >
-            <Text
-              variant="titleMedium"
-              style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginBottom: 4 }}
-            >
-              2. Visit Local Office
-            </Text>
-            <Text
-              variant="bodySmall"
-              style={{ marginBottom: 16, color: theme.colors.onSurfaceVariant }}
-            >
-              Go to the nearest PhilHealth Local Health Insurance Office.
-            </Text>
-            <Button
-              variant="primary"
-              onPress={handleMap}
-              contentStyle={styles.buttonContent}
-              title="Find Nearest Office"
-            />
-          </View>
-
-          <View
-            style={{
-              marginVertical: 24,
-              padding: 16,
-              backgroundColor: theme.colors.primaryContainer,
-              borderRadius: 12,
-              borderLeftWidth: 4,
-              borderLeftColor: theme.colors.primary,
-            }}
-          >
-            <Text
-              variant="bodyMedium"
-              style={{
-                color: theme.colors.onPrimaryContainer,
-                fontWeight: '500',
-                lineHeight: 20,
-              }}
-            >
-              Once you receive your PIN, return to this app to complete your YAKAP enrollment.
-            </Text>
-          </View>
+            <View style={styles.optionContent}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  variant="titleMedium"
+                  style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginBottom: 4 }}
+                >
+                  Visit Local Office
+                </Text>
+                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                  Go to the nearest PhilHealth Local Health Insurance Office.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.primary}
+                style={{ marginLeft: 8 }}
+              />
+            </View>
+          </TouchableOpacity>
 
           <View style={styles.secondaryActions}>
             <Button
@@ -428,5 +421,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     borderWidth: 1,
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });
