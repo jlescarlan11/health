@@ -88,7 +88,10 @@ export const EnrollmentPathwayScreen = () => {
 
   const renderDetailItem = (label: string, items: string[], color?: string) => (
     <View style={styles.detailSection}>
-      <Text variant="labelMedium" style={[styles.detailLabel, color ? { color } : undefined]}>
+      <Text
+        variant="labelMedium"
+        style={[styles.detailLabel, color ? { color } : { color: theme.colors.onSurfaceVariant }]}
+      >
         {label}
       </Text>
       {items.map((item, index) => (
@@ -104,25 +107,34 @@ export const EnrollmentPathwayScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right']}
     >
-      <StandardHeader title="Choose Pathway" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text variant="bodyLarge" style={styles.headerText}>
-          Choose the enrollment method that works best for you.
-        </Text>
+      <StandardHeader title="Enrollment Path" showBackButton />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerContainer}>
+          <Text variant="bodyLarge" style={[styles.headerText, { color: theme.colors.onSurface }]}>
+            Choose the enrollment method that works best for you.
+          </Text>
+        </View>
 
         {pathways.map((pathway) => (
           <Card
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
-            style={StyleSheet.flatten([
+            mode="contained"
+            style={[
               styles.card,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
-              pathway.recommended && { borderColor: theme.colors.primary, borderWidth: 2 },
-            ])}
+              { backgroundColor: theme.colors.surface },
+              pathway.recommended && styles.recommendedCard,
+            ]}
           >
+            {pathway.recommended && (
+              <View style={[styles.recommendedAccent, { backgroundColor: theme.colors.primary }]} />
+            )}
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderTitle}>
-                <Text variant="titleMedium" style={styles.cardTitle}>
+                <Text
+                  variant="titleMedium"
+                  style={[styles.cardTitle, { color: theme.colors.onSurface }]}
+                >
                   {pathway.name}
                 </Text>
                 {pathway.recommended && (
@@ -133,35 +145,35 @@ export const EnrollmentPathwayScreen = () => {
                     ]}
                     textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}
                   >
-                    Recommended
+                    RECOMMENDED
                   </Chip>
                 )}
               </View>
-              <Text variant="bodySmall" style={{ color: theme.colors.secondary }}>
-                {pathway.duration} • {pathway.difficulty}
+              <Text variant="labelMedium" style={{ color: theme.colors.secondary }}>
+                {pathway.duration.toUpperCase()} • {pathway.difficulty.toUpperCase()}
               </Text>
             </View>
 
-            <Divider style={styles.divider} />
+            <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
             <View style={styles.cardContent}>
               <View style={styles.row}>
                 <View style={styles.column}>
-                  {renderDetailItem('Pros', pathway.pros, theme.colors.primary)}
+                  {renderDetailItem('PROS', pathway.pros, theme.colors.primary)}
                 </View>
                 <View style={styles.column}>
-                  {renderDetailItem('Cons', pathway.cons, theme.colors.error)}
+                  {renderDetailItem('CONS', pathway.cons, theme.colors.error)}
                 </View>
               </View>
 
               <View
                 style={[
                   styles.requirementsSection,
-                  { backgroundColor: theme.colors.surfaceVariant },
+                  { backgroundColor: theme.colors.primaryContainer, opacity: 0.8 },
                 ]}
               >
-                <Text variant="labelMedium" style={styles.detailLabel}>
-                  Requirements:
+                <Text variant="labelSmall" style={styles.detailLabel}>
+                  REQUIREMENTS:
                 </Text>
                 <Text variant="bodySmall" style={styles.requirementsText}>
                   {pathway.requirements.join(', ')}
@@ -170,21 +182,19 @@ export const EnrollmentPathwayScreen = () => {
             </View>
           </Card>
         ))}
+        <View style={{ height: 40 }} />
       </ScrollView>
 
       <Modal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
-        contentContainerStyle={StyleSheet.flatten([
-          styles.modalContent,
-          { backgroundColor: theme.colors.surface },
-        ])}
+        contentContainerStyle={[styles.modalContent, { backgroundColor: theme.colors.surface }]}
       >
         <Text
           variant="headlineSmall"
           style={[styles.modalTitle, { color: theme.colors.onSurface }]}
         >
-          Confirm Selection
+          Confirm Pathway
         </Text>
         <Text
           variant="bodyMedium"
@@ -194,13 +204,7 @@ export const EnrollmentPathwayScreen = () => {
           <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>
             {selectedPathway?.name}
           </Text>
-          .
-        </Text>
-        <Text
-          variant="bodyMedium"
-          style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}
-        >
-          Do you want to proceed with this enrollment pathway?
+          . Do you want to proceed with this enrollment guide?
         </Text>
 
         <View style={styles.modalButtons}>
@@ -209,14 +213,12 @@ export const EnrollmentPathwayScreen = () => {
             title="Cancel"
             onPress={() => setModalVisible(false)}
             style={styles.modalButton}
-            contentStyle={styles.buttonContent}
           />
           <Button
             variant="primary"
             title="Proceed"
             onPress={handleProceed}
             style={styles.modalButton}
-            contentStyle={styles.buttonContent}
           />
         </View>
       </Modal>
@@ -229,43 +231,67 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    padding: 20,
+  },
+  headerContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   headerText: {
-    marginBottom: 24,
     textAlign: 'center',
-    opacity: 0.8,
+    lineHeight: 24,
+    opacity: 0.9,
   },
   card: {
     marginBottom: 16,
     borderRadius: 12,
-    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  recommendedCard: {
+    // Subtle shadow for the recommended one
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  recommendedAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 6,
+    zIndex: 1,
   },
   cardHeader: {
     padding: 16,
+    paddingLeft: 20,
   },
   cardHeaderTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   cardTitle: {
     fontWeight: 'bold',
     flex: 1,
   },
   recommendedChip: {
-    height: 24,
+    height: 22,
   },
   recommendedChipText: {
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   divider: {
     height: 1,
+    opacity: 0.3,
   },
   cardContent: {
     padding: 16,
+    paddingLeft: 20,
   },
   row: {
     flexDirection: 'row',
@@ -280,43 +306,40 @@ const styles = StyleSheet.create({
   },
   requirementsText: {
     marginTop: 4,
-    fontStyle: 'italic',
+    lineHeight: 18,
   },
   detailSection: {
     marginBottom: 8,
   },
   detailLabel: {
     fontWeight: 'bold',
-    marginBottom: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    marginBottom: 6,
+    letterSpacing: 1.2,
+    fontSize: 10,
   },
   detailText: {
-    lineHeight: 18,
+    lineHeight: 20,
+    opacity: 0.9,
   },
   modalContent: {
     padding: 24,
-    margin: 20,
-    borderRadius: 16,
+    margin: 24,
+    borderRadius: 20,
   },
   modalTitle: {
     fontWeight: 'bold',
     marginBottom: 16,
   },
   modalText: {
-    marginBottom: 12,
-    lineHeight: 22,
+    marginBottom: 24,
+    lineHeight: 24,
   },
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 24,
     gap: 12,
   },
   modalButton: {
     minWidth: 100,
-  },
-  buttonContent: {
-    paddingVertical: 10,
   },
 });

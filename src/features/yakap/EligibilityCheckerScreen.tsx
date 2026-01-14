@@ -49,9 +49,13 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         styles.benefitsWrapper,
         {
           backgroundColor: theme.colors.surface,
-          borderColor: theme.colors.outlineVariant,
-          borderWidth: 1,
-          borderRadius: 16,
+          borderRadius: 20,
+          // Subtle shadow for depth
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 15,
+          elevation: 2,
         },
       ]}
     >
@@ -67,40 +71,42 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         </Text>
         <Text
           variant="bodyMedium"
-          style={{ color: theme.colors.onSurfaceVariant, marginTop: 8, lineHeight: 20 }}
+          style={{ color: theme.colors.onSurfaceVariant, marginTop: 12, lineHeight: 22 }}
         >
           Regular check-ups and consultations with your chosen provider at no cost.
         </Text>
       </View>
 
       <View
-        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.5 }]}
+        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.3 }]}
       />
 
       <View style={styles.supplementarySection}>
         <Text
-          variant="labelLarge"
-          style={{ color: theme.colors.onSurface, marginBottom: 12, opacity: 0.6 }}
+          variant="labelMedium"
+          style={{ color: theme.colors.onSurface, marginBottom: 16, opacity: 0.6, letterSpacing: 1 }}
         >
           INCLUDED COVERAGE
         </Text>
 
         <View style={styles.benefitList}>
           <View style={styles.benefitItem}>
+            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab
               Tests & Diagnostics
             </Text>
           </View>
           <View style={styles.benefitItem}>
+            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text>{' '}
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text>{' '}
               Annual Medicine Allowance
             </Text>
           </View>
           <View style={styles.benefitItem}>
+            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              •{' '}
               <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 Early Detection
               </Text>{' '}
@@ -115,10 +121,10 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const renderContent = () => {
     if (hasPhilHealth === true) {
       return (
-        <View>
+        <View style={styles.fadeContainer}>
           <View style={styles.successHeader}>
             <Text
-              variant="headlineMedium"
+              variant="headlineSmall"
               style={[styles.successTitle, { color: theme.colors.onSurface }]}
             >
               You are Eligible!
@@ -131,7 +137,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             </Text>
           </View>
 
-          <View style={{ marginBottom: 32 }}>{renderBenefitsCard()}</View>
+          <View style={{ marginBottom: 40 }}>{renderBenefitsCard()}</View>
 
           <Button
             variant="primary"
@@ -156,10 +162,10 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
 
     if (hasPhilHealth === false) {
       return (
-        <View>
+        <View style={styles.fadeContainer}>
           <View style={styles.sectionHeader}>
             <Text
-              variant="headlineMedium"
+              variant="headlineSmall"
               style={[styles.guidanceTitle, { color: theme.colors.onSurface }]}
             >
               Obtain your PhilHealth PIN
@@ -174,10 +180,15 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           </Text>
 
           <Text
-            variant="titleMedium"
-            style={{ marginBottom: 16, color: theme.colors.onSurface, fontWeight: 'bold' }}
+            variant="labelLarge"
+            style={{
+              marginBottom: 16,
+              color: theme.colors.onSurface,
+              fontWeight: 'bold',
+              letterSpacing: 0.5,
+            }}
           >
-            Choose your registration path:
+            CHOOSE REGISTRATION PATH:
           </Text>
 
           <TouchableOpacity
@@ -187,7 +198,11 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               styles.optionCard,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outlineVariant,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 2,
               },
             ]}
           >
@@ -219,7 +234,11 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               styles.optionCard,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outlineVariant,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 2,
               },
             ]}
           >
@@ -261,7 +280,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
     return (
       <View style={styles.initialSection}>
         <Text
-          variant="headlineMedium"
+          variant="headlineSmall"
           style={[styles.questionText, { color: theme.colors.onSurface }]}
         >
           Do you have a PhilHealth Identification Number (PIN)?
@@ -320,24 +339,27 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     flexGrow: 1,
   },
+  fadeContainer: {
+    flex: 1,
+  },
   initialSection: {
-    marginTop: 8,
+    marginTop: 12,
   },
   questionText: {
     textAlign: 'left',
-    marginBottom: 16,
+    marginBottom: 20,
     fontWeight: 'bold',
-    lineHeight: 36,
+    lineHeight: 32,
   },
   consolidatedSubText: {
     textAlign: 'left',
-    marginBottom: 40,
-    opacity: 0.8,
+    marginBottom: 48,
+    opacity: 0.9,
     lineHeight: 24,
   },
   buttonGroup: {
     width: '100%',
-    gap: 12,
+    gap: 16,
   },
   decisionButton: {
     width: '100%',
@@ -347,28 +369,28 @@ const styles = StyleSheet.create({
   },
   successHeader: {
     alignItems: 'flex-start',
-    marginBottom: 24,
+    marginBottom: 32,
     marginTop: 8,
   },
   successTitle: {
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   successSubtitle: {
     textAlign: 'left',
     lineHeight: 24,
-    opacity: 0.8,
+    opacity: 0.9,
   },
   benefitsWrapper: {
-    padding: 20,
+    padding: 24,
   },
   benefitHeader: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   benefitLabel: {
-    letterSpacing: 1,
+    letterSpacing: 1.5,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   mainBenefit: {
     fontWeight: 'bold',
@@ -377,17 +399,23 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     width: '100%',
-    marginVertical: 16,
+    marginVertical: 20,
   },
   supplementarySection: {
     width: '100%',
   },
   benefitList: {
-    gap: 8,
+    gap: 12,
   },
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  benefitDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 10,
   },
   actionButton: {
     marginTop: 8,
@@ -402,7 +430,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16,
     marginTop: 8,
   },
   guidanceTitle: {
@@ -410,16 +438,15 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   guidanceText: {
-    marginBottom: 24,
+    marginBottom: 32,
     lineHeight: 24,
     textAlign: 'left',
-    opacity: 0.8,
+    opacity: 0.9,
   },
   optionCard: {
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-    borderWidth: 1,
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
   },
   optionContent: {
     flexDirection: 'row',

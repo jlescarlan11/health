@@ -20,15 +20,15 @@ const EnrollmentCompletionScreen = () => {
   const navigation = useNavigation<EnrollmentCompletionNavigationProp>();
 
   // Animation values
-  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(scaleAnim, {
         toValue: 1,
-        tension: 50,
-        friction: 7,
+        tension: 40,
+        friction: 8,
         useNativeDriver: true,
       }),
       Animated.timing(opacityAnim, {
@@ -68,61 +68,69 @@ const EnrollmentCompletionScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['top', 'left', 'right']}
     >
-      <StandardHeader title="Guide Completed" />
+      <StandardHeader title="Enrollment Ready" />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.celebrationContainer}>
-          <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: opacityAnim }}>
-            <MaterialCommunityIcons name="check-decagram" size={100} color={theme.colors.primary} />
+          <Animated.View
+            style={[
+              styles.iconWrapper,
+              {
+                backgroundColor: theme.colors.primaryContainer,
+                transform: [{ scale: scaleAnim }],
+                opacity: opacityAnim,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons name="check-bold" size={48} color={theme.colors.primary} />
           </Animated.View>
-          <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.onSurface }]}>
-            Guide Completed
+          <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
+            Enrollment Guide Complete
           </Text>
           <Text
             variant="bodyLarge"
             style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
           >
-            You have finished the informational walkthrough. You now have all the details needed to
-            visit a health center and complete your official enrollment.
+            You now have all the information needed to finalize your enrollment. Visit an accredited
+            health center to start receiving your benefits.
           </Text>
         </View>
 
-        <Card
-          style={[
-            styles.benefitsCard,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
-          ]}
-        >
-          <Card.Content>
+        <View style={[styles.benefitsSection, { backgroundColor: theme.colors.surface }]}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.accentLine, { backgroundColor: theme.colors.secondary }]} />
             <Text
               variant="titleMedium"
               style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}
             >
-              YAKAP Program Benefits:
+              Your YAKAP Benefits
             </Text>
-            {YAKAP_BENEFITS.map((benefit) => (
-              <View key={benefit.id} style={styles.benefitItem}>
-                <MaterialCommunityIcons
-                  name="check-circle-outline"
-                  size={20}
-                  color={theme.colors.primary}
-                  style={styles.benefitIcon}
-                />
-                <View style={styles.benefitTextContent}>
-                  <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
-                    {benefit.category}
-                  </Text>
-                  <Text
-                    variant="bodySmall"
-                    style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}
-                  >
-                    {benefit.description}
-                  </Text>
-                </View>
+          </View>
+
+          {YAKAP_BENEFITS.slice(0, 3).map((benefit, index) => (
+            <View
+              key={benefit.id}
+              style={[
+                styles.benefitItem,
+                index === 0 && styles.firstBenefit,
+                index === 2 && styles.lastBenefit,
+              ]}
+            >
+              <View style={[styles.bulletPoint, { backgroundColor: theme.colors.primary }]} />
+              <View style={styles.benefitTextContent}>
+                <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
+                  {benefit.category}
+                </Text>
+                <Text
+                  variant="bodySmall"
+                  style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}
+                >
+                  {benefit.description}
+                </Text>
               </View>
-            ))}
-          </Card.Content>
-        </Card>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.actionContainer}>
           <Button
@@ -148,12 +156,12 @@ const EnrollmentCompletionScreen = () => {
             onPress={handleBackToHome}
             style={styles.backButton}
             contentStyle={styles.buttonContent}
-            labelStyle={{ color: theme.colors.onSurfaceVariant }}
-            title="Back to YAKAP Home"
+            labelStyle={{ color: theme.colors.outline, fontSize: 14 }}
+            title="Return to YAKAP Home"
           />
         </View>
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -170,51 +178,83 @@ const styles = StyleSheet.create({
   celebrationContainer: {
     alignItems: 'center',
     marginTop: 20,
-    marginBottom: 32,
+    marginBottom: 40,
+  },
+  iconWrapper: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontWeight: 'bold',
-    marginTop: 20,
+    fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   subtitle: {
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 16,
     lineHeight: 24,
-    opacity: 0.8,
+    paddingHorizontal: 12,
   },
-  benefitsCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 32,
-    elevation: 0,
+  benefitsSection: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 40,
+    // Subtle shadow for depth without being boxy
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  accentLine: {
+    width: 4,
+    height: 18,
+    borderRadius: 2,
+    marginRight: 10,
   },
   benefitsHeader: {
-    fontWeight: 'bold',
-    marginBottom: 20,
+    fontWeight: '600',
   },
   benefitItem: {
     flexDirection: 'row',
-    marginBottom: 16,
+    paddingVertical: 12,
     alignItems: 'flex-start',
   },
-  benefitIcon: {
-    marginTop: 2,
+  firstBenefit: {
+    paddingTop: 0,
+  },
+  lastBenefit: {
+    paddingBottom: 0,
+  },
+  bulletPoint: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 8,
     marginRight: 12,
   },
   benefitTextContent: {
     flex: 1,
   },
   benefitDesc: {
-    marginTop: 2,
+    marginTop: 4,
     lineHeight: 18,
-    opacity: 0.7,
+    opacity: 0.8,
   },
   actionContainer: {
     gap: 12,
   },
   actionButton: {
-    borderRadius: 8,
+    borderRadius: 12,
   },
   buttonContent: {
     paddingVertical: 10,
@@ -223,5 +263,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 });
+
 
 export default EnrollmentCompletionScreen;
