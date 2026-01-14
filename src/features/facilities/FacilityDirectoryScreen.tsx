@@ -135,7 +135,7 @@ export const FacilityDirectoryScreen = () => {
             placeholder="Search facilities, address..."
             onChangeText={handleSearchChange}
             value={searchQuery}
-            style={styles.searchBar}
+            style={[styles.searchBar, { borderColor: theme.colors.outline }]}
             icon={searchQuery ? 'close' : 'magnify'}
             onIconPress={searchQuery ? handleClearSearch : undefined}
           />
@@ -156,7 +156,7 @@ export const FacilityDirectoryScreen = () => {
                   styles.chip,
                   {
                     backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.outlineVariant,
+                    borderColor: theme.colors.outline,
                   },
                 ]}
                 showSelectedOverlay
@@ -191,7 +191,6 @@ const styles = StyleSheet.create({
     flex: 1,
     elevation: 0, // Kanso: Flat
     borderWidth: 1,
-    borderColor: '#E0E2E3', // SurfaceVariant
     backgroundColor: '#fff', // Keep searchbar white
   },
   filterContainer: {

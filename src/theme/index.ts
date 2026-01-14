@@ -37,7 +37,7 @@ export const theme = {
 
     // Text (Outline/Borders)
     outline: palette.green,
-    outlineVariant: '#C4C7C5',
+    outlineVariant: '#D1E5DE', // Light green for subtle borders/dividers
 
     // Elevation/Shadow
     shadow: '#000000',
