@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, ScrollView, StyleSheet, Linking, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Card, useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { YAKAP_BENEFITS } from './yakapContent';
+import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
+import { setHasPhilHealth } from '../../store/settingsSlice';
 
 type Props = RootStackScreenProps<'EligibilityChecker'>;
 
 export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const theme = useTheme();
-  const [hasPhilHealth, setHasPhilHealth] = useState<boolean | null>(null);
+  const dispatch = useAppDispatch();
+  const hasPhilHealth = useAppSelector((state) => state.settings.hasPhilHealth);
+
+  const setHasPhilHealthValue = (value: boolean | null) => {
+    dispatch(setHasPhilHealth(value));
+  };
 
   const handlePhilHealthLink = () => {
     Linking.openURL('https://www.philhealth.gov.ph/services/epr/');
@@ -115,14 +121,14 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <View style={styles.buttonGroup}>
             <Button
               variant="primary"
-              onPress={() => setHasPhilHealth(true)}
+              onPress={() => setHasPhilHealthValue(true)}
               style={styles.decisionButton}
               contentStyle={styles.buttonContent}
               title="Yes, I have PhilHealth"
             />
             <Button
               variant="text"
-              onPress={() => setHasPhilHealth(false)}
+              onPress={() => setHasPhilHealthValue(false)}
               style={styles.decisionButton}
               contentStyle={styles.buttonContent}
               title="No, I don't have it yet"
@@ -166,7 +172,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <View style={styles.secondaryActions}>
             <Button
               variant="text"
-              onPress={() => setHasPhilHealth(null)}
+              onPress={() => setHasPhilHealthValue(null)}
               style={styles.ghostDecisionButton}
               contentStyle={styles.buttonContent}
               title="Change my answer"
@@ -289,7 +295,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <View style={styles.secondaryActions}>
             <Button
               variant="text"
-              onPress={() => setHasPhilHealth(null)}
+              onPress={() => setHasPhilHealthValue(null)}
               style={styles.ghostDecisionButton}
               contentStyle={styles.buttonContent}
               title="Change my answer"
