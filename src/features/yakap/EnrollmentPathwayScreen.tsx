@@ -205,16 +205,18 @@ export const EnrollmentPathwayScreen = () => {
 
         <View style={styles.modalButtons}>
           <Button
-            variant="outline"
+            variant="text"
             title="Cancel"
             onPress={() => setModalVisible(false)}
             style={styles.modalButton}
+            contentStyle={styles.buttonContent}
           />
           <Button
             variant="primary"
             title="Proceed"
             onPress={handleProceed}
             style={styles.modalButton}
+            contentStyle={styles.buttonContent}
           />
         </View>
       </Modal>
@@ -228,89 +230,93 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 40, // Space for bottom tabs/safe area
   },
   headerText: {
-    marginBottom: 16,
+    marginBottom: 24,
     textAlign: 'center',
+    opacity: 0.8,
   },
   card: {
     marginBottom: 16,
-    overflow: 'hidden', // For border radius
-    elevation: 0,
+    borderRadius: 12,
     borderWidth: 1,
   },
   cardHeader: {
-    marginBottom: 8,
+    padding: 16,
   },
   cardHeaderTitle: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 4,
   },
   cardTitle: {
     fontWeight: 'bold',
+    flex: 1,
   },
   recommendedChip: {
     height: 24,
   },
   recommendedChipText: {
     fontSize: 10,
-    lineHeight: 10,
-    marginVertical: 0,
-    marginHorizontal: 4,
+    lineHeight: 12,
   },
   divider: {
-    marginVertical: 8,
+    height: 1,
   },
   cardContent: {
-    marginTop: 4,
+    padding: 16,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   column: {
     flex: 1,
-    paddingRight: 8,
+  },
+  requirementsSection: {
+    padding: 12,
+    borderRadius: 8,
+  },
+  requirementsText: {
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   detailSection: {
     marginBottom: 8,
   },
   detailLabel: {
     fontWeight: 'bold',
-    marginBottom: 2,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   detailText: {
-    marginBottom: 1,
-  },
-  requirementsSection: {
-    marginTop: 8,
-    padding: 8,
-    borderRadius: 4,
-  },
-  requirementsText: {
-    fontStyle: 'italic',
+    lineHeight: 18,
   },
   modalContent: {
     padding: 24,
-    borderRadius: 12,
+    margin: 20,
+    borderRadius: 16,
   },
   modalTitle: {
+    fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: 'center',
   },
   modalText: {
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 22,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'flex-end',
     marginTop: 24,
+    gap: 12,
   },
   modalButton: {
     minWidth: 100,
+  },
+  buttonContent: {
+    paddingVertical: 10,
   },
 });

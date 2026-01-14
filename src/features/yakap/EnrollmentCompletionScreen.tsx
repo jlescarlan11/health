@@ -135,7 +135,7 @@ const EnrollmentCompletionScreen = () => {
           />
 
           <Button
-            variant="outline"
+            variant="text"
             icon="share-variant"
             onPress={handleShare}
             style={styles.actionButton}
@@ -147,6 +147,7 @@ const EnrollmentCompletionScreen = () => {
             variant="text"
             onPress={handleBackToHome}
             style={styles.backButton}
+            contentStyle={styles.buttonContent}
             labelStyle={{ color: theme.colors.onSurfaceVariant }}
             title="Back to YAKAP Home"
           />
@@ -161,16 +162,15 @@ const EnrollmentCompletionScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7F8',
   },
   scrollContent: {
-    padding: 20,
-    alignItems: 'center',
+    padding: 24,
+    flexGrow: 1,
   },
   celebrationContainer: {
     alignItems: 'center',
-    marginVertical: 30,
-    paddingHorizontal: 20,
+    marginTop: 20,
+    marginBottom: 32,
   },
   title: {
     fontWeight: 'bold',
@@ -179,23 +179,23 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
-    marginTop: 10,
-    opacity: 0.7,
+    marginTop: 12,
     lineHeight: 24,
+    opacity: 0.8,
   },
   benefitsCard: {
-    width: '100%',
-    marginVertical: 20,
-    elevation: 0,
+    borderRadius: 12,
     borderWidth: 1,
+    marginBottom: 32,
+    elevation: 0,
   },
   benefitsHeader: {
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 20,
   },
   benefitItem: {
     flexDirection: 'row',
-    marginBottom: 15,
+    marginBottom: 16,
     alignItems: 'flex-start',
   },
   benefitIcon: {
@@ -206,21 +206,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   benefitDesc: {
-    opacity: 0.8,
+    marginTop: 2,
+    lineHeight: 18,
+    opacity: 0.7,
   },
   actionContainer: {
-    width: '100%',
-    marginTop: 10,
     gap: 12,
   },
   actionButton: {
     borderRadius: 8,
   },
   buttonContent: {
-    paddingVertical: 6,
+    paddingVertical: 10,
   },
   backButton: {
-    marginTop: 10,
+    alignItems: 'center',
   },
 });
 
