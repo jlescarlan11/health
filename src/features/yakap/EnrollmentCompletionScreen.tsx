@@ -112,8 +112,6 @@ const EnrollmentCompletionScreen = () => {
           <Button
             variant="text"
             onPress={handleBackToHome}
-            style={styles.backButton}
-            labelStyle={{ color: theme.colors.outline, fontSize: 14 }}
             title="Return to YAKAP Home"
           />
         </View>
@@ -196,9 +194,6 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     gap: 12,
-  },
-  backButton: {
-    alignItems: 'flex-start',
   },
 });
 
