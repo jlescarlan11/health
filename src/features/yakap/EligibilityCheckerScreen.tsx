@@ -184,7 +184,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               variant="headlineMedium"
               style={[styles.guidanceTitle, { color: theme.colors.onSurface }]}
             >
-              Step 1: Obtain your PhilHealth PIN
+              Obtain your PhilHealth PIN First
             </Text>
           </View>
           <Text
@@ -223,7 +223,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               The fastest way if you have internet access.
             </Text>
             <Button
-              variant="text"
+              variant="outline"
               onPress={handlePhilHealthLink}
               title="Visit PhilHealth Website"
             />

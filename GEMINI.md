@@ -163,4 +163,5 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 
 *   **Accessibility Improvements (Jan 14, 2026):**
     *   **Contrast Fix:** Resolved a WCAG AA violation on the Eligibility Check page by updating the "Step 1" heading color. Changed from low-contrast yellow (`secondary`) to `onSurface` (`#45474B`), achieving a 8.6:1 contrast ratio against the light background (`#F5F7F8`).
+    *   **UI Standardization:** Standardized registration path buttons (Online vs. Local Office) to use the `outline` variant, ensuring consistent visual weight and hierarchy across both options.
     *   **Files Modified:** `src/features/yakap/EligibilityCheckerScreen.tsx`.
