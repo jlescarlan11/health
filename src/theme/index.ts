@@ -36,8 +36,8 @@ export const theme = {
     onSurfaceVariant: palette.dark,
 
     // Text (Outline/Borders)
-    outline: '#747775',
-    outlineVariant: '#C4C7C5',
+    outline: '#E0E2E3', // Light gray for standard borders
+    outlineVariant: '#E0E2E3', // Light gray for subtle borders/dividers
 
     // Elevation/Shadow
     shadow: '#000000',

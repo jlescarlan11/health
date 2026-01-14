@@ -96,7 +96,7 @@ export const InputCard: React.FC<InputCardProps> = ({
           onBlur={onBlur}
           style={[styles.textInput, { backgroundColor: theme.colors.background }]}
           contentStyle={styles.textContent}
-          outlineStyle={[styles.outline, { borderColor: theme.colors.outlineVariant }]}
+          outlineStyle={[styles.outline, { borderColor: theme.colors.outline }]}
           cursorColor={theme.colors.primary}
           selectionColor={theme.colors.primary + '40'}
           dense

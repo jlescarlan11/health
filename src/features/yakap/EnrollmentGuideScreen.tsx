@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ProgressBar, Divider, useTheme } from 'react-native-paper';
+import { ProgressBar, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { ENROLLMENT_PATHWAYS, OFFICIAL_CONTACTS } from './yakapContent';
+import { ENROLLMENT_PATHWAYS } from './yakapContent';
 import { RootStackParamList } from '../../types/navigation';
 
 const EnrollmentGuideScreen = () => {
@@ -60,20 +60,31 @@ const EnrollmentGuideScreen = () => {
           <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>
             {pathway.name}
           </Text>
-          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>
-            Step {currentStep + 1} of {totalSteps}
-          </Text>
-          <ProgressBar
-            progress={progress}
-            color={theme.colors.primary}
-            style={styles.progressBar}
-          />
+          <View style={styles.stepCounterRow}>
+            <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>
+              STEP {currentStep + 1} OF {totalSteps}
+            </Text>
+            <View style={styles.progressBarContainer}>
+              <ProgressBar
+                progress={progress}
+                color={theme.colors.primary}
+                style={styles.progressBar}
+              />
+            </View>
+          </View>
         </View>
 
         <View
           style={[
             styles.card,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+            {
+              backgroundColor: theme.colors.surface,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
+              elevation: 4,
+            },
           ]}
         >
           <View style={styles.stepHeader}>
@@ -90,44 +101,22 @@ const EnrollmentGuideScreen = () => {
           <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>
             {currentStepData}
           </Text>
-
-          <Divider style={styles.divider} />
-
-          <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
-            <MaterialCommunityIcons
-              name="lightbulb-on-outline"
-              size={24}
-              color={theme.colors.onSecondaryContainer}
-            />
-            <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
-              Tip: Ensure all information provided matches your official documents to avoid delays.
-            </Text>
-          </View>
         </View>
 
         <View style={styles.navigationButtons}>
           <Button
-            variant="text"
+            variant="outline"
             onPress={handlePrevious}
             disabled={currentStep === 0}
             style={styles.navButton}
-            contentStyle={styles.buttonContent}
             title="Previous"
           />
           <Button
             variant="primary"
             onPress={handleNext}
             style={styles.navButton}
-            contentStyle={styles.buttonContent}
             title={currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
           />
-        </View>
-
-        <View style={[styles.infoBox, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <Text style={[styles.infoTitle, { color: theme.colors.onSurface }]}>Need Assistance?</Text>
-          <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
-            If you encounter any issues during the enrollment process, you can contact the PhilHealth Hotline at {OFFICIAL_CONTACTS.philhealth_hotline} or visit the nearest local office.
-          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -143,96 +132,78 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerSection: {
-    marginBottom: 24,
+    marginBottom: 32,
+    marginTop: 8,
   },
   pathwayName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  stepCounterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   stepCounter: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    opacity: 0.6,
+  },
+  progressBarContainer: {
+    flex: 1,
+    marginLeft: 24,
   },
   progressBar: {
-    height: 6,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 24,
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 32,
   },
   stepHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   stepNumberBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   stepNumberText: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
   },
   stepTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    opacity: 0.8,
   },
   instructionText: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 20,
-  },
-  divider: {
-    marginBottom: 20,
-  },
-  tipsSection: {
-    flexDirection: 'row',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'flex-start',
-  },
-  tipsText: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 28,
+    marginBottom: 24,
+    letterSpacing: 0.2,
   },
   navigationButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: 16,
+    marginBottom: 40,
   },
   navButton: {
     flex: 1,
   },
-  buttonContent: {
-    paddingVertical: 10,
-  },
-  infoBox: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.05)',
-  },
-  infoTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 20,
-    opacity: 0.8,
-  },
 });
-
 
 export default EnrollmentGuideScreen;

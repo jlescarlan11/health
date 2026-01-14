@@ -42,7 +42,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'lab_tests',
     category: 'Laboratory Tests',
-    description: 'Free laboratory tests and diagnostics from your primary provider.',
+    description: 'Free laboratory tests and diagnostics from your provider.',
     items: [
       'Complete Blood Count (CBC)',
       'Urinalysis',
@@ -227,13 +227,3 @@ export const YAKAP_FAQS: YakapFAQ[] = [
     category: 'Usage',
   },
 ];
-
-export const OFFICIAL_CONTACTS = {
-  philhealth_website: 'https://www.philhealth.gov.ph',
-  egovph_website: 'https://e.gov.ph',
-  philhealth_hotline: '(02) 866-225-88',
-  philhealth_sms_smart: '0998-857-2957',
-  philhealth_sms_globe: '0917-127-5987',
-  philhealth_email: 'actioncenter@philhealth.gov.ph',
-  yakap_info_url: 'https://www.philhealth.gov.ph/konsulta/',
-};

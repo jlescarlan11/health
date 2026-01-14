@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -33,10 +33,15 @@ const YakapHomeScreen = () => {
   const renderBenefitItem = (benefit: YakapBenefit) => {
     return (
       <View key={benefit.id} style={styles.benefitCard}>
-        <View style={styles.benefitIconContainer}>
+        <View
+          style={[
+            styles.benefitIconContainer,
+            { backgroundColor: theme.colors.primaryContainer + '60' },
+          ]}
+        >
           <MaterialCommunityIcons
             name={benefit.icon as any}
-            size={28}
+            size={32}
             color={theme.colors.primary}
           />
         </View>
@@ -53,60 +58,62 @@ const YakapHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <StandardHeader title="YAKAP" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        style={{ backgroundColor: theme.colors.background }}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
-        <HeroSection colors={[theme.colors.background, theme.colors.background]} height={220}>
+        <View
+          style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer + '30' }]}
+        >
           <View style={styles.heroContent}>
-            <Text variant="headlineMedium" style={styles.heroTitle}>
+            <Text
+              variant="headlineMedium"
+              style={[styles.heroTitle, { color: theme.colors.onSurface }]}
+            >
               YAKAP Program
             </Text>
-            <Text variant="titleMedium" style={styles.heroSubtitle}>
-              Yaman, Kalinga, at Pag-aaruga
+            <Text
+              variant="titleMedium"
+              style={[styles.heroSubtitle, { color: theme.colors.primary }]}
+            >
+              Yaman ng Kalusugan Program
             </Text>
-            <Text style={styles.heroDesc}>
+            <View style={[styles.heroAccent, { backgroundColor: theme.colors.secondary }]} />
+            <Text style={[styles.heroDesc, { color: theme.colors.onSurfaceVariant }]}>
               Every Filipino is eligible. Follow our step-by-step guide to learn how you can enroll
               in the YAKAP program and start accessing free healthcare benefits.
             </Text>
           </View>
-        </HeroSection>
+        </View>
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <Button
-            variant="primary"
-            onPress={navigateToEnrollment}
-            style={styles.ctaButton}
-            contentStyle={styles.buttonContent}
-            title="Start Enrollment Guide"
-          />
-          <Button
-            variant="text"
-            onPress={navigateToFacilities}
-            style={styles.secondaryButton}
-            contentStyle={styles.buttonContent}
-            title="Find YAKAP Clinics"
-          />
+          <Button variant="primary" onPress={navigateToEnrollment} title="Start Enrollment Guide" />
+          <Button variant="text" onPress={navigateToFacilities} title="Find YAKAP Clinics" />
         </View>
 
         {/* Benefits Summary */}
         <View style={styles.section}>
           <Text
-            variant="titleLarge"
-            style={[styles.sectionHeader, { color: theme.colors.onSurface }]}
+            variant="labelLarge"
+            style={[styles.sectionHeader, { color: theme.colors.onSurfaceVariant }]}
           >
-            Key Benefits
+            KEY BENEFITS
           </Text>
           <View style={styles.benefitsList}>
             {YAKAP_BENEFITS.map((benefit, index) => (
               <React.Fragment key={benefit.id}>
                 {renderBenefitItem(benefit)}
                 {index < YAKAP_BENEFITS.length - 1 && (
-                  <Divider style={{ backgroundColor: theme.colors.outlineVariant, opacity: 0.5 }} />
+                  <View
+                    style={[
+                      styles.benefitDivider,
+                      { backgroundColor: theme.colors.outlineVariant },
+                    ]}
+                  />
                 )}
               </React.Fragment>
             ))}
@@ -115,13 +122,21 @@ const YakapHomeScreen = () => {
 
         {/* FAQ Link */}
         <View style={styles.footer}>
-          <Button
-            variant="text"
+          <TouchableOpacity
             onPress={navigateToFaq}
-            title="Frequently Asked Questions"
-            labelStyle={[styles.faqLinkLabel, { color: theme.colors.outline }]}
-            icon="information-outline"
-          />
+            activeOpacity={0.7}
+            style={styles.faqLinkContainer}
+          >
+            <MaterialCommunityIcons
+              name="information-outline"
+              size={18}
+              color={theme.colors.onSurfaceVariant}
+              style={styles.faqIcon}
+            />
+            <Text style={[styles.faqText, { color: theme.colors.onSurfaceVariant }]}>
+              Frequently Asked Questions
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -133,90 +148,113 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 60,
+  },
+  heroSection: {
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    marginBottom: 16,
   },
   heroContent: {
     alignItems: 'flex-start',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: 20,
   },
   heroTitle: {
-    fontWeight: 'bold',
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 4,
   },
   heroSubtitle: {
-    opacity: 0.7,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 16,
+    textTransform: 'uppercase',
+    fontSize: 14,
+  },
+  heroAccent: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 16,
   },
   heroDesc: {
     textAlign: 'left',
-    marginTop: 10,
-    opacity: 0.8,
+    fontSize: 15,
+    lineHeight: 24,
+    opacity: 0.9,
+    letterSpacing: 0.2,
   },
   actionButtonsContainer: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 8,
+    paddingHorizontal: 24,
+    marginTop: 8,
     gap: 12,
   },
-  ctaButton: {
-    borderRadius: 8,
-  },
-  secondaryButton: {
-    borderRadius: 8,
-  },
-  buttonContent: {
-    paddingVertical: 10,
-  },
   section: {
-    marginTop: 24,
-    marginBottom: 10,
+    marginTop: 40,
+    paddingHorizontal: 24,
   },
   sectionHeader: {
-    marginLeft: 16,
-    marginBottom: 16,
-    fontWeight: 'bold',
+    marginBottom: 20,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    fontSize: 12,
+    opacity: 0.6,
   },
   benefitsList: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
+    backgroundColor: 'transparent',
   },
   benefitCard: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    alignItems: 'flex-start',
+    paddingVertical: 24,
+    alignItems: 'center',
   },
   benefitIconContainer: {
-    marginRight: 16,
-    marginTop: 2,
+    marginRight: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    width: 28,
+    width: 64,
+    height: 64,
+    borderRadius: 18,
   },
   benefitTextContainer: {
     flex: 1,
   },
   benefitTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
     textAlign: 'left',
-    marginBottom: 2,
+    marginBottom: 4,
+    letterSpacing: -0.2,
   },
   benefitDesc: {
     fontSize: 14,
     fontWeight: '400',
     textAlign: 'left',
-    lineHeight: 20,
-    opacity: 0.6,
+    lineHeight: 22,
+    opacity: 0.8,
+  },
+  benefitDivider: {
+    height: 1,
+    opacity: 0.1,
   },
   footer: {
     alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 0,
+    marginTop: 32,
+    marginBottom: 40,
   },
-  faqLinkLabel: {
+  faqLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
+    opacity: 0.6,
+  },
+  faqIcon: {
+    marginRight: 8,
+  },
+  faqText: {
     fontSize: 14,
+    fontWeight: '600',
     textDecorationLine: 'underline',
-    opacity: 0.7,
+    letterSpacing: 0.3,
   },
 });
 

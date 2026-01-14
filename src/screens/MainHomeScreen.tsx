@@ -74,7 +74,14 @@ export const MainHomeScreen = () => {
       <Card
         style={[
           styles.card,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+          {
+            backgroundColor: theme.colors.surface,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.06,
+            shadowRadius: 10,
+            elevation: 2,
+          },
         ]}
         onPress={onPress}
         testID={testID}
@@ -84,30 +91,8 @@ export const MainHomeScreen = () => {
         accessibilityHint={`Double tap to navigate to ${title}`}
       >
         <Card.Content style={styles.cardContent}>
-          <View style={[styles.iconContainer, { backgroundColor: color }]}>
-            {/* #region agent log */}
-            {(() => {
-              fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  location: 'MainHomeScreen.tsx:60',
-                  message: 'Rendering MaterialCommunityIcons',
-                  data: { iconName: icon, title, size: 32, iconLibrary: '@expo/vector-icons' },
-                  timestamp: Date.now(),
-                  sessionId: 'debug-session',
-                  runId: 'post-fix',
-                  hypothesisId: 'A',
-                }),
-              }).catch(() => {});
-              return null;
-            })()}
-            {/* #endregion */}
-            <MaterialCommunityIcons
-              name={icon}
-              size={32}
-              color={iconColor || theme.colors.onPrimary}
-            />
+          <View style={[styles.iconContainer, { backgroundColor: color + 'D9' }]}>
+            <MaterialCommunityIcons name={icon} size={28} color={iconColor || color} />
           </View>
           <View style={styles.textContainer}>
             <Title style={[styles.cardTitle, { color: theme.colors.onSurface }]}>{title}</Title>
@@ -115,28 +100,11 @@ export const MainHomeScreen = () => {
               {subtitle}
             </Paragraph>
           </View>
-          {/* #region agent log */}
-          {(() => {
-            fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                location: 'MainHomeScreen.tsx:72',
-                message: 'Rendering MaterialCommunityIcons chevron',
-                data: { iconName: 'chevron-right', size: 24, iconLibrary: '@expo/vector-icons' },
-                timestamp: Date.now(),
-                sessionId: 'debug-session',
-                runId: 'post-fix',
-                hypothesisId: 'A',
-              }),
-            }).catch(() => {});
-            return null;
-          })()}
-          {/* #endregion */}
           <MaterialCommunityIcons
             name="chevron-right"
             size={24}
-            color={theme.colors.onSurfaceVariant}
+            color={theme.colors.primary}
+            style={{ opacity: 0.8 }}
           />
         </Card.Content>
       </Card>
@@ -193,40 +161,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   cardsContainer: {
-    marginTop: 24,
-    paddingHorizontal: 20,
-    gap: 16,
+    marginTop: 16,
+    paddingHorizontal: 24,
+    gap: 20,
   },
   card: {
-    borderRadius: 12,
-    elevation: 0, // Kanso: Simplify by removing shadow
-    borderWidth: 1, // Add subtle border for definition
+    borderRadius: 20,
+    elevation: 2,
+    borderWidth: 0,
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 16,
   },
 
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 20,
   },
   textContainer: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 19,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    lineHeight: 24,
   },
   cardSubtitle: {
     fontSize: 14,
+    opacity: 0.7,
+    marginTop: 2,
   },
 });
