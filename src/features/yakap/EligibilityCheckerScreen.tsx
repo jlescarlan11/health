@@ -98,46 +98,6 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   );
 
   const renderContent = () => {
-    if (hasPhilHealth === null) {
-      return (
-        <View style={styles.centeredContent}>
-          <View style={styles.heroSection} />
-
-          <Text
-            variant="headlineSmall"
-            style={[styles.questionText, { color: theme.colors.onSurface }]}
-          >
-            Do you have a PhilHealth Identification Number (PIN)?
-          </Text>
-
-          <Text
-            variant="bodyMedium"
-            style={[styles.consolidatedSubText, { color: theme.colors.onSurfaceVariant }]}
-          >
-            The YAKAP program is an additional benefit for PhilHealth members and is required for
-            enrollment.
-          </Text>
-
-          <View style={styles.buttonGroup}>
-            <Button
-              variant="primary"
-              onPress={() => setHasPhilHealthValue(true)}
-              style={styles.decisionButton}
-              contentStyle={styles.buttonContent}
-              title="Yes, I have PhilHealth"
-            />
-            <Button
-              variant="text"
-              onPress={() => setHasPhilHealthValue(false)}
-              style={styles.decisionButton}
-              contentStyle={styles.buttonContent}
-              title="No, I don't have it yet"
-            />
-          </View>
-        </View>
-      );
-    }
-
     if (hasPhilHealth === true) {
       return (
         <View>
@@ -190,7 +150,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               variant="headlineMedium"
               style={[styles.guidanceTitle, { color: theme.colors.onSurface }]}
             >
-              Obtain your PhilHealth PIN First
+              Step 1: Obtain your PhilHealth PIN
             </Text>
           </View>
           <Text
@@ -304,6 +264,45 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         </View>
       );
     }
+
+    // Default: Initial question (hasPhilHealth is null or undefined)
+    return (
+      <View style={styles.centeredContent}>
+        <View style={styles.heroSection} />
+
+        <Text
+          variant="headlineSmall"
+          style={[styles.questionText, { color: theme.colors.onSurface }]}
+        >
+          Do you have a PhilHealth Identification Number (PIN)?
+        </Text>
+
+        <Text
+          variant="bodyMedium"
+          style={[styles.consolidatedSubText, { color: theme.colors.onSurfaceVariant }]}
+        >
+          The YAKAP program is an additional benefit for PhilHealth members and is required for
+          enrollment.
+        </Text>
+
+        <View style={styles.buttonGroup}>
+          <Button
+            variant="primary"
+            onPress={() => setHasPhilHealthValue(true)}
+            style={styles.decisionButton}
+            contentStyle={styles.buttonContent}
+            title="Yes, I have PhilHealth"
+          />
+          <Button
+            variant="text"
+            onPress={() => setHasPhilHealthValue(false)}
+            style={styles.decisionButton}
+            contentStyle={styles.buttonContent}
+            title="No, I don't have it yet"
+          />
+        </View>
+      </View>
+    );
   };
 
   return (
