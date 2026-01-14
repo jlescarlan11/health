@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -122,13 +122,21 @@ const YakapHomeScreen = () => {
 
         {/* FAQ Link */}
         <View style={styles.footer}>
-          <Button
-            variant="text"
+          <TouchableOpacity
             onPress={navigateToFaq}
-            title="Frequently Asked Questions"
-            labelStyle={[styles.faqLinkLabel, { color: theme.colors.outline }]}
-            icon="information-outline"
-          />
+            activeOpacity={0.7}
+            style={styles.faqLinkContainer}
+          >
+            <MaterialCommunityIcons
+              name="information-outline"
+              size={18}
+              color={theme.colors.onSurfaceVariant}
+              style={styles.faqIcon}
+            />
+            <Text style={[styles.faqText, { color: theme.colors.onSurfaceVariant }]}>
+              Frequently Asked Questions
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -231,12 +239,22 @@ const styles = StyleSheet.create({
   footer: {
     alignItems: 'center',
     marginTop: 32,
+    marginBottom: 40,
   },
-  faqLinkLabel: {
-    fontSize: 13,
-    textDecorationLine: 'underline',
+  faqLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 8,
     opacity: 0.6,
-    letterSpacing: 0.5,
+  },
+  faqIcon: {
+    marginRight: 8,
+  },
+  faqText: {
+    fontSize: 14,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    letterSpacing: 0.3,
   },
 });
 
