@@ -1,11 +1,11 @@
 import React from 'react';
-import { StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { Card as PaperCard, Text, useTheme } from 'react-native-paper';
 
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   title?: string;
   subtitle?: string;
   mode?: 'elevated' | 'outlined' | 'contained';

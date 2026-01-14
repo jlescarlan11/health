@@ -1,67 +1,18 @@
 import React, { useState } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
-import { Text, useTheme, Chip, Divider } from 'react-native-paper';
+import { Text, useTheme, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
 import { RootStackParamList } from '../../types/navigation';
+import { ENROLLMENT_PATHWAYS, EnrollmentPathway as Pathway } from './yakapContent';
 
 import StandardHeader from '../../components/common/StandardHeader';
-
-type Pathway = {
-  id: 'egovph' | 'philhealth_portal' | 'clinic_walkin' | 'philhealth_office';
-  name: string;
-  duration: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  pros: string[];
-  cons: string[];
-  requirements: string[];
-  recommended?: boolean;
-};
-
-const pathways: Pathway[] = [
-  {
-    id: 'egovph',
-    name: 'eGovPH App',
-    duration: '10-15 mins',
-    difficulty: 'Easy',
-    pros: ['Instant processing', 'No travel needed', 'Digital ID card'],
-    cons: ['Requires smartphone', 'Needs stable internet'],
-    requirements: ['Mobile Device', 'Internet Connection', 'Valid ID'],
-    recommended: true,
-  },
-  {
-    id: 'philhealth_portal',
-    name: 'PhilHealth Portal',
-    duration: '20-30 mins',
-    difficulty: 'Medium',
-    pros: ['Accessible on any browser', 'No app download'],
-    cons: ['Complex interface', 'Photo upload needed'],
-    requirements: ['Browser', 'Scanned Docs', 'Email Address'],
-  },
-  {
-    id: 'clinic_walkin',
-    name: 'Clinic Visit',
-    duration: '1-2 hours',
-    difficulty: 'Easy',
-    pros: ['Assisted process', 'Direct questions answered'],
-    cons: ['Travel required', 'Waiting time'],
-    requirements: ['Physical Appearance', 'Valid ID', 'Forms'],
-  },
-  {
-    id: 'philhealth_office',
-    name: 'PhilHealth Office',
-    duration: '2-4 hours',
-    difficulty: 'Hard',
-    pros: ['Official processing', 'Immediate distinct card'],
-    cons: ['Long queues', 'Travel required', 'Limited hours'],
-    requirements: ['Physical Appearance', 'Valid IDs', '2x2 Photos'],
-  },
-];
 
 type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -86,18 +37,23 @@ export const EnrollmentPathwayScreen = () => {
     }
   };
 
-  const renderDetailItem = (label: string, items: string[], color?: string) => (
+  const renderDetailItem = (
+    label: string,
+    items: string[],
+    color: string,
+    icon: keyof typeof MaterialCommunityIcons.glyphMap
+  ) => (
     <View style={styles.detailSection}>
-      <Text
-        variant="labelMedium"
-        style={[styles.detailLabel, color ? { color } : { color: theme.colors.onSurfaceVariant }]}
-      >
+      <Text variant="labelMedium" style={[styles.detailLabel, { color }]}>
         {label}
       </Text>
       {items.map((item, index) => (
-        <Text key={index} variant="bodySmall" style={styles.detailText}>
-          • {item}
-        </Text>
+        <View key={index} style={styles.itemRow}>
+          <MaterialCommunityIcons name={icon} size={14} color={color} style={styles.itemIcon} />
+          <Text variant="bodySmall" style={[styles.detailText, { color: theme.colors.onSurface }]}>
+            {item}
+          </Text>
+        </View>
       ))}
     </View>
   );
@@ -115,7 +71,7 @@ export const EnrollmentPathwayScreen = () => {
           </Text>
         </View>
 
-        {pathways.map((pathway) => (
+        {ENROLLMENT_PATHWAYS.map((pathway) => (
           <Card
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
@@ -124,71 +80,109 @@ export const EnrollmentPathwayScreen = () => {
               styles.card,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outlineVariant,
-                borderWidth: 1,
-                // Subtle drop shadow
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
+                borderColor: pathway.recommended
+                  ? theme.colors.primary
+                  : theme.colors.outlineVariant,
+                borderWidth: pathway.recommended ? 1.5 : 1,
+                // Soft shadow for depth (Japanese 'Yugen')
+                shadowColor: theme.colors.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.08,
+                shadowRadius: 8,
+                elevation: 3,
               },
-              pathway.recommended && styles.recommendedCard,
             ]}
           >
-            {pathway.recommended && (
-              <View style={[styles.recommendedAccent, { backgroundColor: theme.colors.primary }]} />
-            )}
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderTitle}>
                 <Text
-                  variant="titleMedium"
+                  variant="titleLarge"
                   style={[styles.cardTitle, { color: theme.colors.onSurface }]}
                 >
                   {pathway.name}
                 </Text>
                 {pathway.recommended && (
                   <Chip
-                    style={[
-                      styles.recommendedChip,
-                      { backgroundColor: theme.colors.primaryContainer },
-                    ]}
-                    textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}
+                    mode="flat"
+                    style={[styles.recommendedChip, { backgroundColor: theme.colors.primary }]}
+                    textStyle={[styles.recommendedChipText, { color: theme.colors.onPrimary }]}
                   >
-                    RECOMMENDED
+                    BEST CHOICE
                   </Chip>
                 )}
               </View>
-              <Text variant="labelMedium" style={{ color: theme.colors.secondary }}>
-                {pathway.duration.toUpperCase()} • {pathway.difficulty.toUpperCase()}
-              </Text>
+              <View style={styles.metaRow}>
+                <View style={styles.metaItem}>
+                  <MaterialCommunityIcons
+                    name="clock-outline"
+                    size={14}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                  <Text
+                    variant="labelMedium"
+                    style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}
+                  >
+                    {pathway.estimatedDuration.toUpperCase()}
+                  </Text>
+                </View>
+                <View style={[styles.dot, { backgroundColor: theme.colors.outlineVariant }]} />
+                <View style={styles.metaItem}>
+                  <MaterialCommunityIcons
+                    name="speedometer"
+                    size={14}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                  <Text
+                    variant="labelMedium"
+                    style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}
+                  >
+                    {pathway.difficulty.toUpperCase()}
+                  </Text>
+                </View>
+              </View>
             </View>
 
-            <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
+            {/* Subtle Divider (Ma) */}
+            <View style={[styles.subtleDivider, { backgroundColor: theme.colors.outlineVariant }]} />
 
             <View style={styles.cardContent}>
               <View style={styles.row}>
                 <View style={styles.column}>
-                  {renderDetailItem('PROS', pathway.pros, theme.colors.primary)}
+                  {renderDetailItem('PROS', pathway.pros, theme.colors.primary, 'check-circle-outline')}
                 </View>
                 <View style={styles.column}>
-                  {renderDetailItem('CONS', pathway.cons, theme.colors.error)}
+                  {renderDetailItem('CONS', pathway.cons, theme.colors.onSurfaceVariant, 'minus-circle-outline')}
                 </View>
               </View>
 
               <View
                 style={[
                   styles.requirementsSection,
-                  { backgroundColor: theme.colors.primaryContainer, opacity: 0.8 },
+                  { backgroundColor: theme.colors.background, borderColor: theme.colors.outlineVariant, borderWidth: 1 },
                 ]}
               >
-                <Text variant="labelSmall" style={styles.detailLabel}>
-                  REQUIREMENTS:
+                <Text
+                  variant="labelSmall"
+                  style={[styles.requirementsLabel, { color: theme.colors.onSurfaceVariant }]}
+                >
+                  WHAT YOU'LL NEED:
                 </Text>
-                <Text variant="bodySmall" style={styles.requirementsText}>
-                  {pathway.requirements.join(', ')}
+                <Text
+                  variant="bodySmall"
+                  style={[styles.requirementsText, { color: theme.colors.onSurface }]}
+                >
+                  {pathway.requirements.join(' • ')}
                 </Text>
               </View>
+
+              <Button
+                variant={pathway.recommended ? 'primary' : 'outline'}
+                title="Select This Path"
+                onPress={() => handlePathwaySelect(pathway)}
+                style={styles.selectButton}
+                icon="arrow-right"
+                contentStyle={{ flexDirection: 'row-reverse' }}
+              />
             </View>
           </Card>
         ))}
@@ -241,91 +235,132 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
+    padding: 16,
   },
   headerContainer: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    marginBottom: 32,
+    paddingHorizontal: 24,
+    marginTop: 12,
   },
   headerText: {
     textAlign: 'center',
-    lineHeight: 24,
-    opacity: 0.9,
+    lineHeight: 26,
+    letterSpacing: 0.3,
+    opacity: 0.8,
   },
   card: {
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: 24,
+    borderRadius: 16,
     overflow: 'hidden',
-  },
-  recommendedCard: {
-    // Distinguish via accent bar and subtle background instead of shadow
-    backgroundColor: '#FFFFFF',
-  },
-  recommendedAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 6,
-    zIndex: 1,
   },
   cardHeader: {
     padding: 16,
-    paddingLeft: 20,
+    paddingBottom: 12,
   },
   cardHeaderTitle: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 10,
   },
   cardTitle: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     flex: 1,
+    letterSpacing: -0.5,
   },
   recommendedChip: {
-    height: 22,
+    borderRadius: 6,
+    marginLeft: 12,
+    height: 26,
+    justifyContent: 'center',
   },
   recommendedChipText: {
-    fontSize: 9,
-    fontWeight: 'bold',
+    fontSize: 10,
+    fontWeight: '800',
     letterSpacing: 0.5,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    marginHorizontal: 8,
   },
-  divider: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaText: {
+    marginLeft: 6,
+    fontWeight: '600',
+    letterSpacing: 0.8,
+    fontSize: 11,
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    marginHorizontal: 12,
+    opacity: 0.5,
+  },
+  subtleDivider: {
     height: 1,
-    opacity: 0.3,
+    marginHorizontal: 16,
+    opacity: 0.1,
   },
   cardContent: {
     padding: 16,
-    paddingLeft: 20,
+    paddingTop: 12,
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   column: {
     flex: 1,
   },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  itemIcon: {
+    marginTop: 2,
+    marginRight: 8,
+  },
   requirementsSection: {
     padding: 12,
     borderRadius: 8,
+    marginBottom: 24,
+  },
+  requirementsLabel: {
+    fontWeight: 'bold',
+    marginBottom: 6,
+    letterSpacing: 1.5,
+    fontSize: 10,
   },
   requirementsText: {
-    marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 20,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   detailSection: {
-    marginBottom: 8,
+    marginRight: 12,
   },
   detailLabel: {
     fontWeight: 'bold',
-    marginBottom: 6,
-    letterSpacing: 1.2,
-    fontSize: 10,
+    marginBottom: 12,
+    letterSpacing: 1.5,
+    fontSize: 11,
   },
   detailText: {
     lineHeight: 20,
-    opacity: 0.9,
+    flex: 1,
+    fontWeight: '400',
+  },
+  selectButton: {
+    marginTop: 8,
+    borderRadius: 8,
   },
   modalContent: {
     padding: 24,

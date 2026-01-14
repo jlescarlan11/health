@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   emergencyButton: { borderRadius: 12, marginVertical: 0 },
 
   card: { marginBottom: 32, borderRadius: 24, overflow: 'hidden' },
-  cardHeader: { paddingTop: 20, paddingBottom: 8 },
+  cardHeader: { paddingTop: 16, paddingBottom: 4 },
   careBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -457,12 +457,12 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(0,0,0,0.05)',
   },
   warningSection: {
-    padding: 20,
-    paddingBottom: 10,
+    padding: 16,
+    paddingBottom: 8,
   },
   concernsSection: {
-    padding: 20,
-    paddingTop: 10,
+    padding: 16,
+    paddingTop: 8,
   },
   warningRow: {
     flexDirection: 'row',
