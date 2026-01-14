@@ -96,7 +96,21 @@ const EnrollmentCompletionScreen = () => {
           </Text>
         </View>
 
-        <View style={[styles.benefitsSection, { backgroundColor: theme.colors.surface }]}>
+        <View
+          style={[
+            styles.benefitsSection,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.outlineVariant,
+              // Subtle drop shadow
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            },
+          ]}
+        >
           <View style={styles.sectionHeader}>
             <View style={[styles.accentLine, { backgroundColor: theme.colors.secondary }]} />
             <Text
@@ -200,15 +214,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   benefitsSection: {
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 20,
     marginBottom: 40,
-    // Subtle shadow for depth without being boxy
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    borderWidth: 1,
+    elevation: 0,
   },
   sectionHeader: {
     flexDirection: 'row',

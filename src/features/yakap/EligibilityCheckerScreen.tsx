@@ -49,13 +49,15 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         styles.benefitsWrapper,
         {
           backgroundColor: theme.colors.surface,
-          borderRadius: 20,
-          // Subtle shadow for depth
+          borderRadius: 12,
+          borderColor: theme.colors.outlineVariant,
+          borderWidth: 1,
+          // Refined drop shadow
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 15,
-          elevation: 2,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+          elevation: 3,
         },
       ]}
     >
@@ -198,11 +200,14 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               styles.optionCard,
               {
                 backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outlineVariant,
+                borderWidth: 1,
+                // Refined drop shadow
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 2,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 3,
               },
             ]}
           >
@@ -234,11 +239,14 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               styles.optionCard,
               {
                 backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outlineVariant,
+                borderWidth: 1,
+                // Refined drop shadow
                 shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 8,
-                elevation: 2,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 3,
               },
             ]}
           >
@@ -445,7 +453,7 @@ const styles = StyleSheet.create({
   },
   optionCard: {
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 12,
     marginBottom: 16,
   },
   optionContent: {
