@@ -9,6 +9,9 @@ interface CardProps {
   title?: string;
   subtitle?: string;
   mode?: 'elevated' | 'outlined' | 'contained';
+  accessibilityRole?: 'button' | 'link' | 'none';
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -18,11 +21,22 @@ export const Card: React.FC<CardProps> = ({
   title,
   subtitle,
   mode = 'elevated',
+  accessibilityRole,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const theme = useTheme();
 
   return (
-    <PaperCard style={[styles.card, style]} onPress={onPress} mode={mode}>
+    <PaperCard
+      style={[styles.card, style]}
+      onPress={onPress}
+      mode={mode}
+      accessible={true}
+      accessibilityRole={accessibilityRole || (onPress ? 'button' : 'none')}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+    >
       {(title || subtitle) && (
         <PaperCard.Title
           title={title}

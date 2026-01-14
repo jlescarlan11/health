@@ -76,6 +76,8 @@ export const EnrollmentPathwayScreen = () => {
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
             mode="contained"
+            accessibilityLabel={`${pathway.name} pathway`}
+            accessibilityHint={`Double tap to select the ${pathway.name} enrollment method`}
             style={[
               styles.card,
               {
@@ -95,21 +97,29 @@ export const EnrollmentPathwayScreen = () => {
           >
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderTitle}>
-                <Text
-                  variant="titleLarge"
-                  style={[styles.cardTitle, { color: theme.colors.onSurface }]}
-                >
-                  {pathway.name}
-                </Text>
-                {pathway.recommended && (
-                  <Chip
-                    mode="flat"
-                    style={[styles.recommendedChip, { backgroundColor: theme.colors.primary }]}
-                    textStyle={[styles.recommendedChipText, { color: theme.colors.onPrimary }]}
+                <View style={styles.titleWithChip}>
+                  <Text
+                    variant="titleLarge"
+                    style={[styles.cardTitle, { color: theme.colors.onSurface }]}
                   >
-                    BEST CHOICE
-                  </Chip>
-                )}
+                    {pathway.name}
+                  </Text>
+                  {pathway.recommended && (
+                    <Chip
+                      mode="flat"
+                      style={[styles.recommendedChip, { backgroundColor: theme.colors.primary }]}
+                      textStyle={[styles.recommendedChipText, { color: theme.colors.onPrimary }]}
+                    >
+                      BEST CHOICE
+                    </Chip>
+                  )}
+                </View>
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={24}
+                  color={theme.colors.onSurfaceVariant}
+                  style={styles.headerChevron}
+                />
               </View>
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
@@ -174,15 +184,6 @@ export const EnrollmentPathwayScreen = () => {
                   {pathway.requirements.join(' • ')}
                 </Text>
               </View>
-
-              <Button
-                variant={pathway.recommended ? 'primary' : 'outline'}
-                title="Select This Path"
-                onPress={() => handlePathwaySelect(pathway)}
-                style={styles.selectButton}
-                icon="arrow-right"
-                contentStyle={{ flexDirection: 'row-reverse' }}
-              />
             </View>
           </Card>
         ))}
@@ -263,9 +264,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
+  titleWithChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerChevron: {
+    marginLeft: 8,
+  },
   cardTitle: {
     fontWeight: '700',
-    flex: 1,
     letterSpacing: -0.5,
   },
   recommendedChip: {
@@ -357,10 +365,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     flex: 1,
     fontWeight: '400',
-  },
-  selectButton: {
-    marginTop: 8,
-    borderRadius: 8,
   },
   modalContent: {
     padding: 24,
