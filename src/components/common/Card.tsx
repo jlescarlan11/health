@@ -12,6 +12,7 @@ interface CardProps {
   accessibilityRole?: 'button' | 'link' | 'none';
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  rippleColor?: string;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -24,6 +25,7 @@ export const Card: React.FC<CardProps> = ({
   accessibilityRole,
   accessibilityLabel,
   accessibilityHint,
+  rippleColor,
 }) => {
   const theme = useTheme();
 
@@ -36,6 +38,7 @@ export const Card: React.FC<CardProps> = ({
       accessibilityRole={accessibilityRole || (onPress ? 'button' : 'none')}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
+      rippleColor={rippleColor}
     >
       {(title || subtitle) && (
         <PaperCard.Title

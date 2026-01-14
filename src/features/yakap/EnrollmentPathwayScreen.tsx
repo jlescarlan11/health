@@ -76,6 +76,7 @@ export const EnrollmentPathwayScreen = () => {
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
             mode="contained"
+            rippleColor={theme.colors.primary + '15'}
             accessibilityLabel={`${pathway.name} pathway`}
             accessibilityHint={`Double tap to select the ${pathway.name} enrollment method`}
             style={[
@@ -85,13 +86,13 @@ export const EnrollmentPathwayScreen = () => {
                 borderColor: pathway.recommended
                   ? theme.colors.primary
                   : theme.colors.outlineVariant,
-                borderWidth: pathway.recommended ? 1.5 : 1,
-                // Soft shadow for depth (Japanese 'Yugen')
+                borderWidth: pathway.recommended ? 2 : 1,
+                // Refined shadow for interactive cards
                 shadowColor: theme.colors.shadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.08,
-                shadowRadius: 8,
-                elevation: 3,
+                shadowOffset: { width: 0, height: pathway.recommended ? 6 : 4 },
+                shadowOpacity: pathway.recommended ? 0.15 : 0.1,
+                shadowRadius: pathway.recommended ? 16 : 12,
+                elevation: pathway.recommended ? 6 : 4,
               },
             ]}
           >
@@ -100,53 +101,51 @@ export const EnrollmentPathwayScreen = () => {
                 <View style={styles.titleWithChip}>
                   <Text
                     variant="titleLarge"
-                    style={[styles.cardTitle, { color: theme.colors.onSurface }]}
+                    style={[
+                      styles.cardTitle,
+                      { color: pathway.recommended ? theme.colors.primary : theme.colors.onSurface },
+                    ]}
                   >
                     {pathway.name}
                   </Text>
                   {pathway.recommended && (
-                    <Chip
-                      mode="flat"
-                      style={[styles.recommendedChip, { backgroundColor: theme.colors.primary }]}
-                      textStyle={[styles.recommendedChipText, { color: theme.colors.onPrimary }]}
+                    <View
+                      style={[styles.recommendedBadge, { backgroundColor: theme.colors.primary }]}
                     >
-                      BEST CHOICE
-                    </Chip>
+                      <Text
+                        style={[styles.recommendedBadgeText, { color: theme.colors.onPrimary }]}
+                      >
+                        BEST CHOICE
+                      </Text>
+                    </View>
                   )}
                 </View>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={24}
-                  color={theme.colors.onSurfaceVariant}
-                  style={styles.headerChevron}
-                />
               </View>
+
               <View style={styles.metaRow}>
                 <View style={styles.metaItem}>
                   <MaterialCommunityIcons
                     name="clock-outline"
                     size={14}
-                    color={theme.colors.onSurfaceVariant}
+                    color={theme.colors.primary}
                   />
                   <Text
                     variant="labelMedium"
-                    style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}
+                    style={[
+                      styles.metaText,
+                      { color: theme.colors.onSurfaceVariant, marginLeft: 6 },
+                    ]}
                   >
-                    {pathway.estimatedDuration.toUpperCase()}
+                    {pathway.estimatedDuration}
                   </Text>
                 </View>
                 <View style={[styles.dot, { backgroundColor: theme.colors.outlineVariant }]} />
                 <View style={styles.metaItem}>
-                  <MaterialCommunityIcons
-                    name="speedometer"
-                    size={14}
-                    color={theme.colors.onSurfaceVariant}
-                  />
                   <Text
                     variant="labelMedium"
                     style={[styles.metaText, { color: theme.colors.onSurfaceVariant }]}
                   >
-                    {pathway.difficulty.toUpperCase()}
+                    {pathway.difficulty.toUpperCase()} EFFORT
                   </Text>
                 </View>
               </View>
@@ -156,33 +155,42 @@ export const EnrollmentPathwayScreen = () => {
             <View style={[styles.subtleDivider, { backgroundColor: theme.colors.outlineVariant }]} />
 
             <View style={styles.cardContent}>
-              <View style={styles.row}>
-                <View style={styles.column}>
-                  {renderDetailItem('PROS', pathway.pros, theme.colors.primary, 'check-circle-outline')}
-                </View>
-                <View style={styles.column}>
-                  {renderDetailItem('CONS', pathway.cons, theme.colors.onSurfaceVariant, 'minus-circle-outline')}
+              <Text
+                variant="bodyMedium"
+                style={[styles.pathwayDescription, { color: theme.colors.onSurfaceVariant }]}
+              >
+                {pathway.description}
+              </Text>
+
+              <View style={styles.requirementsContainer}>
+                <Text
+                  variant="labelSmall"
+                  style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}
+                >
+                  REQUIRED:
+                </Text>
+                <View style={styles.requirementChips}>
+                  {pathway.requirements.map((req, idx) => (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.reqChip,
+                        {
+                          backgroundColor: theme.colors.surfaceVariant,
+                          borderColor: theme.colors.outlineVariant,
+                        },
+                      ]}
+                    >
+                      <Text variant="labelSmall" style={{ color: theme.colors.onSurface }}>
+                        {req}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
               </View>
 
-              <View
-                style={[
-                  styles.requirementsSection,
-                  { backgroundColor: theme.colors.background, borderColor: theme.colors.outlineVariant, borderWidth: 1 },
-                ]}
-              >
-                <Text
-                  variant="labelSmall"
-                  style={[styles.requirementsLabel, { color: theme.colors.onSurfaceVariant }]}
-                >
-                  WHAT YOU'LL NEED:
-                </Text>
-                <Text
-                  variant="bodySmall"
-                  style={[styles.requirementsText, { color: theme.colors.onSurface }]}
-                >
-                  {pathway.requirements.join(' • ')}
-                </Text>
+              <View style={styles.detailsList}>
+                {renderDetailItem('PROS', pathway.pros, theme.colors.primary, 'check-circle-outline')}
               </View>
             </View>
           </Card>
@@ -240,11 +248,10 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginBottom: 32,
-    paddingHorizontal: 24,
     marginTop: 12,
   },
   headerText: {
-    textAlign: 'center',
+    textAlign: 'left',
     lineHeight: 26,
     letterSpacing: 0.3,
     opacity: 0.8,
@@ -269,26 +276,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
-  headerChevron: {
-    marginLeft: 8,
-  },
   cardTitle: {
     fontWeight: '700',
     letterSpacing: -0.5,
   },
-  recommendedChip: {
+  recommendedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 6,
     marginLeft: 12,
-    height: 26,
-    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  recommendedChipText: {
+  recommendedBadgeText: {
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
     includeFontPadding: false,
-    textAlignVertical: 'center',
-    marginHorizontal: 8,
   },
   metaRow: {
     flexDirection: 'row',
@@ -299,7 +303,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metaText: {
-    marginLeft: 6,
     fontWeight: '600',
     letterSpacing: 0.8,
     fontSize: 11,
@@ -320,51 +323,58 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 12,
   },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 24,
+  pathwayDescription: {
+    marginBottom: 16,
+    lineHeight: 20,
+    opacity: 0.9,
   },
-  column: {
-    flex: 1,
+  requirementsContainer: {
+    marginBottom: 20,
+  },
+  sectionLabel: {
+    fontWeight: 'bold',
+    marginBottom: 8,
+    letterSpacing: 1.2,
+    fontSize: 10,
+    opacity: 0.6,
+  },
+  requirementChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  reqChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  detailsList: {
+    gap: 12,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   itemIcon: {
     marginTop: 2,
     marginRight: 8,
   },
-  requirementsSection: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 24,
-  },
-  requirementsLabel: {
-    fontWeight: 'bold',
-    marginBottom: 6,
-    letterSpacing: 1.5,
-    fontSize: 10,
-  },
-  requirementsText: {
-    lineHeight: 20,
-    fontWeight: '500',
-    letterSpacing: 0.2,
-  },
   detailSection: {
-    marginRight: 12,
+    marginRight: 0,
   },
   detailLabel: {
     fontWeight: 'bold',
-    marginBottom: 12,
-    letterSpacing: 1.5,
-    fontSize: 11,
+    marginBottom: 8,
+    letterSpacing: 1.2,
+    fontSize: 10,
+    opacity: 0.6,
   },
   detailText: {
     lineHeight: 20,
     flex: 1,
-    fontWeight: '400',
+    fontWeight: '500',
   },
   modalContent: {
     padding: 24,
