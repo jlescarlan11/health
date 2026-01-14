@@ -1,9 +1,8 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Share, Animated } from 'react-native';
-import { Text, Card, useTheme } from 'react-native-paper';
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
@@ -18,37 +17,6 @@ type EnrollmentCompletionNavigationProp = StackNavigationProp<
 const EnrollmentCompletionScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<EnrollmentCompletionNavigationProp>();
-
-  // Animation values
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 40,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message:
-          'I just finished learning how to enroll in YAKAP! 🎉 This program provides free primary care, lab tests, and medicines in Naga City. Check out the HEALTH app to see how you can benefit too!',
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
 
   const navigateToFacilities = () => {
     // Navigate to Find tab with YAKAP filter
@@ -68,22 +36,10 @@ const EnrollmentCompletionScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right']}
     >
-      <StandardHeader title="Enrollment Ready" />
+      <StandardHeader title="Guide Complete" />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.celebrationContainer}>
-          <Animated.View
-            style={[
-              styles.iconWrapper,
-              {
-                backgroundColor: theme.colors.primaryContainer,
-                transform: [{ scale: scaleAnim }],
-                opacity: opacityAnim,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons name="check-bold" size={48} color={theme.colors.primary} />
-          </Animated.View>
           <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
             Enrollment Guide Complete
           </Text>
@@ -149,16 +105,8 @@ const EnrollmentCompletionScreen = () => {
         <View style={styles.actionContainer}>
           <Button
             variant="primary"
-            icon="hospital-marker"
             onPress={navigateToFacilities}
             title="Find Nearest YAKAP Clinic"
-          />
-
-          <Button
-            variant="text"
-            icon="share-variant"
-            onPress={handleShare}
-            title="Share this Guide"
           />
 
           <Button
@@ -185,28 +133,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   celebrationContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 20,
     marginBottom: 40,
   },
-  iconWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
   title: {
     fontWeight: '700',
-    textAlign: 'center',
+    textAlign: 'left',
     letterSpacing: 0.5,
   },
   subtitle: {
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 16,
     lineHeight: 24,
-    paddingHorizontal: 12,
   },
   benefitsSection: {
     borderRadius: 12,
@@ -259,9 +198,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backButton: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
 });
-
 
 export default EnrollmentCompletionScreen;

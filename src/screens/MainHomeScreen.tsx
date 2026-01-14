@@ -92,11 +92,7 @@ export const MainHomeScreen = () => {
       >
         <Card.Content style={styles.cardContent}>
           <View style={[styles.iconContainer, { backgroundColor: color + 'D9' }]}>
-            <MaterialCommunityIcons
-              name={icon}
-              size={28}
-              color={iconColor || color}
-            />
+            <MaterialCommunityIcons name={icon} size={28} color={iconColor || color} />
           </View>
           <View style={styles.textContainer}>
             <Title style={[styles.cardTitle, { color: theme.colors.onSurface }]}>{title}</Title>

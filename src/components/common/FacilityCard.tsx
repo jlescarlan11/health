@@ -121,8 +121,15 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             )}
             {showDistance && distance !== undefined && (
               <View style={styles.distanceContainer}>
-                <MaterialCommunityIcons name="map-marker-outline" size={10} color={theme.colors.outline} />
-                <Text variant="labelSmall" style={[styles.distance, { color: theme.colors.outline }]}>
+                <MaterialCommunityIcons
+                  name="map-marker-outline"
+                  size={10}
+                  color={theme.colors.outline}
+                />
+                <Text
+                  variant="labelSmall"
+                  style={[styles.distance, { color: theme.colors.outline }]}
+                >
                   {formatDistance(distance)}
                 </Text>
               </View>
@@ -132,7 +139,10 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         <View style={styles.content}>
           <View style={styles.statusRow}>
-            <Text variant="labelMedium" style={{ color: statusColor, fontWeight: '800', letterSpacing: 0.5 }}>
+            <Text
+              variant="labelMedium"
+              style={{ color: statusColor, fontWeight: '800', letterSpacing: 0.5 }}
+            >
               {statusText.toUpperCase()}
             </Text>
             {facility.hours && !facility.hours.includes('24/7') && (

@@ -71,7 +71,12 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         </Text>
         <Text
           variant="bodyMedium"
-          style={{ color: theme.colors.onSurfaceVariant, marginTop: 8, lineHeight: 22, opacity: 0.9 }}
+          style={{
+            color: theme.colors.onSurfaceVariant,
+            marginTop: 8,
+            lineHeight: 22,
+            opacity: 0.9,
+          }}
         >
           Regular check-ups and consultations with your chosen provider at no cost.
         </Text>
@@ -84,7 +89,13 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
       <View style={styles.supplementarySection}>
         <Text
           variant="labelMedium"
-          style={{ color: theme.colors.onSurface, marginBottom: 20, opacity: 0.6, letterSpacing: 1.5, fontWeight: '800' }}
+          style={{
+            color: theme.colors.onSurface,
+            marginBottom: 20,
+            opacity: 0.6,
+            letterSpacing: 1.5,
+            fontWeight: '800',
+          }}
         >
           INCLUDED COVERAGE
         </Text>
@@ -93,15 +104,15 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <View style={styles.benefitItem}>
             <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab
-              Tests & Diagnostics
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab Tests
+              & Diagnostics
             </Text>
           </View>
           <View style={styles.benefitItem}>
             <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text>{' '}
-              Annual Medicine Allowance
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text> Annual
+              Medicine Allowance
             </Text>
           </View>
           <View style={styles.benefitItem}>

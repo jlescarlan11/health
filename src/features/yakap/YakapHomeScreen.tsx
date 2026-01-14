@@ -33,7 +33,12 @@ const YakapHomeScreen = () => {
   const renderBenefitItem = (benefit: YakapBenefit) => {
     return (
       <View key={benefit.id} style={styles.benefitCard}>
-        <View style={[styles.benefitIconContainer, { backgroundColor: theme.colors.primaryContainer + '60' }]}>
+        <View
+          style={[
+            styles.benefitIconContainer,
+            { backgroundColor: theme.colors.primaryContainer + '60' },
+          ]}
+        >
           <MaterialCommunityIcons
             name={benefit.icon as any}
             size={32}
@@ -53,19 +58,27 @@ const YakapHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <StandardHeader title="YAKAP" />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
-        <View style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer + '30' }]}>
+        <View
+          style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer + '30' }]}
+        >
           <View style={styles.heroContent}>
-            <Text variant="headlineMedium" style={[styles.heroTitle, { color: theme.colors.onSurface }]}>
+            <Text
+              variant="headlineMedium"
+              style={[styles.heroTitle, { color: theme.colors.onSurface }]}
+            >
               YAKAP Program
             </Text>
-            <Text variant="titleMedium" style={[styles.heroSubtitle, { color: theme.colors.primary }]}>
+            <Text
+              variant="titleMedium"
+              style={[styles.heroSubtitle, { color: theme.colors.primary }]}
+            >
               Yaman ng Kalusugan Program
             </Text>
             <View style={[styles.heroAccent, { backgroundColor: theme.colors.secondary }]} />
@@ -78,16 +91,8 @@ const YakapHomeScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <Button
-            variant="primary"
-            onPress={navigateToEnrollment}
-            title="Start Enrollment Guide"
-          />
-          <Button
-            variant="text"
-            onPress={navigateToFacilities}
-            title="Find YAKAP Clinics"
-          />
+          <Button variant="primary" onPress={navigateToEnrollment} title="Start Enrollment Guide" />
+          <Button variant="text" onPress={navigateToFacilities} title="Find YAKAP Clinics" />
         </View>
 
         {/* Benefits Summary */}
@@ -103,7 +108,12 @@ const YakapHomeScreen = () => {
               <React.Fragment key={benefit.id}>
                 {renderBenefitItem(benefit)}
                 {index < YAKAP_BENEFITS.length - 1 && (
-                  <View style={[styles.benefitDivider, { backgroundColor: theme.colors.outlineVariant }]} />
+                  <View
+                    style={[
+                      styles.benefitDivider,
+                      { backgroundColor: theme.colors.outlineVariant },
+                    ]}
+                  />
                 )}
               </React.Fragment>
             ))}

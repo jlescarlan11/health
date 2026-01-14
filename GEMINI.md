@@ -156,14 +156,14 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Backend Cleanup:** Removed enrollment-related endpoints (`/enrollment`, `/enrollment/:userId`) and logic from `backend/src/routes/yakapRoutes.ts`, `controllers/yakapController.ts`, and `services/yakapService.ts` to ensure no user data is persisted.
   - **Verification:** Passed full TypeScript checks for both frontend and backend.
 
-*   **Button Standardization (Jan 13, 2026):**
-    *   **Shared Component Refactor:** Enhanced `src/components/common/Button.tsx` to include 'text' variant and support full native prop overrides (buttonColor, textColor).
-    *   **Global Implementation:** Replaced all direct `react-native-paper` Button usages with the shared component across all features (YAKAP, Facilities, Navigation, Screens) for visual consistency.
-    *   **Cleanup:** Removed dead code and unused styles related to legacy button implementations.
+* **Button Standardization (Jan 13, 2026):**
+  - **Shared Component Refactor:** Enhanced `src/components/common/Button.tsx` to include 'text' variant and support full native prop overrides (buttonColor, textColor).
+  - **Global Implementation:** Replaced all direct `react-native-paper` Button usages with the shared component across all features (YAKAP, Facilities, Navigation, Screens) for visual consistency.
+  - **Cleanup:** Removed dead code and unused styles related to legacy button implementations.
 
-*   **Accessibility Improvements (Jan 14, 2026):**
-    *   **Contrast Fix:** Resolved a WCAG AA violation on the Eligibility Check page by updating the "Step 1" heading color. Changed from low-contrast yellow (`secondary`) to `onSurface` (`#45474B`), achieving a 8.6:1 contrast ratio against the light background (`#F5F7F8`).
-    *   **UI Standardization:** Standardized registration path buttons (Online vs. Local Office) to use the `outline` variant, ensuring consistent visual weight and hierarchy across both options.
-    *   **State Persistence:** Implemented local state recovery for the Eligibility Check page. User's PhilHealth identification status is now persisted across app restarts using `settingsSlice` and Redux Persist, ensuring a seamless experience when returning to the enrollment flow.
-    *   **Edit Answer Refinement:** Optimized the "Change my answer" flow with explicit state resets and `LayoutAnimation` feedback. Ensured that eligibility state is retained when navigating back from secondary screens unless explicitly edited.
-    *   **Files Modified:** `src/features/yakap/EligibilityCheckerScreen.tsx`, `src/store/settingsSlice.ts`.
+* **Accessibility Improvements (Jan 14, 2026):**
+  - **Contrast Fix:** Resolved a WCAG AA violation on the Eligibility Check page by updating the "Step 1" heading color. Changed from low-contrast yellow (`secondary`) to `onSurface` (`#45474B`), achieving a 8.6:1 contrast ratio against the light background (`#F5F7F8`).
+  - **UI Standardization:** Standardized registration path buttons (Online vs. Local Office) to use the `outline` variant, ensuring consistent visual weight and hierarchy across both options.
+  - **State Persistence:** Implemented local state recovery for the Eligibility Check page. User's PhilHealth identification status is now persisted across app restarts using `settingsSlice` and Redux Persist, ensuring a seamless experience when returning to the enrollment flow.
+  - **Edit Answer Refinement:** Optimized the "Change my answer" flow with explicit state resets and `LayoutAnimation` feedback. Ensured that eligibility state is retained when navigating back from secondary screens unless explicitly edited.
+  - **Files Modified:** `src/features/yakap/EligibilityCheckerScreen.tsx`, `src/store/settingsSlice.ts`.
