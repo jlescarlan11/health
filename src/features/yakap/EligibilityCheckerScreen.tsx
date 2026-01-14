@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Linking, Platform } from 'react-native';
+import React from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Linking,
+  Platform,
+  LayoutAnimation,
+  TouchableOpacity,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, Card, useTheme } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
+import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
+import { setHasPhilHealth } from '../../store/settingsSlice';
 
 type Props = RootStackScreenProps<'EligibilityChecker'>;
 
 export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const theme = useTheme();
-  const [hasPhilHealth, setHasPhilHealth] = useState<boolean | null>(null);
+  const dispatch = useAppDispatch();
+  const hasPhilHealth = useAppSelector((state) => state.settings.hasPhilHealth);
+
+  const setHasPhilHealthValue = (value: boolean | null) => {
+    // Enable smooth transition for state resets or changes
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    dispatch(setHasPhilHealth(value));
+  };
 
   const handlePhilHealthLink = () => {
-    Linking.openURL('https://www.philhealth.gov.ph/services/epr/');
+    Linking.openURL('https://memberinquiry.philhealth.gov.ph/member/pinApplication.xhtml');
   };
 
   const handleMap = () => {
@@ -27,274 +44,290 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   };
 
   const renderBenefitsCard = () => (
-    <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-      <Card.Content>
-        <Text variant="titleMedium" style={{ marginBottom: 10, color: theme.colors.onSurface }}>
-          What you get:
+    <View
+      style={[
+        styles.benefitsWrapper,
+        {
+          backgroundColor: theme.colors.surface,
+          borderRadius: 12,
+          borderColor: theme.colors.outlineVariant,
+          borderWidth: 1,
+          // Refined drop shadow
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 6,
+          elevation: 3,
+        },
+      ]}
+    >
+      <View style={styles.benefitHeader}>
+        <Text variant="labelLarge" style={[styles.benefitLabel, { color: theme.colors.primary }]}>
+          CORE BENEFIT
         </Text>
-        <View style={styles.bulletRow}>
-          <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
-          <Text
-            variant="bodyMedium"
-            style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}
-          >
-            No age restrictions
-          </Text>
+        <Text
+          variant="headlineSmall"
+          style={[styles.mainBenefit, { color: theme.colors.onSurface }]}
+        >
+          Primary Care
+        </Text>
+        <Text
+          variant="bodyMedium"
+          style={{ color: theme.colors.onSurfaceVariant, marginTop: 12, lineHeight: 22 }}
+        >
+          Regular check-ups and consultations with your chosen provider at no cost.
+        </Text>
+      </View>
+
+      <View
+        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.3 }]}
+      />
+
+      <View style={styles.supplementarySection}>
+        <Text
+          variant="labelMedium"
+          style={{ color: theme.colors.onSurface, marginBottom: 16, opacity: 0.6, letterSpacing: 1 }}
+        >
+          INCLUDED COVERAGE
+        </Text>
+
+        <View style={styles.benefitList}>
+          <View style={styles.benefitItem}>
+            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab
+              Tests & Diagnostics
+            </Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text>{' '}
+              Annual Medicine Allowance
+            </Text>
+          </View>
+          <View style={styles.benefitItem}>
+            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                Early Detection
+              </Text>{' '}
+              Cancer Screenings
+            </Text>
+          </View>
         </View>
-        <View style={styles.bulletRow}>
-          <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
-          <Text
-            variant="bodyMedium"
-            style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}
-          >
-            No income restrictions
-          </Text>
-        </View>
-        <View style={styles.bulletRow}>
-          <MaterialCommunityIcons name="check" size={20} color={theme.colors.primary} />
-          <Text
-            variant="bodyMedium"
-            style={[styles.bulletPoint, { color: theme.colors.onSurfaceVariant }]}
-          >
-            Covered dependents included
-          </Text>
-        </View>
-      </Card.Content>
-    </Card>
+      </View>
+    </View>
   );
 
   const renderContent = () => {
-    if (hasPhilHealth === null) {
-      return (
-        <View style={styles.centeredContent}>
-          <View style={styles.heroSection}>
-            <MaterialCommunityIcons name="shield-check" size={72} color={theme.colors.secondary} />
-          </View>
-
-          <Text
-            variant="headlineSmall"
-            style={[styles.questionText, { color: theme.colors.onSurface }]}
-          >
-            Do you have a PhilHealth Identification Number (PIN)?
-          </Text>
-
-          <Text
-            variant="bodyMedium"
-            style={[styles.consolidatedSubText, { color: theme.colors.onSurfaceVariant }]}
-          >
-            The YAKAP program is an additional benefit for PhilHealth members and is required for
-            enrollment.
-          </Text>
-
-          <View style={styles.buttonGroup}>
-            <Button
-              variant="primary"
-              onPress={() => setHasPhilHealth(true)}
-              style={styles.mainButton}
-              contentStyle={styles.buttonContent}
-              icon="check"
-              title="Yes, I have PhilHealth"
-            />
-            <Button
-              variant="outline"
-              onPress={() => setHasPhilHealth(false)}
-              style={styles.secondaryButton}
-              contentStyle={styles.buttonContent}
-              title="No, I don't have it yet"
-            />
-          </View>
-        </View>
-      );
-    }
-
     if (hasPhilHealth === true) {
       return (
-        <View>
+        <View style={styles.fadeContainer}>
           <View style={styles.successHeader}>
-            <MaterialCommunityIcons name="check-circle" size={80} color={theme.colors.primary} />
             <Text
-              variant="headlineMedium"
-              style={[styles.successTitle, { color: theme.colors.primary }]}
+              variant="headlineSmall"
+              style={[styles.successTitle, { color: theme.colors.onSurface }]}
             >
-              You’re Eligible!
+              You are Eligible!
             </Text>
             <Text
               variant="bodyLarge"
-              style={[
-                styles.successSubtitle,
-                { color: theme.colors.onSurfaceVariant, opacity: 0.7 },
-              ]}
+              style={[styles.successSubtitle, { color: theme.colors.onSurfaceVariant }]}
             >
               Since you have a PhilHealth PIN, you can join YAKAP immediately.
             </Text>
           </View>
 
-          {renderBenefitsCard()}
+          <View style={{ marginBottom: 40 }}>{renderBenefitsCard()}</View>
 
           <Button
             variant="primary"
             onPress={() => navigation.navigate('EnrollmentPathway')}
             style={styles.actionButton}
             contentStyle={styles.buttonContent}
-            icon="arrow-right"
             title="Choose Enrollment Method"
           />
 
-          <Button
-            variant="outline"
-            onPress={() => navigation.goBack()}
-            style={{ marginTop: 20 }}
-            title="Back to Home"
-          />
-
-          <Button
-            variant="text"
-            onPress={() => setHasPhilHealth(null)}
-            style={{ marginTop: 8, opacity: 0.7 }}
-            title="Change my answer"
-          />
+          <View style={styles.secondaryActions}>
+            <Button
+              variant="text"
+              onPress={() => setHasPhilHealthValue(null)}
+              style={styles.ghostDecisionButton}
+              contentStyle={styles.buttonContent}
+              title="Change my answer"
+            />
+          </View>
         </View>
       );
     }
 
     if (hasPhilHealth === false) {
       return (
-        <View>
-          <View style={styles.successHeader}>
-            <MaterialCommunityIcons
-              name="information-outline"
-              size={80}
-              color={theme.colors.secondary}
-            />
+        <View style={styles.fadeContainer}>
+          <View style={styles.sectionHeader}>
             <Text
-              variant="headlineMedium"
-              style={[styles.guidanceTitle, { color: theme.colors.secondary }]}
+              variant="headlineSmall"
+              style={[styles.guidanceTitle, { color: theme.colors.onSurface }]}
             >
-              Step 1: Obtain your PhilHealth PIN
+              Obtain your PhilHealth PIN
             </Text>
           </View>
           <Text
             variant="bodyLarge"
-            style={[styles.guidanceText, { color: theme.colors.onSurfaceVariant, opacity: 0.7 }]}
+            style={[styles.guidanceText, { color: theme.colors.onSurfaceVariant }]}
           >
             Every Filipino is eligible for PhilHealth. You just need to register to get your PIN,
             then you can join YAKAP.
           </Text>
 
           <Text
-            variant="titleMedium"
-            style={{ marginBottom: 16, color: theme.colors.onSurface, fontWeight: 'bold' }}
-          >
-            Choose your registration path:
-          </Text>
-
-          <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-            <Card.Title
-              title="1. Online Registration"
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
-              left={(props) => (
-                <MaterialCommunityIcons
-                  {...props}
-                  name="numeric-1-circle"
-                  color={theme.colors.primary}
-                />
-              )}
-            />
-            <Card.Content>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: 10, color: theme.colors.onSurfaceVariant }}
-              >
-                The fastest way if you have internet access.
-              </Text>
-              <Button
-                variant="text"
-                onPress={handlePhilHealthLink}
-                icon="open-in-new"
-                title="Visit PhilHealth Website"
-              />
-            </Card.Content>
-          </Card>
-
-          <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-            <Card.Title
-              title="2. Visit Local Office"
-              titleStyle={{ color: theme.colors.onSurface, fontWeight: 'bold' }}
-              left={(props) => (
-                <MaterialCommunityIcons
-                  {...props}
-                  name="numeric-2-circle"
-                  color={theme.colors.primary}
-                />
-              )}
-            />
-            <Card.Content>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: 10, color: theme.colors.onSurfaceVariant }}
-              >
-                Go to the nearest PhilHealth Local Health Insurance Office.
-              </Text>
-              <Button
-                variant="outline"
-                onPress={handleMap}
-                icon="map-marker"
-                title="Find Nearest Office"
-              />
-            </Card.Content>
-          </Card>
-
-          <View
+            variant="labelLarge"
             style={{
-              marginVertical: 16,
-              padding: 16,
-              backgroundColor: theme.colors.primaryContainer,
-              borderRadius: 12,
+              marginBottom: 16,
+              color: theme.colors.onSurface,
+              fontWeight: 'bold',
+              letterSpacing: 0.5,
             }}
           >
-            <Text
-              variant="bodyMedium"
-              style={{
-                color: theme.colors.onPrimaryContainer,
-                textAlign: 'center',
-                fontWeight: '500',
-              }}
-            >
-              Once you receive your PIN, return to this app to complete your YAKAP enrollment.
-            </Text>
-          </View>
+            CHOOSE REGISTRATION PATH:
+          </Text>
 
-          <View style={styles.helpSection}>
-            <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
-              Need Assistance?
-            </Text>
-            <View style={styles.contactRow}>
-              <MaterialCommunityIcons name="phone" size={18} color={theme.colors.secondary} />
-              <Text
-                variant="bodyMedium"
-                style={[styles.contactText, { color: theme.colors.onSurfaceVariant }]}
-              >
-                Hotline: (02) 8441-7442
-              </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handlePhilHealthLink}
+            style={[
+              styles.optionCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outlineVariant,
+                borderWidth: 1,
+                // Refined drop shadow
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 3,
+              },
+            ]}
+          >
+            <View style={styles.optionContent}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                    marginBottom: 4,
+                  }}
+                >
+                  Online Registration
+                </Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
+                  The fastest way if you have internet access.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.onSurfaceVariant}
+                style={{ marginLeft: 8 }}
+              />
             </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleMap}
+            style={[
+              styles.optionCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outlineVariant,
+                borderWidth: 1,
+                // Refined drop shadow
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.1,
+                shadowRadius: 6,
+                elevation: 3,
+              },
+            ]}
+          >
+            <View style={styles.optionContent}>
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                    marginBottom: 4,
+                  }}
+                >
+                  Visit Local Office
+                </Text>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
+                  Go to the nearest PhilHealth Local Health Insurance Office.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.onSurfaceVariant}
+                style={{ marginLeft: 8 }}
+              />
+            </View>
+          </TouchableOpacity>
+
+          <View style={styles.secondaryActions}>
+            <Button
+              variant="text"
+              onPress={() => setHasPhilHealthValue(null)}
+              style={styles.ghostDecisionButton}
+              contentStyle={styles.buttonContent}
+              title="Change my answer"
+            />
           </View>
-
-          <Button
-            variant="outline"
-            onPress={() => navigation.goBack()}
-            style={{ marginTop: 32 }}
-            title="Back to Home"
-          />
-
-          <Button
-            variant="text"
-            onPress={() => setHasPhilHealth(null)}
-            style={{ marginTop: 8, opacity: 0.7 }}
-            title="Change my answer"
-          />
         </View>
       );
     }
+
+    // Default: Initial question (hasPhilHealth is null or undefined)
+    return (
+      <View style={styles.initialSection}>
+        <Text
+          variant="headlineSmall"
+          style={[styles.questionText, { color: theme.colors.onSurface }]}
+        >
+          Do you have a PhilHealth Identification Number (PIN)?
+        </Text>
+
+        <Text
+          variant="bodyLarge"
+          style={[styles.consolidatedSubText, { color: theme.colors.onSurfaceVariant }]}
+        >
+          The YAKAP program is an additional benefit for PhilHealth members and is required for
+          enrollment.
+        </Text>
+
+        <View style={styles.buttonGroup}>
+          <Button
+            variant="primary"
+            onPress={() => setHasPhilHealthValue(true)}
+            style={[styles.decisionButton, { minHeight: 56 }]}
+            contentStyle={styles.buttonContent}
+            title="Yes, I have PhilHealth"
+          />
+          <Button
+            variant="text"
+            onPress={() => setHasPhilHealthValue(false)}
+            style={[styles.decisionButton, { minHeight: 56 }]}
+            contentStyle={styles.buttonContent}
+            title="No, I don't have it yet"
+          />
+        </View>
+      </View>
+    );
   };
 
   return (
@@ -319,107 +352,121 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 40,
+    paddingBottom: 48,
     flexGrow: 1,
   },
-  centeredContent: {
+  fadeContainer: {
     flex: 1,
-    justifyContent: 'center',
-    paddingVertical: 20,
   },
-  heroSection: {
-    alignItems: 'center',
-    marginBottom: 32,
+  initialSection: {
+    marginTop: 12,
   },
   questionText: {
-    textAlign: 'center',
-    marginBottom: 16,
+    textAlign: 'left',
+    marginBottom: 20,
     fontWeight: 'bold',
-    fontSize: 24,
     lineHeight: 32,
   },
   consolidatedSubText: {
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 48,
-    opacity: 0.7,
-    lineHeight: 22,
-    paddingHorizontal: 12,
-  },
-  subText: {
-    textAlign: 'center',
-    marginBottom: 32,
-    opacity: 0.8,
-    marginTop: 20,
+    opacity: 0.9,
+    lineHeight: 24,
   },
   buttonGroup: {
     width: '100%',
     gap: 16,
   },
-  mainButton: {
+  decisionButton: {
     width: '100%',
   },
-  secondaryButton: {
+  ghostDecisionButton: {
     width: '100%',
-  },
-  buttonContent: {
-    paddingVertical: 8,
   },
   successHeader: {
-    alignItems: 'center',
-    marginBottom: 24,
-    marginTop: 10,
-  },
-  successTitle: {
-    marginTop: 16,
-    fontWeight: 'bold',
-  },
-  successSubtitle: {
-    textAlign: 'center',
+    alignItems: 'flex-start',
+    marginBottom: 32,
     marginTop: 8,
   },
-  card: {
+  successTitle: {
+    fontWeight: 'bold',
     marginBottom: 12,
   },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  successSubtitle: {
+    textAlign: 'left',
+    lineHeight: 24,
+    opacity: 0.9,
+  },
+  benefitsWrapper: {
+    padding: 24,
+  },
+  benefitHeader: {
+    marginBottom: 20,
+  },
+  benefitLabel: {
+    letterSpacing: 1.5,
+    fontWeight: '700',
     marginBottom: 8,
   },
-  bulletPoint: {
-    marginLeft: 12,
+  mainBenefit: {
+    fontWeight: 'bold',
+    letterSpacing: -0.5,
+  },
+  divider: {
+    height: 1,
+    width: '100%',
+    marginVertical: 20,
+  },
+  supplementarySection: {
+    width: '100%',
+  },
+  benefitList: {
+    gap: 12,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  benefitDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 10,
   },
   actionButton: {
-    marginTop: 24,
+    marginTop: 8,
+    minHeight: 56,
+  },
+  buttonContent: {
+    paddingVertical: 10,
+  },
+  secondaryActions: {
+    marginTop: 12,
+    alignItems: 'flex-start',
+  },
+  sectionHeader: {
+    alignItems: 'flex-start',
+    marginBottom: 16,
+    marginTop: 8,
   },
   guidanceTitle: {
     fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-    marginTop: 16,
+    textAlign: 'left',
   },
   guidanceText: {
+    marginBottom: 32,
+    lineHeight: 24,
+    textAlign: 'left',
+    opacity: 0.9,
+  },
+  optionCard: {
+    padding: 20,
+    borderRadius: 12,
     marginBottom: 16,
-    lineHeight: 22,
-    textAlign: 'center',
   },
-  helpSection: {
-    marginTop: 16,
-    alignItems: 'center',
-  },
-  contactRow: {
+  optionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 8,
-  },
-  contactText: {
-    marginLeft: 8,
-  },
-  footer: {
-    marginTop: 'auto',
-    paddingTop: 32,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontStyle: 'italic',
+    justifyContent: 'space-between',
   },
 });
