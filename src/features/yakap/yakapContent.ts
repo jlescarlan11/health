@@ -42,7 +42,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'lab_tests',
     category: 'Laboratory Tests',
-    description: 'Free laboratory tests and diagnostics from your primary provider.',
+    description: 'Free laboratory tests and diagnostics from your provider.',
     items: [
       'Complete Blood Count (CBC)',
       'Urinalysis',

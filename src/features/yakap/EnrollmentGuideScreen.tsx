@@ -60,20 +60,31 @@ const EnrollmentGuideScreen = () => {
           <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>
             {pathway.name}
           </Text>
-          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>
-            Step {currentStep + 1} of {totalSteps}
-          </Text>
-          <ProgressBar
-            progress={progress}
-            color={theme.colors.primary}
-            style={styles.progressBar}
-          />
+          <View style={styles.stepCounterRow}>
+            <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>
+              STEP {currentStep + 1} OF {totalSteps}
+            </Text>
+            <View style={styles.progressBarContainer}>
+              <ProgressBar
+                progress={progress}
+                color={theme.colors.primary}
+                style={styles.progressBar}
+              />
+            </View>
+          </View>
         </View>
 
         <View
           style={[
             styles.card,
-            { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+            {
+              backgroundColor: theme.colors.surface,
+              shadowColor: theme.colors.shadow,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
+              elevation: 4,
+            },
           ]}
         >
           <View style={styles.stepHeader}>
@@ -93,15 +104,19 @@ const EnrollmentGuideScreen = () => {
 
           <Divider style={styles.divider} />
 
-          <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
-            <MaterialCommunityIcons
-              name="lightbulb-on-outline"
-              size={24}
-              color={theme.colors.onSecondaryContainer}
-            />
-            <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
-              Tip: Ensure all information provided matches your official documents to avoid delays.
-            </Text>
+          <View style={[styles.tipsSection, { backgroundColor: theme.colors.background }]}>
+            <View style={[styles.tipAccent, { backgroundColor: theme.colors.secondary }]} />
+            <View style={styles.tipContent}>
+              <MaterialCommunityIcons
+                name="lightbulb-on-outline"
+                size={20}
+                color={theme.colors.onSurface}
+                style={styles.tipIcon}
+              />
+              <Text style={[styles.tipsText, { color: theme.colors.onSurface }]}>
+                Tip: Ensure all information provided matches your official documents to avoid delays.
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -111,20 +126,21 @@ const EnrollmentGuideScreen = () => {
             onPress={handlePrevious}
             disabled={currentStep === 0}
             style={styles.navButton}
-            contentStyle={styles.buttonContent}
             title="Previous"
           />
           <Button
             variant="primary"
             onPress={handleNext}
             style={styles.navButton}
-            contentStyle={styles.buttonContent}
             title={currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
           />
         </View>
 
-        <View style={[styles.infoBox, { backgroundColor: theme.colors.surfaceVariant }]}>
-          <Text style={[styles.infoTitle, { color: theme.colors.onSurface }]}>Need Assistance?</Text>
+        <View style={[styles.infoBox, { backgroundColor: theme.colors.primaryContainer + '40' }]}>
+          <View style={styles.infoBoxHeader}>
+            <MaterialCommunityIcons name="information-outline" size={18} color={theme.colors.primary} />
+            <Text style={[styles.infoTitle, { color: theme.colors.primary }]}>Need Assistance?</Text>
+          </View>
           <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
             If you encounter any issues during the enrollment process, you can contact the PhilHealth Hotline at {OFFICIAL_CONTACTS.philhealth_hotline} or visit the nearest local office.
           </Text>
@@ -143,94 +159,129 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerSection: {
-    marginBottom: 24,
+    marginBottom: 32,
+    marginTop: 8,
   },
   pathwayName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 12,
+    letterSpacing: -0.5,
+  },
+  stepCounterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   stepCounter: {
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    opacity: 0.6,
+  },
+  progressBarContainer: {
+    flex: 1,
+    marginLeft: 24,
   },
   progressBar: {
-    height: 6,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   card: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginBottom: 24,
+    padding: 24,
+    borderRadius: 20,
+    marginBottom: 32,
   },
   stepHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   stepNumberBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   stepNumberText: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
   },
   stepTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    opacity: 0.8,
   },
   instructionText: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 20,
+    fontSize: 17,
+    lineHeight: 28,
+    marginBottom: 24,
+    letterSpacing: 0.2,
   },
   divider: {
-    marginBottom: 20,
+    marginBottom: 24,
+    height: 1,
+    opacity: 0.5,
   },
   tipsSection: {
     flexDirection: 'row',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  tipAccent: {
+    width: 4,
+  },
+  tipContent: {
+    flexDirection: 'row',
     padding: 16,
-    borderRadius: 8,
+    flex: 1,
     alignItems: 'flex-start',
+  },
+  tipIcon: {
+    marginTop: 2,
   },
   tipsText: {
     flex: 1,
     marginLeft: 12,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontStyle: 'italic',
+    opacity: 0.8,
   },
   navigationButtons: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
+    gap: 16,
+    marginBottom: 40,
   },
   navButton: {
     flex: 1,
   },
-  buttonContent: {
-    paddingVertical: 10,
-  },
   infoBox: {
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 151, 119, 0.1)',
+  },
+  infoBoxHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   infoTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: '800',
+    fontSize: 14,
+    marginLeft: 8,
+    letterSpacing: 0.5,
   },
   infoText: {
     fontSize: 14,
-    lineHeight: 20,
-    opacity: 0.8,
+    lineHeight: 22,
+    opacity: 0.9,
   },
 });
 

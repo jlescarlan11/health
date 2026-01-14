@@ -95,12 +95,12 @@ const styles = StyleSheet.create({
   button: {
     marginVertical: 4,
     borderRadius: 8,
-    minHeight: 44,
+    minHeight: 48,
     justifyContent: 'center',
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
-    paddingVertical: 2,
+    paddingVertical: 4,
   },
 });

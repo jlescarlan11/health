@@ -49,15 +49,13 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         styles.benefitsWrapper,
         {
           backgroundColor: theme.colors.surface,
-          borderRadius: 12,
-          borderColor: theme.colors.outlineVariant,
-          borderWidth: 1,
-          // Refined drop shadow
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: 0.1,
-          shadowRadius: 6,
-          elevation: 3,
+          borderRadius: 20,
+          // Refined soft shadow for "Washi" feel
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
         },
       ]}
     >
@@ -73,20 +71,20 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         </Text>
         <Text
           variant="bodyMedium"
-          style={{ color: theme.colors.onSurfaceVariant, marginTop: 12, lineHeight: 22 }}
+          style={{ color: theme.colors.onSurfaceVariant, marginTop: 8, lineHeight: 22, opacity: 0.9 }}
         >
           Regular check-ups and consultations with your chosen provider at no cost.
         </Text>
       </View>
 
       <View
-        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.3 }]}
+        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.2 }]}
       />
 
       <View style={styles.supplementarySection}>
         <Text
           variant="labelMedium"
-          style={{ color: theme.colors.onSurface, marginBottom: 16, opacity: 0.6, letterSpacing: 1 }}
+          style={{ color: theme.colors.onSurface, marginBottom: 20, opacity: 0.6, letterSpacing: 1.5, fontWeight: '800' }}
         >
           INCLUDED COVERAGE
         </Text>
@@ -139,13 +137,12 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             </Text>
           </View>
 
-          <View style={{ marginBottom: 40 }}>{renderBenefitsCard()}</View>
+          <View style={{ marginBottom: 48 }}>{renderBenefitsCard()}</View>
 
           <Button
             variant="primary"
             onPress={() => navigation.navigate('EnrollmentPathway')}
             style={styles.actionButton}
-            contentStyle={styles.buttonContent}
             title="Choose Enrollment Method"
           />
 
@@ -154,7 +151,6 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               variant="text"
               onPress={() => setHasPhilHealthValue(null)}
               style={styles.ghostDecisionButton}
-              contentStyle={styles.buttonContent}
               title="Change my answer"
             />
           </View>
@@ -184,10 +180,11 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <Text
             variant="labelLarge"
             style={{
-              marginBottom: 16,
+              marginBottom: 20,
               color: theme.colors.onSurface,
-              fontWeight: 'bold',
-              letterSpacing: 0.5,
+              fontWeight: '800',
+              letterSpacing: 1,
+              opacity: 0.6,
             }}
           >
             CHOOSE REGISTRATION PATH:
@@ -200,14 +197,12 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               styles.optionCard,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outlineVariant,
-                borderWidth: 1,
-                // Refined drop shadow
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.1,
-                shadowRadius: 6,
-                elevation: 3,
+                // Refined soft shadow
+                shadowColor: theme.colors.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+                elevation: 4,
               },
             ]}
           >
@@ -218,19 +213,19 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
                     color: theme.colors.onSurface,
                     fontWeight: 'bold',
                     fontSize: 18,
-                    marginBottom: 4,
+                    marginBottom: 6,
                   }}
                 >
                   Online Registration
                 </Text>
-                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, opacity: 0.8 }}>
                   The fastest way if you have internet access.
                 </Text>
               </View>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={24}
-                color={theme.colors.onSurfaceVariant}
+                color={theme.colors.primary}
                 style={{ marginLeft: 8 }}
               />
             </View>
@@ -243,14 +238,12 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               styles.optionCard,
               {
                 backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outlineVariant,
-                borderWidth: 1,
-                // Refined drop shadow
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.1,
-                shadowRadius: 6,
-                elevation: 3,
+                // Refined soft shadow
+                shadowColor: theme.colors.shadow,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.08,
+                shadowRadius: 12,
+                elevation: 4,
               },
             ]}
           >
@@ -261,19 +254,19 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
                     color: theme.colors.onSurface,
                     fontWeight: 'bold',
                     fontSize: 18,
-                    marginBottom: 4,
+                    marginBottom: 6,
                   }}
                 >
                   Visit Local Office
                 </Text>
-                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, opacity: 0.8 }}>
                   Go to the nearest PhilHealth Local Health Insurance Office.
                 </Text>
               </View>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={24}
-                color={theme.colors.onSurfaceVariant}
+                color={theme.colors.primary}
                 style={{ marginLeft: 8 }}
               />
             </View>
@@ -284,7 +277,6 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
               variant="text"
               onPress={() => setHasPhilHealthValue(null)}
               style={styles.ghostDecisionButton}
-              contentStyle={styles.buttonContent}
               title="Change my answer"
             />
           </View>
@@ -314,15 +306,13 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <Button
             variant="primary"
             onPress={() => setHasPhilHealthValue(true)}
-            style={[styles.decisionButton, { minHeight: 56 }]}
-            contentStyle={styles.buttonContent}
+            style={styles.decisionButton}
             title="Yes, I have PhilHealth"
           />
           <Button
             variant="text"
             onPress={() => setHasPhilHealthValue(false)}
-            style={[styles.decisionButton, { minHeight: 56 }]}
-            contentStyle={styles.buttonContent}
+            style={styles.decisionButton}
             title="No, I don't have it yet"
           />
         </View>
@@ -359,19 +349,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   initialSection: {
-    marginTop: 12,
+    marginTop: 16,
   },
   questionText: {
     textAlign: 'left',
-    marginBottom: 20,
-    fontWeight: 'bold',
-    lineHeight: 32,
+    marginBottom: 24,
+    fontWeight: '800',
+    lineHeight: 34,
+    letterSpacing: -0.5,
   },
   consolidatedSubText: {
     textAlign: 'left',
-    marginBottom: 48,
-    opacity: 0.9,
-    lineHeight: 24,
+    marginBottom: 56,
+    opacity: 0.8,
+    lineHeight: 26,
+    letterSpacing: 0.2,
   },
   buttonGroup: {
     width: '100%',
@@ -385,43 +377,46 @@ const styles = StyleSheet.create({
   },
   successHeader: {
     alignItems: 'flex-start',
-    marginBottom: 32,
+    marginBottom: 40,
     marginTop: 8,
   },
   successTitle: {
-    fontWeight: 'bold',
-    marginBottom: 12,
+    fontWeight: '800',
+    marginBottom: 16,
+    letterSpacing: -0.5,
   },
   successSubtitle: {
     textAlign: 'left',
-    lineHeight: 24,
-    opacity: 0.9,
+    lineHeight: 26,
+    opacity: 0.8,
   },
   benefitsWrapper: {
-    padding: 20,
+    padding: 24,
   },
   benefitHeader: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   benefitLabel: {
     letterSpacing: 1.5,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontWeight: '800',
+    marginBottom: 4,
+    fontSize: 12,
+    opacity: 0.7,
   },
   mainBenefit: {
-    fontWeight: 'bold',
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
   divider: {
     height: 1,
     width: '100%',
-    marginVertical: 20,
+    marginVertical: 16,
   },
   supplementarySection: {
     width: '100%',
   },
   benefitList: {
-    gap: 12,
+    gap: 16,
   },
   benefitItem: {
     flexDirection: 'row',
@@ -431,37 +426,34 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 10,
+    marginRight: 12,
   },
   actionButton: {
     marginTop: 8,
-    minHeight: 56,
-  },
-  buttonContent: {
-    paddingVertical: 10,
   },
   secondaryActions: {
-    marginTop: 12,
-    alignItems: 'flex-start',
+    marginTop: 16,
+    alignItems: 'center',
   },
   sectionHeader: {
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 20,
     marginTop: 8,
   },
   guidanceTitle: {
-    fontWeight: 'bold',
+    fontWeight: '800',
     textAlign: 'left',
+    letterSpacing: -0.5,
   },
   guidanceText: {
-    marginBottom: 32,
-    lineHeight: 24,
+    marginBottom: 40,
+    lineHeight: 26,
     textAlign: 'left',
-    opacity: 0.9,
+    opacity: 0.8,
   },
   optionCard: {
-    padding: 16,
-    borderRadius: 12,
+    padding: 20,
+    borderRadius: 16,
     marginBottom: 16,
   },
   optionContent: {
