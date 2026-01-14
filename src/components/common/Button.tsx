@@ -69,6 +69,14 @@ export const Button: React.FC<ButtonProps> = ({
 
   const finalMode = modeProp || mode;
 
+  const buttonStyle = [
+    styles.button,
+    variant === 'outline' && {
+      borderColor: disabled ? theme.colors.outline : theme.colors.primary,
+    },
+    style,
+  ];
+
   return (
     <PaperButton
       mode={finalMode}
@@ -78,7 +86,7 @@ export const Button: React.FC<ButtonProps> = ({
       icon={icon}
       buttonColor={buttonColor}
       textColor={textColor}
-      style={[styles.button, style]}
+      style={buttonStyle}
       labelStyle={[styles.label, labelStyle]}
       contentStyle={contentStyle}
       accessibilityLabel={accessibilityLabel || title}

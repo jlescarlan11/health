@@ -1,14 +1,13 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Share, Animated } from 'react-native';
-import { Text, Card, useTheme } from 'react-native-paper';
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { YAKAP_BENEFITS } from './yakapContent';
+import { YakapBenefitsCard } from '../../components/features/yakap';
 
 type EnrollmentCompletionNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -18,37 +17,6 @@ type EnrollmentCompletionNavigationProp = StackNavigationProp<
 const EnrollmentCompletionScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<EnrollmentCompletionNavigationProp>();
-
-  // Animation values
-  const scaleAnim = useRef(new Animated.Value(0.8)).current;
-  const opacityAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 40,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const handleShare = async () => {
-    try {
-      await Share.share({
-        message:
-          'I just finished learning how to enroll in YAKAP! 🎉 This program provides free primary care, lab tests, and medicines in Naga City. Check out the HEALTH app to see how you can benefit too!',
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
-  };
 
   const navigateToFacilities = () => {
     // Navigate to Find tab with YAKAP filter
@@ -66,24 +34,12 @@ const EnrollmentCompletionScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right']}
     >
-      <StandardHeader title="Enrollment Ready" />
+      <StandardHeader title="Guide Complete" />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.celebrationContainer}>
-          <Animated.View
-            style={[
-              styles.iconWrapper,
-              {
-                backgroundColor: theme.colors.primaryContainer,
-                transform: [{ scale: scaleAnim }],
-                opacity: opacityAnim,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons name="check-bold" size={48} color={theme.colors.primary} />
-          </Animated.View>
           <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
             Enrollment Guide Complete
           </Text>
@@ -96,76 +52,18 @@ const EnrollmentCompletionScreen = () => {
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.benefitsSection,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.outlineVariant,
-              // Subtle drop shadow
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 4,
-              elevation: 2,
-            },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <View style={[styles.accentLine, { backgroundColor: theme.colors.secondary }]} />
-            <Text
-              variant="titleMedium"
-              style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}
-            >
-              Your YAKAP Benefits
-            </Text>
-          </View>
-
-          {YAKAP_BENEFITS.slice(0, 3).map((benefit, index) => (
-            <View
-              key={benefit.id}
-              style={[
-                styles.benefitItem,
-                index === 0 && styles.firstBenefit,
-                index === 2 && styles.lastBenefit,
-              ]}
-            >
-              <View style={[styles.bulletPoint, { backgroundColor: theme.colors.primary }]} />
-              <View style={styles.benefitTextContent}>
-                <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
-                  {benefit.category}
-                </Text>
-                <Text
-                  variant="bodySmall"
-                  style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}
-                >
-                  {benefit.description}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        <YakapBenefitsCard style={{ marginBottom: 40 }} />
 
         <View style={styles.actionContainer}>
           <Button
             variant="primary"
-            icon="hospital-marker"
             onPress={navigateToFacilities}
             title="Find Nearest YAKAP Clinic"
           />
 
           <Button
             variant="text"
-            icon="share-variant"
-            onPress={handleShare}
-            title="Share this Guide"
-          />
-
-          <Button
-            variant="text"
             onPress={handleBackToHome}
-            style={styles.backButton}
-            labelStyle={{ color: theme.colors.outline, fontSize: 14 }}
             title="Return to YAKAP Home"
           />
         </View>
@@ -185,83 +83,23 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   celebrationContainer: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginTop: 20,
     marginBottom: 40,
   },
-  iconWrapper: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
   title: {
     fontWeight: '700',
-    textAlign: 'center',
+    textAlign: 'left',
     letterSpacing: 0.5,
   },
   subtitle: {
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 16,
     lineHeight: 24,
-    paddingHorizontal: 12,
-  },
-  benefitsSection: {
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 40,
-    borderWidth: 1,
-    elevation: 0,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  accentLine: {
-    width: 4,
-    height: 18,
-    borderRadius: 2,
-    marginRight: 10,
-  },
-  benefitsHeader: {
-    fontWeight: '600',
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    alignItems: 'flex-start',
-  },
-  firstBenefit: {
-    paddingTop: 0,
-  },
-  lastBenefit: {
-    paddingBottom: 0,
-  },
-  bulletPoint: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 8,
-    marginRight: 12,
-  },
-  benefitTextContent: {
-    flex: 1,
-  },
-  benefitDesc: {
-    marginTop: 4,
-    lineHeight: 18,
-    opacity: 0.8,
   },
   actionContainer: {
     gap: 12,
   },
-  backButton: {
-    alignItems: 'center',
-  },
 });
-
 
 export default EnrollmentCompletionScreen;

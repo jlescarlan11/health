@@ -227,4 +227,3 @@ export const YAKAP_FAQS: YakapFAQ[] = [
     category: 'Usage',
   },
 ];
-

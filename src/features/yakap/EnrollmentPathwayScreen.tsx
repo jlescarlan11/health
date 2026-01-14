@@ -41,7 +41,7 @@ export const EnrollmentPathwayScreen = () => {
     label: string,
     items: string[],
     color: string,
-    icon: keyof typeof MaterialCommunityIcons.glyphMap
+    icon: keyof typeof MaterialCommunityIcons.glyphMap,
   ) => (
     <View style={styles.detailSection}>
       <Text variant="labelMedium" style={[styles.detailLabel, { color }]}>
@@ -100,20 +100,18 @@ export const EnrollmentPathwayScreen = () => {
                 <View style={styles.titleWithChip}>
                   <Text
                     variant="titleLarge"
-                    style={[
-                      styles.cardTitle,
-                      { color: theme.colors.onSurface },
-                    ]}
+                    style={[styles.cardTitle, { color: theme.colors.onSurface }]}
                   >
                     {pathway.name}
                   </Text>
                   {pathway.recommended && (
                     <View
-                      style={[styles.recommendedBadge, { backgroundColor: theme.colors.primaryContainer }]}
+                      style={[
+                        styles.recommendedBadge,
+                        { backgroundColor: theme.colors.primaryContainer },
+                      ]}
                     >
-                      <Text
-                        style={[styles.recommendedBadgeText, { color: theme.colors.primary }]}
-                      >
+                      <Text style={[styles.recommendedBadgeText, { color: theme.colors.primary }]}>
                         BEST CHOICE
                       </Text>
                     </View>
@@ -151,7 +149,12 @@ export const EnrollmentPathwayScreen = () => {
             </View>
 
             {/* Subtle Divider (Ma) */}
-            <View style={[styles.subtleDivider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.1 }]} />
+            <View
+              style={[
+                styles.subtleDivider,
+                { backgroundColor: theme.colors.outlineVariant, opacity: 0.1 },
+              ]}
+            />
 
             <View style={styles.cardContent}>
               <Text
@@ -180,7 +183,10 @@ export const EnrollmentPathwayScreen = () => {
                         },
                       ]}
                     >
-                      <Text variant="labelSmall" style={{ color: theme.colors.onSurface, opacity: 0.8 }}>
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: theme.colors.onSurface, opacity: 0.8 }}
+                      >
                         {req}
                       </Text>
                     </View>
@@ -189,7 +195,12 @@ export const EnrollmentPathwayScreen = () => {
               </View>
 
               <View style={styles.detailsList}>
-                {renderDetailItem('BENEFITS', pathway.pros, theme.colors.primary, 'check-circle-outline')}
+                {renderDetailItem(
+                  'BENEFITS',
+                  pathway.pros,
+                  theme.colors.primary,
+                  'check-circle-outline',
+                )}
               </View>
             </View>
           </Card>
