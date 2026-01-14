@@ -43,7 +43,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           CORE BENEFIT
         </Text>
         <Text variant="titleLarge" style={[styles.mainBenefit, { color: theme.colors.onSurface }]}>
-          Unlimited Primary Care
+          Primary Care
         </Text>
         <Text
           variant="bodyMedium"
@@ -60,33 +60,29 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
       <View style={styles.supplementarySection}>
         <Text
           variant="labelLarge"
-          style={{ color: theme.colors.onSurface, marginBottom: 12, opacity: 0.6 }}
+          style={{ color: theme.colors.onSurface, marginBottom: 16, opacity: 0.6 }}
         >
           INCLUDED COVERAGE
         </Text>
 
-        <View style={styles.benefitGrid}>
-          <View style={styles.gridItem}>
-            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-              Free
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              Lab Tests & Diagnostics
+        <View style={styles.benefitList}>
+          <View style={styles.benefitItem}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab Tests
+              & Diagnostics
             </Text>
           </View>
-          <View style={styles.gridItem}>
-            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-              ₱20k
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              Annual Medicine Allowance
+          <View style={styles.benefitItem}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text> Annual
+              Medicine Allowance
             </Text>
           </View>
-          <View style={styles.gridItem}>
-            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-              Early
-            </Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+          <View style={styles.benefitItem}>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                Early Detection
+              </Text>{' '}
               Cancer Screenings
             </Text>
           </View>
@@ -171,9 +167,8 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             <Button
               variant="text"
               onPress={() => setHasPhilHealth(null)}
-              textColor={theme.colors.onSurfaceVariant}
               style={styles.ghostDecisionButton}
-              labelStyle={{ fontSize: 14, fontWeight: '500' }}
+              contentStyle={styles.buttonContent}
               title="Change my answer"
             />
           </View>
@@ -361,7 +356,7 @@ const styles = StyleSheet.create({
   },
   buttonGroup: {
     width: '100%',
-    gap: 16,
+    gap: 12,
   },
   decisionButton: {
     width: '100%',
@@ -414,19 +409,18 @@ const styles = StyleSheet.create({
   supplementarySection: {
     width: '100%',
   },
-  benefitGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  benefitList: {
     gap: 12,
   },
-  gridItem: {
-    flex: 1,
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   actionButton: {
     marginTop: 8,
   },
   secondaryActions: {
-    marginTop: 24,
+    marginTop: 12,
     alignItems: 'center',
   },
   guidanceTitle: {
