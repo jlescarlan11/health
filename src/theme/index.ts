@@ -36,7 +36,7 @@ export const theme = {
     onSurfaceVariant: palette.dark,
 
     // Text (Outline/Borders)
-    outline: '#747775',
+    outline: palette.green,
     outlineVariant: '#C4C7C5',
 
     // Elevation/Shadow

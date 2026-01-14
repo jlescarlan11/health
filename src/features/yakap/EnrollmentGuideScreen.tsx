@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { ProgressBar, Divider, useTheme } from 'react-native-paper';
+import { ProgressBar, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { ENROLLMENT_PATHWAYS, OFFICIAL_CONTACTS } from './yakapContent';
+import { ENROLLMENT_PATHWAYS } from './yakapContent';
 import { RootStackParamList } from '../../types/navigation';
 
 const EnrollmentGuideScreen = () => {
@@ -101,28 +101,11 @@ const EnrollmentGuideScreen = () => {
           <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>
             {currentStepData}
           </Text>
-
-          <Divider style={styles.divider} />
-
-          <View style={[styles.tipsSection, { backgroundColor: theme.colors.background }]}>
-            <View style={[styles.tipAccent, { backgroundColor: theme.colors.secondary }]} />
-            <View style={styles.tipContent}>
-              <MaterialCommunityIcons
-                name="lightbulb-on-outline"
-                size={20}
-                color={theme.colors.onSurface}
-                style={styles.tipIcon}
-              />
-              <Text style={[styles.tipsText, { color: theme.colors.onSurface }]}>
-                Tip: Ensure all information provided matches your official documents to avoid delays.
-              </Text>
-            </View>
-          </View>
         </View>
 
         <View style={styles.navigationButtons}>
           <Button
-            variant="text"
+            variant="outline"
             onPress={handlePrevious}
             disabled={currentStep === 0}
             style={styles.navButton}
@@ -134,16 +117,6 @@ const EnrollmentGuideScreen = () => {
             style={styles.navButton}
             title={currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
           />
-        </View>
-
-        <View style={[styles.infoBox, { backgroundColor: theme.colors.primaryContainer + '40' }]}>
-          <View style={styles.infoBoxHeader}>
-            <MaterialCommunityIcons name="information-outline" size={18} color={theme.colors.primary} />
-            <Text style={[styles.infoTitle, { color: theme.colors.primary }]}>Need Assistance?</Text>
-          </View>
-          <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
-            If you encounter any issues during the enrollment process, you can contact the PhilHealth Hotline at {OFFICIAL_CONTACTS.philhealth_hotline} or visit the nearest local office.
-          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -223,36 +196,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     letterSpacing: 0.2,
   },
-  divider: {
-    marginBottom: 24,
-    height: 1,
-    opacity: 0.5,
-  },
-  tipsSection: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  tipAccent: {
-    width: 4,
-  },
-  tipContent: {
-    flexDirection: 'row',
-    padding: 16,
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  tipIcon: {
-    marginTop: 2,
-  },
-  tipsText: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 14,
-    lineHeight: 22,
-    fontStyle: 'italic',
-    opacity: 0.8,
-  },
   navigationButtons: {
     flexDirection: 'row',
     gap: 16,
@@ -260,28 +203,6 @@ const styles = StyleSheet.create({
   },
   navButton: {
     flex: 1,
-  },
-  infoBox: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(55, 151, 119, 0.1)',
-  },
-  infoBoxHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  infoTitle: {
-    fontWeight: '800',
-    fontSize: 14,
-    marginLeft: 8,
-    letterSpacing: 0.5,
-  },
-  infoText: {
-    fontSize: 14,
-    lineHeight: 22,
-    opacity: 0.9,
   },
 });
 
