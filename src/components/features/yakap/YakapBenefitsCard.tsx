@@ -84,17 +84,24 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
                 <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                   {isLab && (
                     <Text>
-                      <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab Tests & Diagnostics
+                      <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text>{' '}
+                      Lab Tests & Diagnostics
                     </Text>
                   )}
                   {isMedicines && (
                     <Text>
-                      <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text> Annual Medicine Allowance
+                      <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                        ₱20,000
+                      </Text>{' '}
+                      Annual Medicine Allowance
                     </Text>
                   )}
                   {isScreenings && (
                     <Text>
-                      <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Early Detection</Text> Cancer Screenings
+                      <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                        Early Detection
+                      </Text>{' '}
+                      Cancer Screenings
                     </Text>
                   )}
                   {!isLab && !isMedicines && !isScreenings && benefit.category}

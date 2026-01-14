@@ -61,11 +61,7 @@ const EnrollmentCompletionScreen = () => {
             title="Find Nearest YAKAP Clinic"
           />
 
-          <Button
-            variant="text"
-            onPress={handleBackToHome}
-            title="Return to YAKAP Home"
-          />
+          <Button variant="text" onPress={handleBackToHome} title="Return to YAKAP Home" />
         </View>
 
         <View style={{ height: 100 }} />
