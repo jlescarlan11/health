@@ -214,19 +214,23 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             <View style={styles.optionContent}>
               <View style={{ flex: 1 }}>
                 <Text
-                  variant="titleMedium"
-                  style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginBottom: 4 }}
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                    marginBottom: 4,
+                  }}
                 >
                   Online Registration
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
                   The fastest way if you have internet access.
                 </Text>
               </View>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={24}
-                color={theme.colors.primary}
+                color={theme.colors.onSurfaceVariant}
                 style={{ marginLeft: 8 }}
               />
             </View>
@@ -253,19 +257,23 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             <View style={styles.optionContent}>
               <View style={{ flex: 1 }}>
                 <Text
-                  variant="titleMedium"
-                  style={{ color: theme.colors.onSurface, fontWeight: 'bold', marginBottom: 4 }}
+                  style={{
+                    color: theme.colors.onSurface,
+                    fontWeight: 'bold',
+                    fontSize: 18,
+                    marginBottom: 4,
+                  }}
                 >
                   Visit Local Office
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14 }}>
                   Go to the nearest PhilHealth Local Health Insurance Office.
                 </Text>
               </View>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={24}
-                color={theme.colors.primary}
+                color={theme.colors.onSurfaceVariant}
                 style={{ marginLeft: 8 }}
               />
             </View>
