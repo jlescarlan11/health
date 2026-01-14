@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
+import { YakapBenefitsCard } from '../../components/features/yakap';
 import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
 import { setHasPhilHealth } from '../../store/settingsSlice';
 
@@ -43,92 +44,6 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
     if (url) Linking.openURL(url);
   };
 
-  const renderBenefitsCard = () => (
-    <View
-      style={[
-        styles.benefitsWrapper,
-        {
-          backgroundColor: theme.colors.surface,
-          borderRadius: 20,
-          // Refined soft shadow for "Washi" feel
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 4,
-        },
-      ]}
-    >
-      <View style={styles.benefitHeader}>
-        <Text variant="labelLarge" style={[styles.benefitLabel, { color: theme.colors.primary }]}>
-          CORE BENEFIT
-        </Text>
-        <Text
-          variant="headlineSmall"
-          style={[styles.mainBenefit, { color: theme.colors.onSurface }]}
-        >
-          Primary Care
-        </Text>
-        <Text
-          variant="bodyMedium"
-          style={{
-            color: theme.colors.onSurfaceVariant,
-            marginTop: 8,
-            lineHeight: 22,
-            opacity: 0.9,
-          }}
-        >
-          Regular check-ups and consultations with your chosen provider at no cost.
-        </Text>
-      </View>
-
-      <View
-        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.2 }]}
-      />
-
-      <View style={styles.supplementarySection}>
-        <Text
-          variant="labelMedium"
-          style={{
-            color: theme.colors.onSurface,
-            marginBottom: 20,
-            opacity: 0.6,
-            letterSpacing: 1.5,
-            fontWeight: '800',
-          }}
-        >
-          INCLUDED COVERAGE
-        </Text>
-
-        <View style={styles.benefitList}>
-          <View style={styles.benefitItem}>
-            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab Tests
-              & Diagnostics
-            </Text>
-          </View>
-          <View style={styles.benefitItem}>
-            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text> Annual
-              Medicine Allowance
-            </Text>
-          </View>
-          <View style={styles.benefitItem}>
-            <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                Early Detection
-              </Text>{' '}
-              Cancer Screenings
-            </Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
   const renderContent = () => {
     if (hasPhilHealth === true) {
       return (
@@ -148,7 +63,9 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             </Text>
           </View>
 
-          <View style={{ marginBottom: 48 }}>{renderBenefitsCard()}</View>
+          <View style={{ marginBottom: 48 }}>
+            <YakapBenefitsCard />
+          </View>
 
           <Button
             variant="primary"
@@ -400,44 +317,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     lineHeight: 26,
     opacity: 0.8,
-  },
-  benefitsWrapper: {
-    padding: 24,
-  },
-  benefitHeader: {
-    marginBottom: 16,
-  },
-  benefitLabel: {
-    letterSpacing: 1.5,
-    fontWeight: '800',
-    marginBottom: 4,
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  mainBenefit: {
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-    marginVertical: 16,
-  },
-  supplementarySection: {
-    width: '100%',
-  },
-  benefitList: {
-    gap: 16,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  benefitDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 12,
   },
   actionButton: {
     marginTop: 8,

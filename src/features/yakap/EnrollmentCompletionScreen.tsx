@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { YAKAP_BENEFITS } from './yakapContent';
+import { YakapBenefitsCard } from '../../components/features/yakap';
 
 type EnrollmentCompletionNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -52,55 +52,7 @@ const EnrollmentCompletionScreen = () => {
           </Text>
         </View>
 
-        <View
-          style={[
-            styles.benefitsSection,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.outlineVariant,
-              // Subtle drop shadow
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 4,
-              elevation: 2,
-            },
-          ]}
-        >
-          <View style={styles.sectionHeader}>
-            <View style={[styles.accentLine, { backgroundColor: theme.colors.secondary }]} />
-            <Text
-              variant="titleMedium"
-              style={[styles.benefitsHeader, { color: theme.colors.onSurface }]}
-            >
-              Your YAKAP Benefits
-            </Text>
-          </View>
-
-          {YAKAP_BENEFITS.slice(0, 3).map((benefit, index) => (
-            <View
-              key={benefit.id}
-              style={[
-                styles.benefitItem,
-                index === 0 && styles.firstBenefit,
-                index === 2 && styles.lastBenefit,
-              ]}
-            >
-              <View style={[styles.bulletPoint, { backgroundColor: theme.colors.primary }]} />
-              <View style={styles.benefitTextContent}>
-                <Text variant="labelLarge" style={{ color: theme.colors.onSurface }}>
-                  {benefit.category}
-                </Text>
-                <Text
-                  variant="bodySmall"
-                  style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}
-                >
-                  {benefit.description}
-                </Text>
-              </View>
-            </View>
-          ))}
-        </View>
+        <YakapBenefitsCard style={{ marginBottom: 40 }} />
 
         <View style={styles.actionContainer}>
           <Button
@@ -144,53 +96,6 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginTop: 16,
     lineHeight: 24,
-  },
-  benefitsSection: {
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 40,
-    borderWidth: 1,
-    elevation: 0,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  accentLine: {
-    width: 4,
-    height: 18,
-    borderRadius: 2,
-    marginRight: 10,
-  },
-  benefitsHeader: {
-    fontWeight: '600',
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    alignItems: 'flex-start',
-  },
-  firstBenefit: {
-    paddingTop: 0,
-  },
-  lastBenefit: {
-    paddingBottom: 0,
-  },
-  bulletPoint: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 8,
-    marginRight: 12,
-  },
-  benefitTextContent: {
-    flex: 1,
-  },
-  benefitDesc: {
-    marginTop: 4,
-    lineHeight: 18,
-    opacity: 0.8,
   },
   actionContainer: {
     gap: 12,
