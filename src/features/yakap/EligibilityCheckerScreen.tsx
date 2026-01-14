@@ -31,7 +31,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   };
 
   const handlePhilHealthLink = () => {
-    Linking.openURL('https://www.philhealth.gov.ph/services/epr/');
+    Linking.openURL('https://memberinquiry.philhealth.gov.ph/member/pinApplication.xhtml');
   };
 
   const handleMap = () => {
@@ -59,7 +59,10 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         <Text variant="labelLarge" style={[styles.benefitLabel, { color: theme.colors.primary }]}>
           CORE BENEFIT
         </Text>
-        <Text variant="headlineSmall" style={[styles.mainBenefit, { color: theme.colors.onSurface }]}>
+        <Text
+          variant="headlineSmall"
+          style={[styles.mainBenefit, { color: theme.colors.onSurface }]}
+        >
           Primary Care
         </Text>
         <Text
@@ -85,19 +88,20 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
         <View style={styles.benefitList}>
           <View style={styles.benefitItem}>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab Tests
-              & Diagnostics
+              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Free</Text> Lab
+              Tests & Diagnostics
             </Text>
           </View>
           <View style={styles.benefitItem}>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text> Annual
-              Medicine Allowance
+              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>₱20,000</Text>{' '}
+              Annual Medicine Allowance
             </Text>
           </View>
           <View style={styles.benefitItem}>
             <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
-              • <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              •{' '}
+              <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 Early Detection
               </Text>{' '}
               Cancer Screenings
@@ -115,16 +119,13 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <View style={styles.successHeader}>
             <Text
               variant="headlineMedium"
-              style={[styles.successTitle, { color: theme.colors.primary }]}
+              style={[styles.successTitle, { color: theme.colors.onSurface }]}
             >
-              You’re Eligible!
+              You are Eligible!
             </Text>
             <Text
               variant="bodyLarge"
-              style={[
-                styles.successSubtitle,
-                { color: theme.colors.onSurfaceVariant },
-              ]}
+              style={[styles.successSubtitle, { color: theme.colors.onSurfaceVariant }]}
             >
               Since you have a PhilHealth PIN, you can join YAKAP immediately.
             </Text>
@@ -258,7 +259,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
 
     // Default: Initial question (hasPhilHealth is null or undefined)
     return (
-      <View style={styles.centeredContent}>
+      <View style={styles.initialSection}>
         <Text
           variant="headlineMedium"
           style={[styles.questionText, { color: theme.colors.onSurface }]}
@@ -319,10 +320,8 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     flexGrow: 1,
   },
-  centeredContent: {
-    flex: 1,
-    paddingVertical: 20,
-    justifyContent: 'center',
+  initialSection: {
+    marginTop: 8,
   },
   questionText: {
     textAlign: 'left',
