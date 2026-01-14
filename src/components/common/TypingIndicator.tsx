@@ -37,7 +37,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
             duration: 400,
             useNativeDriver: true,
           }),
-        ])
+        ]),
       );
     };
 

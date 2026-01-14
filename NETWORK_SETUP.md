@@ -7,11 +7,13 @@ This guide explains how to resolve network connectivity issues between the mobil
 ### 1. Get Your Local IP Address
 
 Run this command to get your local IP address:
+
 ```bash
 node get-local-ip.js
 ```
 
 Or on Windows PowerShell:
+
 ```powershell
 Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -like '192.168.*' -or $_.IPAddress -like '10.*'} | Select-Object -First 1 | ForEach-Object {$_.IPAddress}
 ```
@@ -37,6 +39,7 @@ npm run dev
 ```
 
 The server should show:
+
 ```
 Server is running on port 3000
 ```
@@ -51,6 +54,7 @@ npx expo start --clear
 ```
 
 Or if you're already in the project root:
+
 ```bash
 npm start -- --clear
 ```
@@ -58,11 +62,13 @@ npm start -- --clear
 ### 5. Verify Backend is Accessible
 
 Test the health endpoint:
+
 ```bash
 node test-backend.js
 ```
 
 You should see:
+
 - ✓ Health Check (localhost): Status 200
 - ✓ Health Check (LAN IP): Status 200
 
@@ -87,6 +93,7 @@ You should see:
 **Cause**: Backend server is not running or not accessible.
 
 **Solution**:
+
 1. Verify backend is running: `cd backend && npm run dev`
 2. Check if port 3000 is in use: `netstat -ano | findstr :3000` (Windows)
 3. Ensure firewall allows connections on port 3000
@@ -97,6 +104,7 @@ You should see:
 **Cause**: Cannot resolve the hostname/IP address.
 
 **Solution**:
+
 1. Update `app.config.js` with the correct local IP address
 2. Ensure both devices (computer and phone) are on the same network
 3. Restart Expo with `--clear` flag
@@ -106,6 +114,7 @@ You should see:
 **Cause**: Backend CORS configuration is blocking requests.
 
 **Solution**:
+
 - CORS is already configured in `backend/src/app.ts` to allow all origins
 - If issues persist, check that the backend server was restarted after changes
 
@@ -114,6 +123,7 @@ You should see:
 **Cause**: Database connection issue (not a network problem).
 
 **Solution**:
+
 1. Check database connection string in `backend/.env`
 2. Verify Prisma client is generated: `cd backend && npx prisma generate`
 3. Check backend server logs for database errors
@@ -146,6 +156,3 @@ node test-backend.js
 - **Android Emulator**: Uses `10.0.2.2` automatically - no configuration needed
 - **iOS Simulator**: Uses `localhost` automatically - no configuration needed
 - **Physical Devices**: Must use the local IP address (e.g., `192.168.1.5`)
-
-
-

@@ -40,22 +40,30 @@ async function testEndpoint(url, name) {
 
 async function runTests() {
   console.log('Testing backend endpoints...\n');
-  
+
   console.log('Testing localhost endpoints:');
   const healthLocal = await testEndpoint(`${BASE_URL}/health`, 'Health Check (localhost)');
-  const facilitiesLocal = await testEndpoint(`${BASE_URL}/api/facilities`, 'Facilities (localhost)');
-  
+  const facilitiesLocal = await testEndpoint(
+    `${BASE_URL}/api/facilities`,
+    'Facilities (localhost)',
+  );
+
   console.log('\nTesting LAN IP endpoints:');
   const healthLAN = await testEndpoint(`${BASE_URL_LAN}/health`, 'Health Check (LAN IP)');
   const facilitiesLAN = await testEndpoint(`${BASE_URL_LAN}/api/facilities`, 'Facilities (LAN IP)');
-  
+
   console.log('\n--- Summary ---');
   console.log(`Health (localhost): ${healthLocal.success ? '✓' : '✗'}`);
   console.log(`Facilities (localhost): ${facilitiesLocal.success ? '✓' : '✗'}`);
   console.log(`Health (LAN IP): ${healthLAN.success ? '✓' : '✗'}`);
   console.log(`Facilities (LAN IP): ${facilitiesLAN.success ? '✓' : '✗'}`);
-  
-  if (healthLocal.success && facilitiesLocal.success && healthLAN.success && facilitiesLAN.success) {
+
+  if (
+    healthLocal.success &&
+    facilitiesLocal.success &&
+    healthLAN.success &&
+    facilitiesLAN.success
+  ) {
     console.log('\n✓ All tests passed!');
     process.exit(0);
   } else {
@@ -65,6 +73,3 @@ async function runTests() {
 }
 
 runTests();
-
-
-

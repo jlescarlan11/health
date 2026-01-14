@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
-import { FacilitiesStackScreenProps } from '../types/navigation';
+import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { selectFacility } from '../store/facilitiesSlice';
 import { Button } from '../components/common/Button';
@@ -28,7 +28,7 @@ import { getOpenStatus } from '../utils';
 import { useTheme } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 
-type FacilityDetailsRouteProp = FacilitiesStackScreenProps<'FacilityDetails'>['route'];
+type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
 const { width } = Dimensions.get('window');
 const IMAGE_HEIGHT = 250;
@@ -45,7 +45,14 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
     return 'local-hospital';
   };
 
-  return <MaterialIcons name={getIconName(serviceName)} size={24} color={theme.colors.primary} style={styles.serviceIcon} />;
+  return (
+    <MaterialIcons
+      name={getIconName(serviceName)}
+      size={24}
+      color={theme.colors.primary}
+      style={styles.serviceIcon}
+    />
+  );
 };
 
 export const FacilityDetailsScreen = () => {
@@ -56,7 +63,7 @@ export const FacilityDetailsScreen = () => {
   const { facilityId } = route.params || { facilityId: '' };
 
   const facility = useSelector((state: RootState) =>
-    state.facilities.facilities.find((f) => f.id === facilityId)
+    state.facilities.facilities.find((f) => f.id === facilityId),
   );
 
   const { location, errorMsg, permissionStatus, requestPermission } = useUserLocation();
@@ -77,7 +84,9 @@ export const FacilityDetailsScreen = () => {
       <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
         <StandardHeader title="Details" showBackButton />
         <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: theme.colors.onSurfaceVariant }]}>Facility not found.</Text>
+          <Text style={[styles.errorText, { color: theme.colors.onSurfaceVariant }]}>
+            Facility not found.
+          </Text>
           <Button title="Go Back" onPress={() => navigation.goBack()} />
         </View>
       </View>
@@ -122,7 +131,7 @@ export const FacilityDetailsScreen = () => {
   };
 
   const { isOpen, text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
-  
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader
@@ -134,10 +143,10 @@ export const FacilityDetailsScreen = () => {
           </TouchableOpacity>
         }
       />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Photo Gallery */}
-        <TouchableOpacity 
+        <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => images.length > 0 && setImageViewerVisible(true)}
         >
@@ -153,7 +162,7 @@ export const FacilityDetailsScreen = () => {
             </View>
           )}
         </TouchableOpacity>
-        
+
         {images.length > 0 && (
           <ImageViewing
             images={images}
@@ -167,38 +176,42 @@ export const FacilityDetailsScreen = () => {
           {/* Header Info */}
           <View style={styles.headerSection}>
             <View style={styles.titleRow}>
-              <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>{facility.name}</Text>
+              <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>
+                {facility.name}
+              </Text>
               {facility.yakapAccredited && (
                 <View style={[styles.yakapBadge, { backgroundColor: theme.colors.primary }]}>
                   <Text style={styles.yakapText}>YAKAP</Text>
                 </View>
               )}
             </View>
-            <Text style={[styles.facilityType, { color: theme.colors.onSurfaceVariant }]}>{facility.type}</Text>
+            <Text style={[styles.facilityType, { color: theme.colors.onSurfaceVariant }]}>
+              {facility.type}
+            </Text>
           </View>
 
           {/* Quick Actions */}
           <View style={styles.actionButtons}>
-            <Button 
-              icon="phone" 
-              title="Call" 
-              onPress={handleCall} 
-              style={styles.actionButton} 
-              variant="primary" 
+            <Button
+              icon="phone"
+              title="Call"
+              onPress={handleCall}
+              style={styles.actionButton}
+              variant="primary"
             />
-            <Button 
-              icon="directions" 
-              title="Directions" 
-              onPress={handleDirections} 
-              style={styles.actionButton} 
-              variant="outline" 
+            <Button
+              icon="directions"
+              title="Directions"
+              onPress={handleDirections}
+              style={styles.actionButton}
+              variant="outline"
             />
-            <Button 
-              icon="share" 
-              title="Share" 
-              onPress={handleShare} 
-              style={styles.actionButton} 
-              variant="outline" 
+            <Button
+              icon="share"
+              title="Share"
+              onPress={handleShare}
+              style={styles.actionButton}
+              variant="outline"
             />
           </View>
 
@@ -210,37 +223,73 @@ export const FacilityDetailsScreen = () => {
               <Ionicons name="location-outline" size={24} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Address</Text>
-              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>{facility.address}</Text>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+                Address
+              </Text>
+              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
+                {facility.address}
+              </Text>
               {distance !== null ? (
-                <View style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Ionicons name="navigate-circle-outline" size={14} color={theme.colors.onSurfaceVariant} />
-                  <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>{formatDistance(distance)} away</Text>
+                <View
+                  style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}
+                >
+                  <Ionicons
+                    name="navigate-circle-outline"
+                    size={14}
+                    color={theme.colors.onSurfaceVariant}
+                  />
+                  <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>
+                    {formatDistance(distance)} away
+                  </Text>
                 </View>
               ) : (
                 (permissionStatus === 'denied' || errorMsg) && (
-                  <TouchableOpacity 
-                    onPress={requestPermission} 
+                  <TouchableOpacity
+                    onPress={requestPermission}
                     style={[styles.distanceBadge, { backgroundColor: theme.colors.errorContainer }]}
                   >
                     <Ionicons name="location" size={14} color={theme.colors.error} />
-                    <Text style={[styles.distanceText, { color: theme.colors.error }]}>Enable location to see distance</Text>
+                    <Text style={[styles.distanceText, { color: theme.colors.error }]}>
+                      Enable location to see distance
+                    </Text>
                   </TouchableOpacity>
                 )
               )}
             </View>
           </View>
-          
+
           {/* Hours */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
               <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Operating Hours</Text>
-              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>{facility.hours || 'Hours not available'}</Text>
-              <View style={[styles.openStatus, { backgroundColor: openStatusColor === 'green' ? theme.colors.primaryContainer : theme.colors.errorContainer }]}>
-                <Text style={[styles.openStatusText, { color: openStatusColor === 'green' ? theme.colors.primary : theme.colors.error }]}>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+                Operating Hours
+              </Text>
+              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
+                {facility.hours || 'Hours not available'}
+              </Text>
+              <View
+                style={[
+                  styles.openStatus,
+                  {
+                    backgroundColor:
+                      openStatusColor === 'green'
+                        ? theme.colors.primaryContainer
+                        : theme.colors.errorContainer,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.openStatusText,
+                    {
+                      color:
+                        openStatusColor === 'green' ? theme.colors.primary : theme.colors.error,
+                    },
+                  ]}
+                >
                   {openStatusText}
                 </Text>
               </View>
@@ -253,8 +302,12 @@ export const FacilityDetailsScreen = () => {
               <Ionicons name="call-outline" size={24} color={theme.colors.primary} />
             </View>
             <TouchableOpacity onPress={handleCall} style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>Phone</Text>
-              <Text style={[styles.infoText, styles.linkText, { color: theme.colors.primary }]}>{facility.phone || 'Not available'}</Text>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+                Phone
+              </Text>
+              <Text style={[styles.infoText, styles.linkText, { color: theme.colors.primary }]}>
+                {facility.phone || 'Not available'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -265,9 +318,14 @@ export const FacilityDetailsScreen = () => {
             <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Services</Text>
             <View style={styles.servicesGrid}>
               {facility.services.map((service, index) => (
-                <View key={index} style={[styles.serviceItem, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <View
+                  key={index}
+                  style={[styles.serviceItem, { backgroundColor: theme.colors.surfaceVariant }]}
+                >
                   <ServiceIcon serviceName={service} />
-                  <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>{service}</Text>
+                  <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
+                    {service}
+                  </Text>
                 </View>
               ))}
             </View>

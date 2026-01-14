@@ -30,30 +30,31 @@ const linking: LinkingOptions<RootStackParamList> = {
             path: 'check',
             screens: {
               NavigatorHome: '',
-              SymptomAssessment: 'assessment',
-              Recommendation: 'recommendation',
-              CrisisSupport: 'crisis',
-            }
+            },
           },
           Find: {
             path: 'find',
             screens: {
               FacilityDirectory: '',
-              FacilityDetails: 'details/:facilityId',
-            }
+            },
           },
           YAKAP: {
             path: 'yakap',
             screens: {
               YakapHome: '',
-              EligibilityChecker: 'eligibility',
-              EnrollmentPathway: 'pathway',
-              EnrollmentGuide: 'guide/:pathwayId',
-              EnrollmentCompletion: 'completion',
-            }
+            },
           },
         },
       },
+      SymptomAssessment: 'assessment',
+      Recommendation: 'recommendation',
+      CrisisSupport: 'crisis',
+      FacilityDetails: 'details/:facilityId',
+      YakapFaq: 'faq',
+      EligibilityChecker: 'eligibility',
+      EnrollmentPathway: 'pathway',
+      EnrollmentGuide: 'guide/:pathwayId',
+      EnrollmentCompletion: 'completion',
       NotFound: '*',
       PrivacyPolicy: 'privacy',
       TermsOfService: 'terms',
@@ -67,7 +68,7 @@ const AppContent = () => {
     const startup = async () => {
       try {
         await initDatabase();
-        
+
         // Initial Sync Status Load
         const lastSync = await getLastSyncTime();
         if (lastSync) {
@@ -82,7 +83,7 @@ const AppContent = () => {
         console.error('Startup initialization failed:', err);
       }
     };
-    
+
     startup();
 
     // Network Listener

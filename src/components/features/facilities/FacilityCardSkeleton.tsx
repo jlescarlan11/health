@@ -23,19 +23,14 @@ const SkeletonItem = ({ style }: { style: ViewStyle }) => {
           duration: 800,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     animation.start();
     return () => animation.stop();
   }, [opacity]);
 
   return (
-    <Animated.View
-      style={[
-        { opacity, backgroundColor: theme.colors.surfaceVariant },
-        style,
-      ]}
-    />
+    <Animated.View style={[{ opacity, backgroundColor: theme.colors.surfaceVariant }, style]} />
   );
 };
 

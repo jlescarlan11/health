@@ -3,9 +3,10 @@ import * as facilityService from '../services/facilityService';
 
 // Helper to map DB model to Frontend Interface
 const mapToFacility = (f: any) => {
-  const hours = f.operating_hours && typeof f.operating_hours === 'object' 
-    ? (f.operating_hours as any).description || '' 
-    : '';
+  const hours =
+    f.operating_hours && typeof f.operating_hours === 'object'
+      ? (f.operating_hours as any).description || ''
+      : '';
 
   return {
     id: f.id,
@@ -20,7 +21,7 @@ const mapToFacility = (f: any) => {
     hours: hours,
     operatingHours: f.operating_hours, // Expose full structured data
     photoUrl: f.photos && f.photos.length > 0 ? f.photos[0] : null,
-    distance: f.distance // Preserve if present
+    distance: f.distance, // Preserve if present
   };
 };
 
@@ -30,14 +31,15 @@ export const listFacilities = async (req: Request, res: Response) => {
 
     const result = await facilityService.getAllFacilities({
       type: type as string,
-      yakap_accredited: yakap_accredited === 'true' ? true : yakap_accredited === 'false' ? false : undefined,
+      yakap_accredited:
+        yakap_accredited === 'true' ? true : yakap_accredited === 'false' ? false : undefined,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });
 
     res.json({
       ...result,
-      facilities: result.facilities.map(mapToFacility)
+      facilities: result.facilities.map(mapToFacility),
     });
   } catch (error) {
     console.error('Error listing facilities:', error);
@@ -93,12 +95,12 @@ export const listFacilitiesByType = async (req: Request, res: Response) => {
     const result = await facilityService.getFacilitiesByType(
       type,
       limit ? Number(limit) : undefined,
-      offset ? Number(offset) : undefined
+      offset ? Number(offset) : undefined,
     );
 
     res.json({
       ...result,
-      facilities: result.facilities.map(mapToFacility)
+      facilities: result.facilities.map(mapToFacility),
     });
   } catch (error) {
     console.error('Error listing facilities by type:', error);

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,10 +8,12 @@ const TermsOfServiceScreen = () => {
       <ScrollView contentContainerStyle={styles.contentContainer}>
         <Text style={styles.title}>Terms of Service</Text>
         <Text style={styles.paragraph}>
-          This is a placeholder for the Terms of Service. The full text will be available in a future version.
+          This is a placeholder for the Terms of Service. The full text will be available in a
+          future version.
         </Text>
         <Text style={styles.paragraph}>
-          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+          commodo consequat.
         </Text>
       </ScrollView>
     </SafeAreaView>

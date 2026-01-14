@@ -59,12 +59,6 @@ const navigationSlice = createSlice({
   },
 });
 
-export const { 
-  addMessage, 
-  setSymptoms, 
-  setRecommendation, 
-  setLoading, 
-  setError, 
-  clearSession 
-} = navigationSlice.actions;
+export const { addMessage, setSymptoms, setRecommendation, setLoading, setError, clearSession } =
+  navigationSlice.actions;
 export default navigationSlice.reducer;

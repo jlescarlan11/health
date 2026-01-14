@@ -7,20 +7,20 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { ENROLLMENT_PATHWAYS } from './yakapContent';
-import { YakapStackParamList } from '../../navigation/types';
+import { ENROLLMENT_PATHWAYS, OFFICIAL_CONTACTS } from './yakapContent';
+import { RootStackParamList } from '../../types/navigation';
 
 const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<YakapStackParamList, 'EnrollmentGuide'>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'EnrollmentGuide'>>();
   const theme = useTheme();
 
   const { pathwayId } = route.params;
-  
+
   const [currentStep, setCurrentStep] = useState(0);
 
-  const pathway = ENROLLMENT_PATHWAYS.find(p => p.id === pathwayId);
-  
+  const pathway = ENROLLMENT_PATHWAYS.find((p) => p.id === pathwayId);
+
   useEffect(() => {
     if (!pathway) {
       navigation.goBack();
@@ -49,59 +49,86 @@ const EnrollmentGuideScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <StandardHeader title="Enrollment Guide" showBackButton />
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerSection}>
-          <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>{pathway.name}</Text>
-          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>Step {currentStep + 1} of {totalSteps}</Text>
-          <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
+          <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>
+            {pathway.name}
+          </Text>
+          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>
+            Step {currentStep + 1} of {totalSteps}
+          </Text>
+          <ProgressBar
+            progress={progress}
+            color={theme.colors.primary}
+            style={styles.progressBar}
+          />
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
-            <View style={styles.stepHeader}>
-                <View style={[styles.stepNumberBadge, { backgroundColor: theme.colors.primaryContainer }]}>
-                    <Text style={[styles.stepNumberText, { color: theme.colors.primary }]}>{currentStep + 1}</Text>
-                </View>
-                <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Instruction</Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+          ]}
+        >
+          <View style={styles.stepHeader}>
+            <View
+              style={[styles.stepNumberBadge, { backgroundColor: theme.colors.primaryContainer }]}
+            >
+              <Text style={[styles.stepNumberText, { color: theme.colors.primary }]}>
+                {currentStep + 1}
+              </Text>
             </View>
-            
-            <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>{currentStepData}</Text>
-            
-            <Divider style={styles.divider} />
-            
-            <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
-                <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={theme.colors.secondary} />
-                <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
-                    Tip: Ensure all information provided matches your official documents to avoid delays.
-                </Text>
-            </View>
+            <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Instruction</Text>
+          </View>
+
+          <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>
+            {currentStepData}
+          </Text>
+
+          <Divider style={styles.divider} />
+
+          <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
+            <MaterialCommunityIcons
+              name="lightbulb-on-outline"
+              size={24}
+              color={theme.colors.secondary}
+            />
+            <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
+              Tip: Ensure all information provided matches your official documents to avoid delays.
+            </Text>
+          </View>
         </View>
 
         <View style={styles.navigationButtons}>
-            <Button 
-                variant="outline" 
-                onPress={handlePrevious} 
-                disabled={currentStep === 0}
-                style={styles.navButton}
-                title="Previous"
-            />
-            <Button 
-                variant="primary" 
-                onPress={handleNext} 
-                style={styles.navButton}
-                title={currentStep === totalSteps - 1 ? "Finish" : "Next"}
-            />
+          <Button
+            variant="text"
+            onPress={handlePrevious}
+            disabled={currentStep === 0}
+            style={styles.navButton}
+            contentStyle={styles.buttonContent}
+            title="Previous"
+          />
+          <Button
+            variant="primary"
+            onPress={handleNext}
+            style={styles.navButton}
+            contentStyle={styles.buttonContent}
+            title={currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
+          />
         </View>
 
         <View style={styles.infoBox}>
-            <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.onSurfaceVariant} />
-            <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
-                This is an informational guide. Progress is not saved between sessions.
-            </Text>
+          <Text style={[styles.infoTitle, { color: theme.colors.onSurface }]}>Need Assistance?</Text>
+          <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
+            If you encounter any issues during the enrollment process, you can contact the PhilHealth Hotline at {OFFICIAL_CONTACTS.philhealth_hotline} or visit the nearest local office.
+          </Text>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -112,33 +139,30 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    padding: 20,
     paddingBottom: 40,
   },
   headerSection: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   pathwayName: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   stepCounter: {
     fontSize: 14,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   progressBar: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E0E0E0',
-    marginBottom: 8,
+    height: 6,
+    borderRadius: 3,
   },
   card: {
-    borderRadius: 12,
     padding: 20,
-    marginBottom: 24,
-    elevation: 0,
+    borderRadius: 12,
     borderWidth: 1,
+    marginBottom: 24,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -146,63 +170,69 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   stepNumberBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   stepNumberText: {
-    fontSize: 16,
     fontWeight: 'bold',
+    fontSize: 14,
   },
   stepTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   instructionText: {
     fontSize: 16,
     lineHeight: 24,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   divider: {
-    marginVertical: 16,
+    marginBottom: 20,
   },
   tipsSection: {
     flexDirection: 'row',
-    padding: 12,
+    padding: 16,
     borderRadius: 8,
-    marginBottom: 16,
     alignItems: 'flex-start',
   },
   tipsText: {
     flex: 1,
-    marginLeft: 8,
+    marginLeft: 12,
     fontSize: 14,
     lineHeight: 20,
   },
   navigationButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 24,
   },
   navButton: {
     flex: 1,
-    marginHorizontal: 4,
+  },
+  buttonContent: {
+    paddingVertical: 10,
   },
   infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  infoTitle: {
+    fontWeight: 'bold',
+    marginBottom: 4,
   },
   infoText: {
-    fontSize: 12,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    fontSize: 14,
+    lineHeight: 20,
+    opacity: 0.8,
   },
 });
+
 
 export default EnrollmentGuideScreen;

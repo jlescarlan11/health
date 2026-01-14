@@ -5,25 +5,25 @@ let Mapbox: any = null;
 const isExpoGo = Constants.appOwnership === 'expo';
 
 if (!isExpoGo) {
-    try {
-        Mapbox = require('@rnmapbox/maps');
-    } catch (error) {
-        console.warn('Mapbox native module not found in service');
-    }
+  try {
+    Mapbox = require('@rnmapbox/maps');
+  } catch (error) {
+    console.warn('Mapbox native module not found in service');
+  }
 }
 
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 
 // Naga City Bounding Box (approximate)
 const NAGA_BOUNDS = {
-  ne: [123.2500, 13.6800],
-  sw: [123.1500, 13.5800],
+  ne: [123.25, 13.68],
+  sw: [123.15, 13.58],
 };
 
 export const getDirections = async (
   start: [number, number],
   end: [number, number],
-  profile: 'walking' | 'driving' = 'driving'
+  profile: 'walking' | 'driving' = 'driving',
 ): Promise<{
   routes: {
     geometry: LineString;
@@ -38,7 +38,7 @@ export const getDirections = async (
 
   try {
     const response = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/${profile}/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${MAPBOX_TOKEN}`
+      `https://api.mapbox.com/directions/v5/mapbox/${profile}/${start[0]},${start[1]};${end[0]},${end[1]}?geometries=geojson&access_token=${MAPBOX_TOKEN}`,
     );
 
     const data = await response.json();
@@ -63,7 +63,7 @@ export const getDirections = async (
 
 export const downloadOfflineMap = async (
   name: string = 'NagaCity',
-  styleUrl: string = Mapbox?.StyleURL?.Street || 'mapbox://styles/mapbox/streets-v11'
+  styleUrl: string = Mapbox?.StyleURL?.Street || 'mapbox://styles/mapbox/streets-v11',
 ) => {
   if (!Mapbox) return;
 
@@ -81,7 +81,7 @@ export const downloadOfflineMap = async (
       },
       (region: any, error: any) => {
         console.error(`Offline pack ${name} error:`, error);
-      }
+      },
     );
     console.log(`Offline pack ${name} download started`);
   } catch (error) {

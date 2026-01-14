@@ -38,7 +38,7 @@ describe('Facility Routes', () => {
       expect(response.body.facilities[0].yakapAccredited).toBe(true);
       expect(response.body.facilities[0].hours).toBe('Mon-Fri: 8am-5pm');
       expect(response.body.facilities[0].photoUrl).toBe('url1');
-      
+
       expect(prismaMock.facility.findMany).toHaveBeenCalledTimes(1);
     });
 
@@ -50,7 +50,7 @@ describe('Facility Routes', () => {
 
       expect(response.status).toBe(200);
       expect(prismaMock.facility.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { type: 'hospital' } })
+        expect.objectContaining({ where: { type: 'hospital' } }),
       );
     });
   });
@@ -77,21 +77,21 @@ describe('Facility Routes', () => {
   });
 
   describe('GET /api/facilities/nearby', () => {
-      it('should return nearby facilities', async () => {
-          // Mock raw query response
-          prismaMock.$queryRaw.mockResolvedValue([mockFacility]);
+    it('should return nearby facilities', async () => {
+      // Mock raw query response
+      prismaMock.$queryRaw.mockResolvedValue([mockFacility]);
 
-          const response = await request(app).get('/api/facilities/nearby?lat=12.34&lng=56.78');
+      const response = await request(app).get('/api/facilities/nearby?lat=12.34&lng=56.78');
 
-          expect(response.status).toBe(200);
-          expect(response.body).toHaveLength(1);
-          expect(response.body[0].yakapAccredited).toBe(true);
-          expect(prismaMock.$queryRaw).toHaveBeenCalled();
-      });
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveLength(1);
+      expect(response.body[0].yakapAccredited).toBe(true);
+      expect(prismaMock.$queryRaw).toHaveBeenCalled();
+    });
 
-      it('should validate params', async () => {
-          const response = await request(app).get('/api/facilities/nearby');
-          expect(response.status).toBe(400);
-      });
+    it('should validate params', async () => {
+      const response = await request(app).get('/api/facilities/nearby');
+      expect(response.status).toBe(400);
+    });
   });
 });

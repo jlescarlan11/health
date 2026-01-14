@@ -13,7 +13,9 @@ export const loadFirebaseStorage = (): { storage: any; error: Error | null } => 
   }
 
   if (isExpoGo) {
-    loadError = new Error('Firebase Storage is not available in Expo Go. Use a development build instead.');
+    loadError = new Error(
+      'Firebase Storage is not available in Expo Go. Use a development build instead.',
+    );
     isLoaded = true;
     return { storage: null, error: loadError };
   }
@@ -21,9 +23,14 @@ export const loadFirebaseStorage = (): { storage: any; error: Error | null } => 
   try {
     const moduleName = '@react-native-firebase/storage';
     // Access require through global to avoid static analysis
-    const dynamicRequire = typeof require !== 'undefined' ? require : (() => { throw new Error('require not available'); });
+    const dynamicRequire =
+      typeof require !== 'undefined'
+        ? require
+        : () => {
+            throw new Error('require not available');
+          };
     firebaseStorageModule = dynamicRequire(moduleName);
-    
+
     // Test if the module can actually be used
     try {
       const testStorage = firebaseStorageModule.default || firebaseStorageModule;
@@ -31,9 +38,9 @@ export const loadFirebaseStorage = (): { storage: any; error: Error | null } => 
         const testInstance = testStorage(); // This will fail if native module isn't linked
         isLoaded = true;
         loadError = null;
-        return { 
-          storage: testStorage, 
-          error: null 
+        return {
+          storage: testStorage,
+          error: null,
         };
       }
     } catch (nativeError: any) {
@@ -41,12 +48,12 @@ export const loadFirebaseStorage = (): { storage: any; error: Error | null } => 
       isLoaded = true;
       return { storage: null, error: loadError };
     }
-    
+
     isLoaded = true;
     loadError = null;
-    return { 
-      storage: firebaseStorageModule.default || firebaseStorageModule, 
-      error: null 
+    return {
+      storage: firebaseStorageModule.default || firebaseStorageModule,
+      error: null,
     };
   } catch (error: any) {
     loadError = error;

@@ -6,6 +6,7 @@ interface SettingsState {
   highContrastMode: boolean;
   notificationsEnabled: boolean;
   language: 'en' | 'fil';
+  hasPhilHealth: boolean | null;
 }
 
 const initialState: SettingsState = {
@@ -14,6 +15,7 @@ const initialState: SettingsState = {
   highContrastMode: false,
   notificationsEnabled: true,
   language: 'en',
+  hasPhilHealth: null,
 };
 
 const settingsSlice = createSlice({
@@ -35,14 +37,18 @@ const settingsSlice = createSlice({
     setLanguage: (state, action: PayloadAction<SettingsState['language']>) => {
       state.language = action.payload;
     },
+    setHasPhilHealth: (state, action: PayloadAction<boolean | null>) => {
+      state.hasPhilHealth = action.payload;
+    },
   },
 });
 
-export const { 
-  setTheme, 
-  setFontSize, 
-  setHighContrastMode, 
-  toggleNotifications, 
-  setLanguage 
+export const {
+  setTheme,
+  setFontSize,
+  setHighContrastMode,
+  toggleNotifications,
+  setLanguage,
+  setHasPhilHealth,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

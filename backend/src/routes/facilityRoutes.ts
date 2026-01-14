@@ -17,7 +17,12 @@ router.get('/', validatePagination, asyncHandler(facilityController.listFaciliti
 router.get('/nearby', validateNearbyParams, asyncHandler(facilityController.listFacilitiesNearby));
 
 // GET /api/facilities/by-type/:type
-router.get('/by-type/:type', validateFacilityType, validatePagination, asyncHandler(facilityController.listFacilitiesByType));
+router.get(
+  '/by-type/:type',
+  validateFacilityType,
+  validatePagination,
+  asyncHandler(facilityController.listFacilitiesByType),
+);
 
 // GET /api/facilities/:id
 router.get('/:id', validateFacilityId, asyncHandler(facilityController.getFacility));

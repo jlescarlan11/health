@@ -10,11 +10,11 @@ interface EmergencyButtonProps {
   textColor?: string;
 }
 
-export const EmergencyButton: React.FC<EmergencyButtonProps> = ({ 
-  onPress, 
+export const EmergencyButton: React.FC<EmergencyButtonProps> = ({
+  onPress,
   style,
   buttonColor,
-  textColor
+  textColor,
 }) => {
   const theme = useTheme();
 

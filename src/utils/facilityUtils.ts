@@ -1,8 +1,10 @@
 import { Facility } from '../types';
 
-export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: string; color: string } => {
+export const getOpenStatus = (
+  facility: Facility,
+): { isOpen: boolean; text: string; color: string } => {
   const { hours, operatingHours } = facility;
-  
+
   // 1. Check structured data first
   if (operatingHours) {
     if (operatingHours.is24x7) {
@@ -15,7 +17,7 @@ export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: stri
     // Check specific schedule for today
     if (operatingHours.schedule) {
       const todayHours = operatingHours.schedule[dayOfWeek];
-      
+
       if (todayHours) {
         // Adjust to PH time if needed, but assuming device time is local for now
         const currentHours = now.getHours();
@@ -24,7 +26,7 @@ export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: stri
 
         const [openH, openM] = todayHours.open.split(':').map(Number);
         const [closeH, closeM] = todayHours.close.split(':').map(Number);
-        
+
         const openTimeInMinutes = openH * 60 + openM;
         let closeTimeInMinutes = closeH * 60 + closeM;
 
@@ -33,7 +35,10 @@ export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: stri
           closeTimeInMinutes = 24 * 60;
         }
 
-        if (currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes) {
+        if (
+          currentTimeInMinutes >= openTimeInMinutes &&
+          currentTimeInMinutes < closeTimeInMinutes
+        ) {
           // Format close time to 12h for display
           const closeH12 = closeH % 12 || 12;
           const closeAmPm = closeH >= 12 ? 'PM' : 'AM';
@@ -56,7 +61,7 @@ export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: stri
 
       const [openH, openM] = operatingHours.open.split(':').map(Number);
       const [closeH, closeM] = operatingHours.close.split(':').map(Number);
-      
+
       const openTimeInMinutes = openH * 60 + openM;
       const closeTimeInMinutes = closeH * 60 + closeM;
 
@@ -70,7 +75,7 @@ export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: stri
 
   // 2. Fallback to legacy string parsing
   if (!hours) return { isOpen: false, text: 'Hours N/A', color: 'gray' };
-  
+
   if (hours.toLowerCase().includes('24/7') || hours.toLowerCase().includes('24 hours')) {
     return { isOpen: true, text: 'Open 24/7', color: 'green' };
   }
@@ -79,10 +84,10 @@ export const getOpenStatus = (facility: Facility): { isOpen: boolean; text: stri
   const now = new Date();
   const currentHour = now.getHours();
   const isBusinessHours = currentHour >= 8 && currentHour < 17;
-  
+
   if (isBusinessHours) {
     return { isOpen: true, text: 'Open Now', color: 'green' };
   }
-  
+
   return { isOpen: false, text: 'Closed', color: 'red' };
 };

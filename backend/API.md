@@ -1,20 +1,24 @@
 # Health App API Documentation
 
 ## Base URL
+
 `http://localhost:3000/api`
 
 ## Facilities
 
 ### List Facilities
+
 GET `/facilities`
 
 Query Parameters:
+
 - `type` (optional): Filter by facility type (hospital, health_center, barangay_center)
 - `yakap_accredited` (optional): Filter by YAKAP accreditation (true/false)
 - `limit` (optional): Number of results per page (default: 10)
 - `offset` (optional): Pagination offset (default: 0)
 
 Response:
+
 ```json
 {
   "facilities": [
@@ -34,9 +38,11 @@ Response:
 ```
 
 ### Get Facility Details
+
 GET `/facilities/:id`
 
 Response:
+
 ```json
 {
   "id": "...",
@@ -48,15 +54,18 @@ Response:
 ```
 
 ### Nearby Facilities
+
 GET `/facilities/nearby`
 
 Query Parameters:
+
 - `lat` (required): Latitude
 - `lng` (required): Longitude
 - `radius` (optional): Radius in km (default: 5)
 - `type` (optional): Filter by type
 
 Response:
+
 ```json
 [
   {
@@ -70,9 +79,11 @@ Response:
 ## Symptoms
 
 ### List All Symptoms
+
 GET `/symptoms`
 
 Response:
+
 ```json
 [
   {
@@ -85,12 +96,15 @@ Response:
 ```
 
 ### Search Symptoms
+
 GET `/symptoms/search`
 
 Query Parameters:
+
 - `q` (required): Search query
 
 Response:
+
 ```json
 [
   {
@@ -104,9 +118,11 @@ Response:
 ## AI Navigation
 
 ### Get Recommendations
+
 POST `/ai/navigate`
 
 Body:
+
 ```json
 {
   "symptoms": "chest pain and shortness of breath",
@@ -117,6 +133,7 @@ Body:
 ```
 
 Response:
+
 ```json
 {
   "recommendation": "Emergency",
@@ -128,9 +145,11 @@ Response:
 ## YAKAP Program
 
 ### Get Program Info
+
 GET `/yakap/info`
 
 Response:
+
 ```json
 {
   "program_name": "YAKAP...",
@@ -142,9 +161,11 @@ Response:
 ```
 
 ### Enroll User
+
 POST `/yakap/enrollment`
 
 Body:
+
 ```json
 {
   "user_id": "unique_id",
@@ -153,6 +174,7 @@ Body:
 ```
 
 Response:
+
 ```json
 {
   "id": "...",
@@ -162,9 +184,11 @@ Response:
 ```
 
 ### Get Enrollment Status
+
 GET `/yakap/enrollment/:userId`
 
 Response:
+
 ```json
 {
   "id": "...",
@@ -177,9 +201,11 @@ Response:
 ## Emergency Contacts
 
 ### List All Contacts
+
 GET `/emergency-contacts`
 
 Response:
+
 ```json
 [
   {
@@ -192,9 +218,11 @@ Response:
 ```
 
 ### List by Category
+
 GET `/emergency-contacts/by-category/:category`
 
 Response:
+
 ```json
 [ ... ]
 ```

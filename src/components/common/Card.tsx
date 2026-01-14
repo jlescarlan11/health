@@ -22,11 +22,7 @@ export const Card: React.FC<CardProps> = ({
   const theme = useTheme();
 
   return (
-    <PaperCard
-      style={[styles.card, style]}
-      onPress={onPress}
-      mode={mode}
-    >
+    <PaperCard style={[styles.card, style]} onPress={onPress} mode={mode}>
       {(title || subtitle) && (
         <PaperCard.Title
           title={title}
@@ -35,9 +31,7 @@ export const Card: React.FC<CardProps> = ({
           subtitleStyle={styles.subtitle}
         />
       )}
-      <PaperCard.Content>
-        {children}
-      </PaperCard.Content>
+      <PaperCard.Content>{children}</PaperCard.Content>
     </PaperCard>
   );
 };

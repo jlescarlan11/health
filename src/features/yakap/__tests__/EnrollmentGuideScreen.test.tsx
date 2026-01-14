@@ -16,16 +16,16 @@ jest.mock('@react-navigation/native', () => ({
     navigate: mockNavigate,
   }),
   useRoute: () => ({
-    params: mockParams
+    params: mockParams,
   }),
 }));
 
 jest.mock('../../../components/common/StandardHeader', () => {
-    const { Text } = require('react-native');
-    return {
-        __esModule: true,
-        default: ({ title }: any) => <Text>{title}</Text>
-    }
+  const { Text } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ title }: any) => <Text>{title}</Text>,
+  };
 });
 
 // Mock Icons
@@ -34,13 +34,12 @@ jest.mock('@expo/vector-icons', () => ({
 }));
 
 describe('EnrollmentGuideScreen', () => {
-
   const renderComponent = () => (
-      <PaperProvider>
-        <NavigationContainer>
-          <EnrollmentGuideScreen />
-        </NavigationContainer>
-      </PaperProvider>
+    <PaperProvider>
+      <NavigationContainer>
+        <EnrollmentGuideScreen />
+      </NavigationContainer>
+    </PaperProvider>
   );
 
   beforeEach(() => {
@@ -50,7 +49,7 @@ describe('EnrollmentGuideScreen', () => {
   it('renders correctly when pathway is selected', () => {
     mockParams = { pathwayId: 'egovph' };
     const { getByText } = render(renderComponent());
-    
+
     expect(getByText('eGovPH Mobile App')).toBeTruthy();
     expect(getByText('Step 1 of 5')).toBeTruthy();
     expect(getByText('Next')).toBeTruthy();
@@ -59,7 +58,7 @@ describe('EnrollmentGuideScreen', () => {
   it('navigates back if no pathway selected (invalid id)', () => {
     // @ts-ignore
     mockParams = { pathwayId: null };
-    
+
     render(renderComponent());
     // The component checks if pathway exists. If ID is null, find returns undefined.
     expect(mockGoBack).toHaveBeenCalled();

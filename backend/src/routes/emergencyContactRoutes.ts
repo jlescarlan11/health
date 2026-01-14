@@ -8,6 +8,9 @@ const router = Router();
 router.get('/', asyncHandler(emergencyContactController.listEmergencyContacts));
 
 // GET /api/emergency-contacts/by-category/:category
-router.get('/by-category/:category', asyncHandler(emergencyContactController.listEmergencyContactsByCategory));
+router.get(
+  '/by-category/:category',
+  asyncHandler(emergencyContactController.listEmergencyContactsByCategory),
+);
 
 export default router;

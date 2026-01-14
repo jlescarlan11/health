@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
@@ -8,6 +16,8 @@ interface StandardHeaderProps {
   title: string;
   showBackButton?: boolean;
   onBackPress?: () => void;
+  backRoute?: string;
+  backParams?: any;
   rightActions?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
@@ -17,23 +27,33 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   title,
   showBackButton = false,
   onBackPress,
+  backRoute,
+  backParams,
   rightActions,
   style,
   titleStyle,
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const theme = useTheme();
 
   const handleBackPress = () => {
     if (onBackPress) {
       onBackPress();
-    } else {
+    } else if (navigation.canGoBack()) {
       navigation.goBack();
+    } else if (backRoute) {
+      navigation.navigate(backRoute, backParams);
     }
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }, style]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant },
+        style,
+      ]}
+    >
       <View style={styles.leftContainer}>
         {showBackButton && (
           <TouchableOpacity
@@ -86,7 +106,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
-    marginLeft: -8, 
+    marginLeft: -8,
   },
   title: {
     fontSize: 18,

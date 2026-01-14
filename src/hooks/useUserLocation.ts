@@ -18,7 +18,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       setPermissionStatus(status);
-      
+
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
         Alert.alert(
@@ -26,8 +26,8 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
           'This app needs access to your location to show nearby facilities. Please enable it in settings.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() }
-          ]
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ],
         );
         return false;
       }
@@ -47,10 +47,12 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
         accuracy: Location.Accuracy.Balanced,
       });
       setLocation(location);
-      dispatch(setUserLocation({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      }));
+      dispatch(
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        }),
+      );
     } catch (error) {
       setErrorMsg('Error getting location');
       console.warn(error);
@@ -77,11 +79,13 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
             },
             (newLocation) => {
               setLocation(newLocation);
-              dispatch(setUserLocation({
-                latitude: newLocation.coords.latitude,
-                longitude: newLocation.coords.longitude,
-              }));
-            }
+              dispatch(
+                setUserLocation({
+                  latitude: newLocation.coords.latitude,
+                  longitude: newLocation.coords.longitude,
+                }),
+              );
+            },
           );
         } catch (error) {
           console.warn('Error watching position:', error);

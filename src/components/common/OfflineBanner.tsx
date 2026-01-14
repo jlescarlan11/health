@@ -13,8 +13,15 @@ export const OfflineBanner = () => {
   if (!isOffline) return null;
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: theme.colors.inverseSurface }]}>
-      <Text style={[styles.text, { color: theme.colors.inverseOnSurface }]}>You are offline. Showing cached data.</Text>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, backgroundColor: theme.colors.inverseSurface },
+      ]}
+    >
+      <Text style={[styles.text, { color: theme.colors.inverseOnSurface }]}>
+        You are offline. Showing cached data.
+      </Text>
     </View>
   );
 };

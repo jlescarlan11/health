@@ -8,7 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
 import { Button } from '../../components/common/Button';
-import { YakapStackParamList } from '../../navigation/types';
+import { RootStackParamList } from '../../types/navigation';
 
 import StandardHeader from '../../components/common/StandardHeader';
 
@@ -63,7 +63,10 @@ const pathways: Pathway[] = [
   },
 ];
 
-type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<YakapStackParamList, 'EnrollmentPathway'>;
+type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'EnrollmentPathway'
+>;
 
 export const EnrollmentPathwayScreen = () => {
   const theme = useTheme();
@@ -85,7 +88,10 @@ export const EnrollmentPathwayScreen = () => {
 
   const renderDetailItem = (label: string, items: string[], color?: string) => (
     <View style={styles.detailSection}>
-      <Text variant="labelMedium" style={[styles.detailLabel, color ? { color } : undefined]}>
+      <Text
+        variant="labelMedium"
+        style={[styles.detailLabel, color ? { color } : { color: theme.colors.onSurfaceVariant }]}
+      >
         {label}
       </Text>
       {items.map((item, index) => (
@@ -97,49 +103,88 @@ export const EnrollmentPathwayScreen = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
-      <StandardHeader title="Choose Pathway" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text variant="bodyLarge" style={styles.headerText}>
-          Choose the enrollment method that works best for you.
-        </Text>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
+      <StandardHeader title="Enrollment Path" showBackButton />
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerContainer}>
+          <Text variant="bodyLarge" style={[styles.headerText, { color: theme.colors.onSurface }]}>
+            Choose the enrollment method that works best for you.
+          </Text>
+        </View>
 
         {pathways.map((pathway) => (
           <Card
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
-            style={StyleSheet.flatten([
+            mode="contained"
+            style={[
               styles.card,
-              { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
-              pathway.recommended && { borderColor: theme.colors.primary, borderWidth: 2 }
-            ])}
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outlineVariant,
+                borderWidth: 1,
+                // Subtle drop shadow
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 2,
+              },
+              pathway.recommended && styles.recommendedCard,
+            ]}
           >
+            {pathway.recommended && (
+              <View style={[styles.recommendedAccent, { backgroundColor: theme.colors.primary }]} />
+            )}
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderTitle}>
-                <Text variant="titleMedium" style={styles.cardTitle}>{pathway.name}</Text>
+                <Text
+                  variant="titleMedium"
+                  style={[styles.cardTitle, { color: theme.colors.onSurface }]}
+                >
+                  {pathway.name}
+                </Text>
                 {pathway.recommended && (
-                  <Chip style={[styles.recommendedChip, { backgroundColor: theme.colors.primaryContainer }]} textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}>Recommended</Chip>
+                  <Chip
+                    style={[
+                      styles.recommendedChip,
+                      { backgroundColor: theme.colors.primaryContainer },
+                    ]}
+                    textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}
+                  >
+                    RECOMMENDED
+                  </Chip>
                 )}
               </View>
-              <Text variant="bodySmall" style={{ color: theme.colors.secondary }}>
-                {pathway.duration} • {pathway.difficulty}
+              <Text variant="labelMedium" style={{ color: theme.colors.secondary }}>
+                {pathway.duration.toUpperCase()} • {pathway.difficulty.toUpperCase()}
               </Text>
             </View>
 
-            <Divider style={styles.divider} />
+            <Divider style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
             <View style={styles.cardContent}>
               <View style={styles.row}>
                 <View style={styles.column}>
-                  {renderDetailItem('Pros', pathway.pros, theme.colors.primary)}
+                  {renderDetailItem('PROS', pathway.pros, theme.colors.primary)}
                 </View>
                 <View style={styles.column}>
-                  {renderDetailItem('Cons', pathway.cons, theme.colors.error)}
+                  {renderDetailItem('CONS', pathway.cons, theme.colors.error)}
                 </View>
               </View>
-              
-              <View style={[styles.requirementsSection, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Text variant="labelMedium" style={styles.detailLabel}>Requirements:</Text>
+
+              <View
+                style={[
+                  styles.requirementsSection,
+                  { backgroundColor: theme.colors.primaryContainer, opacity: 0.8 },
+                ]}
+              >
+                <Text variant="labelSmall" style={styles.detailLabel}>
+                  REQUIREMENTS:
+                </Text>
                 <Text variant="bodySmall" style={styles.requirementsText}>
                   {pathway.requirements.join(', ')}
                 </Text>
@@ -147,24 +192,34 @@ export const EnrollmentPathwayScreen = () => {
             </View>
           </Card>
         ))}
+        <View style={{ height: 40 }} />
       </ScrollView>
 
       <Modal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
-        contentContainerStyle={StyleSheet.flatten([styles.modalContent, { backgroundColor: theme.colors.surface }])}
+        contentContainerStyle={[styles.modalContent, { backgroundColor: theme.colors.surface }]}
       >
-        <Text variant="headlineSmall" style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Confirm Selection</Text>
-        <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>
-          You have chosen <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>{selectedPathway?.name}</Text>.
+        <Text
+          variant="headlineSmall"
+          style={[styles.modalTitle, { color: theme.colors.onSurface }]}
+        >
+          Confirm Pathway
         </Text>
-        <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>
-          Do you want to proceed with this enrollment pathway?
+        <Text
+          variant="bodyMedium"
+          style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}
+        >
+          You have chosen{' '}
+          <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+            {selectedPathway?.name}
+          </Text>
+          . Do you want to proceed with this enrollment guide?
         </Text>
 
         <View style={styles.modalButtons}>
           <Button
-            variant="outline"
+            variant="text"
             title="Cancel"
             onPress={() => setModalVisible(false)}
             style={styles.modalButton}
@@ -186,88 +241,109 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 40, // Space for bottom tabs/safe area
+    padding: 20,
+  },
+  headerContainer: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
   },
   headerText: {
-    marginBottom: 16,
     textAlign: 'center',
+    lineHeight: 24,
+    opacity: 0.9,
   },
   card: {
     marginBottom: 16,
-    overflow: 'hidden', // For border radius
-    elevation: 0,
-    borderWidth: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  recommendedCard: {
+    // Distinguish via accent bar and subtle background instead of shadow
+    backgroundColor: '#FFFFFF',
+  },
+  recommendedAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 6,
+    zIndex: 1,
   },
   cardHeader: {
-    marginBottom: 8,
+    padding: 16,
+    paddingLeft: 20,
   },
   cardHeaderTitle: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    justifyContent: 'space-between',
+    marginBottom: 6,
   },
   cardTitle: {
     fontWeight: 'bold',
+    flex: 1,
   },
   recommendedChip: {
-    height: 24,
+    height: 22,
   },
   recommendedChipText: {
-    fontSize: 10,
-    lineHeight: 10,
-    marginVertical: 0,
-    marginHorizontal: 4,
+    fontSize: 9,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   divider: {
-    marginVertical: 8,
+    height: 1,
+    opacity: 0.3,
   },
   cardContent: {
-    marginTop: 4,
+    padding: 16,
+    paddingLeft: 20,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   column: {
     flex: 1,
-    paddingRight: 8,
+  },
+  requirementsSection: {
+    padding: 12,
+    borderRadius: 8,
+  },
+  requirementsText: {
+    marginTop: 4,
+    lineHeight: 18,
   },
   detailSection: {
     marginBottom: 8,
   },
   detailLabel: {
     fontWeight: 'bold',
-    marginBottom: 2,
+    marginBottom: 6,
+    letterSpacing: 1.2,
+    fontSize: 10,
   },
   detailText: {
-    marginBottom: 1,
-  },
-  requirementsSection: {
-    marginTop: 8,
-    padding: 8,
-    borderRadius: 4,
-  },
-  requirementsText: {
-    fontStyle: 'italic',
+    lineHeight: 20,
+    opacity: 0.9,
   },
   modalContent: {
     padding: 24,
-    borderRadius: 12,
+    margin: 24,
+    borderRadius: 20,
   },
   modalTitle: {
+    fontWeight: 'bold',
     marginBottom: 16,
-    textAlign: 'center',
   },
   modalText: {
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 24,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 24,
+    justifyContent: 'flex-end',
+    gap: 12,
   },
   modalButton: {
     minWidth: 100,

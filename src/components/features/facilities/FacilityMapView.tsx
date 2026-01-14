@@ -26,7 +26,7 @@ if (!isExpoGo) {
     console.warn('@rnmapbox/maps native module not available:', error?.message);
   }
 } else {
-    console.log('Running in Expo Go - Mapbox disabled');
+  console.log('Running in Expo Go - Mapbox disabled');
 }
 
 // Initialize Mapbox if available
@@ -35,8 +35,8 @@ if (Mapbox && MAPBOX_TOKEN) {
   try {
     Mapbox.setAccessToken(MAPBOX_TOKEN);
   } catch (error) {
-     console.warn('Failed to set Mapbox access token:', error);
-     Mapbox = null; // Disable Mapbox if initialization fails
+    console.warn('Failed to set Mapbox access token:', error);
+    Mapbox = null; // Disable Mapbox if initialization fails
   }
 } else if (Mapbox && !MAPBOX_TOKEN) {
   console.warn('Mapbox token not found. Map may not render correctly.');
@@ -50,15 +50,17 @@ export const FacilityMapView: React.FC = () => {
   const navigation = useNavigation<any>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { facilities, selectedFacilityId, userLocation } = useSelector((state: RootState) => state.facilities);
-  
+  const { facilities, selectedFacilityId, userLocation } = useSelector(
+    (state: RootState) => state.facilities,
+  );
+
   const [routeGeoJSON, setRouteGeoJSON] = useState<LineString | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ duration: number; distance: number } | null>(null);
-  
+
   const cameraRef = useRef<any>(null);
   const mapRef = useRef<any>(null);
   const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM_LEVEL);
-  
+
   // Show fallback if Mapbox is not available
   if (!Mapbox) {
     return (
@@ -68,15 +70,18 @@ export const FacilityMapView: React.FC = () => {
             Map View Unavailable
           </Text>
           <Text variant="bodyMedium" style={{ textAlign: 'center', color: theme.colors.error }}>
-            {isExpoGo 
-              ? 'Mapbox is not supported in Expo Go.' 
+            {isExpoGo
+              ? 'Mapbox is not supported in Expo Go.'
               : '@rnmapbox native module not available.'}
             {'\n'}
             {mapboxImportError?.message}
           </Text>
-          <Text variant="bodySmall" style={{ marginTop: 16, textAlign: 'center', color: theme.colors.onSurfaceVariant }}>
-            {isExpoGo 
-              ? 'Please use a development build to view the map.\nRun: npx expo run:android' 
+          <Text
+            variant="bodySmall"
+            style={{ marginTop: 16, textAlign: 'center', color: theme.colors.onSurfaceVariant }}
+          >
+            {isExpoGo
+              ? 'Please use a development build to view the map.\nRun: npx expo run:android'
               : 'Please rebuild your app with a development build.\nRun: npx expo run:android'}
           </Text>
         </View>
@@ -85,9 +90,9 @@ export const FacilityMapView: React.FC = () => {
   }
 
   // Get selected facility object
-  const selectedFacility = useMemo(() => 
-    facilities.find((f: Facility) => f.id === selectedFacilityId), 
-    [facilities, selectedFacilityId]
+  const selectedFacility = useMemo(
+    () => facilities.find((f: Facility) => f.id === selectedFacilityId),
+    [facilities, selectedFacilityId],
   );
 
   // Convert facilities to GeoJSON FeatureCollection
@@ -124,71 +129,71 @@ export const FacilityMapView: React.FC = () => {
         const start: [number, number] = [userLocation.longitude, userLocation.latitude];
         const end: [number, number] = [selectedFacility.longitude, selectedFacility.latitude];
         const result = await getDirections(start, end);
-        
+
         if (result && result.routes.length > 0) {
           setRouteGeoJSON(result.routes[0].geometry);
           setRouteInfo({
             duration: result.routes[0].duration,
             distance: result.routes[0].distance,
           });
-          
+
           // Fit bounds to show route
           if (cameraRef.current) {
-             // Basic bbox calculation
-             const minLng = Math.min(start[0], end[0]);
-             const minLat = Math.min(start[1], end[1]);
-             const maxLng = Math.max(start[0], end[0]);
-             const maxLat = Math.max(start[1], end[1]);
-             
-             cameraRef.current.fitBounds(
-               [maxLng, maxLat],
-               [minLng, minLat],
-               [50, 50, 300, 50], // padding
-               1000 // duration
-             );
+            // Basic bbox calculation
+            const minLng = Math.min(start[0], end[0]);
+            const minLat = Math.min(start[1], end[1]);
+            const maxLng = Math.max(start[0], end[0]);
+            const maxLat = Math.max(start[1], end[1]);
+
+            cameraRef.current.fitBounds(
+              [maxLng, maxLat],
+              [minLng, minLat],
+              [50, 50, 300, 50], // padding
+              1000, // duration
+            );
           }
         } else {
-            setRouteGeoJSON(null);
-            setRouteInfo(null);
+          setRouteGeoJSON(null);
+          setRouteInfo(null);
         }
       };
       fetchRoute();
     } else {
-        setRouteGeoJSON(null);
-        setRouteInfo(null);
+      setRouteGeoJSON(null);
+      setRouteInfo(null);
     }
   }, [selectedFacility, userLocation]);
 
   // Center on selected facility if no user location (and thus no route)
   useEffect(() => {
     if (selectedFacility && !userLocation && cameraRef.current) {
-        cameraRef.current.setCamera({
-            centerCoordinate: [selectedFacility.longitude, selectedFacility.latitude],
-            zoomLevel: 15,
-            animationDuration: 1000,
-        });
+      cameraRef.current.setCamera({
+        centerCoordinate: [selectedFacility.longitude, selectedFacility.latitude],
+        zoomLevel: 15,
+        animationDuration: 1000,
+      });
     }
   }, [selectedFacility, userLocation]);
 
   const handleZoomIn = async () => {
     if (cameraRef.current) {
-        const newZoom = Math.min(currentZoom + 1, 20);
-        setCurrentZoom(newZoom);
-        cameraRef.current.setCamera({
-            zoomLevel: newZoom,
-            animationDuration: 300,
-        });
+      const newZoom = Math.min(currentZoom + 1, 20);
+      setCurrentZoom(newZoom);
+      cameraRef.current.setCamera({
+        zoomLevel: newZoom,
+        animationDuration: 300,
+      });
     }
   };
 
   const handleZoomOut = async () => {
-     if (cameraRef.current) {
-        const newZoom = Math.max(currentZoom - 1, 0);
-        setCurrentZoom(newZoom);
-        cameraRef.current.setCamera({
-            zoomLevel: newZoom,
-            animationDuration: 300,
-        });
+    if (cameraRef.current) {
+      const newZoom = Math.max(currentZoom - 1, 0);
+      setCurrentZoom(newZoom);
+      cameraRef.current.setCamera({
+        zoomLevel: newZoom,
+        animationDuration: 300,
+      });
     }
   };
 
@@ -206,25 +211,25 @@ export const FacilityMapView: React.FC = () => {
   };
 
   const handleCenterOnNaga = () => {
-     if (cameraRef.current) {
+    if (cameraRef.current) {
       cameraRef.current.setCamera({
         centerCoordinate: NAGA_CITY_COORDINATES,
         zoomLevel: DEFAULT_ZOOM_LEVEL,
         animationDuration: 1000,
       });
       setCurrentZoom(DEFAULT_ZOOM_LEVEL);
-     }
+    }
   };
 
   const onShapePress = (event: any) => {
     const feature = event.features[0];
     if (feature.properties?.cluster) {
       if (cameraRef.current) {
-        const expansionZoom = currentZoom + 2; 
+        const expansionZoom = currentZoom + 2;
         cameraRef.current.setCamera({
-            centerCoordinate: feature.geometry.coordinates,
-            zoomLevel: expansionZoom,
-            animationDuration: 500,
+          centerCoordinate: feature.geometry.coordinates,
+          zoomLevel: expansionZoom,
+          animationDuration: 500,
         });
         setCurrentZoom(expansionZoom);
       }
@@ -235,29 +240,29 @@ export const FacilityMapView: React.FC = () => {
       }
     }
   };
-  
+
   const handleMapPress = () => {
-     if (selectedFacilityId) {
-         dispatch(selectFacility(null));
-     }
+    if (selectedFacilityId) {
+      dispatch(selectFacility(null));
+    }
   };
 
   const onCameraChanged = (state: any) => {
-      if (state && state.properties && state.properties.zoomLevel) {
-          setCurrentZoom(state.properties.zoomLevel);
-      }
+    if (state && state.properties && state.properties.zoomLevel) {
+      setCurrentZoom(state.properties.zoomLevel);
+    }
   };
 
   const navigateToDetails = () => {
-      if (selectedFacility) {
-          navigation.navigate('FacilityDetails', { facilityId: selectedFacility.id });
-      }
+    if (selectedFacility) {
+      navigation.navigate('FacilityDetails', { facilityId: selectedFacility.id });
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Mapbox.MapView 
-        style={styles.map} 
+      <Mapbox.MapView
+        style={styles.map}
         ref={mapRef}
         onPress={handleMapPress}
         onCameraChanged={onCameraChanged}
@@ -267,29 +272,32 @@ export const FacilityMapView: React.FC = () => {
         attributionEnabled={false}
       >
         <Mapbox.Camera
-            ref={cameraRef}
-            defaultSettings={{
-                centerCoordinate: NAGA_CITY_COORDINATES,
-                zoomLevel: DEFAULT_ZOOM_LEVEL,
-            }}
+          ref={cameraRef}
+          defaultSettings={{
+            centerCoordinate: NAGA_CITY_COORDINATES,
+            zoomLevel: DEFAULT_ZOOM_LEVEL,
+          }}
         />
-        
+
         <Mapbox.UserLocation visible={true} showsUserHeadingIndicator={true} />
 
         {/* Route Line */}
         {routeGeoJSON && (
-            <Mapbox.ShapeSource id="routeSource" shape={{ type: 'Feature', geometry: routeGeoJSON, properties: {} }}>
-                <Mapbox.LineLayer
-                    id="routeLine"
-                    style={{
-                        lineColor: theme.colors.primary,
-                        lineWidth: 4,
-                        lineCap: 'round',
-                        lineJoin: 'round',
-                        lineOpacity: 0.8,
-                    }}
-                />
-            </Mapbox.ShapeSource>
+          <Mapbox.ShapeSource
+            id="routeSource"
+            shape={{ type: 'Feature', geometry: routeGeoJSON, properties: {} }}
+          >
+            <Mapbox.LineLayer
+              id="routeLine"
+              style={{
+                lineColor: theme.colors.primary,
+                lineWidth: 4,
+                lineCap: 'round',
+                lineJoin: 'round',
+                lineOpacity: 0.8,
+              }}
+            />
+          </Mapbox.ShapeSource>
         )}
 
         <Mapbox.ShapeSource
@@ -341,18 +349,24 @@ export const FacilityMapView: React.FC = () => {
               circleColor: [
                 'match',
                 ['get', 'type'],
-                'Hospital', theme.colors.secondary,
-                'Health Center', theme.colors.primary,
-                theme.colors.primary
+                'Hospital',
+                theme.colors.secondary,
+                'Health Center',
+                theme.colors.primary,
+                theme.colors.primary,
               ],
               circleRadius: 10,
             }}
           />
-          
+
           <Mapbox.SymbolLayer
             id="yakapStar"
             aboveLayerID="facilityPoints"
-            filter={['all', ['!', ['has', 'point_count']], ['==', ['get', 'yakapAccredited'], true]]}
+            filter={[
+              'all',
+              ['!', ['has', 'point_count']],
+              ['==', ['get', 'yakapAccredited'], true],
+            ]}
             style={{
               textField: '★', // Unicode Star
               textColor: theme.colors.secondary,
@@ -360,63 +374,83 @@ export const FacilityMapView: React.FC = () => {
               textAllowOverlap: true,
               textIgnorePlacement: true,
               textAnchor: 'center',
-              textTranslate: [0, 0]
+              textTranslate: [0, 0],
             }}
           />
-
         </Mapbox.ShapeSource>
       </Mapbox.MapView>
 
       <View style={[styles.controls, { top: insets.top + 16 }]}>
-        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleCenterOnUser} accessibilityLabel="Center on my location">
+        <TouchableOpacity
+          style={[styles.controlButton, { backgroundColor: theme.colors.surface }]}
+          onPress={handleCenterOnUser}
+          accessibilityLabel="Center on my location"
+        >
           <MaterialCommunityIcons name="crosshairs-gps" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleCenterOnNaga} accessibilityLabel="Center on Naga City">
-            <MaterialCommunityIcons name="compass" size={24} color={theme.colors.onSurface} />
+        <TouchableOpacity
+          style={[styles.controlButton, { backgroundColor: theme.colors.surface }]}
+          onPress={handleCenterOnNaga}
+          accessibilityLabel="Center on Naga City"
+        >
+          <MaterialCommunityIcons name="compass" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleZoomIn} accessibilityLabel="Zoom in">
-            <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onSurface} />
+        <TouchableOpacity
+          style={[styles.controlButton, { backgroundColor: theme.colors.surface }]}
+          onPress={handleZoomIn}
+          accessibilityLabel="Zoom in"
+        >
+          <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.controlButton, { backgroundColor: theme.colors.surface }]} onPress={handleZoomOut} accessibilityLabel="Zoom out">
-            <MaterialCommunityIcons name="minus" size={24} color={theme.colors.onSurface} />
+        <TouchableOpacity
+          style={[styles.controlButton, { backgroundColor: theme.colors.surface }]}
+          onPress={handleZoomOut}
+          accessibilityLabel="Zoom out"
+        >
+          <MaterialCommunityIcons name="minus" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
       </View>
 
       {selectedFacility && (
         <View style={[styles.cardContainer, { paddingBottom: insets.bottom + 16 }]}>
-          <FacilityCard 
-            facility={selectedFacility} 
-            showDistance={true} 
+          <FacilityCard
+            facility={selectedFacility}
+            showDistance={true}
             distance={selectedFacility.distance}
             onPress={navigateToDetails}
             style={styles.card}
           />
-           {routeInfo && (
-              <View style={[styles.routeInfoBadge, { backgroundColor: theme.colors.primary }]}>
-                  <MaterialCommunityIcons name="car" size={16} color={theme.colors.onPrimary} />
-                  <Text style={[styles.routeInfoText, { color: theme.colors.onPrimary }]}>
-                      {Math.round(routeInfo.duration / 60)} min • {(routeInfo.distance / 1000).toFixed(1)} km
-                  </Text>
-              </View>
-           )}
+          {routeInfo && (
+            <View style={[styles.routeInfoBadge, { backgroundColor: theme.colors.primary }]}>
+              <MaterialCommunityIcons name="car" size={16} color={theme.colors.onPrimary} />
+              <Text style={[styles.routeInfoText, { color: theme.colors.onPrimary }]}>
+                {Math.round(routeInfo.duration / 60)} min • {(routeInfo.distance / 1000).toFixed(1)}{' '}
+                km
+              </Text>
+            </View>
+          )}
         </View>
       )}
-      
+
       {!selectedFacility && (
-          <View style={[styles.legend, { top: insets.top + 16, backgroundColor: theme.colors.surface }]}>
-             <View style={styles.legendItem}>
-                 <View style={[styles.dot, { backgroundColor: theme.colors.secondary }]} />
-                 <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>Hospital</Text>
-             </View>
-             <View style={styles.legendItem}>
-                 <View style={[styles.dot, { backgroundColor: theme.colors.primary }]} />
-                 <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>Health Center</Text>
-             </View>
-             <View style={styles.legendItem}>
-                <Text style={{color: theme.colors.secondary, fontSize: 12, marginRight: 6}}>★</Text>
-                <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>YAKAP</Text>
-             </View>
+        <View
+          style={[styles.legend, { top: insets.top + 16, backgroundColor: theme.colors.surface }]}
+        >
+          <View style={styles.legendItem}>
+            <View style={[styles.dot, { backgroundColor: theme.colors.secondary }]} />
+            <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>Hospital</Text>
           </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.dot, { backgroundColor: theme.colors.primary }]} />
+            <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>
+              Health Center
+            </Text>
+          </View>
+          <View style={styles.legendItem}>
+            <Text style={{ color: theme.colors.secondary, fontSize: 12, marginRight: 6 }}>★</Text>
+            <Text style={[styles.legendText, { color: theme.colors.onSurface }]}>YAKAP</Text>
+          </View>
+        </View>
       )}
     </View>
   );
@@ -465,19 +499,19 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   routeInfoBadge: {
-      position: 'absolute',
-      top: -40,
-      alignSelf: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 20,
-      flexDirection: 'row',
-      alignItems: 'center',
-      elevation: 4,
+    position: 'absolute',
+    top: -40,
+    alignSelf: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 4,
   },
   routeInfoText: {
-      fontWeight: 'bold',
-      marginLeft: 6,
+    fontWeight: 'bold',
+    marginLeft: 6,
   },
   legend: {
     position: 'absolute',
@@ -495,15 +529,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
-      dot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 8,
-      },
-      legendText: {
-        fontSize: 12,
-        fontWeight: '600',
-      },
-    });
-    
+  dot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});

@@ -3,6 +3,7 @@
 HEALTH is an AI-powered mobile healthcare navigation application designed for Naga City. It helps residents identify the appropriate level of care, locate facilities, and enroll in the YAKAP free healthcare program.
 
 ## Table of Contents
+
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Prerequisites](#prerequisites)
@@ -37,6 +38,7 @@ HEALTH is an AI-powered mobile healthcare navigation application designed for Na
 ## Installation
 
 1.  **Clone the repository:**
+
     ```bash
     git clone <repository-url>
     cd health-app
@@ -50,6 +52,7 @@ HEALTH is an AI-powered mobile healthcare navigation application designed for Na
 ## Configuration
 
 1.  Copy the example environment file:
+
     ```bash
     cp .env.example .env
     ```

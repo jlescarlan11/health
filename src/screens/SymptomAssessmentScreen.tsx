@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { CheckStackScreenProps } from '../types/navigation';
+import { RootStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
@@ -16,8 +24,8 @@ import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
 import { InputCard, TypingIndicator } from '../components/common';
 
-type ScreenRouteProp = CheckStackScreenProps<'SymptomAssessment'>['route'];
-type NavigationProp = CheckStackScreenProps<'SymptomAssessment'>['navigation'];
+type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
+type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
 
 interface Question {
   id: string;
@@ -92,7 +100,7 @@ const SymptomAssessmentScreen = () => {
           playsInSilentModeIOS: true,
         });
         const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
+          Audio.RecordingOptionsPresets.HIGH_QUALITY,
         );
         setRecording(recording);
         setIsRecording(true);
@@ -113,15 +121,15 @@ const SymptomAssessmentScreen = () => {
       await recording.stopAndUnloadAsync();
       // Simulation of STT (Replace with actual API call)
       setTimeout(() => {
-        const simulatedText = "I have been feeling this way for a few days.";
-        setInputText(prev => prev + (prev ? ' ' : '') + simulatedText);
+        const simulatedText = 'I have been feeling this way for a few days.';
+        setInputText((prev) => prev + (prev ? ' ' : '') + simulatedText);
         setIsProcessingAudio(false);
         setRecording(null);
       }, 1500);
     } catch (error) {
-       console.error(error);
-       setIsProcessingAudio(false);
-       Alert.alert('Error', 'Failed to process audio.');
+      console.error(error);
+      setIsProcessingAudio(false);
+      Alert.alert('Error', 'Failed to process audio.');
     }
   };
 
@@ -131,20 +139,14 @@ const SymptomAssessmentScreen = () => {
       'Are you sure you want to start over? Your progress will be lost.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() }
-      ]
+        { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() },
+      ],
     );
   }, [navigation]);
 
   useEffect(() => {
     navigation.setOptions({
-      header: () => (
-        <StandardHeader 
-          title="Assessment" 
-          showBackButton 
-          onBackPress={handleBack} 
-        />
-      ),
+      header: () => <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />,
     });
   }, [navigation, handleBack]);
 
@@ -154,8 +156,8 @@ const SymptomAssessmentScreen = () => {
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
 
     if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
-      navigation.navigate('Recommendation', { 
-        assessmentData: { symptoms: initialSymptom || '', answers: {} } 
+      navigation.navigate('Recommendation', {
+        assessmentData: { symptoms: initialSymptom || '', answers: {} },
       });
       return;
     }
@@ -173,20 +175,22 @@ const SymptomAssessmentScreen = () => {
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
         if (parsed.questions && Array.isArray(parsed.questions)) {
-           setQuestions(parsed.questions);
-           // Add combined first message to conversation
-           if (parsed.questions.length > 0) {
-             const firstQ = parsed.questions[0];
-             const combinedText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I'd like to ask a few clarifying questions.\n\n${firstQ.text}`;
-             
-             setMessages([{
-               id: 'intro',
-               text: combinedText,
-               sender: 'assistant'
-             }]);
-           }
+          setQuestions(parsed.questions);
+          // Add combined first message to conversation
+          if (parsed.questions.length > 0) {
+            const firstQ = parsed.questions[0];
+            const combinedText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I'd like to ask a few clarifying questions.\n\n${firstQ.text}`;
+
+            setMessages([
+              {
+                id: 'intro',
+                text: combinedText,
+                sender: 'assistant',
+              },
+            ]);
+          }
         } else {
-           throw new Error('Invalid response format');
+          throw new Error('Invalid response format');
         }
       } else {
         throw new Error('Failed to parse questions');
@@ -209,54 +213,58 @@ const SymptomAssessmentScreen = () => {
     // Save answer
     const newAnswers = { ...answers, [currentQuestion.id]: finalAnswer };
     setAnswers(newAnswers);
-    
+
     // Add user message
-    const userMsg: Message = { id: `user-${currentStep}-${Date.now()}`, text: finalAnswer, sender: 'user' };
-    setMessages(prev => [...prev, userMsg]);
+    const userMsg: Message = {
+      id: `user-${currentStep}-${Date.now()}`,
+      text: finalAnswer,
+      sender: 'user',
+    };
+    setMessages((prev) => [...prev, userMsg]);
     setInputText('');
-    
+
     // Check for emergency
     const emergencyCheck = detectEmergency(finalAnswer);
     if (emergencyCheck.isEmergency) {
-        console.log("Emergency detected during assessment:", emergencyCheck.matchedKeywords);
-        const partialData = {
-            symptoms: initialSymptom || '',
-            answers: newAnswers
-        };
-        navigation.navigate('Recommendation', { assessmentData: partialData });
-        return;
+      console.log('Emergency detected during assessment:', emergencyCheck.matchedKeywords);
+      const partialData = {
+        symptoms: initialSymptom || '',
+        answers: newAnswers,
+      };
+      navigation.navigate('Recommendation', { assessmentData: partialData });
+      return;
     }
 
     // Move to next step or finish with a thoughtful delay
     setIsTyping(true);
-    
+
     const delay = 1500; // 1.5 seconds delay for a more natural feel
-    
+
     setTimeout(() => {
       if (currentStep < questions.length - 1) {
         const nextStep = currentStep + 1;
         const nextQuestion = questions[nextStep];
-        
+
         // Random acknowledgments for a more conversational feel
         const acknowledgments = [
-          "I understand.",
-          "Thank you for that information.",
-          "Got it, thanks.",
+          'I understand.',
+          'Thank you for that information.',
+          'Got it, thanks.',
           "I see. That's helpful to know.",
-          "Okay, thank you for clarifying."
+          'Okay, thank you for clarifying.',
         ];
         const ack = acknowledgments[Math.floor(Math.random() * acknowledgments.length)];
-        
-        const assistantMsg: Message = { 
-          id: nextQuestion.id, 
-          text: `${ack}\n\n${nextQuestion.text}`, 
-          sender: 'assistant' 
+
+        const assistantMsg: Message = {
+          id: nextQuestion.id,
+          text: `${ack}\n\n${nextQuestion.text}`,
+          sender: 'assistant',
         };
-        
-        setMessages(prev => [...prev, assistantMsg]);
+
+        setMessages((prev) => [...prev, assistantMsg]);
         setIsTyping(false);
         setCurrentStep(nextStep);
-        
+
         // Scroll to end
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -270,8 +278,8 @@ const SymptomAssessmentScreen = () => {
 
   const finishAssessment = (finalAnswers: Record<string, string>) => {
     const assessmentData = {
-        symptoms: initialSymptom || '',
-        answers: finalAnswers
+      symptoms: initialSymptom || '',
+      answers: finalAnswers,
     };
     navigation.navigate('Recommendation', { assessmentData });
   };
@@ -288,8 +296,12 @@ const SymptomAssessmentScreen = () => {
     return (
       <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text variant="titleMedium" style={styles.loadingText}>Analyzing symptoms...</Text>
-        <Text variant="bodySmall" style={styles.loadingSubtext}>Preparing your personalized assessment</Text>
+        <Text variant="titleMedium" style={styles.loadingText}>
+          Analyzing symptoms...
+        </Text>
+        <Text variant="bodySmall" style={styles.loadingSubtext}>
+          Preparing your personalized assessment
+        </Text>
       </View>
     );
   }
@@ -297,7 +309,9 @@ const SymptomAssessmentScreen = () => {
   if (error) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.error, marginBottom: 16, textAlign: 'center' }}>{error}</Text>
+        <Text style={{ color: theme.colors.error, marginBottom: 16, textAlign: 'center' }}>
+          {error}
+        </Text>
         <Button title="Retry" onPress={fetchQuestions} />
       </View>
     );
@@ -309,11 +323,13 @@ const SymptomAssessmentScreen = () => {
         <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
           <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
         </View>
-        <View style={[
-          styles.bubble,
-          styles.assistantBubble,
-          { backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 12 }
-        ]}>
+        <View
+          style={[
+            styles.bubble,
+            styles.assistantBubble,
+            { backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 12 },
+          ]}
+        >
           <TypingIndicator />
         </View>
       </View>
@@ -323,25 +339,29 @@ const SymptomAssessmentScreen = () => {
   const renderMessage = (message: Message) => {
     const isAssistant = message.sender === 'assistant';
     return (
-      <View key={message.id} style={[
-        styles.messageWrapper,
-        isAssistant ? styles.assistantWrapper : styles.userWrapper
-      ]}>
+      <View
+        key={message.id}
+        style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}
+      >
         {isAssistant && (
           <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
             <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
           </View>
         )}
-        <View style={[
-          styles.bubble,
-          isAssistant ? 
-            [styles.assistantBubble, { backgroundColor: theme.colors.surface }] : 
-            [styles.userBubble, { backgroundColor: theme.colors.primary }]
-        ]}>
-          <Text style={[
-            styles.messageText,
-            { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary }
-          ]}>
+        <View
+          style={[
+            styles.bubble,
+            isAssistant
+              ? [styles.assistantBubble, { backgroundColor: theme.colors.surface }]
+              : [styles.userBubble, { backgroundColor: theme.colors.primary }],
+          ]}
+        >
+          <Text
+            style={[
+              styles.messageText,
+              { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
+            ]}
+          >
             {message.text}
           </Text>
         </View>
@@ -350,18 +370,18 @@ const SymptomAssessmentScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardVerticalOffset={keyboardVerticalOffset}
       >
-        <ScrollView 
+        <ScrollView
           ref={scrollViewRef}
-          contentContainerStyle={[
-            styles.scrollContent,
-            isKeyboardVisible && { paddingBottom: 20 }
-          ]}
+          contentContainerStyle={[styles.scrollContent, isKeyboardVisible && { paddingBottom: 20 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
@@ -375,7 +395,11 @@ const SymptomAssessmentScreen = () => {
         <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
           {currentQuestion?.type === 'choice' && currentQuestion.options && (
             <View style={styles.choiceContainer}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.choiceScrollContent}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.choiceScrollContent}
+              >
                 {currentQuestion.options.map((opt) => (
                   <Chip
                     key={opt}
@@ -416,14 +440,14 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   loadingText: { marginTop: 16, fontWeight: 'bold' },
   loadingSubtext: { marginTop: 4, opacity: 0.7 },
-  
+
   scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
   messagesContainer: { flex: 1 },
-  
+
   messageWrapper: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-end' },
   assistantWrapper: { justifyContent: 'flex-start' },
   userWrapper: { justifyContent: 'flex-end' },
-  
+
   avatar: {
     width: 32,
     height: 32,
@@ -477,7 +501,5 @@ const styles = StyleSheet.create({
     height: 36,
   },
 });
-
-
 
 export default SymptomAssessmentScreen;

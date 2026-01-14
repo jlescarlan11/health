@@ -7,17 +7,15 @@ export const CustomHeader = ({ navigation, back }: StackHeaderProps) => {
 
   return (
     <Appbar.Header style={{ backgroundColor: theme.colors.surface }} elevated>
-      {back ? (
-        <Appbar.BackAction onPress={navigation.goBack} />
-      ) : null}
-      
-      <Appbar.Content 
-        title="HEALTH" 
-        titleStyle={{ 
-          color: theme.colors.primary, 
-          fontWeight: 'bold', 
-          letterSpacing: 1 
-        }} 
+      {back ? <Appbar.BackAction onPress={navigation.goBack} /> : null}
+
+      <Appbar.Content
+        title="HEALTH"
+        titleStyle={{
+          color: theme.colors.primary,
+          fontWeight: 'bold',
+          letterSpacing: 1,
+        }}
       />
     </Appbar.Header>
   );

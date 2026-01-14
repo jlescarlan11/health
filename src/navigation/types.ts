@@ -8,5 +8,3 @@ export type {
   RootStackScreenProps,
   FacilitiesStackScreenProps,
 } from '../types/navigation';
-
-
