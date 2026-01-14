@@ -203,8 +203,10 @@ const SymptomAssessmentScreen = () => {
     }
   };
 
-  const handleNext = (answerText?: string) => {
-    const finalAnswer = answerText || inputText;
+  const handleNext = (answerText?: string, isSkip: boolean = false) => {
+    const finalAnswer = isSkip ? 'User was not sure' : answerText || inputText;
+    const displayAnswer = isSkip ? "I'm not sure" : finalAnswer;
+
     if (!finalAnswer.trim() || isTyping) return;
 
     const currentQuestion = questions[currentStep];
@@ -217,7 +219,7 @@ const SymptomAssessmentScreen = () => {
     // Add user message
     const userMsg: Message = {
       id: `user-${currentStep}-${Date.now()}`,
-      text: finalAnswer,
+      text: displayAnswer,
       sender: 'user',
     };
     setMessages((prev) => [...prev, userMsg]);
@@ -226,7 +228,6 @@ const SymptomAssessmentScreen = () => {
     // Check for emergency
     const emergencyCheck = detectEmergency(finalAnswer);
     if (emergencyCheck.isEmergency) {
-      console.log('Emergency detected during assessment:', emergencyCheck.matchedKeywords);
       const partialData = {
         symptoms: initialSymptom || '',
         answers: newAnswers,
@@ -393,26 +394,37 @@ const SymptomAssessmentScreen = () => {
         </ScrollView>
 
         <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
-          {currentQuestion?.type === 'choice' && currentQuestion.options && (
+          {currentQuestion && (
             <View style={styles.choiceContainer}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.choiceScrollContent}
               >
-                {currentQuestion.options.map((opt) => (
-                  <Chip
-                    key={opt}
-                    onPress={() => !isTyping && handleNext(opt)}
-                    style={styles.choiceChip}
-                    mode="flat"
-                    compact
-                    showSelectedOverlay
-                    disabled={isTyping}
-                  >
-                    {opt}
-                  </Chip>
-                ))}
+                {currentQuestion.type === 'choice' &&
+                  currentQuestion.options?.map((opt) => (
+                    <Chip
+                      key={opt}
+                      onPress={() => !isTyping && handleNext(opt)}
+                      style={styles.choiceChip}
+                      mode="flat"
+                      compact
+                      showSelectedOverlay
+                      disabled={isTyping}
+                    >
+                      {opt}
+                    </Chip>
+                  ))}
+                <Chip
+                  onPress={() => !isTyping && handleNext(undefined, true)}
+                  style={[styles.choiceChip, { borderColor: theme.colors.outline }]}
+                  textStyle={{ color: theme.colors.onSurfaceVariant }}
+                  mode="outlined"
+                  compact
+                  disabled={isTyping}
+                >
+                  I'm not sure
+                </Chip>
               </ScrollView>
             </View>
           )}
