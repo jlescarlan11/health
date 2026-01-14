@@ -151,8 +151,6 @@ const EnrollmentCompletionScreen = () => {
             variant="primary"
             icon="hospital-marker"
             onPress={navigateToFacilities}
-            style={styles.actionButton}
-            contentStyle={styles.buttonContent}
             title="Find Nearest YAKAP Clinic"
           />
 
@@ -160,8 +158,6 @@ const EnrollmentCompletionScreen = () => {
             variant="text"
             icon="share-variant"
             onPress={handleShare}
-            style={styles.actionButton}
-            contentStyle={styles.buttonContent}
             title="Share this Guide"
           />
 
@@ -169,7 +165,6 @@ const EnrollmentCompletionScreen = () => {
             variant="text"
             onPress={handleBackToHome}
             style={styles.backButton}
-            contentStyle={styles.buttonContent}
             labelStyle={{ color: theme.colors.outline, fontSize: 14 }}
             title="Return to YAKAP Home"
           />
@@ -262,12 +257,6 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     gap: 12,
-  },
-  actionButton: {
-    borderRadius: 12,
-  },
-  buttonContent: {
-    paddingVertical: 10,
   },
   backButton: {
     alignItems: 'center',

@@ -72,9 +72,20 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
   return (
     <Card
-      style={[styles.card, style, { backgroundColor: theme.colors.surface }]}
+      style={[
+        styles.card,
+        style,
+        {
+          backgroundColor: theme.colors.surface,
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 2,
+        },
+      ]}
       onPress={onPress}
-      mode="outlined"
+      mode="contained"
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
@@ -85,9 +96,12 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             <Text variant="titleMedium" style={styles.title}>
               {facility.name}
             </Text>
-            <Text variant="labelSmall" style={[styles.typeText, { color: theme.colors.primary }]}>
-              {formatFacilityType(facility.type)}
-            </Text>
+            <View style={styles.typeRow}>
+              <View style={[styles.typeIndicator, { backgroundColor: theme.colors.primary }]} />
+              <Text variant="labelSmall" style={[styles.typeText, { color: theme.colors.primary }]}>
+                {formatFacilityType(facility.type)}
+              </Text>
+            </View>
           </View>
 
           <View style={styles.rightHeader}>
@@ -97,7 +111,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               >
                 <MaterialCommunityIcons
                   name="check-decagram"
-                  size={14}
+                  size={12}
                   color={theme.colors.onSecondaryContainer}
                 />
                 <Text style={[styles.yakapText, { color: theme.colors.onSecondaryContainer }]}>
@@ -106,22 +120,25 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               </View>
             )}
             {showDistance && distance !== undefined && (
-              <Text variant="labelSmall" style={[styles.distance, { color: theme.colors.outline }]}>
-                {formatDistance(distance)}
-              </Text>
+              <View style={styles.distanceContainer}>
+                <MaterialCommunityIcons name="map-marker-outline" size={10} color={theme.colors.outline} />
+                <Text variant="labelSmall" style={[styles.distance, { color: theme.colors.outline }]}>
+                  {formatDistance(distance)}
+                </Text>
+              </View>
             )}
           </View>
         </View>
 
         <View style={styles.content}>
           <View style={styles.statusRow}>
-            <Text variant="labelMedium" style={{ color: statusColor, fontWeight: '800' }}>
-              {statusText}
+            <Text variant="labelMedium" style={{ color: statusColor, fontWeight: '800', letterSpacing: 0.5 }}>
+              {statusText.toUpperCase()}
             </Text>
             {facility.hours && !facility.hours.includes('24/7') && (
               <Text
                 variant="labelSmall"
-                style={{ marginLeft: 8, color: 'rgba(0,0,0,0.4)', fontWeight: '500' }}
+                style={{ marginLeft: 12, color: 'rgba(0,0,0,0.4)', fontWeight: '600' }}
               >
                 {facility.hours}
               </Text>
@@ -138,12 +155,12 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 key={index}
                 style={[
                   styles.serviceChip,
-                  { backgroundColor: theme.colors.primaryContainer + '50' },
+                  { backgroundColor: theme.colors.primaryContainer + '40' },
                 ]}
               >
                 <MaterialCommunityIcons
                   name={getServiceIcon(service) as any}
-                  size={14}
+                  size={12}
                   color={theme.colors.primary}
                 />
                 <Text
@@ -164,9 +181,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               >
                 <Text
                   variant="labelSmall"
-                  style={{ color: theme.colors.primary, fontWeight: 'bold' }}
+                  style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10 }}
                 >
-                  +{facility.services.length - displayServices.length} more
+                  +{facility.services.length - displayServices.length} MORE
                 </Text>
               </TouchableOpacity>
             )}
@@ -179,19 +196,18 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    marginVertical: 6,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
+    marginVertical: 8,
+    borderRadius: 20,
+    borderWidth: 0,
   },
   cardInner: {
-    padding: 12,
+    padding: 16,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   titleContainer: {
     flex: 1,
@@ -199,13 +215,28 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: '800',
-    color: 'rgba(0,0,0,0.8)',
-    marginBottom: 2,
+    color: 'rgba(0,0,0,0.85)',
+    marginBottom: 4,
+    letterSpacing: -0.2,
+    fontSize: 17,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typeIndicator: {
+    width: 3,
+    height: 10,
+    borderRadius: 1.5,
+    marginRight: 6,
+    opacity: 0.6,
   },
   typeText: {
-    fontWeight: '700',
-    letterSpacing: 0.5,
-    textTransform: 'none',
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    opacity: 0.7,
   },
   rightHeader: {
     alignItems: 'flex-end',
@@ -215,18 +246,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 6,
+    borderRadius: 6,
+    marginBottom: 8,
   },
   yakapText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '900',
     marginLeft: 4,
     letterSpacing: 0.5,
   },
+  distanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   distance: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: '700',
+    marginLeft: 4,
   },
   content: {
     marginTop: 0,
@@ -234,30 +270,32 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   address: {
     color: 'rgba(0,0,0,0.5)',
-    marginBottom: 12,
-    fontWeight: '500',
+    marginBottom: 16,
+    fontWeight: '600',
+    fontSize: 13,
   },
   servicesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: 8,
   },
   serviceChip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   serviceText: {
-    fontSize: 11,
+    fontSize: 10,
     marginLeft: 6,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   moreServices: {
     paddingHorizontal: 4,
