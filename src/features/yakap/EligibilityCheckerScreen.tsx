@@ -5,6 +5,7 @@ import { Text, Card, useTheme } from 'react-native-paper';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
+import { YAKAP_BENEFITS } from './yakapContent';
 
 type Props = RootStackScreenProps<'EligibilityChecker'>;
 
@@ -28,39 +29,68 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const renderBenefitsCard = () => (
     <View
       style={[
-        styles.benefitsContainer,
-        { backgroundColor: theme.colors.primaryContainer, borderRadius: 16 },
+        styles.benefitsWrapper,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.outlineVariant,
+          borderWidth: 1,
+          borderRadius: 16,
+        },
       ]}
     >
-      <Text
-        variant="titleMedium"
-        style={{ marginBottom: 16, color: theme.colors.primary, fontWeight: 'bold' }}
-      >
-        What you get:
-      </Text>
-      <View style={styles.bulletRow}>
+      <View style={styles.benefitHeader}>
+        <Text variant="titleSmall" style={[styles.benefitLabel, { color: theme.colors.primary }]}>
+          CORE BENEFIT
+        </Text>
+        <Text variant="titleLarge" style={[styles.mainBenefit, { color: theme.colors.onSurface }]}>
+          Unlimited Primary Care
+        </Text>
         <Text
           variant="bodyMedium"
-          style={[styles.bulletPoint, { color: theme.colors.onPrimaryContainer }]}
+          style={{ color: theme.colors.onSurfaceVariant, marginTop: 4, lineHeight: 20 }}
         >
-          • No age restrictions
+          Regular check-ups and consultations with your chosen provider at no cost.
         </Text>
       </View>
-      <View style={styles.bulletRow}>
+
+      <View
+        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.5 }]}
+      />
+
+      <View style={styles.supplementarySection}>
         <Text
-          variant="bodyMedium"
-          style={[styles.bulletPoint, { color: theme.colors.onPrimaryContainer }]}
+          variant="labelLarge"
+          style={{ color: theme.colors.onSurface, marginBottom: 12, opacity: 0.6 }}
         >
-          • No income restrictions
+          INCLUDED COVERAGE
         </Text>
-      </View>
-      <View style={styles.bulletRow}>
-        <Text
-          variant="bodyMedium"
-          style={[styles.bulletPoint, { color: theme.colors.onPrimaryContainer }]}
-        >
-          • Covered dependents included
-        </Text>
+
+        <View style={styles.benefitGrid}>
+          <View style={styles.gridItem}>
+            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              Free
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              Lab Tests & Diagnostics
+            </Text>
+          </View>
+          <View style={styles.gridItem}>
+            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              ₱20k
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              Annual Medicine Allowance
+            </Text>
+          </View>
+          <View style={styles.gridItem}>
+            <Text variant="titleMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+              Early
+            </Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              Cancer Screenings
+            </Text>
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -90,14 +120,14 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             <Button
               variant="primary"
               onPress={() => setHasPhilHealth(true)}
-              style={styles.mainButton}
+              style={styles.decisionButton}
               contentStyle={styles.buttonContent}
               title="Yes, I have PhilHealth"
             />
             <Button
               variant="text"
               onPress={() => setHasPhilHealth(false)}
-              style={styles.secondaryButton}
+              style={styles.decisionButton}
               contentStyle={styles.buttonContent}
               title="No, I don't have it yet"
             />
@@ -127,7 +157,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             </Text>
           </View>
 
-          <View style={{ marginVertical: 32 }}>{renderBenefitsCard()}</View>
+          <View style={{ marginBottom: 40 }}>{renderBenefitsCard()}</View>
 
           <Button
             variant="primary"
@@ -141,7 +171,9 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             <Button
               variant="text"
               onPress={() => setHasPhilHealth(null)}
-              style={{ opacity: 0.6 }}
+              textColor={theme.colors.onSurfaceVariant}
+              style={styles.ghostDecisionButton}
+              labelStyle={{ fontSize: 14, fontWeight: '500' }}
               title="Change my answer"
             />
           </View>
@@ -195,7 +227,11 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             >
               The fastest way if you have internet access.
             </Text>
-            <Button variant="text" onPress={handlePhilHealthLink} title="Visit PhilHealth Website" />
+            <Button
+              variant="text"
+              onPress={handlePhilHealthLink}
+              title="Visit PhilHealth Website"
+            />
           </View>
 
           <View
@@ -259,7 +295,8 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             <Button
               variant="text"
               onPress={() => setHasPhilHealth(null)}
-              style={{ opacity: 0.6 }}
+              style={styles.ghostDecisionButton}
+              contentStyle={styles.buttonContent}
               title="Change my answer"
             />
           </View>
@@ -326,11 +363,14 @@ const styles = StyleSheet.create({
     width: '100%',
     gap: 16,
   },
-  mainButton: {
+  decisionButton: {
     width: '100%',
+    height: 56,
+    justifyContent: 'center',
   },
-  secondaryButton: {
+  ghostDecisionButton: {
     width: '100%',
+    justifyContent: 'center',
   },
   buttonContent: {
     paddingVertical: 8,
@@ -338,7 +378,7 @@ const styles = StyleSheet.create({
   successHeader: {
     alignItems: 'center',
     marginBottom: 24,
-    marginTop: 10,
+    marginTop: 32,
   },
   successTitle: {
     marginTop: 16,
@@ -347,24 +387,46 @@ const styles = StyleSheet.create({
   successSubtitle: {
     textAlign: 'center',
     marginTop: 8,
+    paddingHorizontal: 20,
+    lineHeight: 24,
   },
-  benefitsContainer: {
+  benefitsWrapper: {
     padding: 24,
     marginBottom: 12,
   },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+  benefitHeader: {
+    marginBottom: 20,
   },
-  bulletPoint: {
-    marginLeft: 4,
+  benefitLabel: {
+    letterSpacing: 1.5,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  mainBenefit: {
+    fontWeight: 'bold',
+    letterSpacing: -0.5,
+  },
+  divider: {
+    height: 1,
+    width: '100%',
+    marginVertical: 20,
+  },
+  supplementarySection: {
+    width: '100%',
+  },
+  benefitGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  gridItem: {
+    flex: 1,
   },
   actionButton: {
     marginTop: 8,
   },
   secondaryActions: {
-    marginTop: 16,
+    marginTop: 24,
     alignItems: 'center',
   },
   guidanceTitle: {
