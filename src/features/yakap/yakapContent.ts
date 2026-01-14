@@ -28,7 +28,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'consultation',
     category: 'Primary Care Consultations',
-    description: 'Unlimited free primary care consultations with your registered provider.',
+    description: 'Free primary care consultations with your registered provider.',
     items: [
       'General health check-ups',
       'Health profiling',
