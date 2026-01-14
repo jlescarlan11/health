@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.05)',
   },
   cardInner: {
-    padding: 16,
+    padding: 12,
   },
   headerRow: {
     flexDirection: 'row',

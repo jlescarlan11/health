@@ -5,6 +5,7 @@ import {
   Modal as RNModal,
   TouchableWithoutFeedback,
   ViewStyle,
+  StyleProp,
 } from 'react-native';
 import { Surface, useTheme, IconButton } from 'react-native-paper';
 
@@ -12,7 +13,7 @@ interface ModalProps {
   visible: boolean;
   onDismiss: () => void;
   children: React.ReactNode;
-  contentContainerStyle?: ViewStyle;
+  contentContainerStyle?: StyleProp<ViewStyle>;
   dismissable?: boolean;
 }
 

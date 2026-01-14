@@ -97,7 +97,7 @@ const EnrollmentGuideScreen = () => {
             <MaterialCommunityIcons
               name="lightbulb-on-outline"
               size={24}
-              color={theme.colors.secondary}
+              color={theme.colors.onSecondaryContainer}
             />
             <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
               Tip: Ensure all information provided matches your official documents to avoid delays.
@@ -123,7 +123,7 @@ const EnrollmentGuideScreen = () => {
           />
         </View>
 
-        <View style={styles.infoBox}>
+        <View style={[styles.infoBox, { backgroundColor: theme.colors.surfaceVariant }]}>
           <Text style={[styles.infoTitle, { color: theme.colors.onSurface }]}>Need Assistance?</Text>
           <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
             If you encounter any issues during the enrollment process, you can contact the PhilHealth Hotline at {OFFICIAL_CONTACTS.philhealth_hotline} or visit the nearest local office.
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   card: {
-    padding: 20,
+    padding: 16,
     borderRadius: 12,
     borderWidth: 1,
     marginBottom: 24,

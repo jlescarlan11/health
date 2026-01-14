@@ -14,6 +14,8 @@ export interface EnrollmentPathway {
   difficulty: 'Easy' | 'Medium' | 'Hard';
   requirements: string[];
   steps: string[];
+  pros: string[];
+  cons: string[];
   recommended?: boolean;
 }
 
@@ -28,7 +30,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   {
     id: 'consultation',
     category: 'Primary Care Consultations',
-    description: 'Unlimited free primary care consultations with your registered provider.',
+    description: 'Free primary care consultations with your registered provider.',
     items: [
       'General health check-ups',
       'Health profiling',
@@ -81,11 +83,13 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
 export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
   {
     id: 'egovph',
-    name: 'eGovPH Mobile App',
-    description: 'The most convenient way to register using the official government super app.',
-    estimatedDuration: '10-15 minutes',
+    name: 'eGovPH App',
+    description: 'Fast, official government registration through a single app.',
+    estimatedDuration: '10-15 MINS',
     difficulty: 'Easy',
-    requirements: ['Smartphone with internet connection', 'Valid Government ID', 'Mobile number'],
+    pros: ['Instant processing', 'No travel needed', 'Digital ID card'],
+    cons: ['Requires smartphone', 'Needs stable internet'],
+    requirements: ['Mobile Device', 'Internet', 'Valid ID'],
     steps: [
       'Download the eGovPH app from Google Play Store or Apple App Store.',
       'Create an account and verify your identity using a valid ID.',
@@ -97,15 +101,13 @@ export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
   },
   {
     id: 'philhealth_portal',
-    name: 'PhilHealth Member Portal',
-    description: 'Register online through the official PhilHealth website.',
-    estimatedDuration: '15-20 minutes',
+    name: 'PhilHealth Portal',
+    description: 'Register online through the official PhilHealth website portal.',
+    estimatedDuration: '20-30 MINS',
     difficulty: 'Medium',
-    requirements: [
-      'Computer or smartphone with internet',
-      'PhilHealth Identification Number (PIN)',
-      'Password for Member Portal',
-    ],
+    pros: ['Accessible on any browser', 'No app download'],
+    cons: ['Complex interface', 'Photo upload needed'],
+    requirements: ['Browser', 'Scanned Docs', 'Email'],
     steps: [
       'Visit the PhilHealth website (philhealth.gov.ph) and log in to the Member Portal.',
       "If you don't have an account, register using your PIN.",
@@ -117,11 +119,13 @@ export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
   },
   {
     id: 'clinic_walkin',
-    name: 'Direct Clinic Registration',
-    description: 'Register in person at any accredited YAKAP/Konsulta provider.',
-    estimatedDuration: '30-60 minutes',
+    name: 'Clinic Visit',
+    description: 'Register in person at any accredited YAKAP/Konsulta provider clinic.',
+    estimatedDuration: '1-2 HOURS',
     difficulty: 'Easy',
-    requirements: ['Valid Government ID', 'PhilHealth ID / Member Data Record (MDR)'],
+    pros: ['Assisted process', 'Direct questions answered'],
+    cons: ['Travel required', 'Waiting time'],
+    requirements: ['Physical Appearance', 'Valid ID'],
     steps: [
       'Visit your chosen accredited YAKAP/Konsulta health center or clinic.',
       'Proceed to the PhilHealth/Admitting desk.',
@@ -133,11 +137,13 @@ export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
   },
   {
     id: 'philhealth_office',
-    name: 'PhilHealth Local Office',
+    name: 'PhilHealth Office',
     description: 'Visit the nearest PhilHealth Local Health Insurance Office (LHIO).',
-    estimatedDuration: '1-2 hours',
-    difficulty: 'Medium',
-    requirements: ['Valid Government ID', 'Filled out PhilHealth Member Registration Form (PMRF)'],
+    estimatedDuration: '2-4 HOURS',
+    difficulty: 'Hard',
+    pros: ['Official processing', 'Immediate distinct card'],
+    cons: ['Long queues', 'Travel required', 'Limited hours'],
+    requirements: ['Physical Appearance', 'Valid IDs', '2x2 Photos'],
     steps: [
       'Go to the nearest PhilHealth LHIO (e.g., in Naga City).',
       'Get a queue number for "Member Services".',

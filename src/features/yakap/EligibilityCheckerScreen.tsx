@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   benefitsWrapper: {
-    padding: 24,
+    padding: 20,
   },
   benefitHeader: {
     marginBottom: 20,
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   optionCard: {
-    padding: 20,
+    padding: 16,
     borderRadius: 12,
     marginBottom: 16,
   },
