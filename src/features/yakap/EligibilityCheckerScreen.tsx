@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, Linking, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Linking, Platform, LayoutAnimation } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme } from 'react-native-paper';
 import { RootStackScreenProps } from '../../types/navigation';
@@ -16,6 +16,8 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const hasPhilHealth = useAppSelector((state) => state.settings.hasPhilHealth);
 
   const setHasPhilHealthValue = (value: boolean | null) => {
+    // Enable smooth transition for state resets or changes
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     dispatch(setHasPhilHealth(value));
   };
 
