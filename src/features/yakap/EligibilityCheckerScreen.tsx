@@ -182,7 +182,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
           <View style={styles.successHeader}>
             <Text
               variant="headlineMedium"
-              style={[styles.guidanceTitle, { color: theme.colors.secondary }]}
+              style={[styles.guidanceTitle, { color: theme.colors.onSurface }]}
             >
               Step 1: Obtain your PhilHealth PIN
             </Text>
