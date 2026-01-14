@@ -10,7 +10,10 @@ const NotFoundScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>This screen doesn't exist.</Text>
-      <Button onPress={() => navigation.replace('Main', { screen: 'Home' })} title="Go to home screen" />
+      <Button
+        onPress={() => navigation.replace('Main', { screen: 'Home' })}
+        title="Go to home screen"
+      />
     </View>
   );
 };

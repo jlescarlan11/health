@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  View,
-  ScrollView,
-  StyleSheet,
-} from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, useTheme, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -36,10 +32,7 @@ const YakapHomeScreen = () => {
 
   const renderBenefitItem = (benefit: YakapBenefit) => {
     return (
-      <View
-        key={benefit.id}
-        style={styles.benefitCard}
-      >
+      <View key={benefit.id} style={styles.benefitCard}>
         <View style={styles.benefitIconContainer}>
           <MaterialCommunityIcons
             name={benefit.icon as any}
@@ -102,7 +95,10 @@ const YakapHomeScreen = () => {
 
         {/* Benefits Summary */}
         <View style={styles.section}>
-          <Text variant="titleLarge" style={[styles.sectionHeader, { color: theme.colors.onSurface }]}>
+          <Text
+            variant="titleLarge"
+            style={[styles.sectionHeader, { color: theme.colors.onSurface }]}
+          >
             Key Benefits
           </Text>
           <View style={styles.benefitsList}>

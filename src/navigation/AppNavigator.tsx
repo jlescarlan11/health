@@ -14,7 +14,7 @@ import {
   EligibilityCheckerScreen,
   EnrollmentPathwayScreen,
   EnrollmentGuideScreen,
-  EnrollmentCompletionScreen
+  EnrollmentCompletionScreen,
 } from '../features/yakap';
 import StandardHeader from '../components/common/StandardHeader';
 
@@ -24,7 +24,7 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
-      
+
       {/* AI Navigator Flow */}
       <Stack.Screen
         name="SymptomAssessment"
@@ -59,11 +59,7 @@ const AppNavigator = () => {
       />
 
       {/* YAKAP Flow */}
-      <Stack.Screen
-        name="YakapFaq"
-        component={YakapFaqScreen}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="YakapFaq" component={YakapFaqScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="EligibilityChecker"
         component={EligibilityCheckerScreen}
@@ -86,8 +82,16 @@ const AppNavigator = () => {
       />
 
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
-      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
-      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ title: 'Terms of Service' }} />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={{ title: 'Privacy Policy' }}
+      />
+      <Stack.Screen
+        name="TermsOfService"
+        component={TermsOfServiceScreen}
+        options={{ title: 'Terms of Service' }}
+      />
     </Stack.Navigator>
   );
 };

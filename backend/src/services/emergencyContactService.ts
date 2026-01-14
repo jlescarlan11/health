@@ -7,7 +7,9 @@ export const getAllEmergencyContacts = async (): Promise<EmergencyContact[]> => 
   });
 };
 
-export const getEmergencyContactsByCategory = async (category: string): Promise<EmergencyContact[]> => {
+export const getEmergencyContactsByCategory = async (
+  category: string,
+): Promise<EmergencyContact[]> => {
   return prisma.emergencyContact.findMany({
     where: { category },
     orderBy: { name: 'asc' },

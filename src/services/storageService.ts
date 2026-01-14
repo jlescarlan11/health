@@ -7,15 +7,15 @@ export const uploadFileToFirebase = async (uri: string, path: string): Promise<s
   if (storage && !error) {
     try {
       const reference = storage().ref(path);
-      
+
       // Handle different file URI formats
       const uploadUri = Platform.OS === 'ios' ? uri.replace('file://', '') : uri;
-      
+
       const task = reference.putFile(uploadUri);
-      
+
       // Wait for completion
       await task;
-      
+
       // Get download URL
       const url = await reference.getDownloadURL();
       return url;

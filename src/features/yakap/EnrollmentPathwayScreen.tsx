@@ -63,7 +63,10 @@ const pathways: Pathway[] = [
   },
 ];
 
-type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EnrollmentPathway'>;
+type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  'EnrollmentPathway'
+>;
 
 export const EnrollmentPathwayScreen = () => {
   const theme = useTheme();
@@ -97,7 +100,10 @@ export const EnrollmentPathwayScreen = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <StandardHeader title="Choose Pathway" showBackButton />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text variant="bodyLarge" style={styles.headerText}>
@@ -111,14 +117,24 @@ export const EnrollmentPathwayScreen = () => {
             style={StyleSheet.flatten([
               styles.card,
               { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
-              pathway.recommended && { borderColor: theme.colors.primary, borderWidth: 2 }
+              pathway.recommended && { borderColor: theme.colors.primary, borderWidth: 2 },
             ])}
           >
             <View style={styles.cardHeader}>
               <View style={styles.cardHeaderTitle}>
-                <Text variant="titleMedium" style={styles.cardTitle}>{pathway.name}</Text>
+                <Text variant="titleMedium" style={styles.cardTitle}>
+                  {pathway.name}
+                </Text>
                 {pathway.recommended && (
-                  <Chip style={[styles.recommendedChip, { backgroundColor: theme.colors.primaryContainer }]} textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}>Recommended</Chip>
+                  <Chip
+                    style={[
+                      styles.recommendedChip,
+                      { backgroundColor: theme.colors.primaryContainer },
+                    ]}
+                    textStyle={[styles.recommendedChipText, { color: theme.colors.primary }]}
+                  >
+                    Recommended
+                  </Chip>
                 )}
               </View>
               <Text variant="bodySmall" style={{ color: theme.colors.secondary }}>
@@ -137,9 +153,16 @@ export const EnrollmentPathwayScreen = () => {
                   {renderDetailItem('Cons', pathway.cons, theme.colors.error)}
                 </View>
               </View>
-              
-              <View style={[styles.requirementsSection, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Text variant="labelMedium" style={styles.detailLabel}>Requirements:</Text>
+
+              <View
+                style={[
+                  styles.requirementsSection,
+                  { backgroundColor: theme.colors.surfaceVariant },
+                ]}
+              >
+                <Text variant="labelMedium" style={styles.detailLabel}>
+                  Requirements:
+                </Text>
                 <Text variant="bodySmall" style={styles.requirementsText}>
                   {pathway.requirements.join(', ')}
                 </Text>
@@ -152,13 +175,31 @@ export const EnrollmentPathwayScreen = () => {
       <Modal
         visible={modalVisible}
         onDismiss={() => setModalVisible(false)}
-        contentContainerStyle={StyleSheet.flatten([styles.modalContent, { backgroundColor: theme.colors.surface }])}
+        contentContainerStyle={StyleSheet.flatten([
+          styles.modalContent,
+          { backgroundColor: theme.colors.surface },
+        ])}
       >
-        <Text variant="headlineSmall" style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Confirm Selection</Text>
-        <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>
-          You have chosen <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>{selectedPathway?.name}</Text>.
+        <Text
+          variant="headlineSmall"
+          style={[styles.modalTitle, { color: theme.colors.onSurface }]}
+        >
+          Confirm Selection
         </Text>
-        <Text variant="bodyMedium" style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}>
+        <Text
+          variant="bodyMedium"
+          style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}
+        >
+          You have chosen{' '}
+          <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+            {selectedPathway?.name}
+          </Text>
+          .
+        </Text>
+        <Text
+          variant="bodyMedium"
+          style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}
+        >
           Do you want to proceed with this enrollment pathway?
         </Text>
 

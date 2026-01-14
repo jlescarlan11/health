@@ -72,7 +72,10 @@ export const MainHomeScreen = () => {
 
     return (
       <Card
-        style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}
+        style={[
+          styles.card,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+        ]}
         onPress={onPress}
         testID={testID}
         accessible={true}
@@ -100,11 +103,17 @@ export const MainHomeScreen = () => {
               return null;
             })()}
             {/* #endregion */}
-            <MaterialCommunityIcons name={icon} size={32} color={iconColor || theme.colors.onPrimary} />
+            <MaterialCommunityIcons
+              name={icon}
+              size={32}
+              color={iconColor || theme.colors.onPrimary}
+            />
           </View>
           <View style={styles.textContainer}>
             <Title style={[styles.cardTitle, { color: theme.colors.onSurface }]}>{title}</Title>
-            <Paragraph style={[styles.cardSubtitle, { color: theme.colors.onSurfaceVariant }]}>{subtitle}</Paragraph>
+            <Paragraph style={[styles.cardSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+              {subtitle}
+            </Paragraph>
           </View>
           {/* #region agent log */}
           {(() => {
@@ -135,7 +144,10 @@ export const MainHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <HomeHero />
 

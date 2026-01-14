@@ -10,14 +10,14 @@ interface TriageResult {
 export const performTriage = async (
   symptoms: string,
   age: string | number,
-  severity: number
+  severity: number,
 ): Promise<TriageResult> => {
   // 1. Check for Immediate Emergency
   const emergencyCheck = detectEmergency(symptoms);
   if (emergencyCheck.isEmergency && emergencyCheck.overrideResponse) {
     return {
       type: 'EMERGENCY',
-      data: emergencyCheck.overrideResponse
+      data: emergencyCheck.overrideResponse,
     };
   }
 
@@ -26,7 +26,7 @@ export const performTriage = async (
   if (mentalHealthCheck.isCrisis) {
     return {
       type: 'CRISIS',
-      data: mentalHealthCheck
+      data: mentalHealthCheck,
     };
   }
 
@@ -36,10 +36,10 @@ export const performTriage = async (
     const assessment = await geminiClient.assessSymptoms(fullSymptoms, []);
     return {
       type: 'ASSESSMENT',
-      data: assessment
+      data: assessment,
     };
   } catch (error) {
-    console.error("Triage Error:", error);
+    console.error('Triage Error:', error);
     // Fallback if AI fails but no specific emergency detected
     // In a real app, we might check for "offline mode" here or return a generic "Go to Health Center" advice.
     throw error;

@@ -5,18 +5,23 @@ let db: SQLite.SQLiteDatabase | null = null;
 let initPromise: Promise<void> | null = null;
 
 // Migration function to add missing columns
-const migrateTableSchema = async (tableName: string, requiredColumns: { name: string; type: string }[]) => {
+const migrateTableSchema = async (
+  tableName: string,
+  requiredColumns: { name: string; type: string }[],
+) => {
   if (!db) return;
-  
+
   try {
     // Get existing columns
     const tableInfo = await db.getAllAsync<any>(`PRAGMA table_info(${tableName})`);
     const existingColumnNames = tableInfo.map((col: any) => col.name);
-    
+
     // Check and add missing columns
     for (const requiredColumn of requiredColumns) {
       if (!existingColumnNames.includes(requiredColumn.name)) {
-        await db.execAsync(`ALTER TABLE ${tableName} ADD COLUMN ${requiredColumn.name} ${requiredColumn.type}`);
+        await db.execAsync(
+          `ALTER TABLE ${tableName} ADD COLUMN ${requiredColumn.name} ${requiredColumn.type}`,
+        );
       }
     }
   } catch (error: any) {
@@ -52,9 +57,7 @@ export const initDatabase = async () => {
       `);
 
       // Migrate facilities table schema (add missing columns if table already existed)
-      await migrateTableSchema('facilities', [
-        { name: 'lastUpdated', type: 'INTEGER' }
-      ]);
+      await migrateTableSchema('facilities', [{ name: 'lastUpdated', type: 'INTEGER' }]);
 
       // Create Emergency Contacts Table
       await db.execAsync(`
@@ -71,9 +74,7 @@ export const initDatabase = async () => {
       `);
 
       // Migrate emergency_contacts table schema (add missing columns if table already existed)
-      await migrateTableSchema('emergency_contacts', [
-        { name: 'lastUpdated', type: 'INTEGER' }
-      ]);
+      await migrateTableSchema('emergency_contacts', [{ name: 'lastUpdated', type: 'INTEGER' }]);
 
       console.log('Database initialized successfully');
     } catch (error) {
@@ -97,7 +98,7 @@ export const saveFacilities = async (facilities: Facility[]) => {
     await db.execAsync('BEGIN TRANSACTION');
 
     const statement = await db.prepareAsync(
-      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`
+      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`,
     );
 
     try {
@@ -115,10 +116,10 @@ export const saveFacilities = async (facilities: Facility[]) => {
           $hours: facility.hours || null,
           $photoUrl: facility.photoUrl || null,
           $lastUpdated: timestamp,
-          $data: JSON.stringify(facility)
+          $data: JSON.stringify(facility),
         });
       }
-      
+
       await db.execAsync('COMMIT');
       console.log(`Saved ${facilities.length} facilities to offline storage`);
     } catch (innerError) {
@@ -144,29 +145,31 @@ export const getFacilities = async (): Promise<Facility[]> => {
 
   try {
     const result = await db.getAllAsync<any>('SELECT * FROM facilities');
-    
-    return result.map(row => {
-      try {
-        const fullData = row.data ? JSON.parse(row.data) : {};
-        return {
-          ...fullData,
-          id: row.id,
-          name: row.name,
-          type: row.type,
-          services: row.services ? JSON.parse(row.services) : [],
-          address: row.address,
-          latitude: row.latitude,
-          longitude: row.longitude,
-          phone: row.phone,
-          yakapAccredited: Boolean(row.yakapAccredited),
-          hours: row.hours,
-          photoUrl: row.photoUrl,
-        };
-      } catch (e) {
-        console.error('Error parsing facility row:', e);
-        return null;
-      }
-    }).filter((f): f is Facility => f !== null);
+
+    return result
+      .map((row) => {
+        try {
+          const fullData = row.data ? JSON.parse(row.data) : {};
+          return {
+            ...fullData,
+            id: row.id,
+            name: row.name,
+            type: row.type,
+            services: row.services ? JSON.parse(row.services) : [],
+            address: row.address,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            phone: row.phone,
+            yakapAccredited: Boolean(row.yakapAccredited),
+            hours: row.hours,
+            photoUrl: row.photoUrl,
+          };
+        } catch (e) {
+          console.error('Error parsing facility row:', e);
+          return null;
+        }
+      })
+      .filter((f): f is Facility => f !== null);
   } catch (error) {
     console.error('Error getting facilities:', error);
     throw error;
@@ -179,7 +182,7 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
 
   try {
     const row = await db.getFirstAsync<any>('SELECT * FROM facilities WHERE id = ?', [id]);
-    
+
     if (!row) return null;
 
     const fullData = row.data ? JSON.parse(row.data) : {};
@@ -214,7 +217,7 @@ export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
     await db.execAsync('BEGIN TRANSACTION');
 
     const statement = await db.prepareAsync(
-      `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, lastUpdated, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $lastUpdated, $data)`
+      `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, lastUpdated, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $lastUpdated, $data)`,
     );
 
     try {
@@ -227,10 +230,10 @@ export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
           $available24x7: contact.available24x7 ? 1 : 0,
           $description: contact.description || null,
           $lastUpdated: timestamp,
-          $data: JSON.stringify(contact)
+          $data: JSON.stringify(contact),
         });
       }
-      
+
       await db.execAsync('COMMIT');
       console.log(`Saved ${contacts.length} emergency contacts to offline storage`);
     } catch (innerError) {
@@ -256,24 +259,26 @@ export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
 
   try {
     const result = await db.getAllAsync<any>('SELECT * FROM emergency_contacts');
-    
-    return result.map(row => {
-      try {
-        const fullData = row.data ? JSON.parse(row.data) : {};
-        return {
-          ...fullData,
-          id: row.id,
-          name: row.name,
-          category: row.category,
-          phone: row.phone,
-          available24x7: Boolean(row.available24x7),
-          description: row.description,
-        };
-      } catch (e) {
-        console.error('Error parsing emergency contact row:', e);
-        return null;
-      }
-    }).filter((c): c is EmergencyContact => c !== null);
+
+    return result
+      .map((row) => {
+        try {
+          const fullData = row.data ? JSON.parse(row.data) : {};
+          return {
+            ...fullData,
+            id: row.id,
+            name: row.name,
+            category: row.category,
+            phone: row.phone,
+            available24x7: Boolean(row.available24x7),
+            description: row.description,
+          };
+        } catch (e) {
+          console.error('Error parsing emergency contact row:', e);
+          return null;
+        }
+      })
+      .filter((c): c is EmergencyContact => c !== null);
   } catch (error) {
     console.error('Error getting emergency contacts:', error);
     throw error;

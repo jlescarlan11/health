@@ -26,18 +26,14 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     return (
       <Modal transparent animationType="fade" visible={visible}>
         <View style={styles.modalBackground}>
-          <View 
+          <View
             style={[styles.activityIndicatorWrapper, { backgroundColor: theme.colors.surface }]}
             accessible={true}
             accessibilityRole="progressbar"
-            accessibilityLabel={text || "Loading"}
+            accessibilityLabel={text || 'Loading'}
           >
             <ActivityIndicator animating={true} color={spinnerColor} size={size} />
-            {text && (
-              <Text style={[styles.text, { color: theme.colors.onSurface }]}>
-                {text}
-              </Text>
-            )}
+            {text && <Text style={[styles.text, { color: theme.colors.onSurface }]}>{text}</Text>}
           </View>
         </View>
       </Modal>
@@ -45,18 +41,14 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   }
 
   return (
-    <View 
+    <View
       style={styles.inlineContainer}
       accessible={true}
       accessibilityRole="progressbar"
-      accessibilityLabel={text || "Loading"}
+      accessibilityLabel={text || 'Loading'}
     >
       <ActivityIndicator animating={true} color={spinnerColor} size={size} />
-      {text && (
-        <Text style={[styles.inlineText, { color: theme.colors.onSurface }]}>
-          {text}
-        </Text>
-      )}
+      {text && <Text style={[styles.inlineText, { color: theme.colors.onSurface }]}>{text}</Text>}
     </View>
   );
 };

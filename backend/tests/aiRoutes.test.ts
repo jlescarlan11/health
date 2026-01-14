@@ -28,14 +28,14 @@ describe('AI Routes', () => {
     it('should return navigation recommendations', async () => {
       // Mock facilities fetch
       prismaMock.facility.findMany.mockResolvedValueOnce([]); // context
-      
+
       // Mock AI response
       const aiResponseJSON = JSON.stringify({
         recommendation: 'Hospital',
         reasoning: 'Serious symptoms',
         recommended_facility_ids: ['1'],
       });
-      
+
       mockGenerateContent.mockResolvedValue({
         response: {
           text: () => aiResponseJSON,
@@ -61,12 +61,10 @@ describe('AI Routes', () => {
       };
       prismaMock.facility.findMany.mockResolvedValueOnce([mockFacility]);
 
-      const response = await request(app)
-        .post('/api/ai/navigate')
-        .send({
-          symptoms: 'chest pain',
-          severity: 'high'
-        });
+      const response = await request(app).post('/api/ai/navigate').send({
+        symptoms: 'chest pain',
+        severity: 'high',
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.recommendation).toBe('Hospital');

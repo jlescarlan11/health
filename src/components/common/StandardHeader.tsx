@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
@@ -39,7 +47,13 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant }, style]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant },
+        style,
+      ]}
+    >
       <View style={styles.leftContainer}>
         {showBackButton && (
           <TouchableOpacity
@@ -92,7 +106,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
-    marginLeft: -8, 
+    marginLeft: -8,
   },
   title: {
     fontSize: 18,

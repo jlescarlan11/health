@@ -11,12 +11,7 @@ interface AlertProps {
   style?: ViewStyle;
 }
 
-export const Alert: React.FC<AlertProps> = ({
-  type,
-  message,
-  onDismiss,
-  style,
-}) => {
+export const Alert: React.FC<AlertProps> = ({ type, message, onDismiss, style }) => {
   const theme = useTheme();
 
   let backgroundColor;
@@ -42,7 +37,7 @@ export const Alert: React.FC<AlertProps> = ({
   }
 
   return (
-    <View 
+    <View
       style={[styles.container, { backgroundColor }, style]}
       accessible={true}
       accessibilityRole="alert"
@@ -51,11 +46,11 @@ export const Alert: React.FC<AlertProps> = ({
       <IconButton icon={icon} iconColor={color} size={24} />
       <Text style={[styles.message, { color }]}>{message}</Text>
       {onDismiss && (
-        <IconButton 
-          icon="close" 
-          iconColor={color} 
-          size={20} 
-          onPress={onDismiss} 
+        <IconButton
+          icon="close"
+          iconColor={color}
+          size={20}
+          onPress={onDismiss}
           accessibilityLabel="Dismiss alert"
           accessibilityRole="button"
         />

@@ -16,11 +16,11 @@ const EnrollmentGuideScreen = () => {
   const theme = useTheme();
 
   const { pathwayId } = route.params;
-  
+
   const [currentStep, setCurrentStep] = useState(0);
 
-  const pathway = ENROLLMENT_PATHWAYS.find(p => p.id === pathwayId);
-  
+  const pathway = ENROLLMENT_PATHWAYS.find((p) => p.id === pathwayId);
+
   useEffect(() => {
     if (!pathway) {
       navigation.goBack();
@@ -49,59 +49,88 @@ const EnrollmentGuideScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <StandardHeader title="Enrollment Guide" showBackButton />
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerSection}>
-          <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>{pathway.name}</Text>
-          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>Step {currentStep + 1} of {totalSteps}</Text>
-          <ProgressBar progress={progress} color={theme.colors.primary} style={styles.progressBar} />
+          <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>
+            {pathway.name}
+          </Text>
+          <Text style={[styles.stepCounter, { color: theme.colors.onSurfaceVariant }]}>
+            Step {currentStep + 1} of {totalSteps}
+          </Text>
+          <ProgressBar
+            progress={progress}
+            color={theme.colors.primary}
+            style={styles.progressBar}
+          />
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
-            <View style={styles.stepHeader}>
-                <View style={[styles.stepNumberBadge, { backgroundColor: theme.colors.primaryContainer }]}>
-                    <Text style={[styles.stepNumberText, { color: theme.colors.primary }]}>{currentStep + 1}</Text>
-                </View>
-                <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Instruction</Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+          ]}
+        >
+          <View style={styles.stepHeader}>
+            <View
+              style={[styles.stepNumberBadge, { backgroundColor: theme.colors.primaryContainer }]}
+            >
+              <Text style={[styles.stepNumberText, { color: theme.colors.primary }]}>
+                {currentStep + 1}
+              </Text>
             </View>
-            
-            <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>{currentStepData}</Text>
-            
-            <Divider style={styles.divider} />
-            
-            <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
-                <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color={theme.colors.secondary} />
-                <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
-                    Tip: Ensure all information provided matches your official documents to avoid delays.
-                </Text>
-            </View>
+            <Text style={[styles.stepTitle, { color: theme.colors.onSurface }]}>Instruction</Text>
+          </View>
+
+          <Text style={[styles.instructionText, { color: theme.colors.onSurface }]}>
+            {currentStepData}
+          </Text>
+
+          <Divider style={styles.divider} />
+
+          <View style={[styles.tipsSection, { backgroundColor: theme.colors.secondaryContainer }]}>
+            <MaterialCommunityIcons
+              name="lightbulb-on-outline"
+              size={24}
+              color={theme.colors.secondary}
+            />
+            <Text style={[styles.tipsText, { color: theme.colors.onSecondaryContainer }]}>
+              Tip: Ensure all information provided matches your official documents to avoid delays.
+            </Text>
+          </View>
         </View>
 
         <View style={styles.navigationButtons}>
-            <Button 
-                variant="outline" 
-                onPress={handlePrevious} 
-                disabled={currentStep === 0}
-                style={styles.navButton}
-                title="Previous"
-            />
-            <Button 
-                variant="primary" 
-                onPress={handleNext} 
-                style={styles.navButton}
-                title={currentStep === totalSteps - 1 ? "Finish" : "Next"}
-            />
+          <Button
+            variant="outline"
+            onPress={handlePrevious}
+            disabled={currentStep === 0}
+            style={styles.navButton}
+            title="Previous"
+          />
+          <Button
+            variant="primary"
+            onPress={handleNext}
+            style={styles.navButton}
+            title={currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
+          />
         </View>
 
         <View style={styles.infoBox}>
-            <MaterialCommunityIcons name="information-outline" size={20} color={theme.colors.onSurfaceVariant} />
-            <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
-                This is an informational guide. Progress is not saved between sessions.
-            </Text>
+          <MaterialCommunityIcons
+            name="information-outline"
+            size={20}
+            color={theme.colors.onSurfaceVariant}
+          />
+          <Text style={[styles.infoText, { color: theme.colors.onSurfaceVariant }]}>
+            This is an informational guide. Progress is not saved between sessions.
+          </Text>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

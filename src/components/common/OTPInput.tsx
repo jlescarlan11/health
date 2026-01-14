@@ -27,8 +27,8 @@ export const OTPInput: React.FC<OTPInputProps> = ({
 
   return (
     <View style={[styles.container, containerStyle]}>
-      <Pressable 
-        style={styles.inputsContainer} 
+      <Pressable
+        style={styles.inputsContainer}
         onPress={handlePress}
         accessible={true}
         accessibilityLabel="One Time Password Input"

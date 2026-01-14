@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { Audio } from 'expo-av';
@@ -16,7 +24,7 @@ const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 
 const NavigatorHomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
-  
+
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -65,7 +73,7 @@ const NavigatorHomeScreen = () => {
           playsInSilentModeIOS: true,
         });
         const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
+          Audio.RecordingOptionsPresets.HIGH_QUALITY,
         );
         setRecording(recording);
         setIsRecording(true);
@@ -86,14 +94,14 @@ const NavigatorHomeScreen = () => {
       await recording.stopAndUnloadAsync();
       // Simulation of STT (Replace with actual API call)
       setTimeout(() => {
-        setSymptom(prev => prev + (prev ? ' ' : '') + "I have a severe headache and fever.");
+        setSymptom((prev) => prev + (prev ? ' ' : '') + 'I have a severe headache and fever.');
         setIsProcessingAudio(false);
         setRecording(null);
       }, 1500);
     } catch (error) {
-       console.error(error);
-       setIsProcessingAudio(false);
-       Alert.alert('Error', 'Failed to process audio.');
+      console.error(error);
+      setIsProcessingAudio(false);
+      Alert.alert('Error', 'Failed to process audio.');
     }
   };
 
@@ -113,12 +121,12 @@ const NavigatorHomeScreen = () => {
 
   const handleEmergencyCall = () => {
     Alert.alert(
-      "Emergency Call",
-      "This will initiate a call to emergency services (911). Do you want to continue?",
+      'Emergency Call',
+      'This will initiate a call to emergency services (911). Do you want to continue?',
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Call 911", onPress: () => console.log("Calling 911..."), style: 'destructive' }
-      ]
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Call 911', onPress: () => console.log('Calling 911...'), style: 'destructive' },
+      ],
     );
   };
 
@@ -130,31 +138,40 @@ const NavigatorHomeScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
         keyboardVerticalOffset={keyboardVerticalOffset}
       >
-        <ScrollView 
+        <ScrollView
           ref={scrollViewRef}
           style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            isKeyboardVisible && { paddingBottom: 20 }
-          ]} 
+          contentContainerStyle={[styles.scrollContent, isKeyboardVisible && { paddingBottom: 20 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.mainContent}>
             <View style={styles.emergencyLayoutContainer}>
-              <Card mode="contained" style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}>
+              <Card
+                mode="contained"
+                style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}
+              >
                 <Card.Content style={styles.emergencyCardContent}>
                   <View style={styles.emergencyTextContent}>
-                    <Text variant="titleLarge" style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}>
+                    <Text
+                      variant="titleLarge"
+                      style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}
+                    >
                       Emergency?
                     </Text>
-                    <Text variant="bodyMedium" style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}>
+                    <Text
+                      variant="bodyMedium"
+                      style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}
+                    >
                       Call 911 immediately if you need urgent care.
                     </Text>
                   </View>
@@ -164,10 +181,16 @@ const NavigatorHomeScreen = () => {
             </View>
 
             <View style={styles.heroSection}>
-              <Text variant="headlineSmall" style={[styles.welcomeText, { color: theme.colors.onBackground }]}>
+              <Text
+                variant="headlineSmall"
+                style={[styles.welcomeText, { color: theme.colors.onBackground }]}
+              >
                 How are you feeling today?
               </Text>
-              <Text variant="bodyMedium" style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
+              <Text
+                variant="bodyMedium"
+                style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+              >
                 Describe your symptoms and our AI will guide you to the right care.
               </Text>
             </View>

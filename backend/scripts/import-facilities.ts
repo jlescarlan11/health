@@ -212,7 +212,7 @@ async function main() {
   }
 
   const fileContent = fs.readFileSync(csvPath, 'utf-8');
-  
+
   const records = parse(fileContent, {
     columns: true,
     skip_empty_lines: true,
@@ -223,60 +223,66 @@ async function main() {
 
   for (const record of records) {
     try {
-        const operatingHours = parseOperatingHours(record.operating_hours);
-        
-        // Convert comma/semicolon separated strings to arrays
-        const services = record.services ? record.services.split(';').map((s: string) => s.trim()) : [];
-        const photos = record.photos ? record.photos.split(';').map((p: string) => p.trim()).filter((p: string) => p.length > 0) : [];
-        
-        // Clean lat/long
-        const latitude = parseFloat(record.latitude);
-        const longitude = parseFloat(record.longitude);
+      const operatingHours = parseOperatingHours(record.operating_hours);
 
-        if (isNaN(latitude) || isNaN(longitude)) {
-            console.warn(`Skipping ${record.name}: Invalid coordinates`);
-            continue;
-        }
+      // Convert comma/semicolon separated strings to arrays
+      const services = record.services
+        ? record.services.split(';').map((s: string) => s.trim())
+        : [];
+      const photos = record.photos
+        ? record.photos
+            .split(';')
+            .map((p: string) => p.trim())
+            .filter((p: string) => p.length > 0)
+        : [];
 
-        // Upsert facility
-        // We use name as the unique identifier for upsert here, but schema might not have unique on name.
-        // If name is not unique, we should check if it exists first.
-        // Schema: id String @id, name String. No unique on name.
-        // So we use findFirst.
-        
-        const existing = await prisma.facility.findFirst({
-            where: { name: record.name }
+      // Clean lat/long
+      const latitude = parseFloat(record.latitude);
+      const longitude = parseFloat(record.longitude);
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        console.warn(`Skipping ${record.name}: Invalid coordinates`);
+        continue;
+      }
+
+      // Upsert facility
+      // We use name as the unique identifier for upsert here, but schema might not have unique on name.
+      // If name is not unique, we should check if it exists first.
+      // Schema: id String @id, name String. No unique on name.
+      // So we use findFirst.
+
+      const existing = await prisma.facility.findFirst({
+        where: { name: record.name },
+      });
+
+      const data = {
+        name: record.name,
+        type: record.type,
+        address: record.address,
+        latitude,
+        longitude,
+        phone: record.phone || null,
+        yakap_accredited: record.yakap_accredited === 'true',
+        services,
+        operating_hours: operatingHours,
+        photos,
+        barangay: record.barangay || null,
+      };
+
+      if (existing) {
+        await prisma.facility.update({
+          where: { id: existing.id },
+          data,
         });
-
-        const data = {
-            name: record.name,
-            type: record.type,
-            address: record.address,
-            latitude,
-            longitude,
-            phone: record.phone || null,
-            yakap_accredited: record.yakap_accredited === 'true',
-            services,
-            operating_hours: operatingHours,
-            photos,
-            barangay: record.barangay || null,
-        };
-
-        if (existing) {
-            await prisma.facility.update({
-                where: { id: existing.id },
-                data,
-            });
-            console.log(`Updated: ${record.name}`);
-        } else {
-            await prisma.facility.create({
-                data,
-            });
-            console.log(`Created: ${record.name}`);
-        }
-
+        console.log(`Updated: ${record.name}`);
+      } else {
+        await prisma.facility.create({
+          data,
+        });
+        console.log(`Created: ${record.name}`);
+      }
     } catch (err) {
-        console.error(`Error processing ${record.name}:`, err);
+      console.error(`Error processing ${record.name}:`, err);
     }
   }
 

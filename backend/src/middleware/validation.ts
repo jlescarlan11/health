@@ -41,20 +41,20 @@ export const validateNearbyParams = (req: Request, res: Response, next: NextFunc
 export const validateFacilityId = (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
   if (!id) {
-     res.status(400).json({ error: 'Facility ID is required' });
-     return;
+    res.status(400).json({ error: 'Facility ID is required' });
+    return;
   }
   next();
 };
 
 export const validateFacilityType = (req: Request, res: Response, next: NextFunction) => {
-    const { type } = req.params;
-    if (!type) {
-        res.status(400).json({ error: 'Facility type is required' });
-        return;
-    }
-    next();
-}
+  const { type } = req.params;
+  if (!type) {
+    res.status(400).json({ error: 'Facility type is required' });
+    return;
+  }
+  next();
+};
 
 export const validateRequest = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);

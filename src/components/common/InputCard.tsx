@@ -66,7 +66,7 @@ export const InputCard: React.FC<InputCardProps> = ({
               useNativeDriver: true,
             }),
           ]),
-        ])
+        ]),
       );
       animation.start();
     } else {
@@ -94,15 +94,9 @@ export const InputCard: React.FC<InputCardProps> = ({
           onChangeText={onChangeText}
           onFocus={onFocus}
           onBlur={onBlur}
-          style={[
-            styles.textInput,
-            { backgroundColor: theme.colors.background },
-          ]}
+          style={[styles.textInput, { backgroundColor: theme.colors.background }]}
           contentStyle={styles.textContent}
-          outlineStyle={[
-            styles.outline,
-            { borderColor: theme.colors.outlineVariant }
-          ]}
+          outlineStyle={[styles.outline, { borderColor: theme.colors.outlineVariant }]}
           cursorColor={theme.colors.primary}
           selectionColor={theme.colors.primary + '40'}
           dense
@@ -112,7 +106,9 @@ export const InputCard: React.FC<InputCardProps> = ({
 
       <View style={styles.actionContainer}>
         {isProcessingAudio ? (
-          <View style={[styles.iconButtonPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}>
+          <View
+            style={[styles.iconButtonPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}
+          >
             <ActivityIndicator size="small" color={theme.colors.primary} />
           </View>
         ) : showSend ? (
@@ -130,12 +126,12 @@ export const InputCard: React.FC<InputCardProps> = ({
               {isRecording && (
                 <Animated.View
                   style={[
-                    styles.recordingPulse, 
-                    { 
-                      opacity: fadeAnim, 
+                    styles.recordingPulse,
+                    {
+                      opacity: fadeAnim,
                       backgroundColor: theme.colors.error,
-                      transform: [{ scale: scaleAnim }]
-                    }
+                      transform: [{ scale: scaleAnim }],
+                    },
                   ]}
                 />
               )}
@@ -164,7 +160,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flex: 1,
   },
-  textInput: { 
+  textInput: {
     fontSize: 15,
     lineHeight: 20,
     maxHeight: 100,
@@ -184,15 +180,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginLeft: 8, // Consistent spacing from input field
   },
-  micContainer: { 
-    position: 'relative', 
-    width: 40, 
-    height: 40, 
-    alignItems: 'center', 
+  micContainer: {
+    position: 'relative',
+    width: 40,
+    height: 40,
+    alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
   },
-  iconButton: { 
+  iconButton: {
     margin: 0,
     width: 40,
     height: 40,

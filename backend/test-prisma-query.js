@@ -17,24 +17,24 @@ const prisma = new PrismaClient({ adapter });
 async function testQuery() {
   try {
     console.log('Testing Prisma query...');
-    
+
     const result = await prisma.facility.findMany({
       take: 10,
       skip: 0,
       orderBy: { name: 'asc' },
     });
-    
+
     console.log('✓ Query successful!');
     console.log(`Found ${result.length} facilities`);
-    
+
     const count = await prisma.facility.count();
     console.log(`Total facilities in database: ${count}`);
-    
+
     if (count === 0) {
       console.log('\n⚠️  Database is empty. You may need to seed it:');
       console.log('   cd backend && npm run seed');
     }
-    
+
     await prisma.$disconnect();
     process.exit(0);
   } catch (error) {
@@ -49,6 +49,3 @@ async function testQuery() {
 }
 
 testQuery();
-
-
-

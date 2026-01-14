@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,12 +9,7 @@ interface HeroSectionProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const HeroSection: React.FC<HeroSectionProps> = ({
-  children,
-  colors,
-  height = 200,
-  style,
-}) => {
+const HeroSection: React.FC<HeroSectionProps> = ({ children, colors, height = 200, style }) => {
   return (
     <LinearGradient colors={colors as any} style={[styles.container, { height }, style]}>
       <View style={styles.content}>{children}</View>
@@ -27,7 +21,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
     paddingHorizontal: 0, // Remove horizontal padding for edge-to-edge HomeHero
-    paddingTop: 40, 
+    paddingTop: 40,
     paddingBottom: 20,
   },
   content: {

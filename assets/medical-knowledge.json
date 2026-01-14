@@ -170,14 +170,7 @@
     {
       "id": "gastrointestinal",
       "name": "Gastrointestinal Issues",
-      "symptoms": [
-        "Stomach cramp",
-        "Nausea",
-        "Vomiting",
-        "Diarrhea",
-        "Bloating",
-        "Gas"
-      ],
+      "symptoms": ["Stomach cramp", "Nausea", "Vomiting", "Diarrhea", "Bloating", "Gas"],
       "red_flags": [
         "Severe, sharp pain",
         "Vomiting blood",
@@ -195,12 +188,7 @@
     {
       "id": "hypertension",
       "name": "Hypertension (High Blood Pressure)",
-      "symptoms": [
-        "High BP reading",
-        "Mild headache",
-        "Flushing",
-        "Dizziness"
-      ],
+      "symptoms": ["High BP reading", "Mild headache", "Flushing", "Dizziness"],
       "red_flags": [
         "BP > 180/120 (Hypertensive Crisis)",
         "Severe chest pain",
@@ -242,12 +230,7 @@
     {
       "id": "prenatal_care",
       "name": "Prenatal Care",
-      "symptoms": [
-        "Pregnancy check-up",
-        "Mild morning sickness",
-        "Fatigue",
-        "Backache"
-      ],
+      "symptoms": ["Pregnancy check-up", "Mild morning sickness", "Fatigue", "Backache"],
       "red_flags": [
         "Vaginal bleeding",
         "Severe abdominal cramping",
@@ -265,10 +248,7 @@
     {
       "id": "immunizations",
       "name": "Immunizations / Vaccines",
-      "symptoms": [
-        "Need for scheduled vaccine",
-        "Mild soreness at injection site (post-vax)"
-      ],
+      "symptoms": ["Need for scheduled vaccine", "Mild soreness at injection site (post-vax)"],
       "red_flags": [
         "High fever after vaccine",
         "Severe allergic reaction (hives, breathing trouble)",
@@ -306,14 +286,7 @@
     {
       "id": "skin_conditions",
       "name": "Skin Conditions (Rashes/Infections)",
-      "symptoms": [
-        "Redness",
-        "Itching",
-        "Rash",
-        "Minor swelling",
-        "Dry skin",
-        "Acne"
-      ],
+      "symptoms": ["Redness", "Itching", "Rash", "Minor swelling", "Dry skin", "Acne"],
       "red_flags": [
         "Rapidly spreading redness (Cellulitis)",
         "Fever accompanying rash",
@@ -331,12 +304,7 @@
     {
       "id": "ear_conditions",
       "name": "Ear Conditions",
-      "symptoms": [
-        "Ear pain",
-        "Muffled hearing",
-        "Itching in ear",
-        "Mild discharge"
-      ],
+      "symptoms": ["Ear pain", "Muffled hearing", "Itching in ear", "Mild discharge"],
       "red_flags": [
         "Swelling behind the ear",
         "High fever",
@@ -354,12 +322,7 @@
     {
       "id": "dental_concerns",
       "name": "Dental Concerns",
-      "symptoms": [
-        "Toothache",
-        "Sensitivity to hot/cold",
-        "Gum swelling",
-        "Bleeding gums"
-      ],
+      "symptoms": ["Toothache", "Sensitivity to hot/cold", "Gum swelling", "Bleeding gums"],
       "red_flags": [
         "Swelling spreading to eye or neck",
         "Difficulty breathing or swallowing",
@@ -376,13 +339,7 @@
     {
       "id": "eye_concerns",
       "name": "Eye Concerns",
-      "symptoms": [
-        "Redness in eye",
-        "Discharge/crusting",
-        "Itching",
-        "Tearing",
-        "Mild blurriness"
-      ],
+      "symptoms": ["Redness in eye", "Discharge/crusting", "Itching", "Tearing", "Mild blurriness"],
       "red_flags": [
         "Sudden vision loss",
         "Severe eye pain",
@@ -400,13 +357,7 @@
     {
       "id": "allergies",
       "name": "Allergies (Mild)",
-      "symptoms": [
-        "Sneezing",
-        "Itchy eyes",
-        "Runny nose",
-        "Mild hives",
-        "Itchy skin"
-      ],
+      "symptoms": ["Sneezing", "Itchy eyes", "Runny nose", "Mild hives", "Itchy skin"],
       "red_flags": [
         "Difficulty breathing",
         "Swelling of tongue or throat",
@@ -446,12 +397,7 @@
     {
       "id": "musculoskeletal_pain",
       "name": "Musculoskeletal Pain",
-      "symptoms": [
-        "Back pain",
-        "Joint aching",
-        "Muscle stiffness",
-        "Chronic pain flare-up"
-      ],
+      "symptoms": ["Back pain", "Joint aching", "Muscle stiffness", "Chronic pain flare-up"],
       "red_flags": [
         "Loss of bowel/bladder control",
         "Numbness or weakness in legs",
@@ -469,12 +415,7 @@
     {
       "id": "minor_burns",
       "name": "Minor Burns",
-      "symptoms": [
-        "Redness",
-        "Pain",
-        "Small blisters",
-        "Peeling skin"
-      ],
+      "symptoms": ["Redness", "Pain", "Small blisters", "Peeling skin"],
       "red_flags": [
         "Burn covers large area (e.g., larger than palm)",
         "Burn on face, hands, feet, or genitals",
