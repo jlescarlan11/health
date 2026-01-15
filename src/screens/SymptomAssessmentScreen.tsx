@@ -37,7 +37,7 @@ const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
-import { InputCard, TypingIndicator, InputCardRef, SafetyRecheckModal } from '../components/common';
+import { InputCard, TypingIndicator, InputCardRef, SafetyRecheckModal, ProgressBar } from '../components/common';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -69,6 +69,7 @@ const SymptomAssessmentScreen = () => {
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentStep, setCurrentStep] = useState(0);
+  const [totalEstimatedSteps, setTotalEstimatedSteps] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
@@ -231,11 +232,10 @@ const SymptomAssessmentScreen = () => {
       setInputText('');
     }
 
-    // 5. Ensure input focus is maintained
     setTimeout(() => {
       inputCardRef.current?.focus();
     }, 100);
-  }, [currentStep, messages, questions, answers, navigation, isOfflineMode]);
+  }, [currentStep, messages, questions, answers, navigation, isOfflineMode, totalEstimatedSteps]);
 
   useFocusEffect(
     useCallback(() => {
@@ -278,6 +278,9 @@ const SymptomAssessmentScreen = () => {
     const startNode = TriageEngine.getStartNode(triageFlow);
     setCurrentOfflineNodeId(startNode.id);
     
+    // Estimate offline steps - this is a rough approximation based on typical flow depth
+    setTotalEstimatedSteps(5);
+    
     setMessages([
       {
         id: 'offline-intro',
@@ -315,6 +318,7 @@ const SymptomAssessmentScreen = () => {
         const parsed = JSON.parse(jsonMatch[0]);
         if (parsed.questions && Array.isArray(parsed.questions)) {
           setQuestions(parsed.questions);
+          setTotalEstimatedSteps(parsed.questions.length);
           // Add combined first message to conversation
           if (parsed.questions.length > 0) {
             const firstQ = parsed.questions[0];
@@ -385,6 +389,7 @@ const SymptomAssessmentScreen = () => {
           };
           setMessages((prev) => [...prev, assistantMsg]);
           setCurrentOfflineNodeId(nextNode.id);
+          setCurrentStep((prev) => Math.min(prev + 1, totalEstimatedSteps - 1));
         }
       } catch (err) {
         console.error('Offline triage error:', err);
@@ -471,6 +476,7 @@ const SymptomAssessmentScreen = () => {
         }, 100);
       } else {
         setIsTyping(false);
+        setCurrentStep(questions.length); // Final step
         finishAssessment(newAnswers);
       }
     }, delay);
@@ -575,6 +581,14 @@ const SymptomAssessmentScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+        <ProgressBar 
+          progress={totalEstimatedSteps > 0 ? (currentStep) / totalEstimatedSteps : 0} 
+          label={isOfflineMode ? "Offline Check Progress" : "Assessment Progress"}
+          showPercentage
+          height={6}
+        />
+      </View>
       {isOfflineMode && (
         <View style={[styles.offlineBanner, { backgroundColor: theme.colors.secondaryContainer }]}>
           <MaterialCommunityIcons name="wifi-off" size={16} color={theme.colors.secondary} />
