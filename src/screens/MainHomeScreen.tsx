@@ -112,7 +112,7 @@ export const MainHomeScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <HomeHero />
