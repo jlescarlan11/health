@@ -9,6 +9,7 @@ import {
   UIManager,
   Keyboard,
   Animated,
+  BackHandler,
 } from 'react-native';
 
 // Enable LayoutAnimation on Android
@@ -18,7 +19,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
@@ -216,6 +217,19 @@ const SymptomAssessmentScreen = () => {
     }, 100);
   }, [currentStep, messages, questions, answers, navigation]);
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        handleBack();
+        return true; // Prevent default behavior
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [handleBack]),
+  );
+
   useEffect(() => {
     navigation.setOptions({
       header: () => <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />,
@@ -228,7 +242,7 @@ const SymptomAssessmentScreen = () => {
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
 
     if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
-      navigation.navigate('Recommendation', {
+      navigation.replace('Recommendation', {
         assessmentData: { symptoms: initialSymptom || '', answers: {} },
       });
       return;
@@ -304,7 +318,7 @@ const SymptomAssessmentScreen = () => {
         symptoms: initialSymptom || '',
         answers: newAnswers,
       };
-      navigation.navigate('Recommendation', { assessmentData: partialData });
+      navigation.replace('Recommendation', { assessmentData: partialData });
       return;
     }
 
@@ -355,7 +369,7 @@ const SymptomAssessmentScreen = () => {
       symptoms: initialSymptom || '',
       answers: finalAnswers,
     };
-    navigation.navigate('Recommendation', { assessmentData });
+    navigation.replace('Recommendation', { assessmentData });
   };
 
   const handleInputFocus = () => {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Linking, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, Alert, Linking, Platform, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Text,
@@ -11,7 +11,7 @@ import {
   Divider,
   Surface,
 } from 'react-native-paper';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
+import { useRoute, useNavigation, RouteProp, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
@@ -45,11 +45,55 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
 
+  const handleBack = useCallback(() => {
+    Alert.alert(
+      'Exit Recommendation',
+      'Are you sure you want to exit? You will be returned to the AI Navigator start screen.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Exit',
+          onPress: () =>
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 1,
+                routes: [
+                  { name: 'Home' },
+                  {
+                    name: 'Check',
+                    state: {
+                      routes: [{ name: 'NavigatorHome' }],
+                    },
+                  },
+                ],
+              }),
+            ),
+          style: 'destructive',
+        },
+      ],
+    );
+    return true; // Prevent default behavior
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        return handleBack();
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [handleBack]),
+  );
+
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      header: () => <StandardHeader title="Recommendation" />,
+      header: () => (
+        <StandardHeader title="Recommendation" showBackButton onBackPress={handleBack} />
+      ),
     });
-  }, [navigation]);
+  }, [navigation, handleBack]);
 
   useEffect(() => {
     analyzeSymptoms();
@@ -387,9 +431,20 @@ const RecommendationScreen = () => {
           <Button
             title="Start New Assessment"
             onPress={() =>
-              navigation.navigate('Check', {
-                screen: 'NavigatorHome',
-              })
+              navigation.dispatch(
+                CommonActions.reset({
+                  index: 1,
+                  routes: [
+                    { name: 'Home' },
+                    {
+                      name: 'Check',
+                      state: {
+                        routes: [{ name: 'NavigatorHome' }],
+                      },
+                    },
+                  ],
+                }),
+              )
             }
             variant="primary"
             style={styles.restartButton}

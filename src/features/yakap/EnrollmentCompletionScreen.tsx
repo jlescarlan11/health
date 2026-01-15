@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../types/navigation';
@@ -27,9 +27,39 @@ const EnrollmentCompletionScreen = () => {
     });
   };
 
-  const handleBackToHome = () => {
-    navigation.popToTop();
-  };
+  const handleExitFlow = useCallback(() => {
+    Alert.alert(
+      'Return to YAKAP',
+      'Are you sure you want to exit the guide summary and return to the YAKAP overview?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Return',
+          onPress: () =>
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 1,
+                routes: [{ name: 'Home' }, { name: 'YAKAP' }],
+              }),
+            ),
+          style: 'default',
+        },
+      ]
+    );
+    return true; // Prevent default behavior
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        return handleExitFlow();
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [handleExitFlow])
+  );
 
   return (
     <SafeAreaView
@@ -61,7 +91,7 @@ const EnrollmentCompletionScreen = () => {
             title="Find Nearest YAKAP Clinic"
           />
 
-          <Button variant="text" onPress={handleBackToHome} title="Return to YAKAP Home" />
+          <Button variant="text" onPress={handleExitFlow} title="Return to YAKAP" />
         </View>
 
         <View style={{ height: 100 }} />
