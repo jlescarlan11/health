@@ -140,17 +140,22 @@ const NavigatorHomeScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 + insets.top : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 + insets.top : 0}
     >
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => {
+          if (keyboardVisible) {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }
+        }}
       >
         <View style={styles.mainContent}>
           <View style={styles.emergencyLayoutContainer}>
@@ -166,6 +171,7 @@ const NavigatorHomeScreen = () => {
                   >
                     Emergency?
                   </Text>
+
                   <Text
                     variant="bodyMedium"
                     style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}
@@ -173,6 +179,7 @@ const NavigatorHomeScreen = () => {
                     Call 911 immediately if you need urgent care.
                   </Text>
                 </View>
+
                 <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
               </Card.Content>
             </Card>
@@ -185,6 +192,7 @@ const NavigatorHomeScreen = () => {
             >
               How are you feeling today?
             </Text>
+
             <Text
               variant="bodyMedium"
               style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
@@ -197,13 +205,19 @@ const NavigatorHomeScreen = () => {
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Common Symptoms
             </Text>
+
             <View style={styles.chipContainer}>
               {QUICK_SYMPTOMS.map((s) => {
                 let icon = 'medical-bag';
+
                 if (s === 'Fever') icon = 'thermometer';
+
                 if (s === 'Cough') icon = 'bacteria';
+
                 if (s === 'Headache') icon = 'head-alert';
+
                 if (s === 'Stomach Pain') icon = 'stomach';
+
                 if (s === 'Injury') icon = 'bandage';
 
                 return (
@@ -213,6 +227,7 @@ const NavigatorHomeScreen = () => {
                     onPress={() =>
                       setSymptom((prev) => {
                         const newText = prev ? `${prev}, ${s}` : s;
+
                         return newText.length > 500 ? prev : newText;
                       })
                     }
@@ -232,10 +247,14 @@ const NavigatorHomeScreen = () => {
       <View
         style={[
           styles.anchoredInputContainer,
+
           {
-            paddingBottom: keyboardVisible ? 12 : Math.max(16, insets.bottom + 8),
+            paddingBottom: keyboardVisible ? 16 : Math.max(16, insets.bottom + 8),
+
             paddingLeft: Math.max(16, insets.left),
+
             paddingRight: Math.max(16, insets.right),
+
             backgroundColor: theme.colors.background,
           },
         ]}

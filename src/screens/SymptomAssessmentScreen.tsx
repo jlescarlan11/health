@@ -439,14 +439,14 @@ const SymptomAssessmentScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior="padding"
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 + insets.top : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 + insets.top : 0}
     >
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
@@ -462,7 +462,7 @@ const SymptomAssessmentScreen = () => {
         style={[
           styles.inputSection,
           {
-            paddingBottom: keyboardVisible ? 12 : Math.max(12, insets.bottom),
+            paddingBottom: keyboardVisible ? 16 : Math.max(12, insets.bottom),
             paddingLeft: Math.max(16, insets.left),
             paddingRight: Math.max(16, insets.right),
             backgroundColor: theme.colors.background,
