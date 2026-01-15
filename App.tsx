@@ -23,27 +23,23 @@ const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [prefix],
   config: {
     screens: {
-      Main: {
+      Home: 'home',
+      Check: {
+        path: 'check',
         screens: {
-          Home: 'home',
-          Check: {
-            path: 'check',
-            screens: {
-              NavigatorHome: '',
-            },
-          },
-          Find: {
-            path: 'find',
-            screens: {
-              FacilityDirectory: '',
-            },
-          },
-          YAKAP: {
-            path: 'yakap',
-            screens: {
-              YakapHome: '',
-            },
-          },
+          NavigatorHome: '',
+        },
+      },
+      Find: {
+        path: 'find',
+        screens: {
+          FacilityDirectory: '',
+        },
+      },
+      YAKAP: {
+        path: 'yakap',
+        screens: {
+          YakapHome: '',
         },
       },
       SymptomAssessment: 'assessment',

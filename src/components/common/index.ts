@@ -13,6 +13,5 @@ export * from './FeatureCard';
 export * from './CustomHeader';
 export * from './OfflineBanner';
 export * from './StandardHeader';
-export * from './TabBarIcon';
 export * from './InputCard';
 export * from './TypingIndicator';

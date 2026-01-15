@@ -127,7 +127,7 @@ export const FacilityDirectoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StandardHeader title="Find Facilities" />
+      <StandardHeader title="Find Facilities" showBackButton />
 
       <View style={styles.contentContainer}>
         <View style={styles.searchContainer}>

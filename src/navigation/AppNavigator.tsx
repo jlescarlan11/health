@@ -1,6 +1,9 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import TabNavigator from './TabNavigator';
+import { MainHomeScreen } from '../screens/MainHomeScreen';
+import CheckNavigator from './CheckNavigator';
+import FacilitiesNavigator from './FacilitiesNavigator';
+import YakapNavigator from './YakapNavigator';
 import { RootStackParamList } from '../types/navigation';
 import NotFoundScreen from '../screens/NotFoundScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
@@ -23,7 +26,10 @@ const Stack = createStackNavigator<RootStackParamList>();
 const AppNavigator = () => {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="Home" component={MainHomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Check" component={CheckNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="Find" component={FacilitiesNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="YAKAP" component={YakapNavigator} options={{ headerShown: false }} />
 
       {/* AI Navigator Flow */}
       <Stack.Screen
