@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, BackHandler, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ProgressBar, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -42,18 +42,60 @@ const EnrollmentGuideScreen = () => {
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
-  };
+  }, [currentStep]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (currentStep > 0) {
+          handlePrevious();
+          return true;
+        } else {
+          Alert.alert('Exit Guide', 'Are you sure you want to exit the enrollment guide?', [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Exit',
+              onPress: () => navigation.goBack(),
+              style: 'destructive',
+            },
+          ]);
+          return true;
+        }
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [currentStep, handlePrevious, navigation]),
+  );
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <StandardHeader title="Enrollment Guide" showBackButton />
+      <StandardHeader
+        title="Enrollment Guide"
+        showBackButton
+        onBackPress={() => {
+          if (currentStep > 0) {
+            handlePrevious();
+          } else {
+            Alert.alert('Exit Guide', 'Are you sure you want to exit the enrollment guide?', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Exit',
+                onPress: () => navigation.goBack(),
+                style: 'destructive',
+              },
+            ]);
+          }
+        }}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerSection}>
