@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { SlideToCall } from '../../components/common/SlideToCall';
 import { InputCard, SafetyRecheckModal } from '../../components/common';
+import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk } from '../../store/navigationSlice';
 
@@ -112,7 +113,17 @@ const NavigatorHomeScreen = () => {
   const handleSubmit = () => {
     if (!symptom.trim()) return;
 
-    // Check for mental health crisis
+    // 1. Check for immediate Emergency
+    const emergencyCheck = detectEmergency(symptom);
+    if (emergencyCheck.isEmergency) {
+      dispatch(setHighRisk(true));
+      navigation.navigate('Recommendation', {
+        assessmentData: { symptoms: symptom, answers: {} },
+      });
+      return;
+    }
+
+    // 2. Check for mental health crisis
     const crisisCheck = detectMentalHealthCrisis(symptom);
     if (crisisCheck.isCrisis) {
       dispatch(setHighRisk(true));

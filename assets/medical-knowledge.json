@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": "1.1.0",
-    "last_updated": "2026-01-01",
+    "version": "1.2.0",
+    "last_updated": "2026-01-15",
     "disclaimer": "CRITICAL: This knowledge base is for development and prototyping purposes only. It has NOT been validated by a medical professional or legal advisor. It should not be used for actual medical diagnosis or triage without rigorous expert review, validation, and regulatory compliance checks."
   },
   "emergency_keywords": [
@@ -25,7 +25,32 @@
     "blue lips",
     "crushing pain",
     "severe abdominal pain",
-    "suicide attempt"
+    "suicide attempt",
+    "dying",
+    "feel like dying",
+    "feeling like dying",
+    "heart attack",
+    "chest tightness",
+    "facial drooping",
+    "arm weakness",
+    "cannot speak",
+    "severe dehydration",
+    "persistent vomiting",
+    "blood in stool",
+    "black stool",
+    "vomiting blood",
+    "active labor",
+    "water broke",
+    "severe pelvic pain",
+    "stiff neck",
+    "extreme lethargy",
+    "unresponsive",
+    "choking",
+    "not breathing",
+    "poisoned",
+    "chemical splash",
+    "electric shock",
+    "drowning"
   ],
   "mental_health_keywords": [
     "suicide",
@@ -39,7 +64,13 @@
     "hallucinations",
     "severe depression",
     "uncontrollable anger",
-    "panic attack"
+    "panic attack",
+    "better off dead",
+    "no reason to live",
+    "give up on life",
+    "make it stop",
+    "dying inside",
+    "feel like dying"
   ],
   "situations": [
     {
@@ -452,6 +483,167 @@
         "Can you move the joint?",
         "Can you put weight on it?",
         "Is it swollen or bruised?"
+      ]
+    },
+    {
+      "id": "dengue_fever",
+      "name": "Dengue Fever",
+      "symptoms": [
+        "Sudden high fever",
+        "Severe headache (often behind the eyes)",
+        "Severe joint and muscle pain",
+        "Fatigue",
+        "Nausea",
+        "Vomiting",
+        "Skin rash (appears 2-5 days after fever start)"
+      ],
+      "red_flags": [
+        "Severe abdominal pain",
+        "Persistent vomiting",
+        "Bleeding gums or nose",
+        "Blood in urine, stools, or vomit",
+        "Bleeding under the skin (bruising)",
+        "Difficult or rapid breathing",
+        "Cold or clammy skin",
+        "Fatigue, restlessness, or irritability"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "How many days has the fever lasted?",
+        "Are there any signs of bleeding (gums, nose, bruises)?",
+        "Is there severe abdominal pain?",
+        "Have you been able to drink enough fluids?"
+      ]
+    },
+    {
+      "id": "animal_bites",
+      "name": "Animal Bites (Rabies Risk)",
+      "symptoms": [
+        "Broken skin from bite or scratch",
+        "Pain at the site",
+        "Swelling",
+        "Redness"
+      ],
+      "red_flags": [
+        "Bite on the head, neck, or hands",
+        "Deep or large wounds",
+        "Animal was acting strangely (unprovoked attack)",
+        "Animal is unknown or unvaccinated",
+        "Excessive bleeding"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "What animal bit you?",
+        "Where is the bite located?",
+        "Is the animal a pet and is it vaccinated?",
+        "Did you wash the wound with soap and water?"
+      ]
+    },
+    {
+      "id": "leptospirosis",
+      "name": "Leptospirosis",
+      "symptoms": [
+        "High fever",
+        "Severe headache",
+        "Chills",
+        "Muscle aches (especially calf muscles)",
+        "Vomiting",
+        "Jaundice (yellow skin and eyes)",
+        "Red eyes",
+        "Abdominal pain",
+        "Diarrhea"
+      ],
+      "red_flags": [
+        "Kidney failure (low urine output)",
+        "Meningitis (stiff neck, confusion)",
+        "Liver failure (severe jaundice)",
+        "Respiratory distress",
+        "Bleeding (lungs, GI tract)"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "Have you waded in floodwaters recently?",
+        "Do you have severe pain in your calf muscles?",
+        "Are your eyes red?",
+        "Has your urine output decreased?"
+      ]
+    },
+    {
+      "id": "acute_stroke",
+      "name": "Acute Stroke (FAST)",
+      "symptoms": [
+        "Facial drooping (one side)",
+        "Arm weakness (one side)",
+        "Speech difficulty (slurring, cannot speak)",
+        "Sudden confusion",
+        "Sudden vision changes",
+        "Sudden severe headache",
+        "Sudden loss of balance"
+      ],
+      "red_flags": [
+        "Any sign of F.A.S.T. (Face, Arms, Speech, Time)",
+        "Symptoms started suddenly",
+        "Loss of consciousness"
+      ],
+      "recommended_facility_level": "Emergency",
+      "follow_up_questions": [
+        "What time did the symptoms start?",
+        "Is there facial drooping or weakness on one side?",
+        "Is the person able to speak clearly?",
+        "Can they raise both arms?"
+      ]
+    },
+    {
+      "id": "chest_pain_stemi",
+      "name": "Chest Pain / Heart Attack",
+      "symptoms": [
+        "Chest pressure or squeezing",
+        "Pain radiating to jaw, neck, back, or left arm",
+        "Shortness of breath",
+        "Sweating (cold sweat)",
+        "Nausea",
+        "Lightheadedness"
+      ],
+      "red_flags": [
+        "Pain lasting more than a few minutes",
+        "Crushing or heavy sensation",
+        "Difficulty breathing",
+        "Fainting",
+        "Pain not relieved by rest"
+      ],
+      "recommended_facility_level": "Emergency",
+      "follow_up_questions": [
+        "Does the pain feel like pressure, squeezing, or fullness?",
+        "Does the pain spread to the jaw, neck, or arms?",
+        "Are you having trouble breathing?",
+        "How long has the pain lasted?"
+      ]
+    },
+    {
+      "id": "heat_illness",
+      "name": "Heat-Related Illness",
+      "symptoms": [
+        "Heavy sweating",
+        "Rapid pulse",
+        "Dizziness",
+        "Fatigue",
+        "Muscle cramps",
+        "Nausea",
+        "Headache"
+      ],
+      "red_flags": [
+        "High body temperature (>103°F/39.4°C)",
+        "Confusion or altered mental state",
+        "Hot, red, dry or damp skin",
+        "Loss of consciousness",
+        "Seizures"
+      ],
+      "recommended_facility_level": "Health Center",
+      "follow_up_questions": [
+        "Have you been exposed to high temperatures?",
+        "Is the person confused or acting strangely?",
+        "Is the skin hot and dry?",
+        "Is there nausea or vomiting?"
       ]
     }
   ]
