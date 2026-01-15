@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 import { store } from '../src/store';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { NavigationContainer } from '@react-navigation/native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Mock navigation
 const mockNavigate = jest.fn();
@@ -12,7 +13,9 @@ jest.mock('@react-navigation/native', () => ({
   ...jest.requireActual('@react-navigation/native'),
   useNavigation: () => ({
     navigate: mockNavigate,
+    replace: mockNavigate,
   }),
+  useFocusEffect: jest.fn(),
 }));
 
 // Mock AsyncStorage
@@ -29,11 +32,13 @@ describe('MainHomeScreen', () => {
 
   const component = (
     <Provider store={store}>
-      <PaperProvider settings={{ icon: MockIcon }}>
-        <NavigationContainer>
-          <MainHomeScreen />
-        </NavigationContainer>
-      </PaperProvider>
+      <SafeAreaProvider>
+        <PaperProvider settings={{ icon: MockIcon }}>
+          <NavigationContainer>
+            <MainHomeScreen />
+          </NavigationContainer>
+        </PaperProvider>
+      </SafeAreaProvider>
     </Provider>
   );
 

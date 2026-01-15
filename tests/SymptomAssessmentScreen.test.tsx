@@ -35,27 +35,8 @@ import { Provider as PaperProvider } from 'react-native-paper';
 jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
   useNavigation: jest.fn(),
+  useFocusEffect: jest.fn(),
 }));
-
-jest.mock('react-native-safe-area-context', () => {
-  const React = require('react');
-  const context = React.createContext({
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  });
-  return {
-    SafeAreaProvider: ({ children }: any) => children,
-    SafeAreaView: ({ children }: any) => children,
-    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
-    SafeAreaContext: context,
-    initialWindowMetrics: {
-      frame: { x: 0, y: 0, width: 0, height: 0 },
-      insets: { top: 0, left: 0, right: 0, bottom: 0 },
-    },
-  };
-});
 
 jest.mock('../src/services/gemini', () => ({
   getGeminiResponse: jest.fn(),
@@ -89,12 +70,14 @@ const mockQuestions = {
 describe('SymptomAssessmentScreen Skip Functionality', () => {
   const mockNavigate = jest.fn();
   const mockSetOptions = jest.fn();
+  const mockReplace = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useNavigation as jest.Mock).mockReturnValue({
       navigate: mockNavigate,
       setOptions: mockSetOptions,
+      replace: mockNavigate,
     });
     (useRoute as jest.Mock).mockReturnValue({
       params: { initialSymptom: 'Headache' },
