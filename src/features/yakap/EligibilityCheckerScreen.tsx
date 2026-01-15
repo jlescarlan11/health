@@ -251,7 +251,7 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right', 'bottom']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Eligibility Check" showBackButton />
       <ScrollView

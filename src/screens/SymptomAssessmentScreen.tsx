@@ -7,8 +7,8 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
-  KeyboardAvoidingView,
   Keyboard,
+  Animated,
 } from 'react-native';
 
 // Enable LayoutAnimation on Android
@@ -54,6 +54,7 @@ const SymptomAssessmentScreen = () => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const inputCardRef = useRef<InputCardRef>(null);
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -70,33 +71,38 @@ const SymptomAssessmentScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
+    const keyboardWillShow = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-        // Ensure conversation is visible
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: e.endCoordinates.height,
+          duration: e.duration || 250,
+          useNativeDriver: false,
+        }).start();
       },
     );
-    const keyboardDidHideListener = Keyboard.addListener(
+
+    const keyboardWillHide = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setKeyboardVisible(false),
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: e.duration || 250,
+          useNativeDriver: false,
+        }).start();
+      },
     );
 
     return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
     };
   }, []);
 
   useEffect(() => {
     if (recording) {
-      // Handle recording cleanup separately
       return () => {
         recording.stopAndUnloadAsync();
       };
@@ -335,7 +341,7 @@ const SymptomAssessmentScreen = () => {
 
         // Scroll to end
         setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd(true);
+          scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
       } else {
         setIsTyping(false);
@@ -354,7 +360,7 @@ const SymptomAssessmentScreen = () => {
 
   const handleInputFocus = () => {
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd(true);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 150);
   };
 
@@ -438,17 +444,12 @@ const SymptomAssessmentScreen = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
@@ -458,18 +459,15 @@ const SymptomAssessmentScreen = () => {
         </View>
       </ScrollView>
 
-      <View
+      <Animated.View
         style={[
           styles.inputSection,
           {
-            paddingBottom: keyboardVisible
-              ? Platform.OS === 'ios'
-                ? 12
-                : 12
-              : Math.max(12, insets.bottom),
+            paddingBottom: Math.max(12, insets.bottom),
             paddingLeft: Math.max(16, insets.left),
             paddingRight: Math.max(16, insets.right),
             backgroundColor: theme.colors.background,
+            marginBottom: Animated.add(keyboardHeight, new Animated.Value(8)),
           },
         ]}
       >
@@ -521,10 +519,11 @@ const SymptomAssessmentScreen = () => {
           onVoicePress={isRecording ? stopRecording : startRecording}
           disabled={isTyping}
         />
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },

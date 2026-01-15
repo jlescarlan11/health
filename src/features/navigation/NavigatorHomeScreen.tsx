@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Alert,
-  Platform,
-  KeyboardAvoidingView,
-  Keyboard,
-  ScrollView,
-} from 'react-native';
+import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { Audio } from 'expo-av';
@@ -27,33 +19,40 @@ const NavigatorHomeScreen = () => {
 
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
 
   const [symptom, setSymptom] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
+    const keyboardWillShow = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-        // Scroll to end when keyboard appears to ensure content is visible
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: e.endCoordinates.height,
+          duration: e.duration || 250,
+          useNativeDriver: false,
+        }).start();
       },
     );
-    const keyboardDidHideListener = Keyboard.addListener(
+
+    const keyboardWillHide = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => setKeyboardVisible(false),
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: e.duration || 250,
+          useNativeDriver: false,
+        }).start();
+      },
     );
 
     return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
     };
   }, []);
 
@@ -133,29 +132,20 @@ const NavigatorHomeScreen = () => {
 
   const handleInputFocus = () => {
     setIsInputFocused(true);
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 300);
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => {
-          if (keyboardVisible) {
-            scrollViewRef.current?.scrollToEnd({ animated: true });
-          }
-        }}
       >
         <View style={styles.mainContent}>
           <View style={styles.emergencyLayoutContainer}>
@@ -244,22 +234,15 @@ const NavigatorHomeScreen = () => {
         </View>
       </ScrollView>
 
-      <View
+      <Animated.View
         style={[
           styles.anchoredInputContainer,
-
           {
-            paddingBottom: keyboardVisible
-              ? Platform.OS === 'ios'
-                ? 12
-                : 12
-              : Math.max(16, insets.bottom + 8),
-
+            paddingBottom: Math.max(16, insets.bottom + 8),
             paddingLeft: Math.max(16, insets.left),
-
             paddingRight: Math.max(16, insets.right),
-
             backgroundColor: theme.colors.background,
+            marginBottom: keyboardHeight,
           },
         ]}
       >
@@ -271,15 +254,16 @@ const NavigatorHomeScreen = () => {
           placeholder=""
           maxLength={500}
           onFocus={handleInputFocus}
-          onBlur={() => setIsInputFocused(false)}
+          onBlur={handleInputBlur}
           isRecording={isRecording}
           isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
-      </View>
-    </KeyboardAvoidingView>
+      </Animated.View>
+    </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
