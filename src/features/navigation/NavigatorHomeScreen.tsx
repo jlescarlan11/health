@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Platform, KeyboardAvoidingView, Keyboard } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
+  Keyboard,
+  ScrollView,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Audio } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { CheckStackScreenProps } from '../../types/navigation';
@@ -19,7 +26,7 @@ const NavigatorHomeScreen = () => {
   const theme = useTheme();
 
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const [symptom, setSymptom] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -31,7 +38,13 @@ const NavigatorHomeScreen = () => {
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setKeyboardVisible(true),
+      () => {
+        setKeyboardVisible(true);
+        // Scroll to end when keyboard appears to ensure content is visible
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      },
     );
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
@@ -120,10 +133,8 @@ const NavigatorHomeScreen = () => {
 
   const handleInputFocus = () => {
     setIsInputFocused(true);
-    // KeyboardAwareScrollView handles scrolling to the focused input automatically
-    // but for anchored inputs we might still want to scroll the main content
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd(true);
+      scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 300);
   };
 
@@ -131,18 +142,15 @@ const NavigatorHomeScreen = () => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 + insets.top : 0}
     >
-      <KeyboardAwareScrollView
+      <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        extraScrollHeight={Platform.OS === 'ios' ? 20 : 0}
       >
         <View style={styles.mainContent}>
           <View style={styles.emergencyLayoutContainer}>
@@ -219,13 +227,13 @@ const NavigatorHomeScreen = () => {
             </View>
           </View>
         </View>
-      </KeyboardAwareScrollView>
+      </ScrollView>
 
       <View
         style={[
           styles.anchoredInputContainer,
           {
-            paddingBottom: keyboardVisible ? 10 : Math.max(16, insets.bottom + 8),
+            paddingBottom: keyboardVisible ? 12 : Math.max(16, insets.bottom + 8),
             paddingLeft: Math.max(16, insets.left),
             paddingRight: Math.max(16, insets.right),
             backgroundColor: theme.colors.background,

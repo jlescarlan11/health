@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   UIManager,
   KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 
 // Enable LayoutAnimation on Android
@@ -16,7 +17,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -52,7 +52,7 @@ const SymptomAssessmentScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const inputCardRef = useRef<InputCardRef>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
@@ -75,7 +75,13 @@ const SymptomAssessmentScreen = () => {
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      () => setKeyboardVisible(true),
+      () => {
+        setKeyboardVisible(true);
+        // Ensure conversation is visible
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      },
     );
     const keyboardDidHideListener = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
@@ -435,31 +441,28 @@ const SymptomAssessmentScreen = () => {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 + insets.top : 0}
     >
-      <KeyboardAwareScrollView
+      <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        extraScrollHeight={Platform.OS === 'ios' ? 20 : 0}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd(true)}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
         <View style={styles.messagesContainer}>
           {messages.map(renderMessage)}
           {isTyping && renderTypingIndicator()}
         </View>
-      </KeyboardAwareScrollView>
+      </ScrollView>
 
       <View
         style={[
           styles.inputSection,
           {
-            paddingBottom: keyboardVisible ? 10 : Math.max(12, insets.bottom),
+            paddingBottom: keyboardVisible ? 12 : Math.max(12, insets.bottom),
             paddingLeft: Math.max(16, insets.left),
             paddingRight: Math.max(16, insets.right),
             backgroundColor: theme.colors.background,
