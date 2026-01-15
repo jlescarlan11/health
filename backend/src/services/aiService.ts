@@ -50,10 +50,20 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     Available Healthcare Facilities in Naga City:
     ${facilityContext}
 
+    VALID_SERVICES = [
+      "Adolescent Health", "Animal Bite Clinic", "Blood Bank", "Clinical Chemistry", 
+      "Clinical Microscopy", "Consultation", "Dental", "Dermatology", "Dialysis", 
+      "ECG", "ENT", "Emergency", "Eye Center", "Family Planning", "General Medicine", 
+      "HIV Treatment", "Hematology", "Immunization", "Internal Medicine", "Laboratory", 
+      "Maternal Care", "Mental Health", "Nutrition Services", "OB-GYN", "Pediatrics", 
+      "Primary Care", "Radiology", "Surgery", "X-ray"
+    ]
+
     Task:
     1. Analyze the symptoms and severity to determine the appropriate level of care (Self-Care, Health Center, Hospital, or Emergency Room).
     2. Recommend specific facilities from the provided list that are best suited to handle the case based on their type and services.
-    3. Provide a clear reasoning for your recommendation.
+    3. Include 2-3 "relevant_services" in your reasoning or as part of the recommendation, choosing ONLY from the VALID_SERVICES list above.
+    4. Provide a clear reasoning for your recommendation.
 
     Output Schema (JSON only):
     {
@@ -61,6 +71,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
       "confidence_score": 0.0 to 1.0,
       "ambiguity_detected": boolean,
       "reasoning": "Brief explanation...",
+      "relevant_services": ["Service 1", "Service 2"],
       "recommended_facility_ids": ["id1", "id2"]
     }
     
@@ -82,6 +93,22 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   } catch (e) {
     console.error('Failed to parse Gemini response:', cleanedText);
     throw new Error('AI service unavailable');
+  }
+
+  // Validate relevant_services against VALID_SERVICES
+  const VALID_SERVICES = [
+    "Adolescent Health", "Animal Bite Clinic", "Blood Bank", "Clinical Chemistry", 
+    "Clinical Microscopy", "Consultation", "Dental", "Dermatology", "Dialysis", 
+    "ECG", "ENT", "Emergency", "Eye Center", "Family Planning", "General Medicine", 
+    "HIV Treatment", "Hematology", "Immunization", "Internal Medicine", "Laboratory", 
+    "Maternal Care", "Mental Health", "Nutrition Services", "OB-GYN", "Pediatrics", 
+    "Primary Care", "Radiology", "Surgery", "X-ray"
+  ];
+
+  if (parsedResponse.relevant_services) {
+    parsedResponse.relevant_services = parsedResponse.relevant_services.filter((s: string) =>
+      VALID_SERVICES.includes(s),
+    );
   }
 
   // --- Conservative Fallback Logic ---
