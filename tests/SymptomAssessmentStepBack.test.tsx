@@ -4,6 +4,9 @@ import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
 import { getGeminiResponse } from '../src/services/gemini';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { View, Text, TouchableOpacity, TextInput as RNTextInput } from 'react-native';
+import { Provider as ReduxProvider } from 'react-redux';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { navigationReducer, settingsReducer } from '../src/store';
 
 // Mock dependencies
 jest.mock('@react-navigation/native', () => ({
@@ -86,12 +89,28 @@ jest.mock('../src/components/common', () => {
       );
     }),
     TypingIndicator: () => <View testID="typing-indicator" />,
+    SafetyRecheckModal: () => <View testID="safety-modal" />,
+  };
+});
+
+jest.mock('../src/components/common/Button', () => {
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  return {
     Button: ({ title, onPress }: any) => (
       <TouchableOpacity onPress={onPress}>
         <Text>{title}</Text>
       </TouchableOpacity>
     ),
-    StandardHeader: ({ onBackPress, title }: any) => (
+  };
+});
+
+jest.mock('../src/components/common/StandardHeader', () => {
+  const React = require('react');
+  const { View, Text, TouchableOpacity } = require('react-native');
+  return {
+    __esModule: true,
+    default: ({ onBackPress, title }: any) => (
       <View testID="header">
         <TouchableOpacity testID="header-back" onPress={onBackPress}>
           <Text>Back</Text>
@@ -113,6 +132,7 @@ const mockThreeQuestions = {
 describe('SymptomAssessmentScreen Step-Back Navigation', () => {
   const mockNavigate = jest.fn();
   const mockSetOptions = jest.fn();
+  let store: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -126,6 +146,13 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
       params: { initialSymptom: 'Fever' },
     });
     (getGeminiResponse as jest.Mock).mockResolvedValue(JSON.stringify(mockThreeQuestions));
+
+    store = configureStore({
+      reducer: combineReducers({
+        navigation: navigationReducer,
+        settings: settingsReducer,
+      }),
+    });
   });
 
   afterEach(() => {
@@ -145,10 +172,18 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     });
   };
 
+  const renderScreen = () =>
+    render(
+      <ReduxProvider store={store}>
+        <SymptomAssessmentScreen />
+      </ReduxProvider>,
+    );
+
   test('comprehensive step-back test', async () => {
-    render(<SymptomAssessmentScreen />);
+    renderScreen();
 
     await waitFor(() => expect(screen.getByText(/Question 1: Duration\?/)).toBeTruthy());
+
 
     const input = screen.getByTestId('input-text');
     const submitBtn = screen.getByTestId('submit-button');
@@ -212,7 +247,7 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
   });
 
   test('repeatedly stepping back', async () => {
-    render(<SymptomAssessmentScreen />);
+    renderScreen();
     await waitFor(() => expect(screen.getByText(/Question 1: Duration\?/)).toBeTruthy());
 
     fireEvent.changeText(screen.getByTestId('input-text'), '1 week');

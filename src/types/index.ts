@@ -1,4 +1,5 @@
 export * from './navigation';
+export * from './triage';
 
 export interface Facility {
   id: string;

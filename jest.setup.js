@@ -39,6 +39,16 @@ jest.mock('@react-native-community/netinfo', () => ({
       isConnectionExpensive: false,
     },
   }),
+  fetch: jest.fn(() =>
+    Promise.resolve({
+      type: 'wifi',
+      isConnected: true,
+      isInternetReachable: true,
+      details: {
+        isConnectionExpensive: false,
+      },
+    }),
+  ),
 }));
 
 // Mock expo-location
@@ -99,6 +109,11 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
   return ({ name, size, color, ...props }) =>
     React.createElement('Icon', { name, size, color, ...props });
 });
+
+// Mock @react-native-async-storage/async-storage
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
 
 // Cleanup after all tests
 afterAll(() => {

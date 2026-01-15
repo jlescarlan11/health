@@ -30,6 +30,9 @@ jest.mock('react-native-paper', () => {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as ReduxProvider } from 'react-redux';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { navigationReducer, settingsReducer } from '../src/store';
 
 // Mock dependencies
 jest.mock('@react-navigation/native', () => ({
@@ -53,12 +56,36 @@ jest.mock('expo-av', () => ({
 }));
 
 // Mock components used in the screen
-jest.mock('../src/components/common', () => ({
-  InputCard: 'InputCard',
-  TypingIndicator: 'TypingIndicator',
-  Button: 'Button',
-  StandardHeader: 'StandardHeader',
+jest.mock('../src/components/common', () => {
+  const React = require('react');
+  return {
+    InputCard: React.forwardRef((props: any, ref: any) => {
+      React.useImperativeHandle(ref, () => ({
+        focus: jest.fn(),
+        blur: jest.fn(),
+        isFocused: jest.fn(() => false),
+      }));
+      return React.createElement('InputCard', props);
+    }),
+    TypingIndicator: () => React.createElement('TypingIndicator'),
+    SafetyRecheckModal: () => React.createElement('SafetyRecheckModal'),
+  };
+});
+
+jest.mock('../src/components/common/Button', () => ({
+  Button: (props: any) => {
+    const React = require('react');
+    return React.createElement('Button', props);
+  },
 }));
+
+jest.mock('../src/components/common/StandardHeader', () => {
+  const React = require('react');
+  return {
+    __esModule: true,
+    default: (props: any) => React.createElement('StandardHeader', props),
+  };
+});
 
 const mockQuestions = {
   questions: [
@@ -71,6 +98,7 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
   const mockNavigate = jest.fn();
   const mockSetOptions = jest.fn();
   const mockReplace = jest.fn();
+  let store: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -83,15 +111,24 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
       params: { initialSymptom: 'Headache' },
     });
     (getGeminiResponse as jest.Mock).mockResolvedValue(JSON.stringify(mockQuestions));
+
+    store = configureStore({
+      reducer: combineReducers({
+        navigation: navigationReducer,
+        settings: settingsReducer,
+      }),
+    });
   });
 
   const renderScreen = () =>
     render(
-      <SafeAreaProvider>
-        <PaperProvider>
-          <SymptomAssessmentScreen />
-        </PaperProvider>
-      </SafeAreaProvider>,
+      <ReduxProvider store={store}>
+        <SafeAreaProvider>
+          <PaperProvider>
+            <SymptomAssessmentScreen />
+          </PaperProvider>
+        </SafeAreaProvider>
+      </ReduxProvider>,
     );
 
   test('renders "I\'m not sure" chip for both text and choice questions', async () => {

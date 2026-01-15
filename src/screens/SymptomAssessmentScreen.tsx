@@ -21,6 +21,7 @@ import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
+import NetInfo from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
@@ -28,6 +29,11 @@ import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
+import { TriageEngine } from '../services/triageEngine';
+import triageFlowRaw from '../../assets/triage-flow.json';
+import { TriageFlow, TriageNode } from '../types/triage';
+
+const triageFlow = triageFlowRaw as unknown as TriageFlow;
 
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
@@ -48,6 +54,7 @@ interface Message {
   id: string;
   text: string;
   sender: 'assistant' | 'user';
+  isOffline?: boolean;
 }
 
 const SymptomAssessmentScreen = () => {
@@ -76,6 +83,11 @@ const SymptomAssessmentScreen = () => {
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+
+  // Offline Mode State
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
+  const [isNetworkError, setIsNetworkError] = useState(false);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -157,6 +169,18 @@ const SymptomAssessmentScreen = () => {
   };
 
   const handleBack = useCallback(() => {
+    if (isOfflineMode) {
+      Alert.alert(
+        'Cancel Assessment',
+        'Are you sure you want to stop the offline check?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Stop', style: 'destructive', onPress: () => navigation.goBack() },
+        ],
+      );
+      return;
+    }
+
     if (currentStep === 0 && messages.length <= 1) {
       Alert.alert(
         'Cancel Assessment',
@@ -219,7 +243,7 @@ const SymptomAssessmentScreen = () => {
     setTimeout(() => {
       inputCardRef.current?.focus();
     }, 100);
-  }, [currentStep, messages, questions, answers, navigation]);
+  }, [currentStep, messages, questions, answers, navigation, isOfflineMode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -256,10 +280,42 @@ const SymptomAssessmentScreen = () => {
     fetchQuestions();
   }, []);
 
+  const startOfflineTriage = () => {
+    setIsOfflineMode(true);
+    setIsNetworkError(false);
+    const startNode = TriageEngine.getStartNode(triageFlow);
+    setCurrentOfflineNodeId(startNode.id);
+    
+    setMessages([
+      {
+        id: 'offline-intro',
+        text: "I'm having trouble connecting to the AI assistant. I've switched to the Offline Emergency Check to help you identify any critical red flags immediately.",
+        sender: 'assistant',
+        isOffline: true,
+      },
+      {
+        id: startNode.id,
+        text: startNode.text || '',
+        sender: 'assistant',
+        isOffline: true,
+      }
+    ]);
+    
+    setLoading(false);
+    setError('');
+  };
+
   const fetchQuestions = async () => {
     try {
       setLoading(true);
       setError('');
+      setIsNetworkError(false);
+
+      const netInfo = await NetInfo.fetch();
+      if (!netInfo.isConnected) {
+        throw new Error('NETWORK_ERROR');
+      }
+
       const prompt = CLARIFYING_QUESTIONS_PROMPT.replace('{{symptoms}}', initialSymptom || '');
       const response = await getGeminiResponse(prompt);
       const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -286,15 +342,73 @@ const SymptomAssessmentScreen = () => {
       } else {
         throw new Error('Failed to parse questions');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Unable to generate assessment questions. Please try again.');
+      if (err.message === 'NETWORK_ERROR' || err.message?.includes('network') || err.message?.includes('fetch')) {
+        setIsNetworkError(true);
+        setError('Connection lost. We can continue with an emergency-focused check while offline.');
+      } else {
+        setError('Unable to generate assessment questions. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const handleOfflineNext = (answer: string) => {
+    if (!currentOfflineNodeId || isTyping) return;
+
+    // Add user message
+    const userMsg: Message = {
+      id: `user-offline-${Date.now()}`,
+      text: answer,
+      sender: 'user',
+      isOffline: true,
+    };
+    setMessages((prev) => [...prev, userMsg]);
+
+    setIsTyping(true);
+
+    setTimeout(() => {
+      try {
+        const result = TriageEngine.processStep(triageFlow, currentOfflineNodeId, answer);
+        
+        if (result.isOutcome) {
+          const rec = result.node.recommendation!;
+          // Navigate to recommendation with offline data
+          navigation.replace('Recommendation', {
+            assessmentData: {
+              symptoms: initialSymptom || '',
+              answers: { 'Offline Triage': rec.reasoning },
+              offlineRecommendation: rec,
+            },
+          });
+        } else {
+          const nextNode = result.node;
+          const assistantMsg: Message = {
+            id: nextNode.id,
+            text: nextNode.text || '',
+            sender: 'assistant',
+            isOffline: true,
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+          setCurrentOfflineNodeId(nextNode.id);
+        }
+      } catch (err) {
+        console.error('Offline triage error:', err);
+        setError('An error occurred during the offline check.');
+      } finally {
+        setIsTyping(false);
+      }
+    }, 800);
+  };
+
   const handleNext = (answerText?: string, isSkip: boolean = false) => {
+    if (isOfflineMode) {
+      handleOfflineNext(answerText || '');
+      return;
+    }
+
     const finalAnswer = isSkip ? 'User was not sure' : answerText || inputText;
     const displayAnswer = isSkip ? "I'm not sure" : finalAnswer;
 
@@ -385,6 +499,7 @@ const SymptomAssessmentScreen = () => {
   };
 
   const currentQuestion = questions[currentStep];
+  const currentOfflineNode = currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId] : null;
 
   if (loading) {
     return (
@@ -400,7 +515,7 @@ const SymptomAssessmentScreen = () => {
     );
   }
 
-  if (error) {
+  if (error && !isNetworkError) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
         <Text style={{ color: theme.colors.error, marginBottom: 16, textAlign: 'center' }}>
@@ -438,16 +553,19 @@ const SymptomAssessmentScreen = () => {
         style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}
       >
         {isAssistant && (
-          <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
-            <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+          <View style={[styles.avatar, { backgroundColor: message.isOffline ? theme.colors.secondaryContainer : theme.colors.primaryContainer }]}>
+            <MaterialCommunityIcons 
+              name={message.isOffline ? "shield-check" : "robot"} 
+              size={18} 
+              color={message.isOffline ? theme.colors.secondary : theme.colors.primary} 
+            />
           </View>
         )}
         <View
           style={[
-            styles.bubble,
             isAssistant
-              ? [styles.assistantBubble, { backgroundColor: theme.colors.surface }]
-              : [styles.userBubble, { backgroundColor: theme.colors.primary }],
+              ? [styles.bubble, styles.assistantBubble, { backgroundColor: theme.colors.surface }]
+              : [styles.bubble, styles.userBubble, { backgroundColor: theme.colors.primary }],
           ]}
         >
           <Text
@@ -465,6 +583,15 @@ const SymptomAssessmentScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {isOfflineMode && (
+        <View style={[styles.offlineBanner, { backgroundColor: theme.colors.secondaryContainer }]}>
+          <MaterialCommunityIcons name="wifi-off" size={16} color={theme.colors.secondary} />
+          <Text style={[styles.offlineBannerText, { color: theme.colors.onSecondaryContainer }]}>
+            OFFLINE EMERGENCY CHECK ACTIVE
+          </Text>
+        </View>
+      )}
+      
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
@@ -476,6 +603,28 @@ const SymptomAssessmentScreen = () => {
         <View style={styles.messagesContainer}>
           {messages.map(renderMessage)}
           {isTyping && renderTypingIndicator()}
+          
+          {isNetworkError && (
+            <View style={[styles.errorCard, { backgroundColor: theme.colors.surfaceVariant }]}>
+              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={theme.colors.error} style={styles.errorIcon} />
+              <Text variant="titleMedium" style={{ color: theme.colors.error, fontWeight: 'bold' }}>Connection Issue</Text>
+              <Text style={styles.errorDescription}>{error}</Text>
+              <View style={styles.errorActions}>
+                <Button 
+                  title="START OFFLINE CHECK" 
+                  onPress={startOfflineTriage}
+                  variant="primary"
+                  style={{ flex: 1, marginRight: 8 }}
+                />
+                <Button 
+                  title="RETRY" 
+                  onPress={fetchQuestions}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                />
+              </View>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -491,7 +640,7 @@ const SymptomAssessmentScreen = () => {
           },
         ]}
       >
-        {currentQuestion && (
+        {!isOfflineMode && currentQuestion && (
           <View style={styles.choiceContainer}>
             <ScrollView
               horizontal
@@ -526,18 +675,42 @@ const SymptomAssessmentScreen = () => {
           </View>
         )}
 
+        {isOfflineMode && currentOfflineNode && currentOfflineNode.type === 'question' && (
+          <View style={styles.choiceContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.choiceScrollContent}
+            >
+              {currentOfflineNode.options?.map((opt) => (
+                <Chip
+                  key={opt.label}
+                  onPress={() => !isTyping && handleOfflineNext(opt.label)}
+                  style={[styles.choiceChip, { minWidth: 80 }]}
+                  mode="flat"
+                  compact
+                  showSelectedOverlay
+                  disabled={isTyping}
+                >
+                  {opt.label}
+                </Chip>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         <InputCard
           ref={inputCardRef}
           value={inputText}
           onChangeText={setInputText}
           onSubmit={() => handleNext()}
-          label="Type your answer..."
+          label={isOfflineMode ? "Please use options above" : "Type your answer..."}
           placeholder=""
           onFocus={handleInputFocus}
           isRecording={isRecording}
           isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
-          disabled={isTyping}
+          disabled={isTyping || isOfflineMode}
         />
       </Animated.View>
 
@@ -609,6 +782,40 @@ const styles = StyleSheet.create({
   choiceChip: {
     height: 36,
   },
+  offlineBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    gap: 8,
+  },
+  offlineBannerText: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  errorCard: {
+    padding: 20,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  errorIcon: {
+    marginBottom: 12,
+  },
+  errorDescription: {
+    textAlign: 'center',
+    marginBottom: 20,
+    opacity: 0.8,
+    lineHeight: 20,
+  },
+  errorActions: {
+    flexDirection: 'row',
+    width: '100%',
+  },
 });
 
 export default SymptomAssessmentScreen;
+
