@@ -172,6 +172,12 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Edit Answer Refinement:** Optimized the "Change my answer" flow with explicit state resets and `LayoutAnimation` feedback. Ensured that eligibility state is retained when navigating back from secondary screens unless explicitly edited.
   - **Files Modified:** `src/features/yakap/EligibilityCheckerScreen.tsx`, `src/store/settingsSlice.ts`.
 
+* **Keyboard & Layout Optimization (Jan 15, 2026):**
+  - **Keyboard Awareness:** Integrated `react-native-keyboard-aware-scroll-view` to prevent the system keyboard from covering input fields in `NavigatorHomeScreen` and `SymptomAssessmentScreen`.
+  - **Dynamic View Resizing:** Implemented `KeyboardAvoidingView` in `FacilityDirectoryScreen` to ensure the facility list remains visible and accessible while the search bar is focused on both iOS and Android.
+  - **Safe Area Integration:** Standardized `SafeAreaView` usage across all screens with explicit edge handling to prevent layout shifts and ensure consistent spacing with system UI elements.
+  - **Files Modified:** `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`, `src/features/facilities/FacilityDirectoryScreen.tsx`, `package.json`.
+
 * **Layout Fixes (Jan 15, 2026):**
   - **Keyboard Overlap:** Resolved issues where the keyboard covered input fields in `NavigatorHomeScreen` and `SymptomAssessmentScreen` by switching `KeyboardAvoidingView` behavior to `height` on Android. This ensures the view resizes correctly with the edge-to-edge configuration.
   - **System Navigation Safety:** Updated input containers to explicitly include `insets.bottom` plus an 8px buffer in their padding. This prevents the input fields from being obscured by the Android system navigation bar (gesture bar or buttons).
