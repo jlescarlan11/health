@@ -1,4 +1,8 @@
-import { detectEmergency, tokenizeSentences } from '../emergencyDetector';
+import {
+  detectEmergency,
+  tokenizeSentences,
+  isNegated,
+} from '../emergencyDetector';
 
 describe('tokenizeSentences', () => {
   it('should split by period, comma, question mark, and exclamation point', () => {
@@ -23,6 +27,47 @@ describe('tokenizeSentences', () => {
   });
 });
 
+describe('isNegated', () => {
+  it('should detect simple negation before keyword', () => {
+    expect(isNegated('I have no chest pain', 'chest pain')).toBe(true);
+  });
+
+  it('should detect negation within 3 words before', () => {
+    expect(isNegated('I do not have any chest pain', 'chest pain')).toBe(true);
+  });
+
+  it('should detect negation after keyword', () => {
+    expect(isNegated('Chest pain I have none', 'chest pain')).toBe(true);
+  });
+
+  it('should handle different negation keywords (never)', () => {
+    expect(isNegated('I never have chest pain', 'chest pain')).toBe(true);
+  });
+
+  it('should not detect negation if outside 3-word window', () => {
+    // "No" is 4 words before "chest"
+    expect(
+      isNegated('No I really think that chest pain is bad', 'chest pain')
+    ).toBe(false);
+  });
+
+  it('should return false if keyword is not present', () => {
+    expect(isNegated('I am fine', 'chest pain')).toBe(false);
+  });
+
+  it('should return false if keyword is present but not negated', () => {
+    expect(isNegated('I have severe chest pain', 'chest pain')).toBe(false);
+  });
+
+  it('should return false if one match is negated but another is not in the same segment', () => {
+    expect(isNegated('no chest pain but chest pain', 'chest pain')).toBe(false);
+  });
+
+  it('should be case insensitive and ignore punctuation', () => {
+    expect(isNegated('I have NO chest pain!', 'CHEST PAIN')).toBe(true);
+  });
+});
+
 describe('detectEmergency', () => {
   it('should detect high severity emergency keywords', () => {
     const result = detectEmergency('I have severe chest pain');
@@ -31,6 +76,21 @@ describe('detectEmergency', () => {
     expect(result.matchedKeywords).toContain('chest pain');
     expect(result.overrideResponse).toBeDefined();
     expect(result.overrideResponse?.recommended_level).toBe('emergency');
+  });
+
+  it('should skip emergency if negated', () => {
+    const result = detectEmergency('I have no chest pain');
+    expect(result.isEmergency).toBe(false);
+    expect(result.matchedKeywords).not.toContain('chest pain');
+  });
+
+  it('should detect emergency if one symptom is negated but another is present', () => {
+    const result = detectEmergency(
+      'I have no chest pain, but I am difficulty breathing'
+    );
+    expect(result.isEmergency).toBe(true);
+    expect(result.matchedKeywords).toContain('difficulty breathing');
+    expect(result.matchedKeywords).not.toContain('chest pain');
   });
 
   it('should detect keywords separated by punctuation', () => {

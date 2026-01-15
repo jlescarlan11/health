@@ -64,6 +64,71 @@ export const tokenizeSentences = (text: string): string[] => {
 };
 
 /**
+ * Checks if a keyword within a segment is negated.
+ * Scans for negation keywords ("no", "not", "never", "none") within a 3-word proximity window
+ * around the identified red-flag symptom keyword.
+ */
+export const isNegated = (segment: string, keyword: string): boolean => {
+  const NEGATION_KEYWORDS = ['no', 'not', 'never', 'none'];
+  const PROXIMITY_WINDOW = 3;
+
+  // Clean and tokenize the segment
+  const words = segment
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length > 0);
+
+  const keywordWords = keyword.toLowerCase().split(/\s+/);
+
+  if (keywordWords.length === 0 || words.length === 0) return false;
+
+  let foundMatch = false;
+  let anyNonNegated = false;
+
+  for (let i = 0; i <= words.length - keywordWords.length; i++) {
+    // Check for keyword match at current position
+    let match = true;
+    for (let j = 0; j < keywordWords.length; j++) {
+      if (words[i + j] !== keywordWords[j]) {
+        match = false;
+        break;
+      }
+    }
+
+    if (match) {
+      foundMatch = true;
+
+      // Check for negation keywords in proximity
+      const start = Math.max(0, i - PROXIMITY_WINDOW);
+      const end = Math.min(
+        words.length - 1,
+        i + keywordWords.length + PROXIMITY_WINDOW - 1
+      );
+
+      let isThisOccurrenceNegated = false;
+      for (let k = start; k <= end; k++) {
+        // Skip the words that are part of the keyword itself
+        if (k >= i && k < i + keywordWords.length) continue;
+
+        if (NEGATION_KEYWORDS.includes(words[k])) {
+          isThisOccurrenceNegated = true;
+          break;
+        }
+      }
+
+      if (!isThisOccurrenceNegated) {
+        anyNonNegated = true;
+      }
+    }
+  }
+
+  // A symptom is considered negated if we found matches and ALL of them are negated.
+  // If there is at least one non-negated match, we consider the symptom present.
+  return foundMatch && !anyNonNegated;
+};
+
+/**
  * Analyzes input text for emergency keywords.
  * Normalizes text and calculates a severity score (0-10).
  * If score > 7, it's an EMERGENCY.
@@ -77,6 +142,11 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
     for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
       // Check for exact keyword or phrase match within the segment
       if (segment.includes(keyword)) {
+        // Skip if the symptom is negated in this segment
+        if (isNegated(segment, keyword)) {
+          continue;
+        }
+
         if (!matchedKeywords.includes(keyword)) {
           matchedKeywords.push(keyword);
         }
