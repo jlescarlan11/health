@@ -25,6 +25,7 @@ import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
+import { calculateDistance } from '../utils';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -38,7 +39,7 @@ const RecommendationScreen = () => {
   useUserLocation({ watch: false });
 
   const { assessmentData } = route.params;
-  const { facilities, isLoading: isFacilitiesLoading } = useSelector(
+  const { facilities, isLoading: isFacilitiesLoading, userLocation } = useSelector(
     (state: RootState) => state.facilities,
   );
 
@@ -46,6 +47,7 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+  const analysisStarted = useRef(false);
 
   const handleBack = useCallback(() => {
     Alert.alert(
@@ -97,24 +99,52 @@ const RecommendationScreen = () => {
     });
   }, [navigation, handleBack]);
 
-  useEffect(() => {
-    analyzeSymptoms();
-    // Load facilities if they aren't in the store
-    if (facilities.length === 0) {
-      dispatch(fetchFacilities({ page: 1, refresh: true }));
-    }
-  }, []);
-
-  useEffect(() => {
-    if (recommendation && (facilities.length > 0 || !isFacilitiesLoading)) {
-      filterFacilities();
-    }
-  }, [recommendation, facilities, isFacilitiesLoading]);
-
-  const analyzeSymptoms = async () => {
+  const analyzeSymptoms = useCallback(async () => {
     try {
       setLoading(true);
-      const context = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(assessmentData.answers)}`;
+
+      // Calculate distances to nearest Health Center and Hospital
+      let nearestHealthCenterDist = Infinity;
+      let nearestHospitalDist = Infinity;
+
+      facilities.forEach((f) => {
+        const type = f.type?.toLowerCase() || '';
+        // Use existing distance if available, otherwise calculate it if we have user location
+        const dist =
+          f.distance ??
+          (userLocation
+            ? calculateDistance(
+                userLocation.latitude,
+                userLocation.longitude,
+                f.latitude,
+                f.longitude,
+              )
+            : Infinity);
+
+        if (dist === Infinity) return;
+
+        if (type.includes('health') || type.includes('unit') || type.includes('center')) {
+          if (dist < nearestHealthCenterDist) nearestHealthCenterDist = dist;
+        }
+
+        if (
+          type.includes('hospital') ||
+          type.includes('infirmary') ||
+          type.includes('emergency')
+        ) {
+          if (dist < nearestHospitalDist) nearestHospitalDist = dist;
+        }
+      });
+
+      const hcDistStr =
+        nearestHealthCenterDist !== Infinity ? `${nearestHealthCenterDist.toFixed(1)}km` : 'Unknown';
+      const hospDistStr =
+        nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
+      const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
+
+      const context = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
+        assessmentData.answers,
+      )}. Context: ${distanceContext}`;
       const response = await geminiClient.assessSymptoms(context);
       setRecommendation(response);
 
@@ -139,7 +169,28 @@ const RecommendationScreen = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [assessmentData, facilities, userLocation, dispatch]);
+
+  useEffect(() => {
+    // Load facilities if they aren't in the store
+    if (facilities.length === 0) {
+      dispatch(fetchFacilities({ page: 1, refresh: true }));
+    }
+  }, [dispatch, facilities.length]);
+
+  useEffect(() => {
+    // Start analysis once facilities are loaded (or if they were already available)
+    if (!analysisStarted.current && (!isFacilitiesLoading || facilities.length > 0)) {
+      analysisStarted.current = true;
+      analyzeSymptoms();
+    }
+  }, [facilities.length, isFacilitiesLoading, analyzeSymptoms]);
+
+  useEffect(() => {
+    if (recommendation && (facilities.length > 0 || !isFacilitiesLoading)) {
+      filterFacilities();
+    }
+  }, [recommendation, facilities, isFacilitiesLoading]);
 
   const filterFacilities = () => {
     if (!recommendation) return;
