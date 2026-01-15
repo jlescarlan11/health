@@ -68,6 +68,14 @@ describe('isNegated', () => {
     expect(isNegated('I have severe chest pain', 'chest pain')).toBe(false);
   });
 
+  it('should detect negation in "I do not have chest pain"', () => {
+    expect(isNegated('I do not have chest pain', 'chest pain')).toBe(true);
+  });
+
+  it('should detect negation in "chest pain is not present"', () => {
+    expect(isNegated('chest pain is not present', 'chest pain')).toBe(true);
+  });
+
   it('should return false if one match is negated but another is not in the same segment', () => {
     expect(isNegated('no chest pain but chest pain', 'chest pain')).toBe(false);
   });
@@ -87,8 +95,14 @@ describe('detectEmergency', () => {
     expect(result.overrideResponse?.recommended_level).toBe('emergency');
   });
 
-  it('should skip emergency if negated', () => {
+  it('should skip emergency if negated ("no chest pain")', () => {
     const result = detectEmergency('I have no chest pain');
+    expect(result.isEmergency).toBe(false);
+    expect(result.matchedKeywords).not.toContain('chest pain');
+  });
+
+  it('should skip emergency if negated ("do not have chest pain")', () => {
+    const result = detectEmergency('I do not have chest pain');
     expect(result.isEmergency).toBe(false);
     expect(result.matchedKeywords).not.toContain('chest pain');
   });
@@ -100,6 +114,16 @@ describe('detectEmergency', () => {
     expect(result.isEmergency).toBe(true);
     expect(result.matchedKeywords).toContain('difficulty breathing');
     expect(result.matchedKeywords).not.toContain('chest pain');
+  });
+
+  it('should accurately identify non-negated symptom while excluding negated one ("I do not have chest pain, but I have a deep wound")', () => {
+    const result = detectEmergency(
+      'I do not have chest pain, but I have a deep wound'
+    );
+    expect(result.isEmergency).toBe(true);
+    expect(result.matchedKeywords).toContain('deep wound');
+    expect(result.matchedKeywords).not.toContain('chest pain');
+    expect(result.score).toBe(8);
   });
 
   it('should detect keywords separated by punctuation', () => {
