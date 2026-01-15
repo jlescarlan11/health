@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -10,12 +10,14 @@ import NetInfo from '@react-native-community/netinfo';
 
 import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
-import { OfflineBanner } from './src/components/common';
+import { OfflineBanner, SafetyRecheckModal } from './src/components/common';
 import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
+import { setHighRisk } from './src/store/navigationSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
 import { theme } from './src/theme';
+import { useAppDispatch, useAppSelector } from './src/hooks';
 
 const prefix = Linking.createURL('/');
 
@@ -59,7 +61,16 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 const AppContent = () => {
+  const dispatch = useAppDispatch();
+  const isHighRisk = useAppSelector((state) => state.navigation.isHighRisk);
+  const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+
   useEffect(() => {
+    // Check for high risk status on mount
+    if (isHighRisk) {
+      setSafetyModalVisible(true);
+    }
+
     // Initialize Database and Sync
     const startup = async () => {
       try {
@@ -90,10 +101,20 @@ const AppContent = () => {
     return () => unsubscribe();
   }, []);
 
+  const handleDismissSafetyModal = () => {
+    setSafetyModalVisible(false);
+    // Optionally clear high risk status when dismissed
+    dispatch(setHighRisk(false));
+  };
+
   return (
     <View style={styles.container}>
       <OfflineBanner />
       <AppNavigator />
+      <SafetyRecheckModal
+        visible={safetyModalVisible}
+        onDismiss={handleDismissSafetyModal}
+      />
     </View>
   );
 };

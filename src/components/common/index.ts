@@ -15,3 +15,4 @@ export * from './OfflineBanner';
 export * from './StandardHeader';
 export * from './InputCard';
 export * from './TypingIndicator';
+export * from './SafetyRecheckModal';

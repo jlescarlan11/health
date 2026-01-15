@@ -15,10 +15,11 @@ import { useRoute, useNavigation, RouteProp, useFocusEffect, CommonActions } fro
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
+import { setHighRisk } from '../store/navigationSlice';
 import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
-import { Button } from '../components/common/Button';
+import { Button, SafetyRecheckModal } from '../components/common';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
@@ -44,6 +45,7 @@ const RecommendationScreen = () => {
   const [loading, setLoading] = useState(true);
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
+  const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   const handleBack = useCallback(() => {
     Alert.alert(
@@ -115,6 +117,11 @@ const RecommendationScreen = () => {
       const context = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(assessmentData.answers)}`;
       const response = await geminiClient.assessSymptoms(context);
       setRecommendation(response);
+
+      // If emergency, set high risk status for persistence
+      if (response.recommended_level === 'emergency') {
+        dispatch(setHighRisk(true));
+      }
     } catch (error) {
       console.error('Analysis Error:', error);
       // Fallback
@@ -262,7 +269,7 @@ const RecommendationScreen = () => {
               </View>
             </View>
             <EmergencyButton
-              onPress={() => handleCall('911')}
+              onPress={() => setSafetyModalVisible(true)}
               style={styles.emergencyButton}
               buttonColor="white"
               textColor={theme.colors.error}
@@ -452,6 +459,11 @@ const RecommendationScreen = () => {
           />
         </View>
       </ScrollView>
+
+      <SafetyRecheckModal
+        visible={safetyModalVisible}
+        onDismiss={() => setSafetyModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

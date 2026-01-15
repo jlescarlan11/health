@@ -20,17 +20,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { getGeminiResponse } from '../services/gemini';
 import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
+import { setHighRisk } from '../store/navigationSlice';
 
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
-import { InputCard, TypingIndicator, InputCardRef } from '../components/common';
+import { InputCard, TypingIndicator, InputCardRef, SafetyRecheckModal } from '../components/common';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -51,6 +53,7 @@ interface Message {
 const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
+  const dispatch = useDispatch();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -72,6 +75,7 @@ const SymptomAssessmentScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -242,6 +246,7 @@ const SymptomAssessmentScreen = () => {
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
 
     if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
+      dispatch(setHighRisk(true));
       navigation.replace('Recommendation', {
         assessmentData: { symptoms: initialSymptom || '', answers: {} },
       });
@@ -314,6 +319,7 @@ const SymptomAssessmentScreen = () => {
     // Check for emergency
     const emergencyCheck = detectEmergency(finalAnswer);
     if (emergencyCheck.isEmergency) {
+      dispatch(setHighRisk(true));
       const partialData = {
         symptoms: initialSymptom || '',
         answers: newAnswers,
@@ -534,6 +540,11 @@ const SymptomAssessmentScreen = () => {
           disabled={isTyping}
         />
       </Animated.View>
+
+      <SafetyRecheckModal
+        visible={safetyModalVisible}
+        onDismiss={() => setSafetyModalVisible(false)}
+      />
     </View>
   );
 };

@@ -53,7 +53,7 @@ const persistConfig = {
   key: 'root',
   version: 2,
   storage: AsyncStorage,
-  whitelist: ['settings'],
+  whitelist: ['settings', 'navigation'],
   migrate: createMigrate(migrations, { debug: false }),
 };
 

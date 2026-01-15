@@ -170,4 +170,11 @@ describe('detectEmergency', () => {
     expect(result.score).toBe(10);
     expect(result.matchedKeywords).toContain('suicide attempt');
   });
+
+  it('should handle "feel like dying" keyword', () => {
+    const result = detectEmergency('I feel like dying');
+    expect(result.isEmergency).toBe(true);
+    expect(result.score).toBe(10);
+    expect(result.matchedKeywords).toContain('feel like dying');
+  });
 });
