@@ -39,14 +39,20 @@ const TabNavigator = () => {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
         tabBarStyle: {
-          height: 24 + insets.bottom,
+          height: 60 + insets.bottom,
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.outlineVariant,
+          paddingBottom: insets.bottom,
+          paddingTop: 8,
+        },
+        tabBarItemStyle: {
+          height: 52,
         },
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: 'bold',
           letterSpacing: 0.5,
+          marginBottom: Platform.OS === 'ios' ? 0 : 4,
         },
       })}
     >

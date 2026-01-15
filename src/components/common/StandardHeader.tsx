@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface StandardHeaderProps {
   title: string;
@@ -35,6 +36,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
 }) => {
   const navigation = useNavigation<any>();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -50,7 +52,12 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
     <View
       style={[
         styles.container,
-        { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outlineVariant },
+        {
+          backgroundColor: theme.colors.surface,
+          borderBottomColor: theme.colors.outlineVariant,
+          paddingTop: insets.top,
+          height: 60 + insets.top,
+        },
         style,
       ]}
     >
@@ -87,7 +94,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 60,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
   },

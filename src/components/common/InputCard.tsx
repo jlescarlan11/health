@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
 import { TextInput, IconButton, ActivityIndicator, useTheme } from 'react-native-paper';
 
@@ -18,24 +18,39 @@ interface InputCardProps {
   disabled?: boolean;
 }
 
-export const InputCard: React.FC<InputCardProps> = ({
-  value,
-  onChangeText,
-  onSubmit,
-  placeholder,
-  label,
-  onFocus,
-  onBlur,
-  maxLength,
-  isRecording = false,
-  isProcessingAudio = false,
-  onVoicePress,
-  containerStyle,
-  disabled = false,
-}) => {
+export interface InputCardRef {
+  focus: () => void;
+  blur: () => void;
+  isFocused: () => boolean;
+}
+
+export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) => {
+  const {
+    value,
+    onChangeText,
+    onSubmit,
+    placeholder,
+    label,
+    onFocus,
+    onBlur,
+    maxLength,
+    isRecording = false,
+    isProcessingAudio = false,
+    onVoicePress,
+    containerStyle,
+    disabled = false,
+  } = props;
+  
   const theme = useTheme();
+  const inputRef = useRef<any>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useImperativeHandle(ref, () => ({
+    focus: () => inputRef.current?.focus(),
+    blur: () => inputRef.current?.blur(),
+    isFocused: () => inputRef.current?.isFocused() || false,
+  }));
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -85,6 +100,7 @@ export const InputCard: React.FC<InputCardProps> = ({
     <View style={[styles.container, containerStyle]}>
       <View style={styles.inputWrapper}>
         <TextInput
+          ref={inputRef}
           mode="outlined"
           label={label}
           placeholder={placeholder}
@@ -94,7 +110,7 @@ export const InputCard: React.FC<InputCardProps> = ({
           onChangeText={onChangeText}
           onFocus={onFocus}
           onBlur={onBlur}
-          style={[styles.textInput, { backgroundColor: theme.colors.background }]}
+          style={[styles.textInput, { backgroundColor: 'transparent' }]}
           contentStyle={styles.textContent}
           outlineStyle={[styles.outline, { borderColor: theme.colors.outline }]}
           cursorColor={theme.colors.primary}
@@ -149,12 +165,14 @@ export const InputCard: React.FC<InputCardProps> = ({
       </View>
     </View>
   );
-};
+});
+
+InputCard.displayName = 'InputCard';
 
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'center', // Vertically center buttons with input field
+    alignItems: 'center',
     width: '100%',
   },
   inputWrapper: {
@@ -165,20 +183,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     maxHeight: 100,
     minHeight: 44,
-    textAlignVertical: 'center',
+    backgroundColor: 'transparent',
   },
   textContent: {
     paddingHorizontal: 12,
     paddingTop: 10,
-    paddingBottom: 10, // Balanced with paddingTop
+    paddingBottom: 10,
   },
   outline: {
     borderRadius: 24,
+    borderWidth: 1,
   },
   actionContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 8, // Consistent spacing from input field
+    marginLeft: 8,
   },
   micContainer: {
     position: 'relative',
@@ -187,6 +206,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   iconButton: {
     margin: 0,
@@ -206,6 +226,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   recordingPulse: {
     width: 34,
