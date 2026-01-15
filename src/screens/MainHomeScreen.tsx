@@ -4,14 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Paragraph, Title, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { TabScreenProps } from '../types/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { RootStackScreenProps } from '../types/navigation';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
 
-type MainHomeNavigationProp = TabScreenProps<'Home'>['navigation'];
+type MainHomeNavigationProp = RootStackScreenProps<'Home'>['navigation'];
 
 export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
@@ -114,7 +112,7 @@ export const MainHomeScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <HomeHero />

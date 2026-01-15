@@ -4,11 +4,18 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
   Platform,
+  LayoutAnimation,
+  UIManager,
   Keyboard,
+  Animated,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -22,7 +29,7 @@ import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
-import { InputCard, TypingIndicator } from '../components/common';
+import { InputCard, TypingIndicator, InputCardRef } from '../components/common';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -46,6 +53,8 @@ const SymptomAssessmentScreen = () => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
+  const inputCardRef = useRef<InputCardRef>(null);
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -55,40 +64,49 @@ const SymptomAssessmentScreen = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Voice Input State
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [inputText, setInputText] = useState('');
 
-  // Header height for KeyboardAvoidingView offset
-  const headerHeight = 60;
-  const keyboardVerticalOffset = headerHeight + insets.top;
-
   useEffect(() => {
-    const showEvent = Platform.OS === 'android' ? 'keyboardDidShow' : 'keyboardWillShow';
-    const hideEvent = Platform.OS === 'android' ? 'keyboardDidHide' : 'keyboardWillHide';
+    const keyboardWillShow = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: e.endCoordinates.height,
+          duration: e.duration || 250,
+          useNativeDriver: false,
+        }).start();
+      },
+    );
 
-    const keyboardShowListener = Keyboard.addListener(showEvent, () => {
-      setIsKeyboardVisible(true);
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    });
-
-    const keyboardHideListener = Keyboard.addListener(hideEvent, () => {
-      setIsKeyboardVisible(false);
-    });
+    const keyboardWillHide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      (e) => {
+        Animated.timing(keyboardHeight, {
+          toValue: 0,
+          duration: e.duration || 250,
+          useNativeDriver: false,
+        }).start();
+      },
+    );
 
     return () => {
-      keyboardShowListener.remove();
-      keyboardHideListener.remove();
-      if (recording) {
-        recording.stopAndUnloadAsync();
-      }
+      keyboardWillShow.remove();
+      keyboardWillHide.remove();
     };
+  }, []);
+
+  useEffect(() => {
+    if (recording) {
+      return () => {
+        recording.stopAndUnloadAsync();
+      };
+    }
   }, [recording]);
 
   const startRecording = async () => {
@@ -134,15 +152,69 @@ const SymptomAssessmentScreen = () => {
   };
 
   const handleBack = useCallback(() => {
-    Alert.alert(
-      'Cancel Assessment',
-      'Are you sure you want to start over? Your progress will be lost.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() },
-      ],
-    );
-  }, [navigation]);
+    if (currentStep === 0 && messages.length <= 1) {
+      Alert.alert(
+        'Cancel Assessment',
+        'Are you sure you want to start over? Your progress will be lost.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() },
+        ],
+      );
+      return;
+    }
+
+    // Smooth transition for message removal
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+    // Cancel any pending typing response
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setIsTyping(false);
+
+    // Determine if we are currently "between" steps (user answered, but assistant hasn't yet)
+    // The conversation structure is: 1 (intro) + 2*currentStep messages
+    // If messages.length > 2*currentStep + 1, it means the user just answered
+    const isMidStep = messages.length > 2 * currentStep + 1;
+
+    let targetStep = currentStep;
+    if (!isMidStep) {
+      targetStep = currentStep - 1;
+    }
+
+    const questionToUndo = questions[targetStep];
+
+    // Synchronized state updates
+    // 1. Truncate messages to the state BEFORE the user answered the target question
+    setMessages((prev) => prev.slice(0, 2 * targetStep + 1));
+
+    // 2. Remove the answer from state
+    setAnswers((prev) => {
+      const newAnswers = { ...prev };
+      if (questionToUndo) {
+        delete newAnswers[questionToUndo.id];
+      }
+      return newAnswers;
+    });
+
+    // 3. Revert step
+    setCurrentStep(targetStep);
+
+    // 4. Restore previous answer to input for easy editing
+    const previousAnswer = answers[questionToUndo?.id];
+    if (previousAnswer && previousAnswer !== 'User was not sure') {
+      setInputText(previousAnswer);
+    } else {
+      setInputText('');
+    }
+
+    // 5. Ensure input focus is maintained
+    setTimeout(() => {
+      inputCardRef.current?.focus();
+    }, 100);
+  }, [currentStep, messages, questions, answers, navigation]);
 
   useEffect(() => {
     navigation.setOptions({
@@ -241,7 +313,8 @@ const SymptomAssessmentScreen = () => {
 
     const delay = 1500; // 1.5 seconds delay for a more natural feel
 
-    setTimeout(() => {
+    typingTimeoutRef.current = setTimeout(() => {
+      typingTimeoutRef.current = null;
       if (currentStep < questions.length - 1) {
         const nextStep = currentStep + 1;
         const nextQuestion = questions[nextStep];
@@ -371,79 +444,83 @@ const SymptomAssessmentScreen = () => {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScrollView
+        ref={scrollViewRef}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={keyboardVerticalOffset}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
-        <ScrollView
-          ref={scrollViewRef}
-          contentContainerStyle={[styles.scrollContent, isKeyboardVisible && { paddingBottom: 20 }]}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-        >
-          <View style={styles.messagesContainer}>
-            {messages.map(renderMessage)}
-            {isTyping && renderTypingIndicator()}
-          </View>
-        </ScrollView>
-
-        <View style={[styles.inputSection, { backgroundColor: theme.colors.surface }]}>
-          {currentQuestion && (
-            <View style={styles.choiceContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.choiceScrollContent}
-              >
-                {currentQuestion.type === 'choice' &&
-                  currentQuestion.options?.map((opt) => (
-                    <Chip
-                      key={opt}
-                      onPress={() => !isTyping && handleNext(opt)}
-                      style={styles.choiceChip}
-                      mode="flat"
-                      compact
-                      showSelectedOverlay
-                      disabled={isTyping}
-                    >
-                      {opt}
-                    </Chip>
-                  ))}
-                <Chip
-                  onPress={() => !isTyping && handleNext(undefined, true)}
-                  style={[styles.choiceChip, { borderColor: theme.colors.outline }]}
-                  textStyle={{ color: theme.colors.onSurfaceVariant }}
-                  mode="outlined"
-                  compact
-                  disabled={isTyping}
-                >
-                  I'm not sure
-                </Chip>
-              </ScrollView>
-            </View>
-          )}
-
-          <InputCard
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmit={() => handleNext()}
-            label="Type your answer..."
-            placeholder=""
-            onFocus={handleInputFocus}
-            isRecording={isRecording}
-            isProcessingAudio={isProcessingAudio}
-            onVoicePress={isRecording ? stopRecording : startRecording}
-            disabled={isTyping}
-          />
+        <View style={styles.messagesContainer}>
+          {messages.map(renderMessage)}
+          {isTyping && renderTypingIndicator()}
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </ScrollView>
+
+      <Animated.View
+        style={[
+          styles.inputSection,
+          {
+            paddingBottom: Math.max(12, insets.bottom),
+            paddingLeft: Math.max(16, insets.left),
+            paddingRight: Math.max(16, insets.right),
+            backgroundColor: theme.colors.background,
+            marginBottom: Animated.add(keyboardHeight, new Animated.Value(8)),
+          },
+        ]}
+      >
+        {currentQuestion && (
+          <View style={styles.choiceContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.choiceScrollContent}
+            >
+              {currentQuestion.type === 'choice' &&
+                currentQuestion.options?.map((opt) => (
+                  <Chip
+                    key={opt}
+                    onPress={() => !isTyping && handleNext(opt)}
+                    style={styles.choiceChip}
+                    mode="flat"
+                    compact
+                    showSelectedOverlay
+                    disabled={isTyping}
+                  >
+                    {opt}
+                  </Chip>
+                ))}
+              <Chip
+                onPress={() => !isTyping && handleNext(undefined, true)}
+                style={[styles.choiceChip, { borderColor: theme.colors.outline }]}
+                textStyle={{ color: theme.colors.onSurfaceVariant }}
+                mode="outlined"
+                compact
+                disabled={isTyping}
+              >
+                I'm not sure
+              </Chip>
+            </ScrollView>
+          </View>
+        )}
+
+        <InputCard
+          ref={inputCardRef}
+          value={inputText}
+          onChangeText={setInputText}
+          onSubmit={() => handleNext()}
+          label="Type your answer..."
+          placeholder=""
+          onFocus={handleInputFocus}
+          isRecording={isRecording}
+          isProcessingAudio={isProcessingAudio}
+          onVoicePress={isRecording ? stopRecording : startRecording}
+          disabled={isTyping}
+        />
+      </Animated.View>
+    </View>
   );
 };
 
@@ -490,13 +567,8 @@ const styles = StyleSheet.create({
 
   inputSection: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 8,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
   progressSubtle: {
     alignItems: 'center',

@@ -64,16 +64,21 @@ if (!connectionString) {
   throw new Error('DATABASE_URL environment variable is required');
 }
 
-const pool = new Pool({
-  connectionString,
-  ssl: process.env.NODE_ENV === 'production' ? true : { rejectUnauthorized: false },
-});
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-});
-const adapter = new PrismaPg(pool);
-
 const prismaClientSingleton = () => {
+  const pool = new Pool({
+    connectionString,
+    ssl: process.env.NODE_ENV === 'production' ? true : { rejectUnauthorized: false },
+    max: 10, // Limit pool size
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  });
+
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle client', err);
+  });
+
+  const adapter = new PrismaPg(pool);
+
   return new PrismaClient({ adapter });
 };
 

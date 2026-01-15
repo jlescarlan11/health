@@ -1,4 +1,3 @@
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 
@@ -20,17 +19,12 @@ export type YakapStackParamList = {
   YakapHome: undefined;
 };
 
-// Define the parameters for each tab in the bottom tab navigator
-export type TabParamList = {
+// Define the parameters for the root stack
+export type RootStackParamList = {
   Home: undefined;
   Check: NavigatorScreenParams<CheckStackParamList>;
   Find: NavigatorScreenParams<FacilitiesStackParamList>;
   YAKAP: NavigatorScreenParams<YakapStackParamList>;
-};
-
-// Define the parameters for the root stack
-export type RootStackParamList = {
-  Main: NavigatorScreenParams<TabParamList>;
   SymptomAssessment: { initialSymptom?: string };
   Recommendation: { assessmentData: AssessmentData };
   CrisisSupport: undefined;
@@ -51,24 +45,19 @@ export type RootStackScreenProps<T extends keyof RootStackParamList> = StackScre
   T
 >;
 
-export type TabScreenProps<T extends keyof TabParamList> = CompositeScreenProps<
-  BottomTabScreenProps<TabParamList, T>,
-  RootStackScreenProps<keyof RootStackParamList>
->;
-
 // Props for screens within the nested stack navigators
 export type CheckStackScreenProps<T extends keyof CheckStackParamList> = CompositeScreenProps<
   StackScreenProps<CheckStackParamList, T>,
-  TabScreenProps<keyof TabParamList>
+  RootStackScreenProps<keyof RootStackParamList>
 >;
 
 export type FacilitiesStackScreenProps<T extends keyof FacilitiesStackParamList> =
   CompositeScreenProps<
     StackScreenProps<FacilitiesStackParamList, T>,
-    TabScreenProps<keyof TabParamList>
+    RootStackScreenProps<keyof RootStackParamList>
   >;
 
 export type YakapStackScreenProps<T extends keyof YakapStackParamList> = CompositeScreenProps<
   StackScreenProps<YakapStackParamList, T>,
-  TabScreenProps<keyof TabParamList>
+  RootStackScreenProps<keyof RootStackParamList>
 >;

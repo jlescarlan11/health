@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
@@ -57,6 +57,7 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
 
 export const FacilityDetailsScreen = () => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const route = useRoute<FacilityDetailsRouteProp>();
   const navigation = useNavigation<any>();
   const dispatch = useDispatch();
@@ -144,7 +145,9 @@ export const FacilityDetailsScreen = () => {
         }
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 + insets.bottom }]}
+      >
         {/* Photo Gallery */}
         <TouchableOpacity
           activeOpacity={0.9}

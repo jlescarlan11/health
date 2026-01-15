@@ -16,7 +16,7 @@ const CheckNavigator = () => {
         name="NavigatorHome"
         component={NavigatorHomeScreen}
         options={{
-          header: () => <StandardHeader title="AI Navigator" />,
+          header: () => <StandardHeader title="AI Navigator" showBackButton />,
         }}
       />
     </Stack.Navigator>

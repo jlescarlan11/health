@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { StyleSheet } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -23,27 +23,23 @@ const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [prefix],
   config: {
     screens: {
-      Main: {
+      Home: 'home',
+      Check: {
+        path: 'check',
         screens: {
-          Home: 'home',
-          Check: {
-            path: 'check',
-            screens: {
-              NavigatorHome: '',
-            },
-          },
-          Find: {
-            path: 'find',
-            screens: {
-              FacilityDirectory: '',
-            },
-          },
-          YAKAP: {
-            path: 'yakap',
-            screens: {
-              YakapHome: '',
-            },
-          },
+          NavigatorHome: '',
+        },
+      },
+      Find: {
+        path: 'find',
+        screens: {
+          FacilityDirectory: '',
+        },
+      },
+      YAKAP: {
+        path: 'yakap',
+        screens: {
+          YakapHome: '',
         },
       },
       SymptomAssessment: 'assessment',
@@ -95,10 +91,10 @@ const AppContent = () => {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <OfflineBanner />
       <AppNavigator />
-    </SafeAreaView>
+    </View>
   );
 };
 
