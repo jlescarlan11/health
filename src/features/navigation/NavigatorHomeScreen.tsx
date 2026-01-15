@@ -140,9 +140,9 @@ const NavigatorHomeScreen = () => {
 
   return (
     <KeyboardAvoidingView
-      behavior="padding"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 + insets.top : 0}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80}
     >
       <ScrollView
         ref={scrollViewRef}
@@ -249,7 +249,7 @@ const NavigatorHomeScreen = () => {
           styles.anchoredInputContainer,
 
           {
-            paddingBottom: keyboardVisible ? 16 : Math.max(16, insets.bottom + 8),
+            paddingBottom: keyboardVisible ? 24 : Math.max(16, insets.bottom + 8),
 
             paddingLeft: Math.max(16, insets.left),
 
