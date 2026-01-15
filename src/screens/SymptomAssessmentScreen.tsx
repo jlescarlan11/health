@@ -7,6 +7,7 @@ import {
   Platform,
   LayoutAnimation,
   UIManager,
+  KeyboardAvoidingView,
 } from 'react-native';
 
 // Enable LayoutAnimation on Android
@@ -69,6 +70,23 @@ const SymptomAssessmentScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (recording) {
@@ -414,7 +432,11 @@ const SymptomAssessmentScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
       <KeyboardAwareScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
@@ -424,7 +446,7 @@ const SymptomAssessmentScreen = () => {
         showsVerticalScrollIndicator={false}
         enableOnAndroid={true}
         enableAutomaticScroll={true}
-        extraScrollHeight={Platform.OS === 'ios' ? 50 : 0}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 0}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd(true)}
       >
         <View style={styles.messagesContainer}>
@@ -437,7 +459,7 @@ const SymptomAssessmentScreen = () => {
         style={[
           styles.inputSection,
           {
-            paddingBottom: Math.max(12, insets.bottom),
+            paddingBottom: keyboardVisible ? 10 : Math.max(12, insets.bottom),
             paddingLeft: Math.max(16, insets.left),
             paddingRight: Math.max(16, insets.right),
             backgroundColor: theme.colors.background,
@@ -493,10 +515,9 @@ const SymptomAssessmentScreen = () => {
           disabled={isTyping}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
-
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },

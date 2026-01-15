@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, StyleSheet, Alert, Platform, KeyboardAvoidingView, Keyboard } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Audio } from 'expo-av';
@@ -26,6 +26,23 @@ const NavigatorHomeScreen = () => {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true),
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false),
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   useEffect(() => {
     if (recording) {
@@ -102,6 +119,7 @@ const NavigatorHomeScreen = () => {
   };
 
   const handleInputFocus = () => {
+    setIsInputFocused(true);
     // KeyboardAwareScrollView handles scrolling to the focused input automatically
     // but for anchored inputs we might still want to scroll the main content
     setTimeout(() => {
@@ -110,7 +128,11 @@ const NavigatorHomeScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      keyboardVerticalOffset={0}
+    >
       <KeyboardAwareScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
@@ -120,7 +142,7 @@ const NavigatorHomeScreen = () => {
         showsVerticalScrollIndicator={false}
         enableOnAndroid={true}
         enableAutomaticScroll={true}
-        extraScrollHeight={Platform.OS === 'ios' ? 50 : 0}
+        extraScrollHeight={Platform.OS === 'ios' ? 20 : 0}
       >
         <View style={styles.mainContent}>
           <View style={styles.emergencyLayoutContainer}>
@@ -203,7 +225,7 @@ const NavigatorHomeScreen = () => {
         style={[
           styles.anchoredInputContainer,
           {
-            paddingBottom: Math.max(16, insets.bottom + 8),
+            paddingBottom: keyboardVisible ? 10 : Math.max(16, insets.bottom + 8),
             paddingLeft: Math.max(16, insets.left),
             paddingRight: Math.max(16, insets.right),
             backgroundColor: theme.colors.background,
@@ -224,7 +246,7 @@ const NavigatorHomeScreen = () => {
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 const styles = StyleSheet.create({
