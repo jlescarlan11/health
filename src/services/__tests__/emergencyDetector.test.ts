@@ -1,4 +1,27 @@
-import { detectEmergency } from '../emergencyDetector';
+import { detectEmergency, tokenizeSentences } from '../emergencyDetector';
+
+describe('tokenizeSentences', () => {
+  it('should split by period, comma, question mark, and exclamation point', () => {
+    const text = 'Help! I have chest pain. Can you help me, please?';
+    const tokens = tokenizeSentences(text);
+    expect(tokens).toEqual([
+      'Help',
+      'I have chest pain',
+      'Can you help me',
+      'please',
+    ]);
+  });
+
+  it('should handle multiple consecutive punctuation marks', () => {
+    const text = 'Emergency!!! Chest pain... help,me';
+    const tokens = tokenizeSentences(text);
+    expect(tokens).toEqual(['Emergency', 'Chest pain', 'help', 'me']);
+  });
+
+  it('should return empty array for empty input', () => {
+    expect(tokenizeSentences('')).toEqual([]);
+  });
+});
 
 describe('detectEmergency', () => {
   it('should detect high severity emergency keywords', () => {
@@ -8,6 +31,13 @@ describe('detectEmergency', () => {
     expect(result.matchedKeywords).toContain('chest pain');
     expect(result.overrideResponse).toBeDefined();
     expect(result.overrideResponse?.recommended_level).toBe('emergency');
+  });
+
+  it('should detect keywords separated by punctuation', () => {
+    const result = detectEmergency('Help, I have chest pain!');
+    expect(result.isEmergency).toBe(true);
+    expect(result.score).toBe(10);
+    expect(result.matchedKeywords).toContain('chest pain');
   });
 
   it('should detect moderate severity emergency keywords (score > 7)', () => {

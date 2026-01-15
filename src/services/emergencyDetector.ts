@@ -51,21 +51,38 @@ interface EmergencyDetectionResult {
 }
 
 /**
+ * Splits input text into separate segments (sentences/clauses) based on punctuation.
+ * Handles periods, commas, question marks, and exclamation points.
+ */
+export const tokenizeSentences = (text: string): string[] => {
+  if (!text) return [];
+
+  return text
+    .split(/[.,?!]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+};
+
+/**
  * Analyzes input text for emergency keywords.
  * Normalizes text and calculates a severity score (0-10).
  * If score > 7, it's an EMERGENCY.
  */
 export const detectEmergency = (text: string): EmergencyDetectionResult => {
-  const normalizedText = text.toLowerCase().trim();
+  const segments = tokenizeSentences(text.toLowerCase());
   let maxScore = 0;
   const matchedKeywords: string[] = [];
 
-  for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
-    // Check for exact keyword or phrase match
-    if (normalizedText.includes(keyword)) {
-      matchedKeywords.push(keyword);
-      if (severity > maxScore) {
-        maxScore = severity;
+  for (const segment of segments) {
+    for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
+      // Check for exact keyword or phrase match within the segment
+      if (segment.includes(keyword)) {
+        if (!matchedKeywords.includes(keyword)) {
+          matchedKeywords.push(keyword);
+        }
+        if (severity > maxScore) {
+          maxScore = severity;
+        }
       }
     }
   }
