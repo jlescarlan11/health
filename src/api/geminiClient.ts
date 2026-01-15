@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, GenerativeModel, Content } from '@google/generative-ai';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT } from '../constants/prompts';
+import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 
@@ -132,7 +132,9 @@ export class GeminiClient {
           json.recommended_action || 'Please follow the recommended level of care.',
         key_concerns: json.key_concerns || [],
         critical_warnings: json.critical_warnings || [],
-        relevant_services: json.relevant_services || [],
+        relevant_services: (json.relevant_services || []).filter((s: string) =>
+          VALID_SERVICES.includes(s),
+        ),
         red_flags: json.red_flags || [],
         confidence_score: json.confidence_score,
         ambiguity_detected: json.ambiguity_detected,
