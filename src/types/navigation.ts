@@ -1,9 +1,12 @@
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 
+import { TriageRecommendation } from './triage';
+
 export type AssessmentData = {
   symptoms: string;
   answers: Record<string, string>;
+  offlineRecommendation?: TriageRecommendation;
 };
 
 // Define the parameters for each screen in the stack navigators

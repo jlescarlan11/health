@@ -18,7 +18,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
-import { Audio } from 'expo-av';
+import { speechService } from '../services/speechService';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
@@ -30,10 +30,9 @@ import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
-import triageFlowRaw from '../../assets/triage-flow.json';
 import { TriageFlow, TriageNode } from '../types/triage';
 
-const triageFlow = triageFlowRaw as unknown as TriageFlow;
+const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
@@ -78,8 +77,8 @@ const SymptomAssessmentScreen = () => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Voice Input State
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [volume, setVolume] = useState(0);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
@@ -119,52 +118,45 @@ const SymptomAssessmentScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (recording) {
-      return () => {
-        recording.stopAndUnloadAsync();
-      };
-    }
-  }, [recording]);
+    return () => {
+      speechService.destroy();
+    };
+  }, []);
 
   const startRecording = async () => {
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (permission.status === 'granted') {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-        const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        );
-        setRecording(recording);
-        setIsRecording(true);
-      } else {
-        Alert.alert('Permission Denied', 'Microphone permission is required for voice input.');
-      }
+      setIsRecording(true);
+      setVolume(0);
+      await speechService.startListening(
+        (text) => {
+          setInputText(text);
+        },
+        (error) => {
+          console.error('STT Error:', error);
+          setIsRecording(false);
+          setVolume(0);
+          Alert.alert('Speech Error', 'Could not recognize speech. Please try again.');
+        },
+        (vol) => {
+          setVolume(vol);
+        },
+      );
     } catch (err) {
       console.error('Failed to start recording', err);
-      Alert.alert('Error', 'Failed to start recording.');
+      setIsRecording(false);
+      setVolume(0);
+      Alert.alert('Error', 'Failed to start voice recognition.');
     }
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
     setIsRecording(false);
-    setIsProcessingAudio(true);
+    setVolume(0);
     try {
-      await recording.stopAndUnloadAsync();
-      // Simulation of STT (Replace with actual API call)
-      setTimeout(() => {
-        const simulatedText = 'I have been feeling this way for a few days.';
-        setInputText((prev) => prev + (prev ? ' ' : '') + simulatedText);
-        setIsProcessingAudio(false);
-        setRecording(null);
-      }, 1500);
+      await speechService.stopListening();
     } catch (error) {
       console.error(error);
-      setIsProcessingAudio(false);
-      Alert.alert('Error', 'Failed to process audio.');
+      Alert.alert('Error', 'Failed to stop recording.');
     }
   };
 
@@ -708,6 +700,7 @@ const SymptomAssessmentScreen = () => {
           placeholder=""
           onFocus={handleInputFocus}
           isRecording={isRecording}
+          volume={volume}
           isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
           disabled={isTyping || isOfflineMode}

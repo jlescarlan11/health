@@ -75,7 +75,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           outputRange: [1, 1.3],
         }),
       },
-    ],
+    ] as any,
   });
 
   return (
