@@ -38,7 +38,7 @@ export const Card: React.FC<CardProps> = ({
       accessibilityRole={accessibilityRole || (onPress ? 'button' : 'none')}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      rippleColor={rippleColor}
+      {...(onPress && rippleColor ? { rippleColor } : {})}
     >
       {(title || subtitle) && (
         <PaperCard.Title

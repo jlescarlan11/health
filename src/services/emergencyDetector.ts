@@ -38,8 +38,6 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   'chest tightness': 10,
   'active labor': 10,
   'water broke': 10,
-  'not breathing': 10,
-  choking: 10,
   'electric shock': 10,
   drowning: 10,
 
