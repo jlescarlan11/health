@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Keyboard, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Keyboard,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { Searchbar, Chip, useTheme, Text } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -23,42 +30,7 @@ const FILTERS = [
   { id: 'open_now', label: 'Open Now' },
 ];
 
-// #region agent log
-fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    location: 'FacilityDirectoryScreen.tsx:27',
-    message: 'Before export definition',
-    data: {
-      moduleExports: typeof module !== 'undefined' ? Object.keys(module.exports || {}) : [],
-      timestamp: Date.now(),
-      sessionId: 'debug-session',
-      runId: 'run1',
-      hypothesisId: 'C',
-    },
-  }),
-}).catch(() => {});
-// #endregion
-
 export const FacilityDirectoryScreen = () => {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      location: 'FacilityDirectoryScreen.tsx:31',
-      message: 'Component function entry',
-      data: {
-        componentDefined: true,
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'run1',
-        hypothesisId: 'C',
-      },
-    }),
-  }).catch(() => {});
-  // #endregion
   const theme = useTheme();
   const route = useRoute<RouteProp<FacilitiesStackParamList, 'FacilityDirectory'>>();
   const dispatch = useDispatch<AppDispatch>();
@@ -126,50 +98,55 @@ export const FacilityDirectoryScreen = () => {
   }, [route.params?.filter]);
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       <StandardHeader title="Find Facilities" showBackButton />
 
-      <View style={styles.contentContainer}>
-        <View style={styles.searchContainer}>
-          <Searchbar
-            placeholder="Search facilities, address..."
-            onChangeText={handleSearchChange}
-            value={searchQuery}
-            style={[styles.searchBar, { borderColor: theme.colors.outline }]}
-            icon={searchQuery ? 'close' : 'magnify'}
-            onIconPress={searchQuery ? handleClearSearch : undefined}
-          />
-        </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <View style={styles.contentContainer}>
+          <View style={styles.searchContainer}>
+            <Searchbar
+              placeholder="Search facilities, address..."
+              onChangeText={handleSearchChange}
+              value={searchQuery}
+              style={[styles.searchBar, { borderColor: theme.colors.outline }]}
+              icon={searchQuery ? 'close' : 'magnify'}
+              onIconPress={searchQuery ? handleClearSearch : undefined}
+            />
+          </View>
 
-        <View style={styles.filterContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterScroll}
-          >
-            {FILTERS.map((filter) => (
-              <Chip
-                key={filter.id}
-                selected={activeFilter === filter.id}
-                onPress={() => handleFilterPress(filter.id)}
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: theme.colors.surface,
-                    borderColor: theme.colors.outline,
-                  },
-                ]}
-                showSelectedOverlay
-                mode="outlined"
-              >
-                {filter.label}
-              </Chip>
-            ))}
-          </ScrollView>
-        </View>
+          <View style={styles.filterContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterScroll}
+            >
+              {FILTERS.map((filter) => (
+                <Chip
+                  key={filter.id}
+                  selected={activeFilter === filter.id}
+                  onPress={() => handleFilterPress(filter.id)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.outline,
+                    },
+                  ]}
+                  showSelectedOverlay
+                  mode="outlined"
+                >
+                  {filter.label}
+                </Chip>
+              ))}
+            </ScrollView>
+          </View>
 
-        <FacilityListView />
-      </View>
+          <FacilityListView />
+        </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };

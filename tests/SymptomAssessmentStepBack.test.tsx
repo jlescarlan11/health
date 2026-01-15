@@ -42,7 +42,7 @@ jest.mock('react-native-paper', () => {
       <TouchableOpacity onPress={props.onPress} disabled={props.disabled}>
         <Text>{props.icon}</Text>
       </TouchableOpacity>
-    )
+    ),
   };
 });
 
@@ -71,7 +71,7 @@ jest.mock('expo-av', () => ({
 jest.mock('../src/components/common', () => {
   const React = require('react');
   const { View, Text, TouchableOpacity, TextInput } = require('react-native');
-  
+
   return {
     InputCard: React.forwardRef(({ value, onChangeText, onSubmit, disabled }: any, ref: any) => {
       React.useImperativeHandle(ref, () => ({
@@ -94,7 +94,11 @@ jest.mock('../src/components/common', () => {
       );
     }),
     TypingIndicator: () => <View testID="typing-indicator" />,
-    Button: ({ title, onPress }: any) => <TouchableOpacity onPress={onPress}><Text>{title}</Text></TouchableOpacity>,
+    Button: ({ title, onPress }: any) => (
+      <TouchableOpacity onPress={onPress}>
+        <Text>{title}</Text>
+      </TouchableOpacity>
+    ),
     StandardHeader: ({ onBackPress, title }: any) => (
       <View testID="header">
         <TouchableOpacity testID="header-back" onPress={onBackPress}>
@@ -144,7 +148,7 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     const header = lastCall[0].header();
     // header is a JSX element (StandardHeader), we can trigger its onBackPress prop directly
     act(() => {
-        header.props.onBackPress();
+      header.props.onBackPress();
     });
   };
 
@@ -159,23 +163,27 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     // Answer Q1
     fireEvent.changeText(input, '2 days');
     fireEvent.press(submitBtn);
-    act(() => { jest.advanceTimersByTime(1500); });
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
     await waitFor(() => expect(screen.getByText(/Question 2: Severity\?/)).toBeTruthy());
 
     // Answer Q2
     fireEvent.changeText(input, 'Mild');
     fireEvent.press(submitBtn);
-    act(() => { jest.advanceTimersByTime(1500); });
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
     await waitFor(() => expect(screen.getByText(/Question 3: Location\?/)).toBeTruthy());
 
     // Answer Q3
     fireEvent.changeText(input, 'Chest');
     fireEvent.press(submitBtn);
-    
+
     // Step back to Q3
     triggerBack();
     await waitFor(() => expect(screen.getByText(/Question 3: Location\?/)).toBeTruthy());
-    expect(screen.getByTestId('input-text').props.value).toBe('Chest'); 
+    expect(screen.getByTestId('input-text').props.value).toBe('Chest');
 
     // Step back to Q2
     triggerBack();
@@ -185,13 +193,17 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     // Correct Q2
     fireEvent.changeText(screen.getByTestId('input-text'), 'Severe');
     fireEvent.press(screen.getByTestId('submit-button'));
-    act(() => { jest.advanceTimersByTime(1500); });
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
     await waitFor(() => expect(screen.getByText(/Question 3: Location\?/)).toBeTruthy());
 
     // Answer Q3 again
     fireEvent.changeText(screen.getByTestId('input-text'), 'Abdomen');
     fireEvent.press(screen.getByTestId('submit-button'));
-    act(() => { jest.advanceTimersByTime(1500); });
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith(
@@ -212,12 +224,14 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
 
     fireEvent.changeText(screen.getByTestId('input-text'), '1 week');
     fireEvent.press(screen.getByTestId('submit-button'));
-    act(() => { jest.advanceTimersByTime(1500); });
+    act(() => {
+      jest.advanceTimersByTime(1500);
+    });
     await waitFor(() => expect(screen.getByText(/Question 2: Severity\?/)).toBeTruthy());
 
     triggerBack();
     await waitFor(() => expect(screen.getByText(/Question 1: Duration\?/)).toBeTruthy());
     expect(screen.getByTestId('input-text').props.value).toBe('1 week');
-    expect(screen.queryByText('1 week')).toBeNull(); 
+    expect(screen.queryByText('1 week')).toBeNull();
   });
 });

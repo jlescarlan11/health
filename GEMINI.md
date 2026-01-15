@@ -136,6 +136,10 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Visual Consistency:** Removed redundant placeholders in favor of consistent floating labels across the app.
   - **Files Modified:** `src/components/common/InputCard.tsx`, `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
 
+- **Keyboard Interaction Update (Jan 15, 2026):**
+  - **Behavior Change:** Removed `KeyboardAvoidingView` and all automatic keyboard adjustment logic from `NavigatorHomeScreen` and `SymptomAssessmentScreen`. The input field and action buttons now remain static at the bottom of the screen, allowing the keyboard to overlay them rather than pushing the content up or resizing the view.
+  - **Files Modified:** `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
+
 - **Authentication Removal & Redux Fix:** Completely removed all authentication-related functionality, screens, and logic.
   - **UI/UX:** Removed the "Me" tab, Profile screen, and login flows (Phone/OTP). Simplified greetings in `HomeHero` and removed the profile button from `CustomHeader`.
   - **Redux Implementation:** Deleted `authSlice`, updated `rootReducer`, and implemented a Redux Persist migration (Version 1) to surgically purge legacy `auth` state, resolving the "unexpected key" warning.
@@ -167,3 +171,15 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **State Persistence:** Implemented local state recovery for the Eligibility Check page. User's PhilHealth identification status is now persisted across app restarts using `settingsSlice` and Redux Persist, ensuring a seamless experience when returning to the enrollment flow.
   - **Edit Answer Refinement:** Optimized the "Change my answer" flow with explicit state resets and `LayoutAnimation` feedback. Ensured that eligibility state is retained when navigating back from secondary screens unless explicitly edited.
   - **Files Modified:** `src/features/yakap/EligibilityCheckerScreen.tsx`, `src/store/settingsSlice.ts`.
+
+* **Layout Fixes (Jan 15, 2026):**
+  - **Keyboard Overlap:** Resolved issues where the keyboard covered input fields in `NavigatorHomeScreen` and `SymptomAssessmentScreen` by switching `KeyboardAvoidingView` behavior to `height` on Android. This ensures the view resizes correctly with the edge-to-edge configuration.
+  - **System Navigation Safety:** Updated input containers to explicitly include `insets.bottom` plus an 8px buffer in their padding. This prevents the input fields from being obscured by the Android system navigation bar (gesture bar or buttons).
+  - **Merge Resolution:** Concluded a pending merge of the `development` branch while applying these layout fixes.
+  - **Files Modified:** `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
+
+* **Navigation Refactor & System Integration (Jan 15, 2026):**
+  - **Removed Custom Bottom Navigation:** Deleted the custom bottom tab bar (`TabNavigator`) to eliminate conflicts with native system navigation gestures and buttons. The app now uses a clean, stack-based navigation structure rooted at `MainHomeScreen`.
+  - **Native Navigation Support:** Implemented back buttons in the headers of all primary feature screens (`NavigatorHomeScreen`, `FacilityDirectoryScreen`, `YakapHomeScreen`) to ensure users can navigate back to the home screen using either the in-app UI or the system back button.
+  - **Deep Linking Update:** Updated the `linking` configuration in `App.tsx` to reflect the flattened navigation structure, removing the nested `Main` route.
+  - **Files Modified/Deleted:** `src/navigation/TabNavigator.tsx` (Deleted), `src/navigation/AppNavigator.tsx`, `src/types/navigation.ts`, `App.tsx`.

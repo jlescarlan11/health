@@ -4,9 +4,7 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
-  KeyboardAvoidingView,
   Platform,
-  Keyboard,
   LayoutAnimation,
   UIManager,
 } from 'react-native';
@@ -17,6 +15,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Audio } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -52,7 +51,7 @@ const SymptomAssessmentScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const inputCardRef = useRef<InputCardRef>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
@@ -70,10 +69,6 @@ const SymptomAssessmentScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
-
-  // Header height for KeyboardAvoidingView offset
-  const headerHeight = 60;
-  const keyboardVerticalOffset = headerHeight + insets.top;
 
   useEffect(() => {
     if (recording) {
@@ -128,10 +123,14 @@ const SymptomAssessmentScreen = () => {
 
   const handleBack = useCallback(() => {
     if (currentStep === 0 && messages.length <= 1) {
-      Alert.alert('Cancel Assessment', 'Are you sure you want to start over? Your progress will be lost.', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() },
-      ]);
+      Alert.alert(
+        'Cancel Assessment',
+        'Are you sure you want to start over? Your progress will be lost.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() },
+        ],
+      );
       return;
     }
 
@@ -149,7 +148,7 @@ const SymptomAssessmentScreen = () => {
     // The conversation structure is: 1 (intro) + 2*currentStep messages
     // If messages.length > 2*currentStep + 1, it means the user just answered
     const isMidStep = messages.length > 2 * currentStep + 1;
-    
+
     let targetStep = currentStep;
     if (!isMidStep) {
       targetStep = currentStep - 1;
@@ -189,13 +188,7 @@ const SymptomAssessmentScreen = () => {
 
   useEffect(() => {
     navigation.setOptions({
-      header: () => (
-        <StandardHeader
-          title="Assessment"
-          showBackButton
-          onBackPress={handleBack}
-        />
-      ),
+      header: () => <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />,
     });
   }, [navigation, handleBack]);
 
@@ -318,7 +311,7 @@ const SymptomAssessmentScreen = () => {
 
         // Scroll to end
         setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
+          scrollViewRef.current?.scrollToEnd(true);
         }, 100);
       } else {
         setIsTyping(false);
@@ -337,7 +330,7 @@ const SymptomAssessmentScreen = () => {
 
   const handleInputFocus = () => {
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      scrollViewRef.current?.scrollToEnd(true);
     }, 150);
   };
 
@@ -408,7 +401,7 @@ const SymptomAssessmentScreen = () => {
           ]}
         >
           <Text
-            style={[ 
+            style={[
               styles.messageText,
               { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
             ]}
@@ -422,90 +415,84 @@ const SymptomAssessmentScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <KeyboardAwareScrollView
+        ref={scrollViewRef}
         style={{ flex: 1 }}
-        keyboardVerticalOffset={keyboardVerticalOffset}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 50 : 0}
+        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd(true)}
       >
-        <ScrollView
-          ref={scrollViewRef}
-          style={{ flex: 1 }}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: 20 }
-          ]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-        >
-          <View style={styles.messagesContainer}>
-            {messages.map(renderMessage)}
-            {isTyping && renderTypingIndicator()}
-          </View>
-        </ScrollView>
-
-        <View
-          style={[
-            styles.inputSection,
-            {
-              paddingBottom: Math.max(16, insets.bottom + 8),
-              paddingLeft: Math.max(16, insets.left),
-              paddingRight: Math.max(16, insets.right),
-              backgroundColor: theme.colors.background,
-            },
-          ]}
-        >
-          {currentQuestion && (
-            <View style={styles.choiceContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.choiceScrollContent}
-              >
-                {currentQuestion.type === 'choice' &&
-                  currentQuestion.options?.map((opt) => (
-                    <Chip
-                      key={opt}
-                      onPress={() => !isTyping && handleNext(opt)}
-                      style={styles.choiceChip}
-                      mode="flat"
-                      compact
-                      showSelectedOverlay
-                      disabled={isTyping}
-                    >
-                      {opt}
-                    </Chip>
-                  ))}
-                <Chip
-                  onPress={() => !isTyping && handleNext(undefined, true)}
-                  style={[styles.choiceChip, { borderColor: theme.colors.outline }]} 
-                  textStyle={{ color: theme.colors.onSurfaceVariant }}
-                  mode="outlined"
-                  compact
-                  disabled={isTyping}
-                >
-                  I'm not sure
-                </Chip>
-              </ScrollView>
-            </View>
-          )}
-
-          <InputCard
-            ref={inputCardRef}
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmit={() => handleNext()}
-            label="Type your answer..."
-            placeholder=""
-            onFocus={handleInputFocus}
-            isRecording={isRecording}
-            isProcessingAudio={isProcessingAudio}
-            onVoicePress={isRecording ? stopRecording : startRecording}
-            disabled={isTyping}
-          />
+        <View style={styles.messagesContainer}>
+          {messages.map(renderMessage)}
+          {isTyping && renderTypingIndicator()}
         </View>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
+
+      <View
+        style={[
+          styles.inputSection,
+          {
+            paddingBottom: Math.max(12, insets.bottom),
+            paddingLeft: Math.max(16, insets.left),
+            paddingRight: Math.max(16, insets.right),
+            backgroundColor: theme.colors.background,
+          },
+        ]}
+      >
+        {currentQuestion && (
+          <View style={styles.choiceContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.choiceScrollContent}
+            >
+              {currentQuestion.type === 'choice' &&
+                currentQuestion.options?.map((opt) => (
+                  <Chip
+                    key={opt}
+                    onPress={() => !isTyping && handleNext(opt)}
+                    style={styles.choiceChip}
+                    mode="flat"
+                    compact
+                    showSelectedOverlay
+                    disabled={isTyping}
+                  >
+                    {opt}
+                  </Chip>
+                ))}
+              <Chip
+                onPress={() => !isTyping && handleNext(undefined, true)}
+                style={[styles.choiceChip, { borderColor: theme.colors.outline }]}
+                textStyle={{ color: theme.colors.onSurfaceVariant }}
+                mode="outlined"
+                compact
+                disabled={isTyping}
+              >
+                I'm not sure
+              </Chip>
+            </ScrollView>
+          </View>
+        )}
+
+        <InputCard
+          ref={inputCardRef}
+          value={inputText}
+          onChangeText={setInputText}
+          onSubmit={() => handleNext()}
+          label="Type your answer..."
+          placeholder=""
+          onFocus={handleInputFocus}
+          isRecording={isRecording}
+          isProcessingAudio={isProcessingAudio}
+          onVoicePress={isRecording ? stopRecording : startRecording}
+          disabled={isTyping}
+        />
+      </View>
     </View>
   );
 };

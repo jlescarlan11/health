@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Audio } from 'expo-av';
 import { useNavigation } from '@react-navigation/native';
 import { CheckStackScreenProps } from '../../types/navigation';
@@ -26,16 +19,13 @@ const NavigatorHomeScreen = () => {
   const theme = useTheme();
 
   const insets = useSafeAreaInsets();
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
 
   const [symptom, setSymptom] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
-
-  // Adjusted keyboard offset to account for StandardHeader (60px) + status bar
-  const keyboardVerticalOffset = 60 + insets.top;
 
   useEffect(() => {
     if (recording) {
@@ -112,137 +102,132 @@ const NavigatorHomeScreen = () => {
   };
 
   const handleInputFocus = () => {
-    // Extra scroll to ensure the input card is fully visible
+    // KeyboardAwareScrollView handles scrolling to the focused input automatically
+    // but for anchored inputs we might still want to scroll the main content
     setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      scrollViewRef.current?.scrollToEnd(true);
     }, 300);
   };
 
-    return (
-      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={keyboardVerticalOffset}
-        >
-          <ScrollView
-            ref={scrollViewRef}
-            style={styles.scrollView}
-            contentContainerStyle={[
-              styles.scrollContent,
-              { paddingBottom: 20 }
-            ]}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.mainContent}>
-              <View style={styles.emergencyLayoutContainer}>
-                <Card
-                  mode="contained"
-                  style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}
-                >
-                  <Card.Content style={styles.emergencyCardContent}>
-                    <View style={styles.emergencyTextContent}>
-                      <Text
-                        variant="titleLarge"
-                        style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}
-                      >
-                        Emergency?
-                      </Text>
-                      <Text
-                        variant="bodyMedium"
-                        style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}
-                      >
-                        Call 911 immediately if you need urgent care.
-                      </Text>
-                    </View>
-                    <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
-                  </Card.Content>
-                </Card>
-              </View>
-  
-              <View style={styles.heroSection}>
-                <Text
-                  variant="headlineSmall"
-                  style={[styles.welcomeText, { color: theme.colors.onBackground }]}
-                >
-                  How are you feeling today?
-                </Text>
-                <Text
-                  variant="bodyMedium"
-                  style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
-                >
-                  Describe your symptoms and our AI will guide you to the right care.
-                </Text>
-              </View>
-  
-              <View style={styles.quickActions}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  Common Symptoms
-                </Text>
-                <View style={styles.chipContainer}>
-                  {QUICK_SYMPTOMS.map((s) => {
-                    let icon = 'medical-bag';
-                    if (s === 'Fever') icon = 'thermometer';
-                    if (s === 'Cough') icon = 'bacteria';
-                    if (s === 'Headache') icon = 'head-alert';
-                    if (s === 'Stomach Pain') icon = 'stomach';
-                    if (s === 'Injury') icon = 'bandage';
-  
-                    return (
-                      <Chip
-                        key={s}
-                        icon={icon}
-                        onPress={() =>
-                          setSymptom((prev) => {
-                            const newText = prev ? `${prev}, ${s}` : s;
-                            return newText.length > 500 ? prev : newText;
-                          })
-                        }
-                        style={styles.chip}
-                        mode="flat"
-                        showSelectedOverlay
-                      >
-                        {s}
-                      </Chip>
-                    );
-                  })}
+  return (
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <KeyboardAwareScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 20 }]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={Platform.OS === 'ios' ? 50 : 0}
+      >
+        <View style={styles.mainContent}>
+          <View style={styles.emergencyLayoutContainer}>
+            <Card
+              mode="contained"
+              style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}
+            >
+              <Card.Content style={styles.emergencyCardContent}>
+                <View style={styles.emergencyTextContent}>
+                  <Text
+                    variant="titleLarge"
+                    style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}
+                  >
+                    Emergency?
+                  </Text>
+                  <Text
+                    variant="bodyMedium"
+                    style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}
+                  >
+                    Call 911 immediately if you need urgent care.
+                  </Text>
                 </View>
-              </View>
-            </View>
-          </ScrollView>
-  
-          <View
-            style={[
-              styles.anchoredInputContainer,
-              {
-                paddingBottom: Math.max(16, insets.bottom + 8),
-                paddingLeft: Math.max(16, insets.left),
-                paddingRight: Math.max(16, insets.right),
-                backgroundColor: theme.colors.background,
-              },
-            ]}
-          >
-            <InputCard
-              value={symptom}
-              onChangeText={setSymptom}
-              onSubmit={handleSubmit}
-              label="Symptom Details"
-              placeholder=""
-              maxLength={500}
-              onFocus={handleInputFocus}
-              onBlur={() => setIsInputFocused(false)}
-              isRecording={isRecording}
-              isProcessingAudio={isProcessingAudio}
-              onVoicePress={isRecording ? stopRecording : startRecording}
-            />
+                <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
+              </Card.Content>
+            </Card>
           </View>
-        </KeyboardAvoidingView>
+
+          <View style={styles.heroSection}>
+            <Text
+              variant="headlineSmall"
+              style={[styles.welcomeText, { color: theme.colors.onBackground }]}
+            >
+              How are you feeling today?
+            </Text>
+            <Text
+              variant="bodyMedium"
+              style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}
+            >
+              Describe your symptoms and our AI will guide you to the right care.
+            </Text>
+          </View>
+
+          <View style={styles.quickActions}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Common Symptoms
+            </Text>
+            <View style={styles.chipContainer}>
+              {QUICK_SYMPTOMS.map((s) => {
+                let icon = 'medical-bag';
+                if (s === 'Fever') icon = 'thermometer';
+                if (s === 'Cough') icon = 'bacteria';
+                if (s === 'Headache') icon = 'head-alert';
+                if (s === 'Stomach Pain') icon = 'stomach';
+                if (s === 'Injury') icon = 'bandage';
+
+                return (
+                  <Chip
+                    key={s}
+                    icon={icon}
+                    onPress={() =>
+                      setSymptom((prev) => {
+                        const newText = prev ? `${prev}, ${s}` : s;
+                        return newText.length > 500 ? prev : newText;
+                      })
+                    }
+                    style={styles.chip}
+                    mode="flat"
+                    showSelectedOverlay
+                  >
+                    {s}
+                  </Chip>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </KeyboardAwareScrollView>
+
+      <View
+        style={[
+          styles.anchoredInputContainer,
+          {
+            paddingBottom: Math.max(16, insets.bottom + 8),
+            paddingLeft: Math.max(16, insets.left),
+            paddingRight: Math.max(16, insets.right),
+            backgroundColor: theme.colors.background,
+          },
+        ]}
+      >
+        <InputCard
+          value={symptom}
+          onChangeText={setSymptom}
+          onSubmit={handleSubmit}
+          label="Symptom Details"
+          placeholder=""
+          maxLength={500}
+          onFocus={handleInputFocus}
+          onBlur={() => setIsInputFocused(false)}
+          isRecording={isRecording}
+          isProcessingAudio={isProcessingAudio}
+          onVoicePress={isRecording ? stopRecording : startRecording}
+        />
       </View>
-    );
-  };    
-    const styles = StyleSheet.create({
+    </View>
+  );
+};
+const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 0, paddingVertical: 24 },

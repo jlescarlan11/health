@@ -40,7 +40,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
     containerStyle,
     disabled = false,
   } = props;
-  
+
   const theme = useTheme();
   const inputRef = useRef<any>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;

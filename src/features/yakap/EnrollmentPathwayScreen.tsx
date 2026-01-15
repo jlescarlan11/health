@@ -61,7 +61,7 @@ export const EnrollmentPathwayScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Enrollment Path" showBackButton />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

@@ -201,7 +201,7 @@ const RecommendationScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Emergency Banner */}
@@ -387,9 +387,8 @@ const RecommendationScreen = () => {
           <Button
             title="Start New Assessment"
             onPress={() =>
-              navigation.navigate('Main', {
-                screen: 'Check',
-                params: { screen: 'NavigatorHome' },
+              navigation.navigate('Check', {
+                screen: 'NavigatorHome',
               })
             }
             variant="primary"

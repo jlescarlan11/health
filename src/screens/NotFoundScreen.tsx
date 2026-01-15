@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
 import { Button } from '../components/common';
@@ -8,13 +9,10 @@ type Props = StackScreenProps<RootStackParamList, 'NotFound'>;
 
 const NotFoundScreen: React.FC<Props> = ({ navigation }) => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>This screen doesn't exist.</Text>
-      <Button
-        onPress={() => navigation.replace('Main', { screen: 'Home' })}
-        title="Go to home screen"
-      />
-    </View>
+      <Button onPress={() => navigation.replace('Home')} title="Go to home screen" />
+    </SafeAreaView>
   );
 };
 
