@@ -18,6 +18,7 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({
     params: mockParams,
   }),
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock('../../../components/common/StandardHeader', () => {
@@ -50,8 +51,8 @@ describe('EnrollmentGuideScreen', () => {
     mockParams = { pathwayId: 'egovph' };
     const { getByText } = render(renderComponent());
 
-    expect(getByText('eGovPH Mobile App')).toBeTruthy();
-    expect(getByText('Step 1 of 5')).toBeTruthy();
+    expect(getByText('eGovPH App')).toBeTruthy();
+    expect(getByText(/STEP 1 OF 5/i)).toBeTruthy();
     expect(getByText('Next')).toBeTruthy();
   });
 

@@ -44,6 +44,15 @@ describe('isNegated', () => {
     expect(isNegated('I never have chest pain', 'chest pain')).toBe(true);
   });
 
+  it('should handle contractions (dont)', () => {
+    expect(isNegated("I don't have chest pain", 'chest pain')).toBe(true);
+  });
+
+  it('should handle medical negation (without, denies)', () => {
+    expect(isNegated('Patient without chest pain', 'chest pain')).toBe(true);
+    expect(isNegated('Patient denies chest pain', 'chest pain')).toBe(true);
+  });
+
   it('should not detect negation if outside 3-word window', () => {
     // "No" is 4 words before "chest"
     expect(

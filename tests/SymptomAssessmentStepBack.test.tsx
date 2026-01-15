@@ -9,6 +9,7 @@ import { View, Text, TouchableOpacity, TextInput as RNTextInput } from 'react-na
 jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
   useNavigation: jest.fn(),
+  useFocusEffect: jest.fn(),
 }));
 
 jest.mock('react-native-paper', () => {
@@ -43,15 +44,6 @@ jest.mock('react-native-paper', () => {
         <Text>{props.icon}</Text>
       </TouchableOpacity>
     ),
-  };
-});
-
-jest.mock('react-native-safe-area-context', () => {
-  const React = require('react');
-  return {
-    SafeAreaProvider: ({ children }: any) => children,
-    SafeAreaView: ({ children }: any) => children,
-    useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
   };
 });
 
@@ -128,6 +120,7 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     (useNavigation as jest.Mock).mockReturnValue({
       navigate: mockNavigate,
       setOptions: mockSetOptions,
+      replace: mockNavigate,
     });
     (useRoute as jest.Mock).mockReturnValue({
       params: { initialSymptom: 'Fever' },

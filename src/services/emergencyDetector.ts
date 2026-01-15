@@ -65,16 +65,30 @@ export const tokenizeSentences = (text: string): string[] => {
 
 /**
  * Checks if a keyword within a segment is negated.
- * Scans for negation keywords ("no", "not", "never", "none") within a 3-word proximity window
+ * Scans for negation keywords ("no", "not", "never", "none", etc.) within a 3-word proximity window
  * around the identified red-flag symptom keyword.
  */
 export const isNegated = (segment: string, keyword: string): boolean => {
-  const NEGATION_KEYWORDS = ['no', 'not', 'never', 'none'];
+  const NEGATION_KEYWORDS = [
+    'no',
+    'not',
+    'never',
+    'none',
+    'dont',
+    'doesnt',
+    'didnt',
+    'isnt',
+    'arent',
+    'without',
+    'denies',
+    'negative',
+  ];
   const PROXIMITY_WINDOW = 3;
 
   // Clean and tokenize the segment
   const words = segment
     .toLowerCase()
+    .replace(/['’]/g, '') // Remove apostrophes to handle contractions (e.g., don't -> dont)
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter((w) => w.length > 0);
@@ -142,7 +156,7 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
     for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
       // Check for exact keyword or phrase match within the segment
       if (segment.includes(keyword)) {
-        // Skip if the symptom is negated in this segment
+        // Exclude any symptom matches that have been identified as negated
         if (isNegated(segment, keyword)) {
           continue;
         }
