@@ -1,3 +1,5 @@
+import { Facility } from '../types';
+
 export const calculateDistance = (
   lat1: number,
   lon1: number,
@@ -24,4 +26,54 @@ export const formatDistance = (distanceInKm: number): string => {
     return `${Math.round(distanceInKm * 1000)}m`;
   }
   return `${distanceInKm.toFixed(1)}km`;
+};
+
+/**
+ * Finds the nearest facilities of specified types.
+ * @param facilities List of facilities to search from
+ * @param userLocation Current user location
+ * @param types Array of facility types to look for
+ * @returns An object mapping each type to its nearest facility (or null if not found)
+ */
+export const findNearestFacilitiesByType = (
+  facilities: Facility[],
+  userLocation: { latitude: number; longitude: number } | null,
+  types: string[] = ['Hospital', 'Health Center'],
+): Record<string, Facility | null> => {
+  const result: Record<string, Facility | null> = {};
+
+  // Initialize result with null for each requested type
+  types.forEach((type) => {
+    result[type] = null;
+  });
+
+  if (!facilities.length || !userLocation) {
+    return result;
+  }
+
+  facilities.forEach((facility) => {
+    if (types.includes(facility.type)) {
+      // Use existing distance if available, otherwise calculate it
+      const distance =
+        facility.distance ??
+        calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          facility.latitude,
+          facility.longitude,
+        );
+
+      const currentNearest = result[facility.type];
+
+      // If none found yet for this type, or this one is closer
+      if (!currentNearest || distance < (currentNearest.distance ?? Infinity)) {
+        result[facility.type] = {
+          ...facility,
+          distance,
+        };
+      }
+    }
+  });
+
+  return result;
 };
