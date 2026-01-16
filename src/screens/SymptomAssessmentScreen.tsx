@@ -71,6 +71,11 @@ const SymptomAssessmentScreen = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [totalEstimatedSteps, setTotalEstimatedSteps] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [capturedSlots, setCapturedSlots] = useState<Record<string, string>>({
+    age: '',
+    duration: '',
+    severity: '',
+  });
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
@@ -88,6 +93,14 @@ const SymptomAssessmentScreen = () => {
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
   const [isNetworkError, setIsNetworkError] = useState(false);
+
+  useEffect(() => {
+    // Extract initial info if possible
+    if (initialSymptom) {
+      // Simple heuristic for initial symptom extraction could be added here
+      // but for now we rely on the AI follow-ups
+    }
+  }, [initialSymptom]);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -220,7 +233,7 @@ const SymptomAssessmentScreen = () => {
     // 1. Truncate messages to the state BEFORE the user answered the target question
     setMessages((prev) => prev.slice(0, 2 * targetStep + 1));
 
-    // 2. Remove the answer from state
+    // 2. Remove the answer from state and revert captured slots if applicable
     setAnswers((prev) => {
       const newAnswers = { ...prev };
       if (questionToUndo) {
@@ -228,6 +241,10 @@ const SymptomAssessmentScreen = () => {
       }
       return newAnswers;
     });
+
+    if (questionToUndo && (questionToUndo.id === 'age' || questionToUndo.id === 'duration' || questionToUndo.id === 'severity')) {
+      setCapturedSlots(prev => ({ ...prev, [questionToUndo.id]: '' }));
+    }
 
     // 3. Revert step
     setCurrentStep(targetStep);
@@ -428,6 +445,11 @@ const SymptomAssessmentScreen = () => {
     const newAnswers = { ...answers, [currentQuestion.id]: finalAnswer };
     setAnswers(newAnswers);
 
+    // Update captured slots visually
+    if (!isSkip && (currentQuestion.id === 'age' || currentQuestion.id === 'duration' || currentQuestion.id === 'severity')) {
+      setCapturedSlots(prev => ({ ...prev, [currentQuestion.id]: finalAnswer }));
+    }
+
     // Add user message
     const userMsg: Message = {
       id: `user-${currentStep}-${Date.now()}`,
@@ -589,6 +611,17 @@ const SymptomAssessmentScreen = () => {
     );
   };
 
+  const renderSlotIndicator = (label: string, value: string, icon: string) => {
+    if (!value) return null;
+    return (
+      <View style={[styles.slotBadge, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
+        <MaterialCommunityIcons name={icon as any} size={14} color={theme.colors.primary} />
+        <Text variant="labelSmall" style={[styles.slotLabel, { color: theme.colors.onSurfaceVariant }]}>{label}:</Text>
+        <Text variant="labelSmall" numberOfLines={1} style={[styles.slotValue, { color: theme.colors.onSurface }]}>{value}</Text>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
@@ -598,6 +631,16 @@ const SymptomAssessmentScreen = () => {
           showPercentage
           height={6}
         />
+        
+        {!isOfflineMode && (capturedSlots.age || capturedSlots.duration || capturedSlots.severity) && (
+          <Animated.View style={styles.slotsContainer}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.slotsScrollContent}>
+              {renderSlotIndicator('Age', capturedSlots.age, 'account-clock')}
+              {renderSlotIndicator('Duration', capturedSlots.duration, 'clock-outline')}
+              {renderSlotIndicator('Severity', capturedSlots.severity, 'alert-circle-outline')}
+            </ScrollView>
+          </Animated.View>
+        )}
       </View>
       {isOfflineMode && (
         <View style={[styles.offlineBanner, { backgroundColor: theme.colors.secondaryContainer }]}>
@@ -810,6 +853,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
     letterSpacing: 1,
+  },
+  slotsContainer: {
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  slotsScrollContent: {
+    gap: 8,
+    paddingRight: 16,
+  },
+  slotBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 6,
+  },
+  slotLabel: {
+    fontWeight: 'bold',
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
+  slotValue: {
+    maxWidth: 120,
+    fontSize: 11,
   },
   errorCard: {
     padding: 20,
