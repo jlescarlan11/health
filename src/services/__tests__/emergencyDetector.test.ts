@@ -206,5 +206,19 @@ describe('detectEmergency', () => {
       expect(result.isEmergency).toBe(true);
       expect(result.matchedKeywords).toContain('shortness of breath');
     });
+
+    it('should detect Bicolano emergency terms', () => {
+      expect(detectEmergency('naghihingalo na siya').matchedKeywords).toContain('hingalo');
+      expect(detectEmergency('may kulog sa daghan').matchedKeywords).toContain('kulog sa daghan');
+      expect(detectEmergency('garo gadan na siya').matchedKeywords).toContain('garo gadan');
+      expect(detectEmergency('nagkukumbulsion an aki').matchedKeywords).toContain('nagkukumbulsion');
+    });
+
+    it('should detect Bicolano terms with minor typos', () => {
+      // kulog sa daghan -> kulog sa dagan (missing 'h')
+      expect(detectEmergency('kulog sa dagan').matchedKeywords).toContain('kulog sa daghan');
+      // nagkukumbulsion -> nagkumbulsion (missing 'ku') - Distance 2
+      expect(detectEmergency('nagkumbulsion').matchedKeywords).toContain('nagkukumbulsion');
+    });
   });
 });

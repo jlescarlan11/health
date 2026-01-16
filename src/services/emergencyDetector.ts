@@ -1,5 +1,5 @@
 import { AssessmentResponse } from '../api/geminiClient';
-import { getLevenshteinDistance } from '../utils';
+import { getLevenshteinDistance, findAllFuzzyMatches, FUZZY_THRESHOLD } from '../utils/stringUtils';
 
 // Keywords derived from medical-knowledge.json
 // Scores: 0-10. >7 is EMERGENCY.
@@ -43,6 +43,9 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   'electric shock': 10,
   drowning: 10,
   hingalo: 10, // Bicolano: gasping for breath / near death
+  'kulog sa daghan': 10, // Bicolano: chest pain
+  'garo gadan': 10, // Bicolano: feels like dying / near death
+  nagkukumbulsion: 10, // Bicolano: seizing / convulsing
 
   // Moderate to High (Score 8-9 - Likely Emergency)
   'broken bone': 8,
@@ -121,16 +124,11 @@ export const isNegated = (segment: string, keyword: string): boolean => {
   let anyNonNegated = false;
 
   for (let i = 0; i <= words.length - keywordWords.length; i++) {
-    // Check for keyword match at current position
-    let match = true;
-    for (let j = 0; j < keywordWords.length; j++) {
-      if (words[i + j] !== keywordWords[j]) {
-        match = false;
-        break;
-      }
-    }
-
-    if (match) {
+    // Check for keyword match at current position (with FUZZY_THRESHOLD)
+    const window = words.slice(i, i + keywordWords.length).join(' ');
+    const distance = getLevenshteinDistance(window, keyword.toLowerCase());
+    
+    if (distance <= FUZZY_THRESHOLD) {
       foundMatch = true;
 
       // Check for negation keywords in proximity
@@ -139,7 +137,7 @@ export const isNegated = (segment: string, keyword: string): boolean => {
 
       let isThisOccurrenceNegated = false;
       for (let k = start; k <= end; k++) {
-        // Skip the words that are part of the keyword itself
+        // Skip the words that are part of the match itself
         if (k >= i && k < i + keywordWords.length) continue;
 
         if (NEGATION_KEYWORDS.includes(words[k])) {
@@ -160,23 +158,6 @@ export const isNegated = (segment: string, keyword: string): boolean => {
 };
 
 /**
- * Checks if two strings are a fuzzy match based on Levenshtein distance.
- * The threshold scales with string length.
- */
-const isFuzzyMatch = (s1: string, s2: string): boolean => {
-  const distance = getLevenshteinDistance(s1, s2);
-  const minLength = Math.min(s1.length, s2.length);
-
-  // Thresholds:
-  // Short strings (<= 4): 0 distance (exact match)
-  // Medium strings (5-8): 1 distance
-  // Long strings (> 8): 2 distance
-  if (minLength <= 4) return distance === 0;
-  if (minLength <= 8) return distance <= 1;
-  return distance <= 2;
-};
-
-/**
  * Analyzes input text for emergency keywords.
  * Normalizes text and calculates a severity score (0-10).
  * If score > 7, it's an EMERGENCY.
@@ -186,53 +167,25 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
   const segments = tokenizeSentences(normalizedText);
   let maxScore = 0;
   const matchedKeywords: string[] = [];
+  const keywordList = Object.keys(EMERGENCY_KEYWORDS);
 
   for (const segment of segments) {
-    // Tokenize segment into words for per-word fuzzy matching
-    const segmentWords = segment.split(/\s+/).filter((w) => w.length > 0);
+    // Efficiently find ALL matches in this segment using dual matching (exact + fuzzy)
+    const matches = findAllFuzzyMatches(segment, keywordList);
+    
+    for (const keyword of matches) {
+      const severity = EMERGENCY_KEYWORDS[keyword];
 
-    for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
-      let isMatch = false;
-
-      // 1. Exact match in segment
-      if (segment.includes(keyword)) {
-        isMatch = true;
-      }
-      // 2. Fuzzy match against entire segment (for short segments like "chest pain")
-      else if (isFuzzyMatch(segment, keyword)) {
-        isMatch = true;
-      }
-      // 3. Per-word fuzzy match (for single-word keywords like "unconscious")
-      else if (!keyword.includes(' ')) {
-        isMatch = segmentWords.some((word) => isFuzzyMatch(word, keyword));
-      }
-      // 4. Sliding window fuzzy match for multi-word keywords
-      else {
-        const keywordWords = keyword.split(/\s+/);
-        if (segmentWords.length >= keywordWords.length) {
-          for (let i = 0; i <= segmentWords.length - keywordWords.length; i++) {
-            const window = segmentWords.slice(i, i + keywordWords.length).join(' ');
-            if (isFuzzyMatch(window, keyword)) {
-              isMatch = true;
-              break;
-            }
-          }
-        }
+      // Exclude any symptom matches that have been identified as negated
+      if (isNegated(segment, keyword)) {
+        continue;
       }
 
-      if (isMatch) {
-        // Exclude any symptom matches that have been identified as negated
-        // Note: isNegated currently uses exact word matching, which is fine for safety
-        if (isNegated(segment, keyword)) {
-          continue;
-        }
-
-        if (!matchedKeywords.includes(keyword)) {
-          matchedKeywords.push(keyword);
-        }
-        if (severity > maxScore) {
-          maxScore = severity;
-        }
+      if (!matchedKeywords.includes(keyword)) {
+        matchedKeywords.push(keyword);
+      }
+      if (severity > maxScore) {
+        maxScore = severity;
       }
     }
   }
