@@ -202,7 +202,7 @@ export const detectEmergency = (text: string): EmergencyDetectionResult => {
       recommended_action: 'Go to the nearest emergency room immediately.',
       key_concerns: matchedKeywords.map((k) => `Urgent symptom: ${k}`),
       critical_warnings: ['Immediate medical attention required', 'Do not delay care'],
-      relevant_services: ['Emergency Room', 'Trauma Center', 'Ambulance'],
+      relevant_services: ['Emergency', 'Surgery'],
       red_flags: matchedKeywords,
       follow_up_questions: [],
     };

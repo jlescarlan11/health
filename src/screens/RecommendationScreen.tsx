@@ -25,7 +25,7 @@ import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance } from '../utils';
+import { calculateDistance, scoreFacility } from '../utils';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -196,30 +196,18 @@ const RecommendationScreen = () => {
     if (!recommendation) return;
 
     const targetLevel = recommendation.recommended_level;
+    const requiredServices = recommendation.relevant_services || [];
 
-    // Normalize types for matching
-    const isEmergency = targetLevel === 'emergency' || targetLevel === 'hospital';
-    const isHealthCenter = targetLevel === 'health_center';
+    // Calculate scores for all facilities and sort
+    const scoredFacilities = facilities.map((facility) => ({
+      facility,
+      score: scoreFacility(facility, targetLevel, requiredServices),
+    }));
 
-    let filtered = facilities.filter((f) => {
-      const type = f.type?.toLowerCase() || '';
-      if (isEmergency)
-        return (
-          type.includes('hospital') || type.includes('infirmary') || type.includes('emergency')
-        );
-      if (isHealthCenter)
-        return type.includes('health') || type.includes('unit') || type.includes('center');
-      return true; // Default to all if unsure
-    });
+    // Sort by score descending (highest priority first)
+    scoredFacilities.sort((a, b) => b.score - a.score);
 
-    // If no matches found with strict filtering, fallback to all sorted by distance
-    if (filtered.length === 0) filtered = [...facilities];
-
-    // Sort by distance (assuming distance is populated in store)
-    // Facilities with undefined distance go to the end
-    filtered.sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
-
-    setRecommendedFacilities(filtered.slice(0, 3));
+    setRecommendedFacilities(scoredFacilities.map((s) => s.facility).slice(0, 3));
   };
 
   const handleCall = (phoneNumber?: string) => {

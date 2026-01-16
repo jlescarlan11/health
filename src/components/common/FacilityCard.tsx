@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ViewStyle, TouchableOpacity } from 'react-native';
 import { Card, Text, Chip, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Facility } from '../../types';
+import { Facility, FacilityService } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
 import { getOpenStatus } from '../../utils';
 
@@ -12,7 +12,7 @@ interface FacilityCardProps {
   style?: ViewStyle;
   showDistance?: boolean;
   distance?: number;
-  relevantServices?: string[];
+  relevantServices?: FacilityService[];
   simplified?: boolean;
 }
 
