@@ -57,7 +57,11 @@ export const initDatabase = async () => {
       `);
 
       // Migrate facilities table schema (add missing columns if table already existed)
-      await migrateTableSchema('facilities', [{ name: 'lastUpdated', type: 'INTEGER' }]);
+      await migrateTableSchema('facilities', [
+        { name: 'lastUpdated', type: 'INTEGER' },
+        { name: 'specialized_services', type: 'TEXT' },
+        { name: 'is_24_7', type: 'INTEGER' },
+      ]);
 
       // Create Emergency Contacts Table
       await db.execAsync(`
@@ -98,7 +102,7 @@ export const saveFacilities = async (facilities: Facility[]) => {
     await db.execAsync('BEGIN TRANSACTION');
 
     const statement = await db.prepareAsync(
-      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`,
+      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, specialized_services, is_24_7, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $specialized_services, $is_24_7, $data)`,
     );
 
     try {
@@ -116,6 +120,8 @@ export const saveFacilities = async (facilities: Facility[]) => {
           $hours: facility.hours || null,
           $photoUrl: facility.photoUrl || null,
           $lastUpdated: timestamp,
+          $specialized_services: JSON.stringify(facility.specialized_services || []),
+          $is_24_7: facility.is_24_7 ? 1 : 0,
           $data: JSON.stringify(facility),
         });
       }
@@ -152,6 +158,8 @@ interface FacilityRow {
   hours: string | null;
   photoUrl: string | null;
   lastUpdated: number;
+  specialized_services: string | null;
+  is_24_7: number | null;
   data: string;
 }
 
@@ -190,6 +198,10 @@ export const getFacilities = async (): Promise<Facility[]> => {
             yakapAccredited: Boolean(row.yakapAccredited),
             hours: row.hours,
             photoUrl: row.photoUrl,
+            specialized_services: row.specialized_services
+              ? JSON.parse(row.specialized_services)
+              : [],
+            is_24_7: Boolean(row.is_24_7),
           };
         } catch (e) {
           console.error('Error parsing facility row:', e);
@@ -226,6 +238,8 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
       yakapAccredited: Boolean(row.yakapAccredited),
       hours: row.hours,
       photoUrl: row.photoUrl,
+      specialized_services: row.specialized_services ? JSON.parse(row.specialized_services) : [],
+      is_24_7: Boolean(row.is_24_7),
     };
   } catch (error) {
     console.error('Error getting facility by ID:', error);

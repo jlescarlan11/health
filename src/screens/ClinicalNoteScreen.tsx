@@ -15,12 +15,9 @@ export const ClinicalNoteScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<ClinicalNoteRouteProp>();
   const theme = useTheme();
-  const savedNotes = useSelector((state: RootState) => state.offline.savedNotes);
+  const latestAssessment = useSelector((state: RootState) => state.offline.latestAssessment);
 
-  const { noteId } = route.params || {};
-  const note = noteId 
-    ? savedNotes.find(n => n.id === noteId) 
-    : (savedNotes.length > 0 ? savedNotes[0] : null);
+  const note = latestAssessment;
 
   if (!note) {
     return (
@@ -39,7 +36,7 @@ export const ClinicalNoteScreen = () => {
         onBackPress={() => navigation.goBack()} 
       />
       <DoctorHandoverCard 
-        soapNote={note.soapNote} 
+        clinicalSoap={note.clinical_soap} 
         timestamp={note.timestamp} 
       />
     </View>

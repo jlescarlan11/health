@@ -56,6 +56,8 @@ describe('AI Routes', () => {
         operating_hours: {},
         photos: [],
         barangay: null,
+        specialized_services: [],
+        is_24_7: false,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

@@ -1,0 +1,164 @@
+ LOG  Database initialized successfully
+ LOG  Starting facilities sync...
+ LOG  Saved 10 facilities to offline storage
+ LOG  Facilities sync completed successfully
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Fever"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Fever"
+ LOG 
+Segment: "fever"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Fever"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Fever"
+ LOG 
+Segment: "fever"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I am 21 Years old, I have this fever for 2 days"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I am 21 Years old. I have this fever for 2 days"
+ LOG 
+Segment: "i am 21 years old"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have this fever for 2 days"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 0 ═══╗
+ LOG  ║ Q: How old are you, and how long have you had this fever?
+ LOG  ║ A: I am 21 Years old, I have this fever for 2 days
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "5, i feel like not doing anything and just lay down in my bed. its just the same tho"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "5. i feel like not doing anything and just lay down in my bed. its just the same tho"
+ LOG 
+Segment: "5"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i feel like not doing anything and just lay down in my bed"     
+ LOG    Potential matches: 1
+ LOG      ✗ SUPPRESSED (negated) - "dying" (severity: 10)
+ LOG        Context: "i feel like not doing anything and just lay down"   
+ LOG    Segment max score: 0
+ LOG 
+Segment: "its just the same tho"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Suppressed keywords: [dying]
+ LOG  Reasoning: Emergency keywords negated by user (score 0/10): dying.  
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 1 ═══╗
+ LOG  ║ Q: On a scale of 1 to 10 (10 being the worst), how much is this fever affecting your daily activities, and is it getting better, worse, or staying about the same?
+ LOG  ║ A: 5, i feel like not doing anything and just lay down in my bed. its just the same tho
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "no"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "no"
+ LOG 
+Segment: "no"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  
+╔═══ CONVERSATION STEP 2 ═══╗
+ LOG  ║ Q: Are you experiencing any of the following: severe headache, stiff neck, confusion, unusual rash, persistent vomiting or diarrhea, severe difficulty breathing, or chest pain? (Please answer Yes or No)
+ LOG  ║ A: no
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Finalizing... Extracting Slots.
+ LOG  
+╔═══ FINAL PROFILE EXTRACTION ═══╗
+ LOG  {
+  "age": "21 Years old",
+  "duration": "2 days",
+  "severity": "5/10",
+  "progression": "Staying about the same",
+  "red_flag_denials": null,
+  "summary": "A 21-year-old user reports a fever for 2 days, rated 5/10 in severity, affecting daily activities by causing a desire to lay down, and its progression is staying about the same."
+}
+ LOG  ╚════════════════════════════════╝
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Initial Symptom: Fever. Answers: [{"question":"How old are you, and how long have you had this fever?","answer":"I am 21 Years old, I have this fever for 2 days"},{"question":"On a scale of 1 to 10 (10 being the worst), how much is this fever affecting your daily activities, and is it getting better, worse, or staying about the same?","answer":"5, i feel like not doing anything and just lay down in my bed. its just the same tho"},{"question":"Are you experiencing any of the following: severe headache, stiff neck, confusion, unusual rash, persistent vomiting or diarrhea, severe difficulty breathing, or chest pain? (Please answer Yes or No)","answer":"no"}]. Context: Nearest Health Center: Unknown, Nearest Hospital: Unknown"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Rejected 8 segments:
+ LOG      - "{"question":"How old are you, and how long have you had this..." (JSON structure removed)
+ LOG      - "{"question":"On a scale of 1 to 10 (10 being the worst), how..." (JSON structure removed)
+ LOG      - "{"question":"Are you experiencing any of the following: seve..." (JSON structure removed)
+ LOG      - "[,,]..." (Array structure removed)
+ LOG      - "Initial Symptom: Fever..." (System indicator: "initial symptom:")
+ LOG      - "Answers:..." (System indicator: "answers:")
+ LOG      - "Context: Nearest Health Center: Unknown..." (System indicator: "context:")
+ LOG      - "Nearest Hospital: Unknown..." (System indicator: "nearest")  
+ LOG    Sanitized input: ""
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  [GeminiClient] Sending request (Attempt 1)...
+ LOG  Saved 10 facilities to offline storage

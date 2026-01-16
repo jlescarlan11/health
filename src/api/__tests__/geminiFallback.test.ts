@@ -6,6 +6,9 @@ jest.mock('@google/generative-ai');
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(),
   setItem: jest.fn(),
+  removeItem: jest.fn(),
+  getAllKeys: jest.fn(),
+  multiRemove: jest.fn(),
 }));
 jest.mock('expo-constants', () => ({
   expoConfig: { extra: { geminiApiKey: 'test-key' } },
@@ -52,14 +55,14 @@ describe('GeminiClient Fallback Strategy', () => {
       recommended_level: 'self_care',
       confidence_score: 0.5,
       ambiguity_detected: false,
-      assessment_summary: 'Rest at home.',
+      user_advice: 'Rest at home.',
       follow_up_questions: [],
       red_flags: [],
     });
 
     const result = await client.assessSymptoms('mild headache');
     expect(result.recommended_level).toBe('health_center');
-    expect(result.recommended_action).toContain('upgraded');
+    expect(result.user_advice).toContain('upgraded');
   });
 
   test('should upgrade Health Center to Hospital if ambiguity is detected', async () => {
@@ -67,7 +70,7 @@ describe('GeminiClient Fallback Strategy', () => {
       recommended_level: 'health_center',
       confidence_score: 0.9,
       ambiguity_detected: true,
-      assessment_summary: 'Go to clinic.',
+      user_advice: 'Go to clinic.',
       follow_up_questions: [],
       red_flags: [],
     });
@@ -82,13 +85,13 @@ describe('GeminiClient Fallback Strategy', () => {
       confidence_score: 0.9,
       ambiguity_detected: false,
       red_flags: ['Chest pain'],
-      assessment_summary: 'Hospital checkup needed.',
+      user_advice: 'Hospital checkup needed.',
       follow_up_questions: [],
     });
 
     const result = await client.assessSymptoms('chest pain');
     expect(result.recommended_level).toBe('emergency');
-    expect(result.recommended_action).toContain('Upgraded to Emergency');
+    expect(result.user_advice).toContain('Upgraded to Emergency');
   });
 
   test('should NOT upgrade if confidence is high and no ambiguity', async () => {
@@ -96,13 +99,13 @@ describe('GeminiClient Fallback Strategy', () => {
       recommended_level: 'self_care',
       confidence_score: 0.95,
       ambiguity_detected: false,
-      assessment_summary: 'Rest at home.',
+      user_advice: 'Rest at home.',
       follow_up_questions: [],
       red_flags: [],
     });
 
     const result = await client.assessSymptoms('mild headache');
     expect(result.recommended_level).toBe('self_care');
-    expect(result.recommended_action).not.toContain('upgraded');
+    expect(result.user_advice).not.toContain('upgraded');
   });
 });

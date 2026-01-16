@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+  Keyboard,
+  ScrollView,
+  Animated,
+  Linking,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
-import { SlideToCall } from '../../components/common/SlideToCall';
-import { InputCard, SafetyRecheckModal } from '../../components/common';
+import { InputCard, SafetyRecheckModal, EmergencyActions } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk } from '../../store/navigationSlice';
@@ -137,11 +145,6 @@ const NavigatorHomeScreen = () => {
     navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
   };
 
-  const handleEmergencyCall = () => {
-    setSafetyModalVisible(true);
-    dispatch(setHighRisk(true));
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
@@ -154,27 +157,42 @@ const NavigatorHomeScreen = () => {
         <View style={styles.mainContent}>
           <View style={styles.emergencyLayoutContainer}>
             <Card
-              mode="contained"
-              style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}
+              mode="elevated"
+              style={[
+                styles.emergencyCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.colors.surface,
+                  shadowColor: theme.colors.shadow,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 10,
+                  elevation: 2,
+                },
+              ]}
             >
               <Card.Content style={styles.emergencyCardContent}>
                 <View style={styles.emergencyTextContent}>
                   <Text
                     variant="titleLarge"
-                    style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}
+                    style={[styles.emergencyTitle, { color: theme.colors.error }]}
                   >
                     Emergency?
                   </Text>
 
                   <Text
                     variant="bodyMedium"
-                    style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}
+                    style={[styles.emergencySubtitle, { color: theme.colors.onSurfaceVariant }]}
                   >
-                    Call 911 immediately if you need urgent care.
+                    Contact emergency services immediately if you need urgent care.
                   </Text>
                 </View>
 
-                <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
+                <EmergencyActions
+                  onCallInitiated={() => dispatch(setHighRisk(true))}
+                  variant="light"
+                />
               </Card.Content>
             </Card>
           </View>

@@ -1,5 +1,28 @@
 import '@testing-library/jest-native/extend-expect';
 
+// Mock @react-native-async-storage/async-storage
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
+// Mock expo-speech
+jest.mock('expo-speech', () => ({
+  speak: jest.fn(),
+  stop: jest.fn(),
+  isSpeakingAsync: jest.fn(() => Promise.resolve(false)),
+}));
+
+// Mock @react-native-voice/voice
+jest.mock('@react-native-voice/voice', () => ({
+  onSpeechResults: jest.fn(),
+  onSpeechError: jest.fn(),
+  onSpeechVolumeChanged: jest.fn(),
+  start: jest.fn(),
+  stop: jest.fn(),
+  destroy: jest.fn(),
+  removeAllListeners: jest.fn(),
+}));
+
 // Mock Expo Constants
 jest.mock('expo-constants', () => ({
   manifest: {
@@ -109,11 +132,6 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
   return ({ name, size, color, ...props }) =>
     React.createElement('Icon', { name, size, color, ...props });
 });
-
-// Mock @react-native-async-storage/async-storage
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
-);
 
 // Cleanup after all tests
 afterAll(() => {

@@ -37,7 +37,7 @@ const AppNavigator = () => {
         name="SymptomAssessment"
         component={SymptomAssessmentScreen}
         options={{
-          header: () => <StandardHeader title="Assessment" showBackButton />,
+          headerShown: false,
         }}
       />
       <Stack.Screen

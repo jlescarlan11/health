@@ -269,7 +269,9 @@ export const FacilityDetailsScreen = () => {
                 Operating Hours
               </Text>
               <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
-                {facility.hours || 'Hours not available'}
+                {facility.is_24_7
+                  ? 'Open 24 Hours, 7 Days a Week'
+                  : facility.hours || 'Hours not available'}
               </Text>
               <View
                 style={[
@@ -331,6 +333,35 @@ export const FacilityDetailsScreen = () => {
               ))}
             </View>
           </View>
+
+          {facility.specialized_services && facility.specialized_services.length > 0 && (
+            <View style={styles.servicesSection}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+                Specialized Capabilities
+              </Text>
+              <View style={styles.servicesGrid}>
+                {facility.specialized_services.map((service, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.serviceItem,
+                      { backgroundColor: theme.colors.primaryContainer + '30' },
+                    ]}
+                  >
+                    <MaterialIcons
+                      name="stars"
+                      size={24}
+                      color={theme.colors.primary}
+                      style={styles.serviceIcon}
+                    />
+                    <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
+                      {service}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>

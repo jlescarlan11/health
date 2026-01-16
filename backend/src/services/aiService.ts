@@ -37,6 +37,8 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
       name: true,
       type: true,
       services: true,
+      specialized_services: true,
+      is_24_7: true,
       address: true,
     },
   });
@@ -44,7 +46,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   const facilityContext = allFacilities
     .map(
       (f) =>
-        `- ID: ${f.id}, Name: ${f.name}, Type: ${f.type}, Services: ${f.services.join(', ')}, Address: ${f.address}`,
+        `- ID: ${f.id}, Name: ${f.name}, Type: ${f.type}, Services: ${f.services.join(', ')}, Specialized: ${f.specialized_services.join(', ')}, 24/7: ${f.is_24_7}, Address: ${f.address}`,
     )
     .join('\n');
 
@@ -66,7 +68,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
       "ECG", "ENT", "Emergency", "Eye Center", "Family Planning", "General Medicine", 
       "HIV Treatment", "Hematology", "Immunization", "Internal Medicine", "Laboratory", 
       "Maternal Care", "Mental Health", "Nutrition Services", "OB-GYN", "Pediatrics", 
-      "Primary Care", "Radiology", "Surgery", "X-ray"
+      "Primary Care", "Radiology", "Stroke Unit", "Surgery", "Trauma Care", "X-ray"
     ]
 
     Task:
@@ -134,7 +136,9 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     'Pediatrics',
     'Primary Care',
     'Radiology',
+    'Stroke Unit',
     'Surgery',
+    'Trauma Care',
     'X-ray',
   ];
 

@@ -94,7 +94,7 @@ export const MainHomeScreen = () => {
               color="#000000"
               iconColor="#FFFFFF"
               onPress={() => {
-                navigation.navigate('ClinicalNote', { noteId: lastNote.id });
+                navigation.navigate('ClinicalNote');
               }}
             />
           )}

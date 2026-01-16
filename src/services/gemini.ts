@@ -1,14 +1,12 @@
 import { GoogleGenerativeAI, GenerativeModel, GenerateContentRequest } from '@google/generative-ai';
 import Constants from 'expo-constants';
+import { GENERATE_ASSESSMENT_QUESTIONS_PROMPT, FINAL_SLOT_EXTRACTION_PROMPT } from '../constants/prompts';
 
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
 
-/**
- * Helper to execute Gemini generation with exponential backoff retry logic.
- */
 const generateContentWithRetry = async (
   model: GenerativeModel,
   params:
@@ -37,13 +35,86 @@ const generateContentWithRetry = async (
         throw err;
       }
 
-      // Calculate delay with exponential backoff (1s, 2s, 4s...)
       const delay = BASE_DELAY * Math.pow(2, attempt - 1);
       console.log(`[Gemini Service] Retrying in ${delay}ms...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
   throw new Error('Failed to connect to AI service after multiple attempts.');
+};
+
+export interface AssessmentQuestion {
+  id: string;
+  text: string;
+}
+
+export interface AssessmentProfile {
+  age: string | null;
+  duration: string | null;
+  severity: string | null;
+  progression: string | null;
+  red_flag_denials: string | null;
+  summary: string;
+}
+
+/**
+ * Generates the fixed set of assessment questions (Call #1)
+ */
+export const generateAssessmentPlan = async (initialSymptom: string): Promise<AssessmentQuestion[]> => {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace('{{initialSymptom}}', initialSymptom);
+
+    const responseText = await generateContentWithRetry(model, prompt);
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) throw new Error('Invalid JSON from AI');
+    
+    const parsed = JSON.parse(jsonMatch[0]);
+    return parsed.questions || [];
+  } catch (error) {
+    console.error('[Gemini] Failed to generate assessment plan:', error);
+    // Fallback questions if AI fails
+    return [
+      { id: 'basics', text: 'Could you please tell me your age and how long you have had these symptoms?' },
+      { id: 'severity', text: 'On a scale of 1 to 10, how severe is it, and is it getting better or worse?' },
+      { id: 'red_flags', text: 'To be safe, are you experiencing any difficulty breathing, chest pain, or severe bleeding?' }
+    ];
+  }
+};
+
+/**
+ * Extracts the final slots from the conversation (Call #2)
+ */
+export const extractClinicalProfile = async (
+  history: { role: 'assistant' | 'user', text: string }[]
+): Promise<AssessmentProfile> => {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { responseMimeType: "application/json" } });
+    
+    const conversationText = history
+      .map(msg => `${msg.role.toUpperCase()}: ${msg.text}`)
+      .join('\n');
+
+    const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace('{{conversationHistory}}', conversationText);
+
+    const responseText = await generateContentWithRetry(model, prompt);
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) throw new Error('Invalid JSON from AI');
+    
+    return JSON.parse(jsonMatch[0]) as AssessmentProfile;
+  } catch (error) {
+    console.error('[Gemini] Failed to extract profile:', error);
+    return {
+      age: null,
+      duration: null,
+      severity: null,
+      progression: null,
+      red_flag_denials: null,
+      summary: 'Error parsing profile.'
+    };
+  }
 };
 
 export const getGeminiResponse = async (prompt: string) => {
@@ -56,11 +127,6 @@ export const getGeminiResponse = async (prompt: string) => {
   }
 };
 
-/**
- * Transcribes audio data using Gemini 2.5 Flash.
- * @param base64Audio Base64 encoded audio data
- * @param mimeType MIME type of the audio (e.g., 'audio/wav', 'audio/m4a')
- */
 export const audioToText = async (base64Audio: string, mimeType: string) => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });

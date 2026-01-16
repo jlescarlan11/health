@@ -12,10 +12,10 @@ import {
   BackHandler,
 } from 'react-native';
 
-// Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { speechService } from '../services/speechService';
@@ -24,8 +24,11 @@ import { useDispatch } from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
-import { getGeminiResponse } from '../services/gemini';
-import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
+import {
+  generateAssessmentPlan,
+  extractClinicalProfile,
+  AssessmentQuestion,
+} from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
@@ -34,7 +37,6 @@ import { TriageFlow } from '../types/triage';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 
-// Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
 import {
@@ -47,13 +49,6 @@ import {
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
-
-interface Question {
-  id: string;
-  text: string;
-  type: 'choice' | 'text';
-  options?: string[];
-}
 
 interface Message {
   id: string;
@@ -73,254 +68,247 @@ const SymptomAssessmentScreen = () => {
   const keyboardHeight = useRef(new Animated.Value(0)).current;
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [totalEstimatedSteps, setTotalEstimatedSteps] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [capturedSlots, setCapturedSlots] = useState<Record<string, string>>({
-    age: '',
-    duration: '',
-    severity: '',
-  });
+  // Core State
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({}); // Map question ID -> User Answer
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  
+  // UI Interactions
+  const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Voice Input State
+  
+  // Voice
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
-  const [inputText, setInputText] = useState('');
-  const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
-  // Offline Mode State
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
-  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
-  const [isNetworkError, setIsNetworkError] = useState(false);
-
-  useEffect(() => {
-    // Extract initial info if possible
-    if (initialSymptom) {
-      // Simple heuristic for initial symptom extraction could be added here
-      // but for now we rely on the AI follow-ups
-    }
-  }, [initialSymptom]);
-
-  useEffect(() => {
-    const keyboardWillShow = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => {
-        Animated.timing(keyboardHeight, {
-          toValue: e.endCoordinates.height,
-          duration: e.duration || 250,
-          useNativeDriver: false,
-        }).start();
-      },
-    );
-
-    const keyboardWillHide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      (e) => {
-        Animated.timing(keyboardHeight, {
-          toValue: 0,
-          duration: e.duration || 250,
-          useNativeDriver: false,
-        }).start();
-      },
-    );
-
-    return () => {
-      keyboardWillShow.remove();
-      keyboardWillHide.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      speechService.destroy();
-    };
-  }, []);
-
-  const startRecording = async () => {
-    if (!speechService.isAvailable) {
-      Alert.alert(
-        'Voice Unavailable',
-        'Voice recognition is not available on this device/simulator. Please type your answer.',
-      );
-      return;
-    }
-
-    try {
-      setIsRecording(true);
-      setVolume(0);
-      await speechService.startListening(
-        (text) => {
-          setInputText(text);
-        },
-        (error: any) => {
-          console.error('STT Error:', error);
-          setIsRecording(false);
-          setVolume(0);
-          Alert.alert(
-            'Speech Error',
-            error?.message || 'Could not recognize speech. Please try again.',
-          );
-        },
-        (vol) => {
-          setVolume(vol);
-        },
-      );
-    } catch (err) {
-      console.error('Failed to start recording', err);
-      setIsRecording(false);
-      setVolume(0);
-      Alert.alert('Error', 'Failed to start voice recognition.');
-    }
-  };
-
-  const stopRecording = async () => {
-    setIsRecording(false);
-    setVolume(0);
-    try {
-      await speechService.stopListening();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to stop recording.');
-    }
-  };
-
-  const handleBack = useCallback(() => {
-    if (isOfflineMode) {
-      Alert.alert('Cancel Assessment', 'Are you sure you want to stop the offline check?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Stop', style: 'destructive', onPress: () => navigation.goBack() },
-      ]);
-      return;
-    }
-
-    if (currentStep === 0 && messages.length <= 1) {
-      Alert.alert(
-        'Cancel Assessment',
-        'Are you sure you want to start over? Your progress will be lost.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Start Over', style: 'destructive', onPress: () => navigation.goBack() },
-        ],
-      );
-      return;
-    }
-
-    // Smooth transition for message removal
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-
-    // Cancel any pending typing response
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
-    }
-    setIsTyping(false);
-
-    // Determine if we are currently "between" steps (user answered, but assistant hasn't yet)
-    // The conversation structure is: 1 (intro) + 2*currentStep messages
-    // If messages.length > 2*currentStep + 1, it means the user just answered
-    const isMidStep = messages.length > 2 * currentStep + 1;
-
-    let targetStep = currentStep;
-    if (!isMidStep) {
-      targetStep = currentStep - 1;
-    }
-
-    const questionToUndo = questions[targetStep];
-
-    // Synchronized state updates
-    // 1. Truncate messages to the state BEFORE the user answered the target question
-    setMessages((prev) => prev.slice(0, 2 * targetStep + 1));
-
-    // 2. Remove the answer from state and revert captured slots if applicable
-    setAnswers((prev) => {
-      const newAnswers = { ...prev };
-      if (questionToUndo) {
-        delete newAnswers[questionToUndo.id];
+    // Offline
+    const [isOfflineMode, setIsOfflineMode] = useState(false);
+    const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
+  
+    /**
+     * Log conversation step for debugging
+     */
+    const logConversationStep = (
+      step: number,
+      question: string,
+      userAnswer: string,
+      emergencyCheck: any,
+    ) => {
+      console.log(`\n╔═══ CONVERSATION STEP ${step} ═══╗`);
+      console.log(`║ Q: ${question}`);
+      console.log(`║ A: ${userAnswer}`);
+      console.log(`║ Emergency: ${emergencyCheck.isEmergency} (score: ${emergencyCheck.score})`);
+      if (emergencyCheck.matchedKeywords?.length > 0) {
+          console.log(`║ Keywords: ${emergencyCheck.matchedKeywords.join(', ')}`);
       }
-      return newAnswers;
-    });
-
-    if (
-      questionToUndo &&
-      (questionToUndo.id === 'age' ||
-        questionToUndo.id === 'duration' ||
-        questionToUndo.id === 'severity')
-    ) {
-      setCapturedSlots((prev) => ({ ...prev, [questionToUndo.id]: '' }));
-    }
-
-    // 3. Revert step
-    setCurrentStep(targetStep);
-
-    // 4. Restore previous answer to input for easy editing
-    const previousAnswer = answers[questionToUndo?.id];
-    if (previousAnswer && previousAnswer !== 'User was not sure') {
-      setInputText(previousAnswer);
-    } else {
-      setInputText('');
-    }
-
-    setTimeout(() => {
-      inputCardRef.current?.focus();
-    }, 100);
-  }, [currentStep, messages, questions, answers, navigation, isOfflineMode, totalEstimatedSteps]);
-
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        handleBack();
-        return true; // Prevent default behavior
+      console.log(`╚${'═'.repeat(30)}╝\n`);
+    };
+  
+    useEffect(() => {
+      const keyboardWillShow = Keyboard.addListener(
+        Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+        (e) => {
+          Animated.timing(keyboardHeight, {
+            toValue: e.endCoordinates.height,
+            duration: e.duration || 250,
+            useNativeDriver: false,
+          }).start();
+        },
+      );
+  
+      const keyboardWillHide = Keyboard.addListener(
+        Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+        (e) => {
+          Animated.timing(keyboardHeight, {
+            toValue: 0,
+            duration: e.duration || 250,
+            useNativeDriver: false,
+          }).start();
+        },
+      );
+  
+      return () => {
+        keyboardWillShow.remove();
+        keyboardWillHide.remove();
+        speechService.destroy();
       };
-
-      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
-      return () => subscription.remove();
-    }, [handleBack]),
-  );
-
-  useEffect(() => {
-    navigation.setOptions({
-      header: () => <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />,
-    });
-  }, [navigation, handleBack]);
-
-  useEffect(() => {
-    // Check for immediate escalation
-    const emergencyCheck = detectEmergency(initialSymptom || '');
-    const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
-
-    if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
-      dispatch(setHighRisk(true));
-      navigation.replace('Recommendation', {
-        assessmentData: { symptoms: initialSymptom || '', answers: [] },
-      });
-      return;
-    }
-
-    fetchQuestions();
-  }, []);
-
+    }, []);
+  
+    // --- INITIALIZATION ---
+    useEffect(() => {
+      initializeAssessment();
+    }, []);
+  
+    const initializeAssessment = async () => {
+      // 1. Initial Emergency Check (Locally)
+      const emergencyCheck = detectEmergency(initialSymptom || '', { isUserInput: true });
+      const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
+  
+      if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
+        console.log('[Assessment] IMMEDIATE ESCALATION - Emergency/Crisis detected in initial symptom');
+        dispatch(setHighRisk(true));
+        navigation.replace('Recommendation', {
+          assessmentData: { symptoms: initialSymptom || '', answers: [] },
+        });
+        return;
+      }
+  
+      // 2. Fetch Questions (Call #1)
+      try {
+        setLoading(true);
+        const netInfo = await NetInfo.fetch();
+        if (!netInfo.isConnected) throw new Error('NETWORK_ERROR');
+  
+        const plan = await generateAssessmentPlan(initialSymptom || '');
+        setQuestions(plan);
+        
+        // Add Intro & First Question
+        const firstQ = plan[0];
+        const introText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
+        
+        setMessages([
+          { id: 'intro', text: introText, sender: 'assistant' }
+        ]);
+        
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Initialization Error:', err);
+        if (err.message === 'NETWORK_ERROR') {
+           setError('Network unavailable. Switching to Offline Mode.');
+           startOfflineTriage();
+        } else {
+           setError('Unable to start assessment. Please try again.');
+           setLoading(false);
+        }
+      }
+    };
+  
+    // --- INTERACTION LOGIC ---
+    
+    const handleNext = async (answerOverride?: string, isSkip: boolean = false) => {
+      const answer = answerOverride || inputText;
+      if ((!answer.trim() && !isSkip) || processing) return;
+  
+      const currentQ = questions[currentQuestionIndex];
+      if (!currentQ && !isOfflineMode) return;
+  
+      setProcessing(true);
+      setInputText('');
+  
+      // 1. Append User Message
+      const userMsg: Message = {
+        id: `user-${Date.now()}`,
+        text: isSkip ? "I'm not sure" : answer,
+        sender: 'user',
+        isOffline: isOfflineMode
+      };
+      setMessages(prev => [...prev, userMsg]);
+  
+      // 2. Emergency Check (Local, Deterministic)
+      // Only check if it's NOT a skip
+      if (!isSkip && !isOfflineMode) {
+          const safetyCheck = detectEmergency(answer, { isUserInput: true });
+          
+          // Log the step
+          logConversationStep(currentQuestionIndex, currentQ.text, answer, safetyCheck);
+  
+          if (safetyCheck.isEmergency) {
+              dispatch(setHighRisk(true));
+              console.log('[Assessment] EMERGENCY DETECTED during flow. Escalating.');
+              navigation.replace('Recommendation', {
+                  assessmentData: { 
+                      symptoms: initialSymptom, 
+                      answers: [...Object.entries(answers).map(([k,v]) => ({question: k, answer: v})), { question: currentQ.text, answer }] 
+                  }
+              });
+              return;
+          }
+      }
+  
+      // 3. Store Answer
+      if (!isOfflineMode) {
+          const newAnswers = { ...answers, [currentQ.id]: isSkip ? "Skipped/Unknown" : answer };
+          setAnswers(newAnswers);
+  
+          // 4. Progress or Finish
+          if (currentQuestionIndex < questions.length - 1) {
+              // Next Question
+              setIsTyping(true);
+              setTimeout(() => {
+                  const nextIdx = currentQuestionIndex + 1;
+                  const nextQ = questions[nextIdx];
+                  setMessages(prev => [...prev, {
+                      id: `ai-${nextIdx}`,
+                      text: nextQ.text,
+                      sender: 'assistant'
+                  }]);
+                  setCurrentQuestionIndex(nextIdx);
+                  setIsTyping(false);
+                  setProcessing(false);
+                  setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+              }, 600);
+          } else {
+              // FINISH -> Call #2 (Parsing)
+              setIsTyping(true);
+              await finalizeAssessment(newAnswers);
+          }
+      } else {
+          // Offline Flow Handling
+          handleOfflineLogic(answer);
+      }
+    };
+  
+    const finalizeAssessment = async (finalAnswers: Record<string, string>) => {
+      console.log('[Assessment] Finalizing... Extracting Slots.');
+      
+      // Construct history for the parser
+      const history = messages.map(m => ({
+          role: m.sender, 
+          text: m.text 
+      }));
+      // Add the last user answer which might just have been added to state but not fully flushed in a complex way (actually messages state is updated, so we good).
+      
+      try {
+          const profile = await extractClinicalProfile(history);
+          
+          console.log('\n╔═══ FINAL PROFILE EXTRACTION ═══╗');
+          console.log(JSON.stringify(profile, null, 2));
+          console.log(`╚${'═'.repeat(32)}╝\n`);
+  
+          // Format for Recommendation Screen
+          const formattedAnswers = questions.map(q => ({
+              question: q.text,
+              answer: finalAnswers[q.id] || "Not answered"
+          }));
+  
+          navigation.replace('Recommendation', {
+              assessmentData: {
+                  symptoms: initialSymptom,
+                  answers: formattedAnswers,
+                  extractedProfile: profile
+              }
+          });
+      } catch (e) {
+          console.error('Finalization failed', e);
+          Alert.alert("Error", "Could not process results. Please try again.");
+          setProcessing(false);
+          setIsTyping(false);
+      }
+    };
+  // --- OFFLINE LOGIC ---
   const startOfflineTriage = () => {
     setIsOfflineMode(true);
-    setIsNetworkError(false);
+    setError('');
     const startNode = TriageEngine.getStartNode(triageFlow);
     setCurrentOfflineNodeId(startNode.id);
-
-    // Dynamically calculate estimated steps for the progress bar
-    const estimatedSteps = TriageEngine.getEstimatedRemainingSteps(triageFlow, startNode.id);
-    setTotalEstimatedSteps(estimatedSteps);
-    setCurrentStep(0);
-
     setMessages([
       {
         id: 'offline-intro',
-        text: "I'm having trouble connecting to the AI assistant. I've switched to the Offline Emergency Check to help you identify any critical red flags immediately.",
+        text: "I'm having trouble connecting to the AI. I've switched to Offline Emergency Check.",
         sender: 'assistant',
         isOffline: true,
       },
@@ -328,658 +316,205 @@ const SymptomAssessmentScreen = () => {
         id: startNode.id,
         text: startNode.text || '',
         sender: 'assistant',
-        isOffline: true,
+        isOffline: true
       },
     ]);
-
     setLoading(false);
-    setError('');
   };
 
-  const fetchQuestions = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      setIsNetworkError(false);
-
-      const netInfo = await NetInfo.fetch();
-      if (!netInfo.isConnected) {
-        throw new Error('NETWORK_ERROR');
-      }
-
-      const prompt = CLARIFYING_QUESTIONS_PROMPT.replace('{{symptoms}}', initialSymptom || '');
-      const response = await getGeminiResponse(prompt);
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.questions && Array.isArray(parsed.questions)) {
-          setQuestions(parsed.questions);
-          setTotalEstimatedSteps(parsed.questions.length);
-          // Add combined first message to conversation
-          if (parsed.questions.length > 0) {
-            const firstQ = parsed.questions[0];
-            const combinedText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I'd like to ask a few clarifying questions.\n\n${firstQ.text}`;
-
-            setMessages([
-              {
-                id: 'intro',
-                text: combinedText,
-                sender: 'assistant',
-              },
-            ]);
-          }
-        } else {
-          throw new Error('Invalid response format');
-        }
-      } else {
-        throw new Error('Failed to parse questions');
-      }
-    } catch (err: unknown) {
-      const error = err as Error;
-      console.error(error);
-      if (
-        error.message === 'NETWORK_ERROR' ||
-        error.message?.includes('network') ||
-        error.message?.includes('fetch')
-      ) {
-        setIsNetworkError(true);
-        setError('Connection lost. We can continue with an emergency-focused check while offline.');
-      } else {
-        setError('Unable to generate assessment questions. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOfflineNext = (answer: string) => {
-    if (!currentOfflineNodeId || isTyping) return;
-
-    // Add user message
-    const userMsg: Message = {
-      id: `user-offline-${Date.now()}`,
-      text: answer,
-      sender: 'user',
-      isOffline: true,
-    };
-    setMessages((prev) => [...prev, userMsg]);
-
-    setIsTyping(true);
-
-    setTimeout(() => {
-      try {
+  const handleOfflineLogic = (answer: string) => {
+      if (!currentOfflineNodeId) return;
+      
+      setIsTyping(true);
+      setTimeout(() => {
         const result = TriageEngine.processStep(triageFlow, currentOfflineNodeId, answer);
-
         if (result.isOutcome) {
-          const rec = result.node.recommendation!;
-          // Navigate to recommendation with offline data
-          navigation.replace('Recommendation', {
-            assessmentData: {
-              symptoms: initialSymptom || '',
-              answers: [{ question: 'Offline Triage', answer: rec.reasoning }],
-              offlineRecommendation: rec,
-            },
-          });
+            navigation.replace('Recommendation', {
+                assessmentData: {
+                    symptoms: initialSymptom,
+                    answers: [{ question: 'Offline Triage', answer: result.node.recommendation?.reasoning || 'Completed' }],
+                    offlineRecommendation: result.node.recommendation
+                }
+            });
         } else {
-          const nextNode = result.node;
-          const assistantMsg: Message = {
-            id: nextNode.id,
-            text: nextNode.text || '',
-            sender: 'assistant',
-            isOffline: true,
-          };
-          setMessages((prev) => [...prev, assistantMsg]);
-          setCurrentOfflineNodeId(nextNode.id);
-          setCurrentStep((prev) => Math.min(prev + 1, totalEstimatedSteps - 1));
+            const nextNode = result.node;
+            setMessages(prev => [...prev, {
+                id: nextNode.id,
+                text: nextNode.text || '',
+                sender: 'assistant',
+                isOffline: true
+            }]);
+            setCurrentOfflineNodeId(nextNode.id);
+            setIsTyping(false);
+            setProcessing(false);
+            setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
         }
-      } catch (err) {
-        console.error('Offline triage error:', err);
-        setError('An error occurred during the offline check.');
-      } finally {
-        setIsTyping(false);
-      }
-    }, 800);
+      }, 500);
   };
 
-  const handleNext = (answerText?: string, isSkip: boolean = false) => {
-    if (isOfflineMode) {
-      handleOfflineNext(answerText || '');
-      return;
+  // --- UTILS ---
+  const handleBack = useCallback(() => {
+    // If we go back, we pop the last Q&A pair (User Answer + Assistant Question)
+    // But we need to distinguish between "User just answered" vs "Waiting for user" 
+    
+    if (messages.length <= 1) {
+        navigation.goBack();
+        return;
     }
 
-    const finalAnswer = isSkip ? 'User was not sure' : answerText || inputText;
-    const displayAnswer = isSkip ? "I'm not sure" : finalAnswer;
+    Alert.alert(
+        "Restart Assessment?",
+        "Going back will restart the assessment. Are you sure?",
+        [
+            { text: "Cancel", style: "cancel" },
+            { text: "Restart", style: "destructive", onPress: () => navigation.goBack() }
+        ]
+    );
+  }, [messages, navigation]);
 
-    if (!finalAnswer.trim() || isTyping) return;
-
-    const currentQuestion = questions[currentStep];
-    if (!currentQuestion) return;
-
-    // Save answer
-    const newAnswers = { ...answers, [currentQuestion.id]: finalAnswer };
-    setAnswers(newAnswers);
-
-    // Update captured slots visually
-    if (
-      !isSkip &&
-      (currentQuestion.id === 'age' ||
-        currentQuestion.id === 'duration' ||
-        currentQuestion.id === 'severity')
-    ) {
-      setCapturedSlots((prev) => ({ ...prev, [currentQuestion.id]: finalAnswer }));
-    }
-
-    // Add user message
-    const userMsg: Message = {
-      id: `user-${currentStep}-${Date.now()}`,
-      text: displayAnswer,
-      sender: 'user',
-    };
-    setMessages((prev) => [...prev, userMsg]);
-    setInputText('');
-
-    // Check for emergency
-    const emergencyCheck = detectEmergency(finalAnswer);
-    if (emergencyCheck.isEmergency) {
-      dispatch(setHighRisk(true));
-      const formattedAnswers = Object.entries(newAnswers).map(([id, answer]) => {
-        const question = questions.find((q) => q.id === id);
-        return {
-          question: question ? question.text : id,
-          answer,
-        };
-      });
-
-      const partialData = {
-        symptoms: initialSymptom || '',
-        answers: formattedAnswers,
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        handleBack();
+        return true;
       };
-      navigation.replace('Recommendation', { assessmentData: partialData });
-      return;
-    }
 
-    // Move to next step or finish with a thoughtful delay
-    setIsTyping(true);
-
-    const delay = 1500; // 1.5 seconds delay for a more natural feel
-
-    typingTimeoutRef.current = setTimeout(() => {
-      typingTimeoutRef.current = null;
-      if (currentStep < questions.length - 1) {
-        const nextStep = currentStep + 1;
-        const nextQuestion = questions[nextStep];
-
-        // Random acknowledgments for a more conversational feel
-        const acknowledgments = [
-          'I understand.',
-          'Thank you for that information.',
-          'Got it, thanks.',
-          "I see. That's helpful to know.",
-          'Okay, thank you for clarifying.',
-        ];
-        const ack = acknowledgments[Math.floor(Math.random() * acknowledgments.length)];
-
-        const assistantMsg: Message = {
-          id: nextQuestion.id,
-          text: `${ack}\n\n${nextQuestion.text}`,
-          sender: 'assistant',
-        };
-
-        setMessages((prev) => [...prev, assistantMsg]);
-        setIsTyping(false);
-        setCurrentStep(nextStep);
-
-        // Scroll to end
-        setTimeout(() => {
-          scrollViewRef.current?.scrollToEnd({ animated: true });
-        }, 100);
-      } else {
-        setIsTyping(false);
-        setCurrentStep(questions.length); // Final step
-        finishAssessment(newAnswers);
-      }
-    }, delay);
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
+    }, [handleBack]),
+  );
+  
+  // Voice Handlers
+  const startRecording = async () => {
+      if (!speechService.isAvailable) return Alert.alert("Not Available", "Voice input not supported.");
+      try {
+          setIsRecording(true);
+          await speechService.startListening(
+              (text) => setInputText(text),
+              (err) => { console.error(err); setIsRecording(false); },
+              (vol) => setVolume(vol)
+          );
+      } catch (e) { setIsRecording(false); }
+  };
+  const stopRecording = async () => {
+      setIsRecording(false);
+      await speechService.stopListening();
   };
 
-  const finishAssessment = (finalAnswers: Record<string, string>) => {
-    const formattedAnswers = Object.entries(finalAnswers).map(([id, answer]) => {
-      const question = questions.find((q) => q.id === id);
-      return {
-        question: question ? question.text : id,
-        answer,
-      };
-    });
-
-    const assessmentData = {
-      symptoms: initialSymptom || '',
-      answers: formattedAnswers,
-    };
-    navigation.replace('Recommendation', { assessmentData });
+  // --- RENDER ---
+  const renderMessage = (msg: Message) => {
+    const isAssistant = msg.sender === 'assistant';
+    return (
+      <View key={msg.id} style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}>
+        {isAssistant && (
+           <View style={[styles.avatar, { backgroundColor: msg.isOffline ? theme.colors.secondaryContainer : theme.colors.primaryContainer }]}>
+             <MaterialCommunityIcons name={msg.isOffline ? "shield-check" : "robot"} size={18} color={msg.isOffline ? theme.colors.secondary : theme.colors.primary} />
+           </View>
+        )}
+        <View style={[styles.bubble, isAssistant ? styles.assistantBubble : styles.userBubble, { backgroundColor: isAssistant ? theme.colors.surface : theme.colors.primary }]}>
+           <Text style={[styles.messageText, { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary }]}>{msg.text}</Text>
+        </View>
+      </View>
+    );
   };
-
-  const handleInputFocus = () => {
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 150);
-  };
-
-  const currentQuestion = questions[currentStep];
-  const currentOfflineNode = currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId] : null;
 
   if (loading) {
     return (
       <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <Text variant="titleMedium" style={styles.loadingText}>
-          Analyzing symptoms...
-        </Text>
-        <Text variant="bodySmall" style={styles.loadingSubtext}>
-          Preparing your personalized assessment
-        </Text>
+        <Text style={{ marginTop: 16 }}>Preparing your assessment...</Text>
       </View>
     );
   }
 
-  if (error && !isNetworkError) {
-    return (
-      <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
-        <Text style={{ color: theme.colors.error, marginBottom: 16, textAlign: 'center' }}>
-          {error}
-        </Text>
-        <Button title="Retry" onPress={fetchQuestions} />
-      </View>
-    );
-  }
-
-  const renderTypingIndicator = () => {
-    return (
-      <View style={[styles.messageWrapper, styles.assistantWrapper]}>
-        <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
-          <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
-        </View>
-        <View
-          style={[
-            styles.bubble,
-            styles.assistantBubble,
-            { backgroundColor: theme.colors.surface, paddingHorizontal: 12, paddingVertical: 12 },
-          ]}
-        >
-          <TypingIndicator />
-        </View>
-      </View>
-    );
-  };
-
-  const renderMessage = (message: Message) => {
-    const isAssistant = message.sender === 'assistant';
-    return (
-      <View
-        key={message.id}
-        style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}
-      >
-        {isAssistant && (
-          <View
-            style={[
-              styles.avatar,
-              {
-                backgroundColor: message.isOffline
-                  ? theme.colors.secondaryContainer
-                  : theme.colors.primaryContainer,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={message.isOffline ? 'shield-check' : 'robot'}
-              size={18}
-              color={message.isOffline ? theme.colors.secondary : theme.colors.primary}
-            />
-          </View>
-        )}
-        <View
-          style={[
-            isAssistant
-              ? [styles.bubble, styles.assistantBubble, { backgroundColor: theme.colors.surface }]
-              : [styles.bubble, styles.userBubble, { backgroundColor: theme.colors.primary }],
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
-            ]}
-          >
-            {message.text}
-          </Text>
-        </View>
-      </View>
-    );
-  };
-
-  const renderSlotIndicator = (
-    label: string,
-    value: string,
-    icon: keyof (typeof MaterialCommunityIcons)['glyphMap'],
-  ) => {
-    if (!value) return null;
-    return (
-      <View
-        style={[
-          styles.slotBadge,
-          { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
-        ]}
-      >
-        <MaterialCommunityIcons
-          name={icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
-          size={14}
-          color={theme.colors.primary}
-        />
-        <Text
-          variant="labelSmall"
-          style={[styles.slotLabel, { color: theme.colors.onSurfaceVariant }]}
-        >
-          {label}:
-        </Text>
-        <Text
-          variant="labelSmall"
-          numberOfLines={1}
-          style={[styles.slotValue, { color: theme.colors.onSurface }]}
-        >
-          {value}
-        </Text>
-      </View>
-    );
-  };
+  // Determine current options if offline
+  const offlineOptions = (isOfflineMode && currentOfflineNodeId) 
+    ? triageFlow.nodes[currentOfflineNodeId]?.options 
+    : null;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
+      
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-        <ProgressBar
-          progress={totalEstimatedSteps > 0 ? currentStep / totalEstimatedSteps : 0}
-          label={isOfflineMode ? 'Offline Check Progress' : 'Assessment Progress'}
-          showPercentage
-          height={6}
-        />
-
-        {!isOfflineMode &&
-          (capturedSlots.age || capturedSlots.duration || capturedSlots.severity) && (
-            <Animated.View style={styles.slotsContainer}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.slotsScrollContent}
-              >
-                {renderSlotIndicator('Age', capturedSlots.age, 'account-clock')}
-                {renderSlotIndicator('Duration', capturedSlots.duration, 'clock-outline')}
-                {renderSlotIndicator('Severity', capturedSlots.severity, 'alert-circle-outline')}
-              </ScrollView>
-            </Animated.View>
-          )}
+         <ProgressBar 
+            progress={isOfflineMode ? 0.5 : (currentQuestionIndex / (questions.length || 1))}
+            label={isOfflineMode ? "Emergency Check" : "Assessment Progress"}
+         />
       </View>
-      {isOfflineMode && (
-        <View style={[styles.offlineBanner, { backgroundColor: theme.colors.secondaryContainer }]}>
-          <MaterialCommunityIcons name="wifi-off" size={16} color={theme.colors.secondary} />
-          <Text style={[styles.offlineBannerText, { color: theme.colors.onSecondaryContainer }]}>
-            OFFLINE EMERGENCY CHECK ACTIVE
-          </Text>
-        </View>
-      )}
 
-      <ScrollView
+      <ScrollView 
         ref={scrollViewRef}
-        style={{ flex: 1 }}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
+        style={styles.messagesContainer}
+        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
       >
-        <View style={styles.messagesContainer}>
-          {messages.map(renderMessage)}
-          {isTyping && renderTypingIndicator()}
-
-          {isNetworkError && (
-            <View style={[styles.errorCard, { backgroundColor: theme.colors.surfaceVariant }]}>
-              <MaterialCommunityIcons
-                name="alert-circle-outline"
-                size={32}
-                color={theme.colors.error}
-                style={styles.errorIcon}
-              />
-              <Text variant="titleMedium" style={{ color: theme.colors.error, fontWeight: 'bold' }}>
-                Connection Issue
-              </Text>
-              <Text style={styles.errorDescription}>{error}</Text>
-              <View style={styles.errorActions}>
-                <Button
-                  title="START OFFLINE CHECK"
-                  onPress={startOfflineTriage}
-                  variant="primary"
-                  style={{ flex: 1, marginRight: 8 }}
-                />
-                <Button
-                  title="RETRY"
-                  onPress={fetchQuestions}
-                  variant="outline"
-                  style={{ flex: 1 }}
-                />
-              </View>
-            </View>
-          )}
-        </View>
+        {messages.map(renderMessage)}
+        {isTyping && (
+             <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+                <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+                  <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+                </View>
+                <View style={[styles.bubble, styles.assistantBubble, { backgroundColor: theme.colors.surface, padding: 12 }]}>
+                  <TypingIndicator />
+                </View>
+             </View>
+        )}
       </ScrollView>
 
-      <Animated.View
-        style={[
-          styles.inputSection,
-          {
-            paddingBottom: Math.max(12, insets.bottom),
-            paddingLeft: Math.max(16, insets.left),
-            paddingRight: Math.max(16, insets.right),
-            backgroundColor: theme.colors.background,
-            marginBottom: Animated.add(keyboardHeight, new Animated.Value(8)),
-          },
-        ]}
-      >
-        {!isOfflineMode && currentQuestion && (
-          <View style={styles.choiceContainer}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.choiceScrollContent}
-            >
-              {currentQuestion.type === 'choice' &&
-                currentQuestion.options?.map((opt) => (
-                  <Chip
-                    key={opt}
-                    onPress={() => !isTyping && handleNext(opt)}
-                    style={styles.choiceChip}
-                    mode="flat"
-                    compact
-                    showSelectedOverlay
-                    disabled={isTyping}
-                  >
-                    {opt}
-                  </Chip>
-                ))}
-              <Chip
-                onPress={() => !isTyping && handleNext(undefined, true)}
-                style={[styles.choiceChip, { borderColor: theme.colors.outline }]}
-                textStyle={{ color: theme.colors.onSurfaceVariant }}
-                mode="outlined"
-                compact
-                disabled={isTyping}
-              >
-                I'm not sure
-              </Chip>
-            </ScrollView>
-          </View>
-        )}
+      <Animated.View style={[
+        styles.inputSection, 
+        { 
+          marginBottom: keyboardHeight, 
+          backgroundColor: theme.colors.background,
+          paddingBottom: Math.max(insets.bottom, 16) + 8 
+        }
+      ]}>
+         {/* Offline Chips */}
+         {offlineOptions && (
+             <ScrollView horizontal contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
+                 {offlineOptions.map(opt => (
+                     <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
+                 ))}
+             </ScrollView>
+         )}
+         
+         {/* Skip Button for AI Mode */}
+         {!isOfflineMode && !offlineOptions && (
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingBottom: 8 }}>
+                <Chip mode="outlined" compact onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
+            </View>
+         )}
 
-        {isOfflineMode && currentOfflineNode && currentOfflineNode.type === 'question' && (
-          <View style={styles.choiceContainer}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.choiceScrollContent}
-            >
-              {currentOfflineNode.options?.map((opt) => (
-                <Chip
-                  key={opt.label}
-                  onPress={() => !isTyping && handleOfflineNext(opt.label)}
-                  style={[styles.choiceChip, { minWidth: 80 }]}
-                  mode="flat"
-                  compact
-                  showSelectedOverlay
-                  disabled={isTyping}
-                >
-                  {opt.label}
-                </Chip>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        <InputCard
-          ref={inputCardRef}
-          value={inputText}
-          onChangeText={setInputText}
-          onSubmit={() => handleNext()}
-          label={isOfflineMode ? 'Please use options above' : 'Type your answer...'}
-          placeholder=""
-          onFocus={handleInputFocus}
-          isRecording={isRecording}
-          volume={volume}
-          onVoicePress={isRecording ? stopRecording : startRecording}
-          disabled={isTyping || isOfflineMode}
-        />
+         <InputCard
+            ref={inputCardRef}
+            value={inputText}
+            onChangeText={setInputText}
+            onSubmit={() => handleNext()}
+            label={isOfflineMode ? "Select an option above" : "Type your answer..."}
+            isRecording={isRecording}
+            volume={volume}
+            onVoicePress={isRecording ? stopRecording : startRecording}
+            disabled={processing || (isOfflineMode && !!offlineOptions)}
+         />
       </Animated.View>
-
-      <SafetyRecheckModal
-        visible={safetyModalVisible}
-        onDismiss={() => setSafetyModalVisible(false)}
-      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
-  loadingText: { marginTop: 16, fontWeight: 'bold' },
-  loadingSubtext: { marginTop: 4, opacity: 0.7 },
-
-  scrollContent: { paddingHorizontal: 16, paddingVertical: 16 },
+  centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   messagesContainer: { flex: 1 },
-
-  messageWrapper: { flexDirection: 'row', marginBottom: 20, alignItems: 'flex-end' },
+  messageWrapper: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-end' },
   assistantWrapper: { justifyContent: 'flex-start' },
   userWrapper: { justifyContent: 'flex-end' },
-
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-    marginBottom: 4,
-  },
-  bubble: {
-    maxWidth: '80%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  assistantBubble: {
-    borderBottomLeftRadius: 4,
-  },
-  userBubble: {
-    borderBottomRightRadius: 4,
-  },
+  avatar: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
+  bubble: { maxWidth: '85%', padding: 12, borderRadius: 16, elevation: 1 },
+  assistantBubble: { borderBottomLeftRadius: 4 },
+  userBubble: { borderBottomRightRadius: 4 },
   messageText: { fontSize: 16, lineHeight: 22 },
-
-  inputSection: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
-  },
-  progressSubtle: {
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  choiceContainer: {
-    marginBottom: 12,
-  },
-  choiceScrollContent: {
-    paddingHorizontal: 4,
-    gap: 8,
-  },
-  choiceChip: {
-    height: 36,
-  },
-  offlineBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    gap: 8,
-  },
-  offlineBannerText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
-  slotsContainer: {
-    marginTop: 12,
-    marginBottom: 4,
-  },
-  slotsScrollContent: {
-    gap: 8,
-    paddingRight: 16,
-  },
-  slotBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 6,
-  },
-  slotLabel: {
-    fontWeight: 'bold',
-    fontSize: 10,
-    textTransform: 'uppercase',
-  },
-  slotValue: {
-    maxWidth: 120,
-    fontSize: 11,
-  },
-  errorCard: {
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  errorIcon: {
-    marginBottom: 12,
-  },
-  errorDescription: {
-    textAlign: 'center',
-    marginBottom: 20,
-    opacity: 0.8,
-    lineHeight: 20,
-  },
-  errorActions: {
-    flexDirection: 'row',
-    width: '100%',
-  },
+  inputSection: { padding: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' }
 });
 
 export default SymptomAssessmentScreen;

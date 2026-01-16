@@ -191,7 +191,14 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Files Modified/Deleted:** `src/navigation/TabNavigator.tsx` (Deleted), `src/navigation/AppNavigator.tsx`, `src/types/navigation.ts`, `App.tsx`.
 
 * **Prompt Refinement for Symptom Assessment (Jan 16, 2026):**
-  - **Checklist Integration:** Updated `CLARIFYING_QUESTIONS_PROMPT` in `src/constants/prompts.ts` to include a strict checklist for Age, Duration, and Severity.
+  - **Checklist Integration:** Updated `CLARIFYING_QUESTIONS_PROMPT` in `src/constants/prompts.ts` to include a strict checklist for Age, Duration, Severity, Progression, and Red Flag Denials. Added efficiency logic to ask compound questions when dialogue turn count > 2 and implemented early exit conditions (automatically concluding at Turn 5 or if a Red Flag is identified) to ensure timely guidance.
   - **Efficiency Optimization:** Instructed the AI to identify missing data points from the checklist, avoid redundant questions, and combine queries to reduce chat turns.
   - **Tone & Naturalness:** Ensured the AI maintains an empathetic and professional tone while strictly adhering to the JSON schema for seamless UI integration.
   - **Files Modified:** `src/constants/prompts.ts`.
+
+* **Assessment Progress & Logic Fix (Jan 16, 2026):**
+  - **Progress Tracking:** Fixed the "progress reset" bug by changing the progress calculation to track the total number of unique questions answered (`Object.keys(answers).length`) rather than the index within the current question batch.
+  - **Global Question State:** Refactored `SymptomAssessmentScreen` to maintain a global, cumulative list of questions instead of replacing state with each new AI batch. This ensures that the report generation at the end of the assessment has access to the text of all questions asked, not just the last batch.
+  - **Parsing Resilience:** Updated `src/services/gemini.ts` to gracefully handle empty question arrays from the AI (indicating "no more questions") instead of throwing a parsing error.
+  - **Test Coverage:** Updated `tests/SymptomAssessmentTurns.test.tsx` to accurately mock the 5-turn assessment flow and verified that all frontend tests pass.
+  - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/services/gemini.ts`, `tests/SymptomAssessmentTurns.test.tsx`.

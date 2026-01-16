@@ -36,7 +36,7 @@ export type RootStackParamList = {
       offlineRecommendation?: TriageRecommendation;
     };
   };
-  ClinicalNote: { noteId?: string };
+  ClinicalNote: undefined;
   FacilityDetails: { facilityId: string };
   CrisisSupport: undefined;
   YakapFaq: undefined;

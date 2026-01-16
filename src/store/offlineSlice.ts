@@ -1,31 +1,23 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface SOAPNote {
-  subjective: string;
-  objective: string;
-  assessment: string;
-  plan: string;
-}
-
-interface SavedClinicalNote {
-  id: string;
-  timestamp: number;
-  soapNote: SOAPNote;
+interface LatestAssessment {
+  clinical_soap: string;
   recommendationLevel: string;
+  timestamp: number;
 }
 
 interface OfflineState {
   isOffline: boolean;
   lastSync: number | null;
   pendingSyncs: number;
-  savedNotes: SavedClinicalNote[];
+  latestAssessment: LatestAssessment | null;
 }
 
 const initialState: OfflineState = {
   isOffline: false,
   lastSync: null,
   pendingSyncs: 0,
-  savedNotes: [],
+  latestAssessment: null,
 };
 
 const offlineSlice = createSlice({
@@ -48,17 +40,14 @@ const offlineSlice = createSlice({
     resetSyncStatus: (state) => {
       state.pendingSyncs = 0;
     },
-    saveClinicalNote: (state, action: PayloadAction<Omit<SavedClinicalNote, 'id' | 'timestamp'>>) => {
-      const newNote: SavedClinicalNote = {
+    saveClinicalNote: (state, action: PayloadAction<Omit<LatestAssessment, 'timestamp'>>) => {
+      state.latestAssessment = {
         ...action.payload,
-        id: Math.random().toString(36).substring(7),
         timestamp: Date.now(),
       };
-      // Keep only the last 10 notes to save space
-      state.savedNotes = [newNote, ...state.savedNotes].slice(0, 10);
     },
-    clearSavedNotes: (state) => {
-      state.savedNotes = [];
+    clearLatestAssessment: (state) => {
+      state.latestAssessment = null;
     },
   },
 });
@@ -70,14 +59,23 @@ export const {
   addPendingSync,
   resetSyncStatus,
   saveClinicalNote,
-  clearSavedNotes,
+  clearLatestAssessment,
 } = offlineSlice.actions;
+
+// Thunk to check TTL
+export const checkAssessmentTTL = () => (dispatch: any, getState: () => { offline: OfflineState }) => {
+  const { latestAssessment } = getState().offline;
+  if (latestAssessment) {
+    const now = Date.now();
+    const ttl = 24 * 60 * 60 * 1000; // 24 hours
+    if (now - latestAssessment.timestamp > ttl) {
+      dispatch(clearLatestAssessment());
+    }
+  }
+};
 
 // Selectors
 export const selectLatestClinicalNote = (state: { offline: OfflineState }) => 
-  state.offline.savedNotes.length > 0 ? state.offline.savedNotes[0] : null;
-
-export const selectAllClinicalNotes = (state: { offline: OfflineState }) => 
-  state.offline.savedNotes;
+  state.offline.latestAssessment;
 
 export default offlineSlice.reducer;
