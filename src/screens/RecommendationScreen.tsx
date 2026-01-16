@@ -159,16 +159,15 @@ const RecommendationScreen = () => {
       dispatch(
         setReduxRecommendation({
           level: response.recommended_level,
-          reasoning: response.condition_summary,
-          actions: [response.recommended_action],
-          soap_note: response.soap_note,
+          user_advice: response.user_advice,
+          clinical_soap: response.clinical_soap,
         }),
       );
 
-      if (response.soap_note) {
+      if (response.clinical_soap) {
         dispatch(
           saveClinicalNote({
-            soapNote: response.soap_note,
+            clinical_soap: response.clinical_soap,
             recommendationLevel: response.recommended_level,
           }),
         );
@@ -183,8 +182,8 @@ const RecommendationScreen = () => {
       // Fallback
       setRecommendation({
         recommended_level: 'health_center',
-        condition_summary: 'Based on your symptoms, we recommend a professional medical check-up.',
-        recommended_action: 'Visit your local health center or the Bicol Health Center for an assessment.',
+        user_advice: 'Based on your symptoms, we recommend a professional medical check-up at your local health center. Please follow DOH hydration protocols.',
+        clinical_soap: 'S: Symptoms reported. O: N/A. A: Fallback triage. P: Refer to Health Center.',
         key_concerns: ['Persistent symptoms', 'Need for professional evaluation'],
         critical_warnings: ['Follow DOH hydration protocols: Drink 2L of fluids daily.'],
         relevant_services: ['Consultation'],
@@ -362,23 +361,21 @@ const RecommendationScreen = () => {
             </Surface>
           </Card.Content>
 
-          <Card.Content style={styles.section}>
-            <Text variant="labelMedium" style={styles.sectionLabel}>
-              YOUR CONDITION
+          <Surface style={styles.adviceContainer} elevation={0}>
+            <View style={styles.adviceHeader}>
+              <MaterialCommunityIcons 
+                name="heart-pulse" 
+                size={24} 
+                color={theme.colors.primary} 
+              />
+              <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
+                ASSESSMENT & ADVICE
+              </Text>
+            </View>
+            <Text variant="bodyLarge" style={styles.adviceText}>
+              {recommendation.user_advice}
             </Text>
-            <Text variant="bodyLarge" style={styles.conditionText}>
-              {recommendation.condition_summary}
-            </Text>
-          </Card.Content>
-
-          <Card.Content style={styles.section}>
-            <Text variant="labelMedium" style={styles.sectionLabel}>
-              RECOMMENDED ACTION
-            </Text>
-            <Text variant="bodyLarge" style={[styles.actionText, { color: careInfo.color }]}>
-              {recommendation.recommended_action}
-            </Text>
-          </Card.Content>
+          </Surface>
 
           {(recommendation.key_concerns.length > 0 ||
             recommendation.critical_warnings.length > 0) && (
@@ -487,7 +484,7 @@ const RecommendationScreen = () => {
         )}
 
         {/* Clinical Handover Section */}
-        {recommendation.soap_note && (
+        {recommendation.clinical_soap && (
           <View style={styles.handoverSection}>
             <Divider style={styles.restartDivider} />
             <View style={styles.handoverHeader}>
@@ -508,7 +505,7 @@ const RecommendationScreen = () => {
             />
             {showHandover && (
               <DoctorHandoverCard
-                soapNote={recommendation.soap_note}
+                clinicalSoap={recommendation.clinical_soap}
                 timestamp={Date.now()}
               />
             )}
@@ -603,6 +600,30 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontWeight: '700',
     fontSize: 17,
+  },
+
+  adviceContainer: {
+    margin: 16,
+    padding: 20,
+    backgroundColor: '#E8F5F1', // Soft Green/Blue background (primaryContainer)
+    borderRadius: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#379777', // Primary Green
+  },
+  adviceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  adviceTitle: {
+    marginLeft: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  adviceText: {
+    lineHeight: 26,
+    color: '#2C3333',
+    fontWeight: '500',
   },
 
   warningContainer: {

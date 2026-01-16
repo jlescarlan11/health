@@ -77,18 +77,12 @@ JSON Schema:
   "confidence_score": 0.0 to 1.0,
   "ambiguity_detected": boolean,
   "follow_up_questions": ["Question 1?", "Question 2?"],
-  "condition_summary": "A concise explanation (1-2 sentences) of what the symptoms might indicate, without a definitive diagnosis.",
-  "recommended_action": "A clear, direct instruction on what the user should do next.",
+  "user_advice": "Empathetic, clear, and supportive guidance for the patient. Explain what the symptoms might indicate and what they should do next in plain language.",
+  "clinical_soap": "A concise, objective clinical summary using professional medical shorthand (SOAP format elements) capturing patient age, symptoms, duration, severity, and rationale.",
   "key_concerns": ["Bullet point 1", "Bullet point 2"], // Specific concerns based on symptoms.
   "critical_warnings": ["Warning 1"], // High-priority warnings (e.g., infection risk, dehydration signs).
   "relevant_services": ["Service 1", "Service 2"], // 2-3 specific services to look for at the facility from the VALID_SERVICES list below.
-  "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"],
-  "soap_note": {
-    "subjective": "Chief complaint, HPI (onset, location, duration, characteristics, aggravating/alleviating factors), and pertinent negatives using professional medical terminology (e.g., 'febrile', 'dyspneic', 'emesis').",
-    "objective": "Document reported vital signs, physical findings described by the patient, and observable behavioral cues in clinical terms.",
-    "assessment": "Clinical triage rationale. Synthesize the findings into a triage-level assessment (e.g., 'Acute respiratory distress', 'Suspected infectious process') and justify the assigned acuity level.",
-    "plan": "Triage disposition and immediate nursing interventions. Specify the care level, red flags for immediate reassessment, and any stabilization advice (e.g., 'Maintain upright position', 'NPO')."
-  }
+  "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"]
 }
 
 Rules:
@@ -97,7 +91,9 @@ Rules:
    - Explicitly recommend **Bicol Health Center** or a Hospital.
    - Include **DOH Hydration Protocol**: "Drink at least 2 liters of fluids daily (ORS, water, fruit juice, or soup). Avoid dark-colored foods/drinks."
    - Explicitly warn: "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid; use only Paracetamol."
-3. **Clinical Professionalism:** The "soap_note" must be written in the style of a professional triage nurse. Use standard medical abbreviations and formal terminology. Avoid conversational language in this section.
+3. **Tone Distinction:** 
+   - "user_advice" must be warm, reassuring, and easy to understand.
+   - "clinical_soap" must be professional, clinical, and terse (e.g., "Pt presents with...").
 4. **Follow-up:** If the user's input is vague, provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
 `;
 

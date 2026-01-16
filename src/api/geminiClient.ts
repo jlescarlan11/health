@@ -26,21 +26,14 @@ export interface ChatMessage {
 export interface AssessmentResponse {
   recommended_level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
   follow_up_questions: string[];
-  assessment_summary?: string;
-  condition_summary: string;
-  recommended_action: string;
+  user_advice: string;
+  clinical_soap: string;
   key_concerns: string[];
   critical_warnings: string[];
   relevant_services: FacilityService[];
   red_flags: string[];
   confidence_score?: number;
   ambiguity_detected?: boolean;
-  soap_note?: {
-    subjective: string;
-    objective: string;
-    assessment: string;
-    plan: string;
-  };
 }
 
 interface CacheEntry {
@@ -131,12 +124,14 @@ export class GeminiClient {
       return {
         recommended_level: json.recommended_level,
         follow_up_questions: json.follow_up_questions || [],
-        condition_summary:
-          json.condition_summary ||
-          json.assessment_summary ||
-          "Based on your symptoms, we've analyzed your condition.",
-        recommended_action:
-          json.recommended_action || 'Please follow the recommended level of care.',
+        user_advice:
+          json.user_advice ||
+          json.condition_summary || // Fallback for old cache or transitional responses
+          "Based on your symptoms, we've analyzed your condition. Please see the recommendations below.",
+        clinical_soap:
+          json.clinical_soap ||
+          (json.soap_note ? JSON.stringify(json.soap_note) : '') ||
+          'No clinical summary available.',
         key_concerns: json.key_concerns || [],
         critical_warnings: json.critical_warnings || [],
         relevant_services: (json.relevant_services || []).filter((s: string) =>
@@ -145,14 +140,6 @@ export class GeminiClient {
         red_flags: json.red_flags || [],
         confidence_score: json.confidence_score,
         ambiguity_detected: json.ambiguity_detected,
-        soap_note: json.soap_note
-          ? {
-              subjective: json.soap_note.subjective || '',
-              objective: json.soap_note.objective || '',
-              assessment: json.soap_note.assessment || '',
-              plan: json.soap_note.plan || '',
-            }
-          : undefined,
       };
     } catch (error) {
       console.error('JSON Parse Error:', error);
@@ -225,11 +212,12 @@ export class GeminiClient {
       return {
         recommended_level: 'emergency',
         follow_up_questions: [],
-        condition_summary: 'Critical symptoms detected that require immediate medical attention.',
-        recommended_action:
-          'Go to the nearest emergency room or call emergency services (911) immediately.',
+        user_advice:
+          'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room or call emergency services (911) immediately.',
+        clinical_soap:
+          `S: Patient reports ${emergency.matchedKeywords.join(', ')}. O: AI detected critical emergency keywords. A: Potential life-threatening condition. P: Immediate ED referral.`,
         key_concerns: emergency.matchedKeywords.map((k) => `Urgent: ${k}`),
-        critical_warnings: ['Life-threatening condition possible'],
+        critical_warnings: ['Life-threatening condition possible', 'Do not delay care'],
         relevant_services: ['Emergency'],
         red_flags: emergency.matchedKeywords,
         confidence_score: 1.0,
@@ -241,9 +229,10 @@ export class GeminiClient {
       return {
         recommended_level: 'emergency',
         follow_up_questions: [],
-        condition_summary: 'Your symptoms indicate a mental health crisis.',
-        recommended_action:
-          'Please reach out to a crisis hotline or go to the nearest hospital immediately.',
+        user_advice:
+          'Your symptoms indicate a mental health crisis. You are not alone. Please reach out to a crisis hotline or go to the nearest hospital immediately.',
+        clinical_soap:
+          `S: Patient reports ${mhCrisis.matchedKeywords.join(', ')}. O: AI detected crisis keywords. A: Mental health crisis. P: Immediate psychiatric evaluation/intervention.`,
         key_concerns: ['Risk of self-harm or severe distress'],
         critical_warnings: ['You are not alone. Professional help is available now.'],
         relevant_services: ['Mental Health'],
@@ -261,7 +250,25 @@ export class GeminiClient {
         const cached = JSON.parse(cachedJson) as CacheEntry;
         if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
           console.log('[GeminiClient] Returning cached response from storage');
-          return cached.data;
+          // Ensure cached data has new fields if we want to be safe, or just return it and let parseResponse fallback handle it?
+          // parseResponse handles structure, but here we return directly.
+          // If cached data is OLD structure, it might lack user_advice.
+          // Safe to re-parse or map it?
+          // Let's assume cache might be old. We should map it if needed.
+          // But 'cached.data' is already typed as AssessmentResponse.
+          // If strict runtime check, we might want to migrate it.
+          // For now, let's just return it. The parseResponse fallback handles "condition_summary" -> "user_advice" mapping if we used it,
+          // but here we are using the stored object directly.
+          // If the stored object has 'condition_summary' but no 'user_advice', and we type cast it, it will be missing at runtime.
+          // Let's do a quick migration here.
+          const data: any = cached.data;
+          if (!data.user_advice && data.condition_summary) {
+             data.user_advice = data.condition_summary + ' ' + (data.recommended_action || '');
+          }
+          if (!data.clinical_soap && data.soap_note) {
+             data.clinical_soap = JSON.stringify(data.soap_note);
+          }
+          return data as AssessmentResponse;
         } else {
           await AsyncStorage.removeItem(fullCacheKey);
         }
@@ -323,7 +330,7 @@ export class GeminiClient {
             '[GeminiClient] Red flags detected but not Emergency. Upgrading to Emergency.',
           );
           parsed.recommended_level = 'emergency';
-          parsed.recommended_action += ' (Upgraded to Emergency due to detected red flags).';
+          parsed.user_advice += ' (Upgraded to Emergency due to detected red flags).';
           currentLevelIdx = 3;
         }
 
@@ -339,7 +346,7 @@ export class GeminiClient {
           );
 
           parsed.recommended_level = nextLevel;
-          parsed.recommended_action += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
+          parsed.user_advice += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
         }
         // -----------------------------------
 

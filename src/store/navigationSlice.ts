@@ -11,14 +11,8 @@ interface Message {
 interface Recommendation {
   level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
   facilityType?: string;
-  reasoning: string;
-  actions: string[];
-  soap_note?: {
-    subjective: string;
-    objective: string;
-    assessment: string;
-    plan: string;
-  };
+  user_advice: string;
+  clinical_soap: string;
 }
 
 interface NavigationState {

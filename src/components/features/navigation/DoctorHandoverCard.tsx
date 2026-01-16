@@ -1,214 +1,217 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Card, Text, Surface, useTheme, IconButton } from 'react-native-paper';
-
-interface SOAPNote {
-  subjective: string;
-  objective: string;
-  assessment: string;
-  plan: string;
-}
+import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
+import { Surface, Text, Button, Divider } from 'react-native-paper';
+import * as Clipboard from 'expo-clipboard';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface DoctorHandoverCardProps {
-  soapNote: SOAPNote;
+  clinicalSoap: string;
   timestamp: number;
 }
 
-export const DoctorHandoverCard: React.FC<DoctorHandoverCardProps> = ({ soapNote, timestamp }) => {
-  const [nurseMode, setNurseMode] = useState(false);
-  const theme = useTheme();
+interface SoapSections {
+  s?: string;
+  o?: string;
+  a?: string;
+  p?: string;
+}
 
-  const formattedDate = new Date(timestamp).toLocaleString();
+export const DoctorHandoverCard: React.FC<DoctorHandoverCardProps> = ({
+  clinicalSoap,
+  timestamp,
+}) => {
+  const [copied, setCopied] = useState(false);
+  const formattedDate = new Date(timestamp).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
 
-  const styles = nurseMode ? nurseModeStyles : standardStyles;
+  // Attempt to parse simple S: O: A: P: format
+  const parseSoap = (text: string): SoapSections => {
+    // Basic regex to capture content between markers
+    // Note: This assumes the standard order S -> O -> A -> P
+    const sMatch = text.match(/S:\s*(.*?)(?=\s*O:|$)/s);
+    const oMatch = text.match(/O:\s*(.*?)(?=\s*A:|$)/s);
+    const aMatch = text.match(/A:\s*(.*?)(?=\s*P:|$)/s);
+    const pMatch = text.match(/P:\s*(.*?)$/s);
 
-  const Section = ({ title, content }: { title: string; content: string }) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.content}>{content}</Text>
-    </View>
-  );
+    // If parsing fails completely (e.g. valid JSON string of old format), try parsing as JSON first
+    if (!sMatch && !oMatch && !aMatch && !pMatch) {
+       try {
+         const json = JSON.parse(text);
+         if (json.subjective || json.objective) {
+           return {
+             s: json.subjective,
+             o: json.objective,
+             a: json.assessment,
+             p: json.plan
+           }
+         }
+       } catch (e) {
+         // Not JSON, just plain text
+       }
+    }
+
+    return {
+      s: sMatch ? sMatch[1].trim() : undefined,
+      o: oMatch ? oMatch[1].trim() : undefined,
+      a: aMatch ? aMatch[1].trim() : undefined,
+      p: pMatch ? pMatch[1].trim() : undefined,
+    };
+  };
+
+  const sections = parseSoap(clinicalSoap);
+  const isParsed = !!(sections.s || sections.o || sections.a || sections.p);
+
+  const handleCopy = async () => {
+    await Clipboard.setStringAsync(
+      `CLINICAL HANDOVER REPORT\nDate: ${formattedDate}\n\n${clinicalSoap}`
+    );
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    if (Platform.OS !== 'web') {
+        Alert.alert("Report Copied", "The clinical report has been copied to your clipboard.");
+    }
+  };
+
+  const SectionBlock = ({ label, content }: { label: string; content?: string }) => {
+    if (!content) return null;
+    return (
+      <View style={styles.sectionBlock}>
+        <Text style={styles.sectionLabel}>{label}</Text>
+        <Text style={styles.sectionContent}>{content}</Text>
+      </View>
+    );
+  };
 
   return (
-    <Surface style={styles.container} elevation={nurseMode ? 0 : 1}>
+    <Surface style={styles.paperContainer} elevation={4}> 
+      {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Clinical Handover Note</Text>
-          <Text style={styles.headerSubtitle}>{formattedDate}</Text>
+        <View style={styles.headerTopRow}>
+          <MaterialCommunityIcons name="file-document-outline" size={32} color="black" />
+          <Text style={styles.headerTitle}>CLINICAL REPORT</Text>
         </View>
-        <TouchableOpacity
-          style={[styles.modeToggle, nurseMode && styles.modeToggleActive]}
-          onPress={() => setNurseMode(!nurseMode)}
-          accessibilityLabel="Toggle Nurse Mode"
-          accessibilityRole="button"
-        >
-          <Text style={[styles.modeToggleText, nurseMode && styles.modeToggleTextActive]}>
-            {nurseMode ? 'Standard' : 'Nurse Mode'}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.timestamp}>{formattedDate}</Text>
+        <Divider style={styles.headerDivider} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Section title="S - Subjective" content={soapNote.subjective} />
-        <Section title="O - Objective" content={soapNote.objective} />
-        <Section title="A - Assessment" content={soapNote.assessment} />
-        <Section title="P - Plan" content={soapNote.plan} />
+      <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
+        {isParsed ? (
+          <>
+            <SectionBlock label="SUBJECTIVE (History)" content={sections.s} />
+            <SectionBlock label="OBJECTIVE (Signs)" content={sections.o} />
+            <SectionBlock label="ASSESSMENT (Triage)" content={sections.a} />
+            <SectionBlock label="PLAN (Next Steps)" content={sections.p} />
+          </>
+        ) : (
+          <Text style={styles.sectionContent}>{clinicalSoap}</Text>
+        )}
       </ScrollView>
 
-      {nurseMode && (
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Optimized for Clinical Triage</Text>
-        </View>
-      )}
+      {/* Footer / Actions */}
+      <View style={styles.footer}>
+        <Divider style={styles.footerDivider} />
+        <Button
+          mode="contained"
+          onPress={handleCopy}
+          icon={copied ? 'check' : 'content-copy'}
+          style={styles.copyButton}
+          contentStyle={styles.copyButtonContent}
+          labelStyle={styles.copyButtonLabel}
+          buttonColor="#000000"
+        >
+          {copied ? 'COPIED TO CLIPBOARD' : 'SHARE AS TEXT'}
+        </Button>
+      </View>
     </Surface>
   );
 };
 
-const standardStyles = StyleSheet.create({
-  container: {
+const styles = StyleSheet.create({
+  paperContainer: {
     margin: 16,
-    borderRadius: 12,
     backgroundColor: '#FFFFFF',
+    borderRadius: 4, // Sharp corners for paper feel
     overflow: 'hidden',
-    maxHeight: 500,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    maxHeight: 600,
   },
   header: {
-    padding: 16,
-    backgroundColor: '#379777', // Primary Green
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  headerSubtitle: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 12,
-  },
-  modeToggle: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-  },
-  modeToggleActive: {
+    padding: 24,
+    paddingBottom: 0,
     backgroundColor: '#FFFFFF',
   },
-  modeToggleText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+  headerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  modeToggleTextActive: {
-    color: '#379777',
+  headerTitle: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+    fontWeight: '900',
+    fontSize: 24,
+    color: '#000000',
+    marginLeft: 12,
+    letterSpacing: 1,
   },
-  scrollContent: {
-    padding: 16,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
+  timestamp: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#379777',
-    marginBottom: 4,
+    color: '#333333',
+    marginBottom: 16,
     textTransform: 'uppercase',
   },
-  content: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#45474B',
-  },
-  footer: {
-    display: 'none',
-  },
-  footerText: {
-    display: 'none',
-  },
-});
-
-const nurseModeStyles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#FFFFFF',
-    zIndex: 1000,
-  },
-  header: {
-    padding: 20,
+  headerDivider: {
     backgroundColor: '#000000',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 60, // Account for notch
+    height: 2,
   },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    fontSize: 22,
-  },
-  headerSubtitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  modeToggle: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 4,
+  scrollArea: {
+    maxHeight: 400,
     backgroundColor: '#FFFFFF',
-  },
-  modeToggleActive: {
-    backgroundColor: '#FFFFFF',
-  },
-  modeToggleText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  modeToggleTextActive: {
-    color: '#000000',
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 100,
+    paddingTop: 16,
   },
-  section: {
-    marginBottom: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
-    paddingBottom: 16,
+  sectionBlock: {
+    marginBottom: 24,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#000000',
+  sectionLabel: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#666666',
     marginBottom: 8,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  content: {
-    fontSize: 20,
-    lineHeight: 28,
-    color: '#000000',
+  sectionContent: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+    fontSize: 18, // Large for readability
     fontWeight: '500',
+    color: '#000000', // AAA Contrast
+    lineHeight: 28,
   },
   footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 20,
-    backgroundColor: '#F5F5F5',
-    alignItems: 'center',
+    padding: 24,
+    paddingTop: 0,
+    backgroundColor: '#FFFFFF',
   },
-  footerText: {
-    fontSize: 14,
+  footerDivider: {
+    backgroundColor: '#E0E0E0',
+    marginBottom: 16,
+  },
+  copyButton: {
+    borderRadius: 4,
+  },
+  copyButtonContent: {
+    height: 56,
+  },
+  copyButtonLabel: {
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#666666',
-    textTransform: 'uppercase',
     letterSpacing: 1,
   },
 });
