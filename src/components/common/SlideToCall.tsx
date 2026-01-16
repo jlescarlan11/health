@@ -19,14 +19,25 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      // CRITICAL FIX: Changed from false to true to work in Modals
+      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => false,
+
       onMoveShouldSetPanResponder: (_, gestureState) => {
         // Detect horizontal swipe to avoid interfering with vertical scrolling
-        // and only capture if it's clearly a horizontal move
         return (
           Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 10
         );
       },
+      onMoveShouldSetPanResponderCapture: () => false,
+
+      // CRITICAL FIX: Prevent Modal from terminating the gesture
+      onPanResponderTerminationRequest: () => false,
+
+      onPanResponderGrant: () => {
+        // Touch started - we can add haptic feedback here if needed
+      },
+
       onPanResponderMove: (_, gestureState) => {
         const PULL_LIMIT = 50; // Controlled visual distance
         const resistance = 0.3; // Lower resistance for a 'heavier' feel
@@ -39,6 +50,7 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
           pan.setValue(0);
         }
       },
+
       onPanResponderRelease: (_, gestureState) => {
         const TRIGGER_THRESHOLD = 100; // Drag distance required to trigger
 
@@ -54,6 +66,7 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
           tension: 40,
         }).start();
       },
+
       onPanResponderTerminate: () => {
         // Spring back if gesture is interrupted
         Animated.spring(pan, {
