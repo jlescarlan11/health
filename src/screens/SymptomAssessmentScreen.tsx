@@ -487,13 +487,13 @@ const SymptomAssessmentScreen = () => {
          />
       </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {messages.map(renderMessage)}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >        {messages.map(renderMessage)}
         {isTyping && (
              <View style={[styles.messageWrapper, styles.assistantWrapper]}>
                 <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>

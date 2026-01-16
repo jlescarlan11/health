@@ -53,7 +53,10 @@ const ErrorFallback = ({ error, onRetry }: { error: Error | null; onRetry: () =>
         <Text variant="headlineMedium" style={[styles.title, { color: theme.colors.error }]}>
           Oops! Something went wrong.
         </Text>
-        <ScrollView style={styles.errorContainer}>
+        <ScrollView 
+          style={styles.errorContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
             {error?.toString()}
           </Text>

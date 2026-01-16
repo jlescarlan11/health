@@ -81,7 +81,10 @@ export const MainHomeScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['top', 'left', 'right', 'bottom']}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <HomeHero />
 
         <View style={styles.cardsContainer}>

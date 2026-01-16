@@ -23,7 +23,7 @@ interface StandardHeaderProps {
   titleStyle?: StyleProp<TextStyle>;
 }
 
-const StandardHeader: React.FC<StandardHeaderProps> = ({
+export const StandardHeader: React.FC<StandardHeaderProps> = ({
   title,
   showBackButton = false,
   onBackPress,

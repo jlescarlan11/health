@@ -88,7 +88,10 @@ const YakapFaqScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader title="Frequently Asked Questions" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.faqList}>
           {YAKAP_FAQS.map((faq) => (
             <FaqItem

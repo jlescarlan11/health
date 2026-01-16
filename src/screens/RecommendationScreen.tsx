@@ -25,7 +25,6 @@ import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
-import { DoctorHandoverCard } from '../components/features/navigation/DoctorHandoverCard';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
@@ -82,7 +81,6 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
-  const [showHandover, setShowHandover] = useState(false);
   const analysisStarted = useRef(false);
 
   const handleBack = useCallback(() => {
@@ -530,21 +528,15 @@ const RecommendationScreen = () => {
               </Text>
             </View>
             <Text variant="bodySmall" style={styles.handoverSubtitle}>
-              If you are at the facility, you can show this clinical triage note to the nurse or doctor.
+              If you are at the facility, you can share this clinical handover report with the nurse or doctor.
             </Text>
             <Button
-              title={showHandover ? 'Hide Clinical Note' : 'Show Clinical Note'}
-              onPress={() => setShowHandover(!showHandover)}
+              title="View Handover Report"
+              onPress={() => navigation.navigate('ClinicalNote')}
               variant="outline"
-              icon={showHandover ? 'eye-off' : 'eye'}
+              icon="file-document-outline"
               style={styles.handoverButton}
             />
-            {showHandover && (
-              <DoctorHandoverCard
-                clinicalSoap={recommendation.clinical_soap}
-                timestamp={Date.now()}
-              />
-            )}
           </View>
         )}
 
