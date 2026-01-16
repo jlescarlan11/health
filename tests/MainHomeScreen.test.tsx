@@ -27,7 +27,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 describe('MainHomeScreen', () => {
   // Create a mock icon component for PaperProvider
-  const MockIcon = ({ name, size, color }: { name: string; size: number; color: string }) =>
+  const MockIcon = ({ name, size, color }: any) =>
     React.createElement('Icon', { name, size, color });
 
   const component = (

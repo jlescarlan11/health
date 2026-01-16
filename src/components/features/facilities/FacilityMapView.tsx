@@ -240,7 +240,7 @@ export const FacilityMapView: React.FC = () => {
       }
     } else {
       const id = feature.properties?.id;
-      if (id) {
+      if (typeof id === 'string') {
         dispatch(selectFacility(id));
       }
     }

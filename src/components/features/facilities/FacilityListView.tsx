@@ -54,7 +54,6 @@ export const FacilityListView: React.FC = () => {
   };
 
   const handleFacilityPress = (facility: Facility) => {
-    // @ts-expect-error - navigation type issue
     navigation.navigate('FacilityDetails', { facilityId: facility.id });
   };
 

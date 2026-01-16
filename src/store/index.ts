@@ -31,20 +31,18 @@ const rootReducer = combineReducers({
 });
 
 const migrations = {
-  1: (state: Record<string, unknown> | undefined) => {
+  1: (state: any) => {
     // Surgical removal of legacy auth state if it exists
     if (state && state.auth) {
-      const newState = { ...state };
-      delete newState.auth;
+      const { auth, ...newState } = state;
       return newState;
     }
     return state;
   },
-  2: (state: Record<string, unknown> | undefined) => {
+  2: (state: any) => {
     // Purge enrollment state when migrating to version 2
     if (state && state.enrollment) {
-      const newState = { ...state };
-      delete newState.enrollment;
+      const { enrollment, ...newState } = state;
       return newState;
     }
     return state;
@@ -55,7 +53,7 @@ const persistConfig = {
   key: 'root',
   version: 2,
   storage: AsyncStorage,
-  whitelist: ['settings', 'navigation'],
+  whitelist: ['settings', 'navigation', 'offline'],
   migrate: createMigrate(migrations, { debug: false }),
 };
 

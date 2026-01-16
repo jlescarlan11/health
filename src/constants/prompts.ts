@@ -80,19 +80,19 @@ JSON Schema:
   "key_concerns": ["Bullet point 1", "Bullet point 2"], // Specific concerns based on symptoms.
   "critical_warnings": ["Warning 1"], // High-priority warnings (e.g., infection risk, dehydration signs).
   "relevant_services": ["Service 1", "Service 2"], // 2-3 specific services to look for at the facility from the VALID_SERVICES list below.
-  "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"]
+  "red_flags": ["List specific red flags identified, e.g., 'Difficulty breathing'"],
+  "soap_note": {
+    "subjective": "Chief complaint, HPI (onset, location, duration, characteristics, aggravating/alleviating factors), and pertinent negatives using professional medical terminology (e.g., 'febrile', 'dyspneic', 'emesis').",
+    "objective": "Document reported vital signs, physical findings described by the patient, and observable behavioral cues in clinical terms.",
+    "assessment": "Clinical triage rationale. Synthesize the findings into a triage-level assessment (e.g., 'Acute respiratory distress', 'Suspected infectious process') and justify the assigned acuity level.",
+    "plan": "Triage disposition and immediate nursing interventions. Specify the care level, red flags for immediate reassessment, and any stabilization advice (e.g., 'Maintain upright position', 'NPO')."
+  }
 }
-
-VALID_SERVICES = [
-${VALID_SERVICES.map((s) => `  "${s}"`).join(',\n')}
-]
 
 Rules:
 1. **Safety First:** If ANY red flag is present (chest pain, severe bleeding, unconsciousness, stroke signs, suicide risk, feeling like dying), "recommended_level" MUST be "emergency".
-2. **Follow-up:** If the user's input is vague, provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
-3. **Condition vs Action:** Keep "condition_summary" focused on the 'what' and "recommended_action" focused on the 'what to do'.
-4. **Relevant Services:** ONLY use service names from the VALID_SERVICES list provided above. Choose 2-3 that are most relevant to the patient's symptoms.
-5. **Tone:** Empathetic, professional, calm.
+2. **Clinical Professionalism:** The "soap_note" must be written in the style of a professional triage nurse. Use standard medical abbreviations and formal terminology. Avoid conversational language in this section.
+3. **Follow-up:** If the user's input is vague, provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
 `;
 
 export const CLARIFYING_QUESTIONS_PROMPT = `

@@ -9,10 +9,16 @@ interface Message {
 }
 
 interface Recommendation {
-  level: 'self-care' | 'health-center' | 'hospital' | 'emergency';
+  level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
   facilityType?: string;
   reasoning: string;
   actions: string[];
+  soap_note?: {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+  };
 }
 
 interface NavigationState {
