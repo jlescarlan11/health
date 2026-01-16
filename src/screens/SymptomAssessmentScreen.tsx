@@ -286,8 +286,10 @@ const SymptomAssessmentScreen = () => {
     const startNode = TriageEngine.getStartNode(triageFlow);
     setCurrentOfflineNodeId(startNode.id);
     
-    // Estimate offline steps - this is a rough approximation based on typical flow depth
-    setTotalEstimatedSteps(5);
+    // Dynamically calculate estimated steps for the progress bar
+    const estimatedSteps = TriageEngine.getEstimatedRemainingSteps(triageFlow, startNode.id);
+    setTotalEstimatedSteps(estimatedSteps);
+    setCurrentStep(0);
     
     setMessages([
       {
