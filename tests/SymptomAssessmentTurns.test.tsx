@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
-import { getGeminiResponse } from '../src/services/gemini';
+import { getGeminiResponse, generateAssessmentPlan, extractClinicalProfile } from '../src/services/gemini';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -18,6 +18,8 @@ jest.mock('../src/services/gemini', () => {
   const actual = jest.requireActual('../src/services/gemini');
   return {
     getGeminiResponse: jest.fn(),
+    generateAssessmentPlan: jest.fn(),
+    extractClinicalProfile: jest.fn(),
     parseClarifyingQuestions: actual.parseClarifyingQuestions,
   };
 });
@@ -120,16 +122,17 @@ describe('SymptomAssessmentScreen Turn Limits', () => {
   });
 
   test('concludes assessment automatically at turn limit', async () => {
-    // Turn 1: Initial
-    (getGeminiResponse as jest.Mock).mockResolvedValueOnce(JSON.stringify(mockQuestions('age')));
-    // Turn 2
-    (getGeminiResponse as jest.Mock).mockResolvedValueOnce(JSON.stringify(mockQuestions('duration')));
-    // Turn 3 (should not be called if we limit to 3)
-    (getGeminiResponse as jest.Mock).mockResolvedValueOnce(JSON.stringify(mockQuestions('severity')));
+    // Mock a plan with 5 questions
+    const questions = [
+      ...mockQuestions('age').questions,
+      ...mockQuestions('duration').questions,
+      ...mockQuestions('severity').questions,
+      ...mockQuestions('progression').questions,
+      ...mockQuestions('red_flag_denials').questions
+    ];
 
-    // We will test with a limit of 3 for brevity in this test
-    // I will temporarily change the screen's behavior or just test the current 5 limit but more carefully.
-    // Actually, I'll stick to 5 but fix the async wait.
+    (generateAssessmentPlan as jest.Mock).mockResolvedValueOnce(questions);
+    (extractClinicalProfile as jest.Mock).mockResolvedValue({ summary: 'Mock' });
 
     render(
       <ReduxProvider store={store}>
@@ -137,50 +140,50 @@ describe('SymptomAssessmentScreen Turn Limits', () => {
       </ReduxProvider>
     );
 
-    // Wait for Turn 1 Q
+    // Turn 1 (Age)
     await waitFor(() => expect(screen.getByText(/Question age/)).toBeTruthy());
-    
-    // Turn 1 -> 2
     fireEvent.changeText(screen.getByTestId('input-text'), '25');
     fireEvent.press(screen.getByText('Send'));
     act(() => { jest.advanceTimersByTime(1500); });
-    await waitFor(() => expect(screen.getByText(/Question duration/)).toBeTruthy());
 
-    // Turn 2 -> 3
+    // Turn 2 (Duration)
+    await waitFor(() => expect(screen.getByText(/Question duration/)).toBeTruthy());
     fireEvent.changeText(screen.getByTestId('input-text'), '2 days');
     fireEvent.press(screen.getByText('Send'));
     act(() => { jest.advanceTimersByTime(1500); });
-    await waitFor(() => expect(screen.getByText(/Question severity/)).toBeTruthy());
 
-    // Turn 3 -> 4
+    // Turn 3 (Severity)
+    await waitFor(() => expect(screen.getByText(/Question severity/)).toBeTruthy());
     fireEvent.changeText(screen.getByTestId('input-text'), 'Severe');
     fireEvent.press(screen.getByText('Send'));
     act(() => { jest.advanceTimersByTime(1500); });
-    await waitFor(() => expect(screen.getByText(/Question progression/)).toBeTruthy());
 
-    // Turn 4 -> 5. Final batch finishes. Turn count reaches 5.
+    // Turn 4 (Progression)
+    await waitFor(() => expect(screen.getByText(/Question progression/)).toBeTruthy());
     fireEvent.changeText(screen.getByTestId('input-text'), 'Worsening');
     fireEvent.press(screen.getByText('Send'));
     act(() => { jest.advanceTimersByTime(1500); });
 
+    // Turn 5 (Red Flag Denials)
+    await waitFor(() => expect(screen.getByText(/Question red_flag_denials/)).toBeTruthy());
+    fireEvent.changeText(screen.getByTestId('input-text'), 'No red flags');
+    fireEvent.press(screen.getByText('Send'));
+    act(() => { jest.advanceTimersByTime(1500); });
+
+    // Next turn would be 6, so we expect navigation
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('Recommendation', expect.anything());
     }, { timeout: 5000 });
 
-    // Verification: Turn 1, 2, 3, 4 fetch calls made.
-    // Call 1: useEffect
-    // Call 2: after Turn 1 batch
-    // Call 3: after Turn 2 batch
-    // Call 4: after Turn 3 batch
-    // After Turn 4 batch, nextTurn is 5. We STOP.
-    expect(getGeminiResponse).toHaveBeenCalledTimes(4);
+    // Verification: Single fetch call made
+    expect(generateAssessmentPlan).toHaveBeenCalledTimes(1);
   });
 
   test('concludes assessment immediately when Red Flag is identified', async () => {
     const { detectEmergency } = require('../src/services/emergencyDetector');
     // Ensure we start fresh for this test
     (detectEmergency as jest.Mock).mockReturnValue({ isEmergency: false, matchedKeywords: [] });
-    (getGeminiResponse as jest.Mock).mockResolvedValueOnce(JSON.stringify(mockQuestions('age')));
+    (generateAssessmentPlan as jest.Mock).mockResolvedValueOnce(mockQuestions('age').questions);
 
     render(
       <ReduxProvider store={store}>

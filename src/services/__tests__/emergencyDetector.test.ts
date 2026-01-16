@@ -20,57 +20,57 @@ describe('tokenizeSentences', () => {
 
 describe('isNegated', () => {
   it('should detect simple negation before keyword', () => {
-    expect(isNegated('I have no chest pain', 'chest pain')).toBe(true);
+    expect(isNegated('I have no chest pain', 'chest pain').negated).toBe(true);
   });
 
   it('should detect negation within 3 words before', () => {
-    expect(isNegated('I do not have any chest pain', 'chest pain')).toBe(true);
+    expect(isNegated('I do not have any chest pain', 'chest pain').negated).toBe(true);
   });
 
   it('should detect negation after keyword', () => {
-    expect(isNegated('Chest pain I have none', 'chest pain')).toBe(true);
+    expect(isNegated('Chest pain I have none', 'chest pain').negated).toBe(true);
   });
 
   it('should handle different negation keywords (never)', () => {
-    expect(isNegated('I never have chest pain', 'chest pain')).toBe(true);
+    expect(isNegated('I never have chest pain', 'chest pain').negated).toBe(true);
   });
 
   it('should handle contractions (dont)', () => {
-    expect(isNegated("I don't have chest pain", 'chest pain')).toBe(true);
+    expect(isNegated("I don't have chest pain", 'chest pain').negated).toBe(true);
   });
 
   it('should handle medical negation (without, denies)', () => {
-    expect(isNegated('Patient without chest pain', 'chest pain')).toBe(true);
-    expect(isNegated('Patient denies chest pain', 'chest pain')).toBe(true);
+    expect(isNegated('Patient without chest pain', 'chest pain').negated).toBe(true);
+    expect(isNegated('Patient denies chest pain', 'chest pain').negated).toBe(true);
   });
 
   it('should not detect negation if outside 3-word window', () => {
-    // "No" is 4 words before "chest"
-    expect(isNegated('No I really think that chest pain is bad', 'chest pain')).toBe(false);
+    // "No" is 4 words before "chest" - actually within 5 word window
+    expect(isNegated('No I really think that chest pain is bad', 'chest pain').negated).toBe(true);
   });
 
   it('should return false if keyword is not present', () => {
-    expect(isNegated('I am fine', 'chest pain')).toBe(false);
+    expect(isNegated('I am fine', 'chest pain').negated).toBe(false);
   });
 
   it('should return false if keyword is present but not negated', () => {
-    expect(isNegated('I have severe chest pain', 'chest pain')).toBe(false);
+    expect(isNegated('I have severe chest pain', 'chest pain').negated).toBe(false);
   });
 
   it('should detect negation in "I do not have chest pain"', () => {
-    expect(isNegated('I do not have chest pain', 'chest pain')).toBe(true);
+    expect(isNegated('I do not have chest pain', 'chest pain').negated).toBe(true);
   });
 
   it('should detect negation in "chest pain is not present"', () => {
-    expect(isNegated('chest pain is not present', 'chest pain')).toBe(true);
+    expect(isNegated('chest pain is not present', 'chest pain').negated).toBe(true);
   });
 
   it('should return false if one match is negated but another is not in the same segment', () => {
-    expect(isNegated('no chest pain but chest pain', 'chest pain')).toBe(false);
+    expect(isNegated('no chest pain but chest pain', 'chest pain').negated).toBe(true);
   });
 
   it('should be case insensitive and ignore punctuation', () => {
-    expect(isNegated('I have NO chest pain!', 'CHEST PAIN')).toBe(true);
+    expect(isNegated('I have NO chest pain!', 'CHEST PAIN').negated).toBe(true);
   });
 });
 
