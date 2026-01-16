@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, GenerativeModel, GenerateContentRequest } from '@google/generative-ai';
 import Constants from 'expo-constants';
 import { GENERATE_ASSESSMENT_QUESTIONS_PROMPT, FINAL_SLOT_EXTRACTION_PROMPT } from '../constants/prompts';
+import { AssessmentProfile, AssessmentQuestion } from '../types/triage';
 
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -42,20 +43,6 @@ const generateContentWithRetry = async (
   }
   throw new Error('Failed to connect to AI service after multiple attempts.');
 };
-
-export interface AssessmentQuestion {
-  id: string;
-  text: string;
-}
-
-export interface AssessmentProfile {
-  age: string | null;
-  duration: string | null;
-  severity: string | null;
-  progression: string | null;
-  red_flag_denials: string | null;
-  summary: string;
-}
 
 /**
  * Generates the fixed set of assessment questions (Call #1)
@@ -106,13 +93,15 @@ export const extractClinicalProfile = async (
     return JSON.parse(jsonMatch[0]) as AssessmentProfile;
   } catch (error) {
     console.error('[Gemini] Failed to extract profile:', error);
+    
+    // Return a fallback profile with summary concatenated from history
     return {
       age: null,
       duration: null,
       severity: null,
       progression: null,
       red_flag_denials: null,
-      summary: 'Error parsing profile.'
+      summary: history.map(msg => `${msg.role.toUpperCase()}: ${msg.text}`).join('\n')
     };
   }
 };

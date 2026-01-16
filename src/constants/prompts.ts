@@ -13,23 +13,27 @@ INSTRUCTIONS:
 - Generate a JSON object containing a list of 3-4 questions.
 - **Question 1**: Combine Age and Duration (e.g., "How old are you and when did this start?").
 - **Question 2**: Ask about Severity and Progression (e.g., "On a scale of 1-10, how bad is it, and is it getting worse?").
-- **Question 3**: Ask about Red Flag Denials. MUST be a Yes/No question listing specific critical signs relevant to "{{initialSymptom}}" (plus general ones like chest pain/difficulty breathing).
+- **Question 3**: Ask about Red Flag Denials. MUST be a Yes/No question listing specific critical signs relevant to "{{initialSymptom}}" (plus general ones like chest pain/difficulty breathing). You MUST set the "id" of this question to "red_flags".
 - **Question 4 (Optional)**: Only if "{{initialSymptom}}" strictly requires a specific follow-up (e.g., for "bite", ask "Was it a dog or cat?"). Otherwise, omit.
+- **Options**: For any question where it makes sense (especially Red Flags or Progression), you MAY provide an "options" array of 2-4 suggested answers (strings) to help the user respond quickly.
 
 OUTPUT FORMAT (Strict JSON, no markdown):
 {
   "questions": [
     {
       "id": "basics",
-      "text": "..."
+      "text": "...",
+      "options": ["Option 1", "Option 2"]
     },
     {
       "id": "severity_progression",
-      "text": "..."
+      "text": "...",
+      "options": ["Getting Better", "Getting Worse", "No Change"]
     },
     {
       "id": "red_flags",
-      "text": "..."
+      "text": "...",
+      "options": ["Yes", "No"]
     }
   ]
 }

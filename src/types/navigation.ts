@@ -1,13 +1,7 @@
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 
-import { TriageRecommendation } from './triage';
-
-export type AssessmentData = {
-  symptoms: string;
-  answers: Record<string, string>;
-  offlineRecommendation?: TriageRecommendation;
-};
+import { TriageRecommendation, AssessmentData } from './triage';
 
 // Define the parameters for each screen in the stack navigators
 export type CheckStackParamList = {
@@ -30,11 +24,7 @@ export type RootStackParamList = {
   YAKAP: NavigatorScreenParams<YakapStackParamList>;
   SymptomAssessment: { initialSymptom?: string };
   Recommendation: {
-    assessmentData: {
-      symptoms: string;
-      answers: { question: string; answer: string }[];
-      offlineRecommendation?: TriageRecommendation;
-    };
+    assessmentData: AssessmentData;
   };
   ClinicalNote: undefined;
   FacilityDetails: { facilityId: string };

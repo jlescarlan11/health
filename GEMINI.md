@@ -7,6 +7,9 @@
 ### Key Features
 
 - **AI Navigation Assistant:** Uses Google Gemini 2.5 Flash to triage symptoms and recommend care levels (Self-Care, Health Center, Hospital, Emergency).
+- **Model Note**: The project explicitly uses 'gemini-2.5-flash' as verified by the user.
+- **AI Question Generator**: The generator must assign the identifier `red_flags` to relevant screening questions in `prompts.ts`.
+- **UI Components**: Implemented `MultiSelectChecklist` for red flag screening in `SymptomAssessmentScreen.tsx`.
 - **Facility Directory:** Lists 29 healthcare facilities in Naga City with details like services, hours, and YAKAP accreditation.
 - **YAKAP Enrollment:** Guides eligible residents through the process of enrolling in the free YAKAP healthcare program.
 - **Offline Capability:** Core directory and emergency features function without internet access.

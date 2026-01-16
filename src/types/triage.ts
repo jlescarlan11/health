@@ -26,3 +26,25 @@ export interface TriageFlow {
   startNode: string;
   nodes: Record<string, TriageNode>;
 }
+
+export interface AssessmentProfile {
+  age: string | null;
+  duration: string | null;
+  severity: string | null;
+  progression: string | null;
+  red_flag_denials: string | null;
+  summary: string;
+}
+
+export interface AssessmentQuestion {
+  id: string;
+  text: string;
+  options?: string[];
+}
+
+export interface AssessmentData {
+  symptoms: string;
+  answers: { question: string; answer: string }[];
+  offlineRecommendation?: TriageRecommendation;
+  extractedProfile?: AssessmentProfile;
+}

@@ -56,6 +56,14 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   jaundice: 8,
   'persistent vomiting': 8,
 
+  // Moderate severity (5-7) - Potentially serious if combined
+  headache: 5,
+  'blurred vision': 6,
+  dizziness: 5,
+  fever: 5,
+  'abdominal pain': 6,
+  nausea: 4,
+
   // Bicolano / Local terms
   'hingalo': 10,
   'naghihingalo': 10,
@@ -65,6 +73,38 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   'nagkukumbulsion': 10,
   'kumbulsion': 10,
 };
+
+/**
+ * Critical symptom combinations that indicate high risk when occurring together.
+ * These are used to upgrade severity when multiple symptoms are present simultaneously.
+ */
+const COMBINATION_RISKS = [
+  {
+    symptoms: ['headache', 'blurred vision'],
+    severity: 10,
+    reason: 'Neurological or hypertensive crisis',
+  },
+  {
+    symptoms: ['headache', 'stiff neck'],
+    severity: 10,
+    reason: 'Potential meningitis',
+  },
+  {
+    symptoms: ['chest pain', 'shortness of breath'],
+    severity: 10,
+    reason: 'Potential cardiac emergency',
+  },
+  {
+    symptoms: ['fever', 'confusion'],
+    severity: 10,
+    reason: 'Potential sepsis or severe infection',
+  },
+  {
+    symptoms: ['abdominal pain', 'dizziness'],
+    severity: 10,
+    reason: 'Potential internal bleeding or shock',
+  },
+];
 
 // Negation patterns - expanded
 const NEGATION_KEYWORDS = [
@@ -441,17 +481,37 @@ export const detectEmergency = (
   }
 
   // Calculate final score (highest score across all segments)
-  const finalScore =
+  let finalScore =
     segmentAnalyses.length > 0 ? Math.max(...segmentAnalyses.map((s) => s.maxScore)) : 0;
 
   const matchedKeywords = Array.from(allActiveKeywords);
   const suppressedKeywords = Array.from(allSuppressedKeywords);
+
+  // Check for combination risks to potentially upgrade score
+  let combinationReason = '';
+  for (const risk of COMBINATION_RISKS) {
+    const hasAll = risk.symptoms.every((s) =>
+      matchedKeywords.some(
+        (mk) => mk.toLowerCase() === s.toLowerCase() || mk.toLowerCase().includes(s.toLowerCase()),
+      ),
+    );
+
+    if (hasAll && risk.severity >= finalScore) {
+      finalScore = risk.severity;
+      combinationReason = risk.reason;
+      console.log(`  Combination Risk Triggered: ${risk.symptoms.join(' + ')} (${risk.reason})`);
+    }
+  }
+
   const isEmergency = finalScore > 7;
 
   // Build reasoning
   let reasoning = '';
   if (isEmergency) {
     reasoning = `Emergency detected with score ${finalScore}/10. Active symptoms: ${matchedKeywords.join(', ')}.`;
+    if (combinationReason) {
+      reasoning += ` CRITICAL WARNING: ${combinationReason} detected.`;
+    }
   } else if (matchedKeywords.length > 0) {
     reasoning = `Non-emergency symptoms detected (score ${finalScore}/10): ${matchedKeywords.join(', ')}.`;
   } else if (suppressedKeywords.length > 0) {
@@ -484,11 +544,14 @@ export const detectEmergency = (
   let overrideResponse: AssessmentResponse | undefined;
 
   if (isEmergency) {
+    const advice = combinationReason
+      ? `CRITICAL: High risk combination detected (${combinationReason}). Go to the nearest emergency room immediately.`
+      : 'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room immediately.';
+
     overrideResponse = {
       recommended_level: 'emergency',
-      user_advice:
-        'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room immediately.',
-      clinical_soap: `S: Patient reports ${matchedKeywords.join(', ')}. O: Emergency keywords detected. A: Potential life-threatening condition. P: Immediate ED referral.`,
+      user_advice: advice,
+      clinical_soap: `S: Patient reports ${matchedKeywords.join(', ')}. O: Emergency keywords detected${combinationReason ? ` - Risk: ${combinationReason}` : ''}. A: Potential life-threatening condition. P: Immediate ED referral.`,
       key_concerns: matchedKeywords.map((k) => `Urgent symptom: ${k}`),
       critical_warnings: ['Immediate medical attention required', 'Do not delay care'],
       relevant_services: ['Emergency', 'Trauma Care'],

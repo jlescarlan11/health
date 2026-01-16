@@ -33,7 +33,34 @@ import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
 
+import { AssessmentProfile } from '../types/triage';
+
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
+
+const isFallbackProfile = (profile?: AssessmentProfile) => {
+  if (!profile || !profile.summary) return false;
+  // If age/duration etc are all null and summary contains dialogue tags, it's a fallback
+  const isDataEmpty = !profile.age && !profile.duration && !profile.severity && !profile.progression;
+  const hasDialogueTags = profile.summary.includes('USER:') || profile.summary.includes('ASSISTANT:');
+  return isDataEmpty && hasDialogueTags;
+};
+
+const formatClinicalSummary = (profile?: AssessmentProfile) => {
+  if (!profile) return '';
+  
+  if (isFallbackProfile(profile)) {
+    return profile.summary; // Return raw history for direct analysis
+  }
+
+  const parts = [];
+  if (profile.age) parts.push(`Age: ${profile.age}`);
+  if (profile.duration) parts.push(`Duration: ${profile.duration}`);
+  if (profile.severity) parts.push(`Severity: ${profile.severity}`);
+  if (profile.progression) parts.push(`Progression: ${profile.progression}`);
+  if (profile.red_flag_denials) parts.push(`Red Flags Denied: ${profile.red_flag_denials}`);
+  if (profile.summary) parts.push(`Summary: ${profile.summary}`);
+  return parts.join('. ');
+};
 
 const RecommendationScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
@@ -149,9 +176,18 @@ const RecommendationScreen = () => {
         nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
-      const triageContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
-        assessmentData.answers,
-      )}. Context: ${distanceContext}`;
+      const profile = assessmentData.extractedProfile;
+      const isFallback = isFallbackProfile(profile);
+      const profileSummary = formatClinicalSummary(profile);
+      
+      let triageContext = `Initial Symptom: ${assessmentData.symptoms}. ${
+        profileSummary ? `Clinical Profile: ${profileSummary}. ` : ''
+      }Answers: ${JSON.stringify(assessmentData.answers)}. Context: ${distanceContext}`;
+
+      if (isFallback) {
+        triageContext = `Analyze the following raw medical history directly as the structured extraction failed.\n\n${triageContext}`;
+      }
+
       const response = await geminiClient.assessSymptoms(triageContext);
       setRecommendation(response);
 
