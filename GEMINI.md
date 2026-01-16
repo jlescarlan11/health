@@ -189,3 +189,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Native Navigation Support:** Implemented back buttons in the headers of all primary feature screens (`NavigatorHomeScreen`, `FacilityDirectoryScreen`, `YakapHomeScreen`) to ensure users can navigate back to the home screen using either the in-app UI or the system back button.
   - **Deep Linking Update:** Updated the `linking` configuration in `App.tsx` to reflect the flattened navigation structure, removing the nested `Main` route.
   - **Files Modified/Deleted:** `src/navigation/TabNavigator.tsx` (Deleted), `src/navigation/AppNavigator.tsx`, `src/types/navigation.ts`, `App.tsx`.
+
+* **Prompt Refinement for Symptom Assessment (Jan 16, 2026):**
+  - **Checklist Integration:** Updated `CLARIFYING_QUESTIONS_PROMPT` in `src/constants/prompts.ts` to include a strict checklist for Age, Duration, and Severity.
+  - **Efficiency Optimization:** Instructed the AI to identify missing data points from the checklist, avoid redundant questions, and combine queries to reduce chat turns.
+  - **Tone & Naturalness:** Ensured the AI maintains an empathetic and professional tone while strictly adhering to the JSON schema for seamless UI integration.
+  - **Files Modified:** `src/constants/prompts.ts`.
