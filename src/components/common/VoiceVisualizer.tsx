@@ -34,9 +34,8 @@ export const VoiceVisualizer: React.FC<VoiceVisualizerProps> = ({
     // We normalize it roughly for visualization
     const normalizedVolume = Math.min(Math.max(volume / 10, 0.2), 1.0);
 
-    animations.forEach((anim, index) => {
-      // Add some randomness/stagger to the bars
-      const delay = index * 50;
+    animations.forEach((anim) => {
+      // Add some variation to the bars
       const variation = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
       const targetScale = normalizedVolume * variation;
 
@@ -50,9 +49,9 @@ export const VoiceVisualizer: React.FC<VoiceVisualizerProps> = ({
 
   return (
     <View style={styles.container}>
-      {animations.map((anim, index) => (
+      {animations.map((anim) => (
         <Animated.View
-          key={index}
+          key={anim.toString()}
           style={[
             styles.bar,
             {

@@ -5,11 +5,7 @@ import { theme } from '../src/theme';
 import { PaperProvider } from 'react-native-paper';
 
 const renderWithTheme = (component: React.ReactElement) => {
-  return render(
-    <PaperProvider theme={theme}>
-      {component}
-    </PaperProvider>
-  );
+  return render(<PaperProvider theme={theme}>{component}</PaperProvider>);
 };
 
 describe('ProgressBar', () => {
@@ -21,7 +17,7 @@ describe('ProgressBar', () => {
 
   it('renders with label and percentage', () => {
     const { getByText } = renderWithTheme(
-      <ProgressBar progress={0.75} label="Loading" showPercentage animated={false} />
+      <ProgressBar progress={0.75} label="Loading" showPercentage animated={false} />,
     );
     expect(getByText('Loading')).toBeTruthy();
     expect(getByText('75%')).toBeTruthy();
@@ -32,8 +28,10 @@ describe('ProgressBar', () => {
     const progressBar = getByRole('progressbar');
     // accessibilityValue now should be 100
     expect(progressBar.props.accessibilityValue.now).toBe(100);
-    
-    const { getByRole: getByRoleMin } = renderWithTheme(<ProgressBar progress={-0.5} animated={false} />);
+
+    const { getByRole: getByRoleMin } = renderWithTheme(
+      <ProgressBar progress={-0.5} animated={false} />,
+    );
     const progressBarMin = getByRoleMin('progressbar');
     expect(progressBarMin.props.accessibilityValue.now).toBe(0);
   });

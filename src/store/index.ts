@@ -31,19 +31,21 @@ const rootReducer = combineReducers({
 });
 
 const migrations = {
-  1: (state: any) => {
+  1: (state: Record<string, unknown> | undefined) => {
     // Surgical removal of legacy auth state if it exists
     if (state && state.auth) {
-      const { auth, ...rest } = state;
-      return rest;
+      const newState = { ...state };
+      delete newState.auth;
+      return newState;
     }
     return state;
   },
-  2: (state: any) => {
+  2: (state: Record<string, unknown> | undefined) => {
     // Purge enrollment state when migrating to version 2
     if (state && state.enrollment) {
-      const { enrollment, ...rest } = state;
-      return rest;
+      const newState = { ...state };
+      delete newState.enrollment;
+      return newState;
     }
     return state;
   },

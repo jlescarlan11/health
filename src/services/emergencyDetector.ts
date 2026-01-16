@@ -1,8 +1,10 @@
 import { AssessmentResponse } from '../api/geminiClient';
+import { getLevenshteinDistance } from '../utils';
 
 // Keywords derived from medical-knowledge.json
 // Scores: 0-10. >7 is EMERGENCY.
 const EMERGENCY_KEYWORDS: Record<string, number> = {
+  // ... (keep all existing keywords)
   // High severity (Score 10 - Immediate Emergency)
   'chest pain': 10,
   'difficulty breathing': 10,
@@ -40,6 +42,7 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   'water broke': 10,
   'electric shock': 10,
   drowning: 10,
+  hingalo: 10, // Bicolano: gasping for breath / near death
 
   // Moderate to High (Score 8-9 - Likely Emergency)
   'broken bone': 8,
@@ -53,8 +56,11 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   confusion: 8,
   'high fever': 8, // Especially if > 40C or with other symptoms
   'severe dehydration': 8,
-  'jaundice': 8,
+  jaundice: 8,
   'persistent vomiting': 8,
+  kulog: 8, // Bicolano: pain
+  paga: 8, // Bicolano: swelling
+  hapdi: 8, // Bicolano: stinging or burning sensation
 };
 
 interface EmergencyDetectionResult {
@@ -129,10 +135,7 @@ export const isNegated = (segment: string, keyword: string): boolean => {
 
       // Check for negation keywords in proximity
       const start = Math.max(0, i - PROXIMITY_WINDOW);
-      const end = Math.min(
-        words.length - 1,
-        i + keywordWords.length + PROXIMITY_WINDOW - 1
-      );
+      const end = Math.min(words.length - 1, i + keywordWords.length + PROXIMITY_WINDOW - 1);
 
       let isThisOccurrenceNegated = false;
       for (let k = start; k <= end; k++) {
@@ -157,20 +160,69 @@ export const isNegated = (segment: string, keyword: string): boolean => {
 };
 
 /**
+ * Checks if two strings are a fuzzy match based on Levenshtein distance.
+ * The threshold scales with string length.
+ */
+const isFuzzyMatch = (s1: string, s2: string): boolean => {
+  const distance = getLevenshteinDistance(s1, s2);
+  const minLength = Math.min(s1.length, s2.length);
+
+  // Thresholds:
+  // Short strings (<= 4): 0 distance (exact match)
+  // Medium strings (5-8): 1 distance
+  // Long strings (> 8): 2 distance
+  if (minLength <= 4) return distance === 0;
+  if (minLength <= 8) return distance <= 1;
+  return distance <= 2;
+};
+
+/**
  * Analyzes input text for emergency keywords.
  * Normalizes text and calculates a severity score (0-10).
  * If score > 7, it's an EMERGENCY.
  */
 export const detectEmergency = (text: string): EmergencyDetectionResult => {
-  const segments = tokenizeSentences(text.toLowerCase());
+  const normalizedText = text.toLowerCase();
+  const segments = tokenizeSentences(normalizedText);
   let maxScore = 0;
   const matchedKeywords: string[] = [];
 
   for (const segment of segments) {
+    // Tokenize segment into words for per-word fuzzy matching
+    const segmentWords = segment.split(/\s+/).filter((w) => w.length > 0);
+
     for (const [keyword, severity] of Object.entries(EMERGENCY_KEYWORDS)) {
-      // Check for exact keyword or phrase match within the segment
+      let isMatch = false;
+
+      // 1. Exact match in segment
       if (segment.includes(keyword)) {
+        isMatch = true;
+      }
+      // 2. Fuzzy match against entire segment (for short segments like "chest pain")
+      else if (isFuzzyMatch(segment, keyword)) {
+        isMatch = true;
+      }
+      // 3. Per-word fuzzy match (for single-word keywords like "unconscious")
+      else if (!keyword.includes(' ')) {
+        isMatch = segmentWords.some((word) => isFuzzyMatch(word, keyword));
+      }
+      // 4. Sliding window fuzzy match for multi-word keywords
+      else {
+        const keywordWords = keyword.split(/\s+/);
+        if (segmentWords.length >= keywordWords.length) {
+          for (let i = 0; i <= segmentWords.length - keywordWords.length; i++) {
+            const window = segmentWords.slice(i, i + keywordWords.length).join(' ');
+            if (isFuzzyMatch(window, keyword)) {
+              isMatch = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (isMatch) {
         // Exclude any symptom matches that have been identified as negated
+        // Note: isNegated currently uses exact word matching, which is fine for safety
         if (isNegated(segment, keyword)) {
           continue;
         }

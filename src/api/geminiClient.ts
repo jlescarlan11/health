@@ -162,7 +162,9 @@ export class GeminiClient {
 
         if (cacheKeys.length > 0) {
           await AsyncStorage.multiRemove(cacheKeys);
-          console.log(`[GeminiClient] Automatically cleared ${cacheKeys.length} stale cache entries.`);
+          console.log(
+            `[GeminiClient] Automatically cleared ${cacheKeys.length} stale cache entries.`,
+          );
         }
 
         await AsyncStorage.setItem(STORAGE_KEY_LAST_CLEANUP, now.toString());

@@ -26,10 +26,8 @@ const NavigatorHomeScreen = () => {
   const keyboardHeight = useRef(new Animated.Value(0)).current;
 
   const [symptom, setSymptom] = useState('');
-  const [isInputFocused, setIsInputFocused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   useEffect(() => {
@@ -87,7 +85,10 @@ const NavigatorHomeScreen = () => {
           console.error('STT Error:', error);
           setIsRecording(false);
           setVolume(0);
-          Alert.alert('Speech Error', error.message || 'Could not recognize speech. Please try again.');
+          Alert.alert(
+            'Speech Error',
+            error.message || 'Could not recognize speech. Please try again.',
+          );
         },
         (vol) => {
           setVolume(vol);
@@ -129,7 +130,7 @@ const NavigatorHomeScreen = () => {
     const crisisCheck = detectMentalHealthCrisis(symptom);
     if (crisisCheck.isCrisis) {
       dispatch(setHighRisk(true));
-      // @ts-ignore - CrisisSupport is added to navigator but TS might need full restart to pick up
+      // @ts-expect-error - CrisisSupport is added to navigator but TS might need full restart to pick up
       navigation.navigate('CrisisSupport');
       return;
     }
@@ -140,14 +141,6 @@ const NavigatorHomeScreen = () => {
   const handleEmergencyCall = () => {
     setSafetyModalVisible(true);
     dispatch(setHighRisk(true));
-  };
-
-  const handleInputFocus = () => {
-    setIsInputFocused(true);
-  };
-
-  const handleInputBlur = () => {
-    setIsInputFocused(false);
   };
 
   return (
@@ -265,11 +258,8 @@ const NavigatorHomeScreen = () => {
           label="Symptom Details"
           placeholder=""
           maxLength={500}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
           isRecording={isRecording}
           volume={volume}
-          isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>

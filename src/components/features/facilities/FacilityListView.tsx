@@ -1,9 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
 
 import { RootState, AppDispatch } from '../../../store';
 import { fetchFacilities } from '../../../store/facilitiesSlice';
@@ -55,7 +54,7 @@ export const FacilityListView: React.FC = () => {
   };
 
   const handleFacilityPress = (facility: Facility) => {
-    // @ts-ignore - FacilityDetails is now in Root stack
+    // @ts-expect-error - navigation type issue
     navigation.navigate('FacilityDetails', { facilityId: facility.id });
   };
 

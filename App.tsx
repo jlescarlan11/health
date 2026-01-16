@@ -111,10 +111,7 @@ const AppContent = () => {
     <View style={styles.container}>
       <OfflineBanner />
       <AppNavigator />
-      <SafetyRecheckModal
-        visible={safetyModalVisible}
-        onDismiss={handleDismissSafetyModal}
-      />
+      <SafetyRecheckModal visible={safetyModalVisible} onDismiss={handleDismissSafetyModal} />
     </View>
   );
 };

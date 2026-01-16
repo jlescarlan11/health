@@ -7,7 +7,7 @@ module.exports = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
-    '^.+\.tsx?$': [
+    '^.+\\.tsx?$': [
       'ts-jest',
       {
         tsconfig: 'tsconfig.json',

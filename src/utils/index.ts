@@ -1,2 +1,3 @@
 export * from './facilityUtils';
-export * from './locationUtils'; // Assuming this exists based on imports seen elsewhere
+export * from './locationUtils';
+export * from './stringUtils';

@@ -5,7 +5,7 @@ import { Request, Response, NextFunction } from 'express';
  * This is especially important in Express 5
  */
 export const asyncHandler = (
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any> | any,
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown> | unknown,
 ) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);

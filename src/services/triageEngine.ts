@@ -6,7 +6,10 @@ export interface TriageStepResult {
 }
 
 export class TriageError extends Error {
-  constructor(message: string, public code: 'INVALID_NODE' | 'INVALID_ANSWER' | 'FLOW_NOT_FOUND' | 'OUTCOME_REACHED') {
+  constructor(
+    message: string,
+    public code: 'INVALID_NODE' | 'INVALID_ANSWER' | 'FLOW_NOT_FOUND' | 'OUTCOME_REACHED',
+  ) {
     super(message);
     this.name = 'TriageError';
   }
@@ -23,20 +26,27 @@ export class TriageEngine {
   public static getStartNode(flow: TriageFlow): TriageNode {
     const node = flow.nodes[flow.startNode];
     if (!node) {
-      throw new TriageError(`Start node "${flow.startNode}" not found in flow "${flow.name}".`, 'FLOW_NOT_FOUND');
+      throw new TriageError(
+        `Start node "${flow.startNode}" not found in flow "${flow.name}".`,
+        'FLOW_NOT_FOUND',
+      );
     }
     return node;
   }
 
   /**
    * Processes a user's answer for the current question node and returns the next node.
-   * 
+   *
    * @param flow The full triage flow definition
    * @param currentNodeId The ID of the question currently being asked
    * @param answer The user's response (e.g., "Yes" or "No")
    * @returns The next node (either another question or a final outcome)
    */
-  public static processStep(flow: TriageFlow, currentNodeId: string, answer: string): TriageStepResult {
+  public static processStep(
+    flow: TriageFlow,
+    currentNodeId: string,
+    answer: string,
+  ): TriageStepResult {
     const currentNode = flow.nodes[currentNodeId];
 
     if (!currentNode) {
@@ -44,11 +54,17 @@ export class TriageEngine {
     }
 
     if (currentNode.type === 'outcome') {
-      throw new TriageError(`Cannot process answer for an outcome node "${currentNodeId}".`, 'OUTCOME_REACHED');
+      throw new TriageError(
+        `Cannot process answer for an outcome node "${currentNodeId}".`,
+        'OUTCOME_REACHED',
+      );
     }
 
     if (!currentNode.options) {
-      throw new TriageError(`Question node "${currentNodeId}" has no options defined.`, 'INVALID_NODE');
+      throw new TriageError(
+        `Question node "${currentNodeId}" has no options defined.`,
+        'INVALID_NODE',
+      );
     }
 
     // Robust search for matching option label (case-insensitive + common variations)
@@ -63,17 +79,26 @@ export class TriageEngine {
     });
 
     if (!selectedOption) {
-      throw new TriageError(`Invalid answer "${answer}" for question "${currentNodeId}".`, 'INVALID_ANSWER');
+      throw new TriageError(
+        `Invalid answer "${answer}" for question "${currentNodeId}".`,
+        'INVALID_ANSWER',
+      );
     }
 
     const nextNode = flow.nodes[selectedOption.next];
     if (!nextNode) {
-      throw new TriageError(`Next node "${selectedOption.next}" not found in flow.`, 'INVALID_NODE');
+      throw new TriageError(
+        `Next node "${selectedOption.next}" not found in flow.`,
+        'INVALID_NODE',
+      );
     }
 
     // Robustness: Ensure outcome nodes always have a recommendation
     if (nextNode.type === 'outcome' && !nextNode.recommendation) {
-      throw new TriageError(`Outcome node "${selectedOption.next}" is missing its recommendation payload.`, 'INVALID_NODE');
+      throw new TriageError(
+        `Outcome node "${selectedOption.next}" is missing its recommendation payload.`,
+        'INVALID_NODE',
+      );
     }
 
     return {
@@ -88,7 +113,7 @@ export class TriageEngine {
    */
   public static getEstimatedRemainingSteps(flow: TriageFlow, currentNodeId: string): number {
     const visited = new Set<string>();
-    
+
     const findMaxDepth = (id: string): number => {
       if (visited.has(id)) return 0; // Prevent infinite loops
       visited.add(id);
@@ -98,7 +123,7 @@ export class TriageEngine {
 
       if (!node.options || node.options.length === 0) return 0;
 
-      const depths = node.options.map(opt => findMaxDepth(opt.next));
+      const depths = node.options.map((opt) => findMaxDepth(opt.next));
       return 1 + Math.max(...depths);
     };
 
@@ -110,7 +135,7 @@ export class TriageEngine {
    */
   public static validateFlow(flow: TriageFlow): string[] {
     const errors: string[] = [];
-    
+
     if (!flow.nodes[flow.startNode]) {
       errors.push(`Start node "${flow.startNode}" does not exist.`);
     }
@@ -120,7 +145,7 @@ export class TriageEngine {
         if (!node.options || node.options.length === 0) {
           errors.push(`Question node "${id}" has no options.`);
         } else {
-          node.options.forEach(opt => {
+          node.options.forEach((opt) => {
             if (!flow.nodes[opt.next]) {
               errors.push(`Question node "${id}" points to non-existent node "${opt.next}".`);
             }

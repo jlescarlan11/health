@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle, TouchableOpacity } from 'react-native';
-import { Card, Text, Chip, useTheme } from 'react-native-paper';
+import { Card, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility, FacilityService } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
@@ -49,7 +49,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 }) => {
   const theme = useTheme();
   const [showAllServices, setShowAllServices] = React.useState(false);
-  const { isOpen, text: statusText, color: statusColor } = getOpenStatus(facility);
+  const { text: statusText, color: statusColor } = getOpenStatus(facility);
 
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${showDistance && distance !== undefined ? `, Distance: ${formatDistance(distance)}` : ''}`;
 
@@ -169,7 +169,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 ]}
               >
                 <MaterialCommunityIcons
-                  name={getServiceIcon(service) as any}
+                  name={getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']}
                   size={12}
                   color={theme.colors.primary}
                 />

@@ -1,6 +1,10 @@
-import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
+import Voice, {
+  SpeechResultsEvent,
+  SpeechErrorEvent,
+  SpeechVolumeChangeEvent,
+} from '@react-native-voice/voice';
 import * as Speech from 'expo-speech';
-import { Platform, NativeModules } from 'react-native';
+import { NativeModules } from 'react-native';
 import { audioToText } from './gemini';
 
 class SpeechService {
@@ -27,7 +31,7 @@ class SpeechService {
   }
 
   private onSpeechResultsCallback: ((text: string) => void) | null = null;
-  private onSpeechErrorCallback: ((error: any) => void) | null = null;
+  private onSpeechErrorCallback: ((error: unknown) => void) | null = null;
   private onVolumeChangedCallback: ((volume: number) => void) | null = null;
 
   private onSpeechResults(e: SpeechResultsEvent) {
@@ -50,7 +54,7 @@ class SpeechService {
 
   async startListening(
     onResult: (text: string) => void,
-    onError?: (error: any) => void,
+    onError?: (error: unknown) => void,
     onVolumeChange?: (volume: number) => void,
     language = 'en-US',
   ) {

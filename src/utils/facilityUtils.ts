@@ -121,7 +121,9 @@ export const scoreFacility = (
   if (requiredServices.length > 0) {
     const matches = requiredServices.filter((req) =>
       facility.services.some(
-        (s) => s.toLowerCase().includes(req.toLowerCase()) || req.toLowerCase().includes(s.toLowerCase()),
+        (s) =>
+          s.toLowerCase().includes(req.toLowerCase()) ||
+          req.toLowerCase().includes(s.toLowerCase()),
       ),
     );
 
