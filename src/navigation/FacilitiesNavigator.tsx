@@ -7,13 +7,16 @@ const Stack = createStackNavigator<FacilitiesStackParamList>();
 
 const FacilitiesNavigator = () => {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        cardStyle: { backgroundColor: '#F5F7F8' },
+        cardShadowEnabled: false,
+      }}
+    >
       <Stack.Screen
         name="FacilityDirectory"
         component={FacilityDirectoryScreen}
-        options={{
-          headerShown: false,
-        }}
       />
     </Stack.Navigator>
   );

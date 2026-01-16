@@ -96,7 +96,10 @@ const EnrollmentGuideScreen = () => {
         }}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerSection}>
           <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>
             {pathway.name}

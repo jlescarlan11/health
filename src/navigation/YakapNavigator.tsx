@@ -7,8 +7,15 @@ const Stack = createStackNavigator<YakapStackParamList>();
 
 const YakapNavigator = () => {
   return (
-    <Stack.Navigator initialRouteName="YakapHome">
-      <Stack.Screen name="YakapHome" component={YakapHomeScreen} options={{ headerShown: false }} />
+    <Stack.Navigator 
+      initialRouteName="YakapHome"
+      screenOptions={{
+        headerShown: false,
+        cardStyle: { backgroundColor: '#F5F7F8' },
+        cardShadowEnabled: false,
+      }}
+    >
+      <Stack.Screen name="YakapHome" component={YakapHomeScreen} />
     </Stack.Navigator>
   );
 };

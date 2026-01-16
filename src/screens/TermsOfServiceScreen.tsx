@@ -8,7 +8,10 @@ const TermsOfServiceScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[styles.title, { color: theme.colors.onSurface }]}>Terms of Service</Text>
         <Text style={[styles.paragraph, { color: theme.colors.onSurfaceVariant }]}>
           This is a placeholder for the Terms of Service. The full text will be available in a

@@ -1,74 +1,65 @@
 export const GENERATE_ASSESSMENT_QUESTIONS_PROMPT = `
 You are a medical triage AI for Naga City, Philippines.
-Your goal is to generate a fixed, structured list of assessment questions to gather specific clinical data from a user who has reported: "{{initialSymptom}}".
+Your goal is to generate a comprehensive, structured list of assessment questions (up to 12) to gather clinical data for: "{{initialSymptom}}".
 
-REQUIRED DATA TO COLLECT (The "Slots"):
-1. **Age**: Patient's age.
-2. **Duration**: How long symptoms have lasted.
-3. **Severity**: Intensity (1-10) or impact on daily life.
-4. **Progression**: Getting better, worse, or staying the same.
-5. **Red Flag Denials**: Explicit confirmation that they are NOT experiencing life-threatening signs (e.g., chest pain, difficulty breathing).
+STRUCTURE YOUR PLAN IN THREE TIERS:
+1. **Tier 1 (Core - 3 questions)**: Age, Onset/Duration, and Severity/Progression.
+2. **Tier 2 (Context - 2-3 questions)**: Associated symptoms and "Character" (e.g., sharp vs dull, dry vs wet cough).
+3. **Tier 3 (Ambiguity Resolution - up to 6 questions)**: Specific systematic rule-outs and relevant follow-ups for "{{initialSymptom}}".
 
 INSTRUCTIONS:
-- Generate a JSON object containing a list of 3-4 questions.
-- **Question 1**: Combine Age and Duration (e.g., "How old are you and when did this start?").
-- **Question 2**: Ask about Severity and Progression (e.g., "On a scale of 1-10, how bad is it, and is it getting worse?").
-- **Question 3**: Ask about Red Flag Denials. MUST be a Yes/No question listing specific critical signs relevant to "{{initialSymptom}}" (plus general ones like chest pain/difficulty breathing). You MUST set the "id" of this question to "red_flags".
-- **Question 4 (Optional)**: Only if "{{initialSymptom}}" strictly requires a specific follow-up (e.g., for "bite", ask "Was it a dog or cat?"). Otherwise, omit.
-- **Options**: For any question where it makes sense (especially Red Flags or Progression), you MAY provide an "options" array of 2-4 suggested answers (strings) to help the user respond quickly.
+- Generate a JSON object containing a "questions" array.
+- **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms (e.g., "Are you experiencing chills, body aches, or a rash?"). 
+- **Red Flags**: You MUST include a "red_flags" question (usually in Tier 1 or 2). Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option.
+- **Options**: Provide suggested answers in the "options" array for all questions to improve user speed.
 
-OUTPUT FORMAT (Strict JSON, no markdown):
+OUTPUT FORMAT (Strict JSON):
 {
   "questions": [
     {
       "id": "basics",
-      "text": "...",
-      "options": ["Option 1", "Option 2"]
+      "type": "text",
+      "text": "How old are you and when did this start?",
+      "options": ["Just now", "A few hours ago", "Yesterday"]
     },
     {
-      "id": "severity_progression",
-      "text": "...",
-      "options": ["Getting Better", "Getting Worse", "No Change"]
+      "id": "associated_symptoms",
+      "type": "multi-select",
+      "text": "Are you also experiencing any of the following?",
+      "options": ["Chills", "Body Aches", "Fatigue", "Nausea"]
     },
     {
       "id": "red_flags",
-      "text": "...",
-      "options": ["Yes", "No"]
+      "type": "multi-select",
+      "text": "Are you experiencing any of these critical signs?",
+      "options": ["Chest Pain", "Difficulty Breathing", "Confusion", "None"]
     }
   ]
 }
 `;
 
 export const FINAL_SLOT_EXTRACTION_PROMPT = `
-You are a Clinical Data Parser. Your job is to extract structured data from a triage conversation.
-Analyze the interaction below and extract the values for the required slots.
+You are a Clinical Data Parser. Extract structured data and assess the quality of the information gathered.
 
 CONVERSATION:
 {{conversationHistory}}
 
 RULES:
-1. **Strict Extraction**: Only extract information explicitly provided by the user.
-2. **No Hallucination**: If the user did not answer or the info is missing, set the value to null or an empty string. Do NOT guess.
-3. **Red Flag Denials**:
-   - If the user explicitly denies emergency symptoms (e.g., "No chest pain", "No", "Nope", "Wala"), set this to "Denied".
-   - If they admit to an emergency symptom, extract the specific symptom.
-   - If the topic wasn't discussed, set to null.
-4. **Severity**: Extract numeric values (e.g., "5/10") or descriptive terms (e.g., "Severe").
+1. **Strict Extraction**: Only extract info explicitly provided. Missing info = null.
+2. **Confidence Scoring**: Provide a "confidence_score" (0.0-1.0) based on how complete the clinical picture is for "{{initialSymptom}}".
+3. **Ambiguity Check**: Set "ambiguity_detected" to true if core details (Severity, Duration, Red Flags) are missing or contradictory.
 
-OUTPUT FORMAT (Strict JSON, no markdown):
+OUTPUT FORMAT (Strict JSON):
 {
-  "age": "extracted value or null",
-  "duration": "extracted value or null",
-  "severity": "extracted value or null",
-  "progression": "extracted value or null",
-  "red_flag_denials": "extracted value (e.g. 'Denied') or null",
-  "summary": "Brief 1-sentence clinical summary of the user's report"
+  "age": "...",
+  "duration": "...",
+  "severity": "...",
+  "progression": "...",
+  "red_flag_denials": "...",
+  "summary": "1-sentence summary",
+  "confidence_score": 0.0,
+  "ambiguity_detected": false
 }
-`;
-
-// Keep this for now if needed, but the new flow replaces the loop
-export const CLARIFYING_QUESTIONS_PROMPT = 
-`DEPRECATED
 `;
 
 export const VALID_SERVICES: string[] = [
@@ -102,7 +93,7 @@ export const VALID_SERVICES: string[] = [
   'Stroke Unit',
   'Surgery',
   'Trauma Care',
-  'X-ray'
+  'X-ray',
 ];
 
 export const SYMPTOM_ASSESSMENT_SYSTEM_PROMPT = `

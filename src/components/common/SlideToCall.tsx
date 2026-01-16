@@ -17,8 +17,6 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
   const theme = useTheme();
   const pan = useRef(new Animated.Value(0)).current;
   const [trackWidth, setTrackWidth] = useState(0);
-  const BUTTON_WIDTH = 50;
-  const PADDING = 4;
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { width } = event.nativeEvent.layout;

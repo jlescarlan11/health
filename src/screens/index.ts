@@ -1,4 +1,5 @@
 // Barrel export file for src/screens
+export * from './ClinicalNoteScreen';
 export * from './FacilityDetailsScreen';
 export * from './MainHomeScreen';
 export * from './NotFoundScreen';

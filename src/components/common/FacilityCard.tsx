@@ -169,7 +169,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             >
               {statusText.toUpperCase()}
             </Text>
-            {facility.hours &&
+            {!!facility.hours &&
               !facility.hours.includes('24/7') &&
               !facility.hours.toLowerCase().includes('24 hours') &&
               !facility.is_24_7 && (

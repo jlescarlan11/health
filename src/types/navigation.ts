@@ -1,7 +1,7 @@
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 
-import { TriageRecommendation, AssessmentData } from './triage';
+import { AssessmentData } from './triage';
 
 // Define the parameters for each screen in the stack navigators
 export type CheckStackParamList = {

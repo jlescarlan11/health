@@ -36,7 +36,7 @@ export const MultiSelectChecklist: React.FC<MultiSelectChecklistProps> = ({
 
   return (
     <View style={styles.container}>
-      {title && (
+      {!!title && (
         <Text 
           variant="titleSmall" 
           style={[styles.title, { color: theme.colors.onSurfaceVariant }]}

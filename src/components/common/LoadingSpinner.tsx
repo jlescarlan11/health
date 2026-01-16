@@ -33,7 +33,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
             accessibilityLabel={text || 'Loading'}
           >
             <ActivityIndicator animating={true} color={spinnerColor} size={size} />
-            {text && <Text style={[styles.text, { color: theme.colors.onSurface }]}>{text}</Text>}
+            {!!text && <Text style={[styles.text, { color: theme.colors.onSurface }]}>{text}</Text>}
           </View>
         </View>
       </Modal>
@@ -48,7 +48,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       accessibilityLabel={text || 'Loading'}
     >
       <ActivityIndicator animating={true} color={spinnerColor} size={size} />
-      {text && <Text style={[styles.inlineText, { color: theme.colors.onSurface }]}>{text}</Text>}
+      {!!text && <Text style={[styles.inlineText, { color: theme.colors.onSurface }]}>{text}</Text>}
     </View>
   );
 };

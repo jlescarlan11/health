@@ -5,12 +5,14 @@ import {
   ScrollView,
   Alert,
   Platform,
-  LayoutAnimation,
   UIManager,
   Keyboard,
   Animated,
   BackHandler,
+  Dimensions,
 } from 'react-native';
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -42,7 +44,6 @@ import {
   InputCard,
   TypingIndicator,
   InputCardRef,
-  SafetyRecheckModal,
   ProgressBar,
   MultiSelectChecklist,
 } from '../components/common';
@@ -114,7 +115,6 @@ const SymptomAssessmentScreen = () => {
   // UI Interactions
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [error, setError] = useState('');
   
   // Voice
   const [isRecording, setIsRecording] = useState(false);
@@ -219,10 +219,8 @@ const SymptomAssessmentScreen = () => {
       } catch (err: any) {
         console.error('Initialization Error:', err);
         if (err.message === 'NETWORK_ERROR') {
-           setError('Network unavailable. Switching to Offline Mode.');
            startOfflineTriage();
         } else {
-           setError('Unable to start assessment. Please try again.');
            setLoading(false);
         }
       }
@@ -286,10 +284,37 @@ const SymptomAssessmentScreen = () => {
   
           // 4. Progress or Finish
           if (currentQuestionIndex < questions.length - 1) {
+              const nextIdx = currentQuestionIndex + 1;
+
+              // --- NEW: Early Termination Check at Turn 5 ---
+              if (nextIdx === 5) {
+                  console.log('[Assessment] Turn 5 reached. Checking for early termination...');
+                  try {
+                      const history = nextHistory.map(m => ({
+                          role: m.sender,
+                          text: m.text
+                      }));
+                      const profile = await extractClinicalProfile(history);
+                      
+                      if (profile.confidence_score && profile.confidence_score >= 0.85 && !profile.ambiguity_detected) {
+                          console.log(`[Assessment] High confidence (${profile.confidence_score}) achieved early. Terminating.`);
+                          setIsTyping(true);
+                          setMessages(prev => [...prev, {
+                              id: 'early-exit',
+                              text: "Thank you. I have enough information to provide a recommendation.",
+                              sender: 'assistant'
+                          }]);
+                          setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
+                          return;
+                      }
+                  } catch (e) {
+                      console.warn('[Assessment] Early termination check failed, continuing...', e);
+                  }
+              }
+
               // Next Question
               setIsTyping(true);
               setTimeout(() => {
-                  const nextIdx = currentQuestionIndex + 1;
                   const nextQ = questions[nextIdx];
                   setMessages(prev => [...prev, {
                       id: `ai-${nextIdx}`,
@@ -304,7 +329,14 @@ const SymptomAssessmentScreen = () => {
           } else {
               // FINISH -> Call #2 (Parsing)
               setIsTyping(true);
-              await finalizeAssessment(newAnswers, nextHistory);
+              setMessages(prev => [...prev, {
+                  id: 'finalizing',
+                  text: "Thank you. I'm now analyzing your responses to provide the best guidance...",
+                  sender: 'assistant'
+              }]);
+              setTimeout(() => {
+                  finalizeAssessment(newAnswers, nextHistory);
+              }, 1500);
           }
       } else {
           // Offline Flow Handling
@@ -312,18 +344,14 @@ const SymptomAssessmentScreen = () => {
       }
     };
   
-    const finalizeAssessment = async (finalAnswers: Record<string, string>, currentHistory: Message[]) => {
+    const finalizeAssessment = async (finalAnswers: Record<string, string>, currentHistory: Message[], preExtractedProfile?: AssessmentProfile) => {
       console.log('[Assessment] Finalizing... Extracting Slots.');
       
-      // Construct history for the parser
-      const history = currentHistory.map(m => ({
-          role: m.sender, 
-          text: m.text 
-      }));
-      // Add the last user answer which might just have been added to state but not fully flushed in a complex way (actually messages state is updated, so we good).
-      
       try {
-          const profile = await extractClinicalProfile(history);
+          const profile = preExtractedProfile || await extractClinicalProfile(currentHistory.map(m => ({
+              role: m.sender, 
+              text: m.text 
+          })));
           
           console.log('\n╔═══ FINAL PROFILE EXTRACTION ═══╗');
           console.log(JSON.stringify(profile, null, 2));
@@ -342,8 +370,7 @@ const SymptomAssessmentScreen = () => {
                   extractedProfile: profile
               }
           });
-      } catch (e) {
-          console.error('Finalization failed', e);
+      } catch (_) {
           Alert.alert("Error", "Could not process results. Please try again.");
           setProcessing(false);
           setIsTyping(false);
@@ -352,7 +379,6 @@ const SymptomAssessmentScreen = () => {
   // --- OFFLINE LOGIC ---
   const startOfflineTriage = () => {
     setIsOfflineMode(true);
-    setError('');
     const startNode = TriageEngine.getStartNode(triageFlow);
     setCurrentOfflineNodeId(startNode.id);
     setMessages([
@@ -489,18 +515,19 @@ const SymptomAssessmentScreen = () => {
       
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
          <ProgressBar 
-            progress={isOfflineMode ? 0.5 : (currentQuestionIndex / (questions.length || 1))}
-            label={isOfflineMode ? "Emergency Check" : "Assessment Progress"}
+            progress={isOfflineMode ? 0.5 : ((currentQuestionIndex + 1) / (questions.length || 1))}
+            label={isOfflineMode ? "Emergency Check" : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
          />
       </View>
 
-      <ScrollView 
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {messages.map(renderMessage)}
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+          >
+            {messages.map(renderMessage)}
         {isTyping && (
              <View style={[styles.messageWrapper, styles.assistantWrapper]}>
                 <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
@@ -521,32 +548,41 @@ const SymptomAssessmentScreen = () => {
           paddingBottom: Math.max(insets.bottom, 16) + 8 
         }
       ]}>
-         {/* Red Flags Checklist - Custom UI */}
-         {!isOfflineMode && currentQuestion?.id === 'red_flags' ? (
+         {/* Multi-Select Checklist - Custom UI */}
+         {!isOfflineMode && currentQuestion?.type === 'multi-select' ? (
            <View style={{ paddingBottom: 8 }}>
-             <MultiSelectChecklist
-               options={parseRedFlags(currentQuestion.text)}
-               selectedIds={selectedRedFlags}
-               onSelectionChange={setSelectedRedFlags}
-               title="SELECT ALL THAT APPLY"
-             />
-             <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+             <Text 
+               variant="titleSmall" 
+               style={{ 
+                 marginBottom: 8, 
+                 paddingHorizontal: 16, 
+                 letterSpacing: 1.5, 
+                 fontWeight: '700', 
+                 fontSize: 12, 
+                 color: theme.colors.onSurfaceVariant 
+               }}
+             >
+               SELECT ALL THAT APPLY
+             </Text>
+             <View style={{ maxHeight: SCREEN_HEIGHT / 3 }}>
+               <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
+                 <MultiSelectChecklist
+                   options={currentQuestion.options ? currentQuestion.options.map(opt => ({ id: opt, label: opt })) : parseRedFlags(currentQuestion.text)}
+                   selectedIds={selectedRedFlags}
+                   onSelectionChange={setSelectedRedFlags}
+                 />
+               </ScrollView>
+             </View>
+             <View style={{ marginTop: 8 }}>
                 <Button 
-                  variant={selectedRedFlags.length === 0 ? "primary" : "outline"} 
-                  onPress={() => handleNext("Denied")} 
-                  title="None of these apply"
-                  style={{ flex: 1 }}
+                  variant="primary"
+                  onPress={() => handleNext(selectedRedFlags.length > 0 ? `I have: ${selectedRedFlags.join(', ')}` : "None")}
+                  title="Confirm"
+                  style={{ width: '100%' }}
                   disabled={processing}
+                  accessibilityLabel="Confirm selected symptoms"
+                  accessibilityRole="button"
                 />
-                {selectedRedFlags.length > 0 && (
-                  <Button 
-                    variant="primary"
-                    onPress={() => handleNext(`I have: ${selectedRedFlags.join(', ')}`)}
-                    title="Confirm"
-                    style={{ flex: 1 }}
-                    disabled={processing}
-                  />
-                )}
              </View>
            </View>
          ) : (

@@ -1,4 +1,5 @@
 import { MD3LightTheme } from 'react-native-paper';
+import { DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native';
 
 // User defined palette
 const palette = {
@@ -12,6 +13,7 @@ export const theme = {
   ...MD3LightTheme,
   colors: {
     ...MD3LightTheme.colors,
+    // ... rest of the colors
 
     // Primary - Using Green as it's safe for text and branding
     primary: palette.green,
@@ -48,5 +50,17 @@ export const theme = {
     onError: '#FFFFFF',
     errorContainer: '#FFDAD6',
     onErrorContainer: '#410002',
+  },
+};
+
+export const navigationTheme = {
+  ...NavigationDefaultTheme,
+  colors: {
+    ...NavigationDefaultTheme.colors,
+    background: palette.background,
+    primary: palette.green,
+    card: '#FFFFFF',
+    text: palette.dark,
+    border: '#E0E2E3',
   },
 };

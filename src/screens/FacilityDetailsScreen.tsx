@@ -145,6 +145,7 @@ export const FacilityDetailsScreen = () => {
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 + insets.bottom }]}
+        showsVerticalScrollIndicator={false}
       >
         {/* Photo Gallery */}
         <TouchableOpacity
