@@ -27,13 +27,12 @@ import { RootStackScreenProps } from '../types/navigation';
 import {
   generateAssessmentPlan,
   extractClinicalProfile,
-  AssessmentQuestion,
 } from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
-import { TriageFlow } from '../types/triage';
+import { TriageFlow, AssessmentQuestion } from '../types/triage';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 
@@ -45,6 +44,7 @@ import {
   InputCardRef,
   SafetyRecheckModal,
   ProgressBar,
+  MultiSelectChecklist,
 } from '../components/common';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
@@ -56,6 +56,40 @@ interface Message {
   sender: 'assistant' | 'user';
   isOffline?: boolean;
 }
+
+const parseRedFlags = (text: string): { id: string, label: string }[] => {
+  // 1. Try to find a list after a colon
+  let content = text;
+  const colonIndex = text.indexOf(':');
+  if (colonIndex !== -1) {
+    content = text.substring(colonIndex + 1);
+  } else {
+    // 2. Try to find a list after specific keywords if no colon
+    const keywords = ["including", "like", "such as", "following", "these:"];
+    for (const kw of keywords) {
+      const idx = text.toLowerCase().indexOf(kw);
+      if (idx !== -1) {
+        content = text.substring(idx + kw.length);
+        break;
+      }
+    }
+  }
+
+  // Clean up content (remove trailing question mark)
+  content = content.replace(/\?$/, '');
+
+  // Split by comma or "or"
+  // "A, B, or C" -> ["A", "B", "C"]
+  const rawItems = content.split(/,| or /).map(s => s.trim()).filter(s => s.length > 0);
+  
+  // Deduplicate and format
+  const uniqueItems = Array.from(new Set(rawItems));
+  
+  return uniqueItems.map(item => ({
+    id: item, // Use label as ID for simplicity here
+    label: item.charAt(0).toUpperCase() + item.slice(1)
+  }));
+};
 
 const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
@@ -75,6 +109,7 @@ const SymptomAssessmentScreen = () => {
   const [answers, setAnswers] = useState<Record<string, string>>({}); // Map question ID -> User Answer
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
   
   // UI Interactions
   const [inputText, setInputText] = useState('');
@@ -84,6 +119,12 @@ const SymptomAssessmentScreen = () => {
   // Voice
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
+
+  // Reset checklist when question changes
+  useEffect(() => {
+    setSelectedRedFlags([]);
+  }, [currentQuestionIndex]);
+
 
     // Offline
     const [isOfflineMode, setIsOfflineMode] = useState(false);
@@ -206,7 +247,8 @@ const SymptomAssessmentScreen = () => {
         sender: 'user',
         isOffline: isOfflineMode
       };
-      setMessages(prev => [...prev, userMsg]);
+      const nextHistory = [...messages, userMsg];
+      setMessages(nextHistory);
   
       // 2. Emergency Check (Local, Deterministic)
       // Only check if it's NOT a skip
@@ -221,8 +263,16 @@ const SymptomAssessmentScreen = () => {
               console.log('[Assessment] EMERGENCY DETECTED during flow. Escalating.');
               navigation.replace('Recommendation', {
                   assessmentData: { 
-                      symptoms: initialSymptom, 
-                      answers: [...Object.entries(answers).map(([k,v]) => ({question: k, answer: v})), { question: currentQ.text, answer }] 
+                      symptoms: initialSymptom || '', 
+                      answers: [...Object.entries(answers).map(([k,v]) => ({question: k, answer: v})), { question: currentQ.text, answer }],
+                      extractedProfile: {
+                          age: null,
+                          duration: null,
+                          severity: null,
+                          progression: null,
+                          red_flag_denials: null,
+                          summary: `Emergency detected: ${safetyCheck.matchedKeywords.join(', ')}`
+                      }
                   }
               });
               return;
@@ -254,7 +304,7 @@ const SymptomAssessmentScreen = () => {
           } else {
               // FINISH -> Call #2 (Parsing)
               setIsTyping(true);
-              await finalizeAssessment(newAnswers);
+              await finalizeAssessment(newAnswers, nextHistory);
           }
       } else {
           // Offline Flow Handling
@@ -262,11 +312,11 @@ const SymptomAssessmentScreen = () => {
       }
     };
   
-    const finalizeAssessment = async (finalAnswers: Record<string, string>) => {
+    const finalizeAssessment = async (finalAnswers: Record<string, string>, currentHistory: Message[]) => {
       console.log('[Assessment] Finalizing... Extracting Slots.');
       
       // Construct history for the parser
-      const history = messages.map(m => ({
+      const history = currentHistory.map(m => ({
           role: m.sender, 
           text: m.text 
       }));
@@ -287,7 +337,7 @@ const SymptomAssessmentScreen = () => {
   
           navigation.replace('Recommendation', {
               assessmentData: {
-                  symptoms: initialSymptom,
+                  symptoms: initialSymptom || '',
                   answers: formattedAnswers,
                   extractedProfile: profile
               }
@@ -331,7 +381,7 @@ const SymptomAssessmentScreen = () => {
         if (result.isOutcome) {
             navigation.replace('Recommendation', {
                 assessmentData: {
-                    symptoms: initialSymptom,
+                    symptoms: initialSymptom || '',
                     answers: [{ question: 'Offline Triage', answer: result.node.recommendation?.reasoning || 'Completed' }],
                     offlineRecommendation: result.node.recommendation
                 }
@@ -428,6 +478,7 @@ const SymptomAssessmentScreen = () => {
   }
 
   // Determine current options if offline
+  const currentQuestion = questions[currentQuestionIndex];
   const offlineOptions = (isOfflineMode && currentOfflineNodeId) 
     ? triageFlow.nodes[currentOfflineNodeId]?.options 
     : null;
@@ -470,33 +521,74 @@ const SymptomAssessmentScreen = () => {
           paddingBottom: Math.max(insets.bottom, 16) + 8 
         }
       ]}>
-         {/* Offline Chips */}
-         {offlineOptions && (
-             <ScrollView horizontal contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
-                 {offlineOptions.map(opt => (
-                     <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
-                 ))}
-             </ScrollView>
-         )}
-         
-         {/* Skip Button for AI Mode */}
-         {!isOfflineMode && !offlineOptions && (
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingBottom: 8 }}>
-                <Chip mode="outlined" compact onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
-            </View>
-         )}
+         {/* Red Flags Checklist - Custom UI */}
+         {!isOfflineMode && currentQuestion?.id === 'red_flags' ? (
+           <View style={{ paddingBottom: 8 }}>
+             <MultiSelectChecklist
+               options={parseRedFlags(currentQuestion.text)}
+               selectedIds={selectedRedFlags}
+               onSelectionChange={setSelectedRedFlags}
+               title="SELECT ALL THAT APPLY"
+             />
+             <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                <Button 
+                  variant={selectedRedFlags.length === 0 ? "primary" : "outline"} 
+                  onPress={() => handleNext("Denied")} 
+                  title="None of these apply"
+                  style={{ flex: 1 }}
+                  disabled={processing}
+                />
+                {selectedRedFlags.length > 0 && (
+                  <Button 
+                    variant="primary"
+                    onPress={() => handleNext(`I have: ${selectedRedFlags.join(', ')}`)}
+                    title="Confirm"
+                    style={{ flex: 1 }}
+                    disabled={processing}
+                  />
+                )}
+             </View>
+           </View>
+         ) : (
+           <>
+             {/* Offline Chips */}
+             {offlineOptions && (
+                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
+                     {offlineOptions.map(opt => (
+                         <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
+                     ))}
+                 </ScrollView>
+             )}
 
-         <InputCard
-            ref={inputCardRef}
-            value={inputText}
-            onChangeText={setInputText}
-            onSubmit={() => handleNext()}
-            label={isOfflineMode ? "Select an option above" : "Type your answer..."}
-            isRecording={isRecording}
-            volume={volume}
-            onVoicePress={isRecording ? stopRecording : startRecording}
-            disabled={processing || (isOfflineMode && !!offlineOptions)}
-         />
+             {/* AI Generated Options */}
+             {!isOfflineMode && currentQuestion?.options && (
+                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
+                     {currentQuestion.options.map(opt => (
+                         <Chip key={opt} onPress={() => handleNext(opt)} disabled={processing}>{opt}</Chip>
+                     ))}
+                 </ScrollView>
+             )}
+             
+             {/* Skip Button for AI Mode */}
+             {!isOfflineMode && (
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingBottom: 8 }}>
+                    <Chip mode="outlined" compact onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
+                </View>
+             )}
+
+             <InputCard
+                ref={inputCardRef}
+                value={inputText}
+                onChangeText={setInputText}
+                onSubmit={() => handleNext()}
+                label={isOfflineMode ? "Select an option above" : "Type your answer..."}
+                isRecording={isRecording}
+                volume={volume}
+                onVoicePress={isRecording ? stopRecording : startRecording}
+                disabled={processing || (isOfflineMode && !!offlineOptions)}
+             />
+           </>
+         )}
       </Animated.View>
     </View>
   );
