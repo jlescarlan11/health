@@ -29,9 +29,16 @@ export type RootStackParamList = {
   Find: NavigatorScreenParams<FacilitiesStackParamList>;
   YAKAP: NavigatorScreenParams<YakapStackParamList>;
   SymptomAssessment: { initialSymptom?: string };
-  Recommendation: { assessmentData: AssessmentData };
-  CrisisSupport: undefined;
+  Recommendation: {
+    assessmentData: {
+      symptoms: string;
+      answers: { question: string; answer: string }[];
+      offlineRecommendation?: TriageRecommendation;
+    };
+  };
+  ClinicalNote: { noteId?: string };
   FacilityDetails: { facilityId: string };
+  CrisisSupport: undefined;
   YakapFaq: undefined;
   EligibilityChecker: undefined;
   EnrollmentPathway: undefined;

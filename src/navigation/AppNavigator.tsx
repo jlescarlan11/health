@@ -10,6 +10,7 @@ import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
 import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
 import RecommendationScreen from '../screens/RecommendationScreen';
+import { ClinicalNoteScreen } from '../screens/ClinicalNoteScreen';
 import CrisisSupportScreen from '../screens/CrisisSupportScreen';
 import FacilityDetailsScreen from '../screens/FacilityDetailsScreen';
 import {
@@ -44,6 +45,13 @@ const AppNavigator = () => {
         component={RecommendationScreen}
         options={{
           header: () => <StandardHeader title="Recommendation" />,
+        }}
+      />
+      <Stack.Screen
+        name="ClinicalNote"
+        component={ClinicalNoteScreen}
+        options={{
+          headerShown: false,
         }}
       />
       <Stack.Screen

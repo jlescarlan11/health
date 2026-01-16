@@ -3,8 +3,11 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Paragraph, Title, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
+import { RootState } from '../store';
+import { selectLatestClinicalNote } from '../store/offlineSlice';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -14,6 +17,7 @@ type MainHomeNavigationProp = RootStackScreenProps<'Home'>['navigation'];
 export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
   const theme = useTheme();
+  const lastNote = useSelector(selectLatestClinicalNote);
 
   const FeatureCard = ({
     title,
@@ -82,6 +86,18 @@ export const MainHomeScreen = () => {
         <HomeHero />
 
         <View style={styles.cardsContainer}>
+          {lastNote && (
+            <FeatureCard
+              title="Clinical Handover"
+              subtitle={`Show note from ${new Date(lastNote.timestamp).toLocaleDateString()}`}
+              icon="doctor"
+              color="#000000"
+              iconColor="#FFFFFF"
+              onPress={() => {
+                navigation.navigate('ClinicalNote', { noteId: lastNote.id });
+              }}
+            />
+          )}
           <FeatureCard
             title="Check Symptoms"
             subtitle="AI-powered health assessment"

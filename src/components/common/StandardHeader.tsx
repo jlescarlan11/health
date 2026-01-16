@@ -44,8 +44,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
     } else if (navigation.canGoBack()) {
       navigation.goBack();
     } else if (backRoute) {
-      // @ts-expect-error - dynamic route navigation
-      navigation.navigate(backRoute, backParams);
+      navigation.navigate(onBackPress as any);
     }
   };
 

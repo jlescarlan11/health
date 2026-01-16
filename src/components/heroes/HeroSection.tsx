@@ -11,7 +11,7 @@ interface HeroSectionProps {
 
 const HeroSection: React.FC<HeroSectionProps> = ({ children, colors, height = 200, style }) => {
   return (
-    <LinearGradient colors={colors} style={[styles.container, { height }, style]}>
+    <LinearGradient colors={[colors[0], colors[1]]} style={[styles.container, { height }, style]}>
       <View style={styles.content}>{children}</View>
     </LinearGradient>
   );

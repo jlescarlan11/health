@@ -20,7 +20,6 @@ const EnrollmentCompletionScreen = () => {
 
   const navigateToFacilities = () => {
     // Navigate to Find tab with YAKAP filter
-    // @ts-expect-error - cross-tab navigation
     navigation.navigate('Find', {
       screen: 'FacilityDirectory',
       params: { filter: 'yakap' },

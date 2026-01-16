@@ -158,13 +158,13 @@ const SymptomAssessmentScreen = () => {
         (text) => {
           setInputText(text);
         },
-        (error) => {
+        (error: any) => {
           console.error('STT Error:', error);
           setIsRecording(false);
           setVolume(0);
           Alert.alert(
             'Speech Error',
-            error.message || 'Could not recognize speech. Please try again.',
+            error?.message || 'Could not recognize speech. Please try again.',
           );
         },
         (vol) => {
@@ -298,7 +298,7 @@ const SymptomAssessmentScreen = () => {
     if (emergencyCheck.isEmergency || mentalHealthCheck.isCrisis) {
       dispatch(setHighRisk(true));
       navigation.replace('Recommendation', {
-        assessmentData: { symptoms: initialSymptom || '', answers: {} },
+        assessmentData: { symptoms: initialSymptom || '', answers: [] },
       });
       return;
     }
@@ -416,7 +416,7 @@ const SymptomAssessmentScreen = () => {
           navigation.replace('Recommendation', {
             assessmentData: {
               symptoms: initialSymptom || '',
-              answers: { 'Offline Triage': rec.reasoning },
+              answers: [{ question: 'Offline Triage', answer: rec.reasoning }],
               offlineRecommendation: rec,
             },
           });
@@ -482,9 +482,17 @@ const SymptomAssessmentScreen = () => {
     const emergencyCheck = detectEmergency(finalAnswer);
     if (emergencyCheck.isEmergency) {
       dispatch(setHighRisk(true));
+      const formattedAnswers = Object.entries(newAnswers).map(([id, answer]) => {
+        const question = questions.find((q) => q.id === id);
+        return {
+          question: question ? question.text : id,
+          answer,
+        };
+      });
+
       const partialData = {
         symptoms: initialSymptom || '',
-        answers: newAnswers,
+        answers: formattedAnswers,
       };
       navigation.replace('Recommendation', { assessmentData: partialData });
       return;
@@ -534,9 +542,17 @@ const SymptomAssessmentScreen = () => {
   };
 
   const finishAssessment = (finalAnswers: Record<string, string>) => {
+    const formattedAnswers = Object.entries(finalAnswers).map(([id, answer]) => {
+      const question = questions.find((q) => q.id === id);
+      return {
+        question: question ? question.text : id,
+        answer,
+      };
+    });
+
     const assessmentData = {
       symptoms: initialSymptom || '',
-      answers: finalAnswers,
+      answers: formattedAnswers,
     };
     navigation.replace('Recommendation', { assessmentData });
   };

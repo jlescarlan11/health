@@ -19,11 +19,13 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
-import { setHighRisk } from '../store/navigationSlice';
+import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
+import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
+import { DoctorHandoverCard } from '../components/features/navigation/DoctorHandoverCard';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
@@ -53,6 +55,7 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+  const [showHandover, setShowHandover] = useState(false);
   const analysisStarted = useRef(false);
 
   const handleBack = useCallback(() => {
@@ -146,11 +149,30 @@ const RecommendationScreen = () => {
         nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
-      const context = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
+      const triageContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
         assessmentData.answers,
       )}. Context: ${distanceContext}`;
-      const response = await geminiClient.assessSymptoms(context);
+      const response = await geminiClient.assessSymptoms(triageContext);
       setRecommendation(response);
+
+      // Save to Redux for persistence and offline access
+      dispatch(
+        setReduxRecommendation({
+          level: response.recommended_level,
+          reasoning: response.condition_summary,
+          actions: [response.recommended_action],
+          soap_note: response.soap_note,
+        }),
+      );
+
+      if (response.soap_note) {
+        dispatch(
+          saveClinicalNote({
+            soapNote: response.soap_note,
+            recommendationLevel: response.recommended_level,
+          }),
+        );
+      }
 
       // If emergency, set high risk status for persistence
       if (response.recommended_level === 'emergency') {
@@ -454,6 +476,35 @@ const RecommendationScreen = () => {
           </View>
         )}
 
+        {/* Clinical Handover Section */}
+        {recommendation.soap_note && (
+          <View style={styles.handoverSection}>
+            <Divider style={styles.restartDivider} />
+            <View style={styles.handoverHeader}>
+              <MaterialCommunityIcons name="doctor" size={24} color={theme.colors.primary} />
+              <Text variant="titleMedium" style={styles.handoverTitle}>
+                For Healthcare Professionals
+              </Text>
+            </View>
+            <Text variant="bodySmall" style={styles.handoverSubtitle}>
+              If you are at the facility, you can show this clinical triage note to the nurse or doctor.
+            </Text>
+            <Button
+              title={showHandover ? 'Hide Clinical Note' : 'Show Clinical Note'}
+              onPress={() => setShowHandover(!showHandover)}
+              variant="outline"
+              icon={showHandover ? 'eye-off' : 'eye'}
+              style={styles.handoverButton}
+            />
+            {showHandover && (
+              <DoctorHandoverCard
+                soapNote={recommendation.soap_note}
+                timestamp={Date.now()}
+              />
+            )}
+          </View>
+        )}
+
         {/* Restart Section */}
         <View style={styles.restartSection}>
           <Divider style={styles.restartDivider} />
@@ -584,6 +635,29 @@ const styles = StyleSheet.create({
   sectionHeader: { marginBottom: 16 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },
   sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },
+
+  handoverSection: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  handoverHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  handoverTitle: {
+    marginLeft: 12,
+    fontWeight: 'bold',
+  },
+  handoverSubtitle: {
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  handoverButton: {
+    marginBottom: 16,
+  },
 
   emptyState: {
     padding: 40,

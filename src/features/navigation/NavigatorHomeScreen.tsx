@@ -81,13 +81,13 @@ const NavigatorHomeScreen = () => {
         (text) => {
           setSymptom(text);
         },
-        (error) => {
+        (error: any) => {
           console.error('STT Error:', error);
           setIsRecording(false);
           setVolume(0);
           Alert.alert(
             'Speech Error',
-            error.message || 'Could not recognize speech. Please try again.',
+            error?.message || 'Could not recognize speech. Please try again.',
           );
         },
         (vol) => {
@@ -121,7 +121,7 @@ const NavigatorHomeScreen = () => {
     if (emergencyCheck.isEmergency) {
       dispatch(setHighRisk(true));
       navigation.navigate('Recommendation', {
-        assessmentData: { symptoms: symptom, answers: {} },
+        assessmentData: { symptoms: symptom, answers: [] },
       });
       return;
     }
@@ -130,7 +130,6 @@ const NavigatorHomeScreen = () => {
     const crisisCheck = detectMentalHealthCrisis(symptom);
     if (crisisCheck.isCrisis) {
       dispatch(setHighRisk(true));
-      // @ts-expect-error - CrisisSupport is added to navigator but TS might need full restart to pick up
       navigation.navigate('CrisisSupport');
       return;
     }

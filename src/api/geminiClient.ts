@@ -35,6 +35,12 @@ export interface AssessmentResponse {
   red_flags: string[];
   confidence_score?: number;
   ambiguity_detected?: boolean;
+  soap_note?: {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+  };
 }
 
 interface CacheEntry {
@@ -139,6 +145,14 @@ export class GeminiClient {
         red_flags: json.red_flags || [],
         confidence_score: json.confidence_score,
         ambiguity_detected: json.ambiguity_detected,
+        soap_note: json.soap_note
+          ? {
+              subjective: json.soap_note.subjective || '',
+              objective: json.soap_note.objective || '',
+              assessment: json.soap_note.assessment || '',
+              plan: json.soap_note.plan || '',
+            }
+          : undefined,
       };
     } catch (error) {
       console.error('JSON Parse Error:', error);
