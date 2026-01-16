@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
+import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { speechService } from '../../services/speechService';
@@ -16,6 +16,8 @@ type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
 
 const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 'Prenatal Care'];
 
+let sessionSafetyCheckShown = false;
+
 const NavigatorHomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
@@ -29,6 +31,14 @@ const NavigatorHomeScreen = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+
+  useEffect(() => {
+    // Show safety check modal once per session
+    if (!sessionSafetyCheckShown) {
+      setSafetyModalVisible(true);
+      sessionSafetyCheckShown = true;
+    }
+  }, []);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -138,8 +148,12 @@ const NavigatorHomeScreen = () => {
   };
 
   const handleEmergencyCall = () => {
-    setSafetyModalVisible(true);
     dispatch(setHighRisk(true));
+    const url = Platform.OS === 'android' ? 'tel:911' : 'telprompt:911';
+    Linking.openURL(url).catch((err) => {
+      console.error('Error opening dialer:', err);
+      Alert.alert('Error', 'Could not initiate the call. Please dial 911 manually.');
+    });
   };
 
   return (
