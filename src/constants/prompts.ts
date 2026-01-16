@@ -66,11 +66,6 @@ OUTPUT FORMAT (Strict JSON, no markdown):
 }
 `;
 
-// Keep this for now if needed, but the new flow replaces the loop
-export const CLARIFYING_QUESTIONS_PROMPT = 
-`DEPRECATED
-`;
-
 export const VALID_SERVICES: string[] = [
   'Adolescent Health',
   'Animal Bite Clinic',

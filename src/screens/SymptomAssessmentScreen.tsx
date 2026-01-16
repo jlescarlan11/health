@@ -5,7 +5,6 @@ import {
   ScrollView,
   Alert,
   Platform,
-  LayoutAnimation,
   UIManager,
   Keyboard,
   Animated,
@@ -42,7 +41,6 @@ import {
   InputCard,
   TypingIndicator,
   InputCardRef,
-  SafetyRecheckModal,
   ProgressBar,
   MultiSelectChecklist,
 } from '../components/common';
@@ -114,7 +112,6 @@ const SymptomAssessmentScreen = () => {
   // UI Interactions
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [error, setError] = useState('');
   
   // Voice
   const [isRecording, setIsRecording] = useState(false);
@@ -219,10 +216,8 @@ const SymptomAssessmentScreen = () => {
       } catch (err: any) {
         console.error('Initialization Error:', err);
         if (err.message === 'NETWORK_ERROR') {
-           setError('Network unavailable. Switching to Offline Mode.');
            startOfflineTriage();
         } else {
-           setError('Unable to start assessment. Please try again.');
            setLoading(false);
         }
       }
@@ -342,8 +337,7 @@ const SymptomAssessmentScreen = () => {
                   extractedProfile: profile
               }
           });
-      } catch (e) {
-          console.error('Finalization failed', e);
+      } catch (_) {
           Alert.alert("Error", "Could not process results. Please try again.");
           setProcessing(false);
           setIsTyping(false);
@@ -352,7 +346,6 @@ const SymptomAssessmentScreen = () => {
   // --- OFFLINE LOGIC ---
   const startOfflineTriage = () => {
     setIsOfflineMode(true);
-    setError('');
     const startNode = TriageEngine.getStartNode(triageFlow);
     setCurrentOfflineNodeId(startNode.id);
     setMessages([

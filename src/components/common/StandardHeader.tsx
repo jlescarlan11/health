@@ -18,7 +18,6 @@ interface StandardHeaderProps {
   showBackButton?: boolean;
   onBackPress?: () => void;
   backRoute?: string;
-  backParams?: Record<string, unknown>;
   rightActions?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
@@ -29,7 +28,6 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   showBackButton = false,
   onBackPress,
   backRoute,
-  backParams,
   rightActions,
   style,
   titleStyle,
@@ -44,7 +42,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
     } else if (navigation.canGoBack()) {
       navigation.goBack();
     } else if (backRoute) {
-      navigation.navigate(onBackPress as any);
+      navigation.navigate(backRoute as any);
     }
   };
 

@@ -7,7 +7,6 @@ import {
   Keyboard,
   ScrollView,
   Animated,
-  Linking,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';

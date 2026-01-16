@@ -1,20 +1,14 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme, IconButton } from 'react-native-paper';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { View, StyleSheet } from 'react-native';
+import { Text, IconButton } from 'react-native-paper';
+import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { DoctorHandoverCard } from '../components/features/navigation/DoctorHandoverCard';
-import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import StandardHeader from '../components/common/StandardHeader';
-
-type ClinicalNoteRouteProp = RouteProp<RootStackParamList, 'ClinicalNote'>;
 
 export const ClinicalNoteScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute<ClinicalNoteRouteProp>();
-  const theme = useTheme();
   const latestAssessment = useSelector((state: RootState) => state.offline.latestAssessment);
 
   const note = latestAssessment;

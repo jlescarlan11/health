@@ -47,7 +47,7 @@ export const DoctorHandoverCard: React.FC<DoctorHandoverCardProps> = ({
              p: json.plan
            }
          }
-       } catch (e) {
+       } catch (_) {
          // Not JSON, just plain text
        }
     }

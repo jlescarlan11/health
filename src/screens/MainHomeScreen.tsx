@@ -6,7 +6,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
-import { RootState } from '../store';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
 
 // Import the new components
