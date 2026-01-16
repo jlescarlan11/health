@@ -1,15 +1,29 @@
 import Voice, { SpeechResultsEvent, SpeechErrorEvent, SpeechVolumeChangeEvent } from '@react-native-voice/voice';
 import * as Speech from 'expo-speech';
-import { Platform } from 'react-native';
+import { Platform, NativeModules } from 'react-native';
 import { audioToText } from './gemini';
 
 class SpeechService {
   private isListening = false;
+  private voiceAvailable = false;
 
   constructor() {
-    Voice.onSpeechResults = this.onSpeechResults.bind(this);
-    Voice.onSpeechError = this.onSpeechError.bind(this);
-    Voice.onSpeechVolumeChanged = this.onSpeechVolumeChanged.bind(this);
+    // Check if the native module is available
+    // The @react-native-voice/voice library relies on NativeModules.Voice
+    // This prevents "TypeError: Cannot read property 'startSpeech' of null" if the module is not linked
+    this.voiceAvailable = !!NativeModules.Voice;
+
+    if (this.voiceAvailable) {
+      Voice.onSpeechResults = this.onSpeechResults.bind(this);
+      Voice.onSpeechError = this.onSpeechError.bind(this);
+      Voice.onSpeechVolumeChanged = this.onSpeechVolumeChanged.bind(this);
+    } else {
+      console.warn('Voice module is not available. Speech recognition will not work.');
+    }
+  }
+
+  get isAvailable(): boolean {
+    return this.voiceAvailable;
   }
 
   private onSpeechResultsCallback: ((text: string) => void) | null = null;
@@ -40,6 +54,13 @@ class SpeechService {
     onVolumeChange?: (volume: number) => void,
     language = 'en-US',
   ) {
+    if (!this.voiceAvailable) {
+      const error = new Error('Voice recognition is not available on this device or simulator.');
+      console.warn(error.message);
+      onError?.(error);
+      return;
+    }
+
     if (this.isListening) return;
 
     try {
@@ -55,7 +76,7 @@ class SpeechService {
   }
 
   async stopListening() {
-    if (!this.isListening) return;
+    if (!this.isListening || !this.voiceAvailable) return;
 
     try {
       await Voice.stop();
@@ -66,6 +87,8 @@ class SpeechService {
   }
 
   async destroy() {
+    if (!this.voiceAvailable) return;
+
     try {
       await Voice.destroy();
       Voice.removeAllListeners();

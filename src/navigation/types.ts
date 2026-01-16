@@ -3,7 +3,6 @@ export type {
   CheckStackParamList,
   FacilitiesStackParamList,
   YakapStackParamList,
-  TabParamList,
   RootStackParamList,
   RootStackScreenProps,
   FacilitiesStackScreenProps,
