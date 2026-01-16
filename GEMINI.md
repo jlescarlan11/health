@@ -191,7 +191,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Files Modified/Deleted:** `src/navigation/TabNavigator.tsx` (Deleted), `src/navigation/AppNavigator.tsx`, `src/types/navigation.ts`, `App.tsx`.
 
 * **Prompt Refinement for Symptom Assessment (Jan 16, 2026):**
-  - **Checklist Integration:** Updated `CLARIFYING_QUESTIONS_PROMPT` in `src/constants/prompts.ts` to include a strict checklist for Age, Duration, and Severity.
+  - **Checklist Integration:** Updated `CLARIFYING_QUESTIONS_PROMPT` in `src/constants/prompts.ts` to include a strict checklist for Age, Duration, Severity, Progression, and Red Flag Denials. Added efficiency logic to ask compound questions when dialogue turn count > 2 and implemented early exit conditions (automatically concluding at Turn 5 or if a Red Flag is identified) to ensure timely guidance.
   - **Efficiency Optimization:** Instructed the AI to identify missing data points from the checklist, avoid redundant questions, and combine queries to reduce chat turns.
   - **Tone & Naturalness:** Ensured the AI maintains an empathetic and professional tone while strictly adhering to the JSON schema for seamless UI integration.
   - **Files Modified:** `src/constants/prompts.ts`.

@@ -49,9 +49,13 @@ jest.mock('react-native-paper', () => {
   };
 });
 
-jest.mock('../src/services/gemini', () => ({
-  getGeminiResponse: jest.fn(),
-}));
+jest.mock('../src/services/gemini', () => {
+  const actual = jest.requireActual('../src/services/gemini');
+  return {
+    getGeminiResponse: jest.fn(),
+    parseClarifyingQuestions: actual.parseClarifyingQuestions,
+  };
+});
 
 jest.mock('expo-av', () => ({
   Audio: {
@@ -121,9 +125,9 @@ jest.mock('../src/components/common/StandardHeader', () => {
 
 const mockThreeQuestions = {
   questions: [
-    { id: 'q1', text: 'Question 1: Duration?', type: 'text' },
-    { id: 'q2', text: 'Question 2: Severity?', type: 'choice', options: ['Mild', 'Severe'] },
-    { id: 'q3', text: 'Question 3: Location?', type: 'text' },
+    { id: 'duration', text: 'Question 1: Duration?', type: 'text' },
+    { id: 'severity', text: 'Question 2: Severity?', type: 'choice', options: ['Mild', 'Severe'] },
+    { id: 'progression', text: 'Question 3: Location?', type: 'text' },
   ],
 };
 
@@ -143,7 +147,9 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     (useRoute as jest.Mock).mockReturnValue({
       params: { initialSymptom: 'Fever' },
     });
-    (getGeminiResponse as jest.Mock).mockResolvedValue(JSON.stringify(mockThreeQuestions));
+    (getGeminiResponse as jest.Mock)
+      .mockResolvedValueOnce(JSON.stringify(mockThreeQuestions))
+      .mockResolvedValue(JSON.stringify({ questions: [] }));
 
     store = configureStore({
       reducer: combineReducers({
@@ -236,7 +242,11 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
         expect.objectContaining({
           assessmentData: {
             symptoms: 'Fever',
-            answers: { q1: '2 days', q2: 'Severe', q3: 'Abdomen' },
+            answers: [
+              { question: 'Question 1: Duration?', answer: '2 days' },
+              { question: 'Question 2: Severity?', answer: 'Severe' },
+              { question: 'Question 3: Location?', answer: 'Abdomen' },
+            ],
           },
         }),
       );

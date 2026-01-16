@@ -40,9 +40,13 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini', () => ({
-  getGeminiResponse: jest.fn(),
-}));
+jest.mock('../src/services/gemini', () => {
+  const actual = jest.requireActual('../src/services/gemini');
+  return {
+    getGeminiResponse: jest.fn(),
+    parseClarifyingQuestions: actual.parseClarifyingQuestions,
+  };
+});
 
 jest.mock('expo-av', () => ({
   Audio: {
@@ -89,8 +93,8 @@ jest.mock('../src/components/common/StandardHeader', () => {
 
 const mockQuestions = {
   questions: [
-    { id: 'q1', text: 'How long have you had this?', type: 'text' },
-    { id: 'q2', text: 'Is it sharp or dull?', type: 'choice', options: ['Sharp', 'Dull'] },
+    { id: 'duration', text: 'How long have you had this?', type: 'text' },
+    { id: 'severity', text: 'Is it sharp or dull?', type: 'choice', options: ['Sharp', 'Dull'] },
   ],
 };
 
@@ -109,7 +113,9 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
     (useRoute as jest.Mock).mockReturnValue({
       params: { initialSymptom: 'Headache' },
     });
-    (getGeminiResponse as jest.Mock).mockResolvedValue(JSON.stringify(mockQuestions));
+    (getGeminiResponse as jest.Mock)
+      .mockResolvedValueOnce(JSON.stringify(mockQuestions))
+      .mockResolvedValue(JSON.stringify({ questions: [] }));
 
     store = configureStore({
       reducer: combineReducers({
@@ -190,10 +196,10 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
           expect.objectContaining({
             assessmentData: {
               symptoms: 'Headache',
-              answers: {
-                q1: 'User was not sure',
-                q2: 'User was not sure',
-              },
+              answers: [
+                { question: 'How long have you had this?', answer: 'User was not sure' },
+                { question: 'Is it sharp or dull?', answer: 'User was not sure' },
+              ],
             },
           }),
         );

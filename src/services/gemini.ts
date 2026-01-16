@@ -46,6 +46,83 @@ const generateContentWithRetry = async (
   throw new Error('Failed to connect to AI service after multiple attempts.');
 };
 
+export interface ClarifyingQuestion {
+  id: 'age' | 'duration' | 'severity' | 'progression' | 'red_flag_denials';
+  text: string;
+  type: 'choice' | 'text';
+  options?: string[];
+}
+
+export interface ClarifyingQuestionsResponse {
+  questions: ClarifyingQuestion[];
+}
+
+/**
+ * Robustly parses and validates clarifying questions from AI response.
+ */
+export const parseClarifyingQuestions = (text: string): ClarifyingQuestionsResponse => {
+  try {
+    // 1. Extract JSON block using regex
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('No valid JSON found in AI response');
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // 2. Validate top-level structure
+    if (!parsed.questions || !Array.isArray(parsed.questions)) {
+      throw new Error('Invalid response structure: "questions" array missing');
+    }
+
+    // 3. Validate and sanitize each question
+    const validatedQuestions: ClarifyingQuestion[] = parsed.questions
+      .map((q: any) => {
+        // Required fields
+        if (!q.id || !q.text || !q.type) {
+          console.warn('[Gemini Parser] Skipping malformed question:', q);
+          return null;
+        }
+
+        // Validate ID enum
+        const validIds = ['age', 'duration', 'severity', 'progression', 'red_flag_denials'];
+        if (!validIds.includes(q.id)) {
+          console.warn('[Gemini Parser] Invalid question ID:', q.id);
+          return null;
+        }
+
+        // Validate type
+        if (q.type !== 'choice' && q.type !== 'text') {
+          console.warn('[Gemini Parser] Invalid question type:', q.type);
+          return null;
+        }
+
+        // Validate options for choice type
+        if (q.type === 'choice' && (!q.options || !Array.isArray(q.options) || q.options.length === 0)) {
+          console.warn('[Gemini Parser] Choice question missing options:', q.id);
+          return null;
+        }
+
+        return {
+          id: q.id as ClarifyingQuestion['id'],
+          text: String(q.text),
+          type: q.type as ClarifyingQuestion['type'],
+          options: q.options ? q.options.map(String) : undefined,
+        };
+      })
+      .filter((q: ClarifyingQuestion | null): q is ClarifyingQuestion => q !== null);
+
+    if (validatedQuestions.length === 0) {
+      throw new Error('No valid clarifying questions could be parsed');
+    }
+
+    return { questions: validatedQuestions };
+  } catch (error) {
+    console.error('[Gemini Parser] Parsing Error:', error);
+    throw new Error('Failed to process health assessment questions. Please try again.');
+  }
+};
+
 export const getGeminiResponse = async (prompt: string) => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });

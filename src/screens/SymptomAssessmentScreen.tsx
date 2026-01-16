@@ -24,7 +24,7 @@ import { useDispatch } from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
-import { getGeminiResponse } from '../services/gemini';
+import { getGeminiResponse, parseClarifyingQuestions, ClarifyingQuestion } from '../services/gemini';
 import { CLARIFYING_QUESTIONS_PROMPT } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
@@ -48,12 +48,7 @@ import {
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
 
-interface Question {
-  id: string;
-  text: string;
-  type: 'choice' | 'text';
-  options?: string[];
-}
+interface Question extends ClarifyingQuestion {}
 
 interface Message {
   id: string;
@@ -81,7 +76,10 @@ const SymptomAssessmentScreen = () => {
     age: '',
     duration: '',
     severity: '',
+    progression: '',
+    red_flag_denials: '',
   });
+  const [turnCount, setTurnCount] = useState(1);
   const [loading, setLoading] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
@@ -250,7 +248,9 @@ const SymptomAssessmentScreen = () => {
       questionToUndo &&
       (questionToUndo.id === 'age' ||
         questionToUndo.id === 'duration' ||
-        questionToUndo.id === 'severity')
+        questionToUndo.id === 'severity' ||
+        questionToUndo.id === 'progression' ||
+        questionToUndo.id === 'red_flag_denials')
     ) {
       setCapturedSlots((prev) => ({ ...prev, [questionToUndo.id]: '' }));
     }
@@ -303,7 +303,7 @@ const SymptomAssessmentScreen = () => {
       return;
     }
 
-    fetchQuestions();
+    fetchQuestions({});
   }, []);
 
   const startOfflineTriage = () => {
@@ -336,7 +336,7 @@ const SymptomAssessmentScreen = () => {
     setError('');
   };
 
-  const fetchQuestions = async () => {
+  const fetchQuestions = async (currentAnswers: Record<string, string> = {}, overrideTurnCount?: number) => {
     try {
       setLoading(true);
       setError('');
@@ -347,33 +347,51 @@ const SymptomAssessmentScreen = () => {
         throw new Error('NETWORK_ERROR');
       }
 
-      const prompt = CLARIFYING_QUESTIONS_PROMPT.replace('{{symptoms}}', initialSymptom || '');
-      const response = await getGeminiResponse(prompt);
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (parsed.questions && Array.isArray(parsed.questions)) {
-          setQuestions(parsed.questions);
-          setTotalEstimatedSteps(parsed.questions.length);
-          // Add combined first message to conversation
-          if (parsed.questions.length > 0) {
-            const firstQ = parsed.questions[0];
-            const combinedText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I'd like to ask a few clarifying questions.\n\n${firstQ.text}`;
+      // Build context string for AI
+      const contextParts = [`Initial Symptoms: ${initialSymptom}`];
+      Object.entries(currentAnswers).forEach(([id, answer]) => {
+        const question = questions.find((q) => q.id === id);
+        const qText = question ? question.text : id;
+        contextParts.push(`Q: ${qText} | A: ${answer}`);
+      });
+      const context = contextParts.join('\n');
 
-            setMessages([
-              {
-                id: 'intro',
-                text: combinedText,
-                sender: 'assistant',
-              },
-            ]);
-          }
-        } else {
-          throw new Error('Invalid response format');
-        }
-      } else {
-        throw new Error('Failed to parse questions');
+      const currentTurn = overrideTurnCount || turnCount;
+      const prompt = CLARIFYING_QUESTIONS_PROMPT.replace('{{context}}', context)
+        .replace('{{turnCount}}', currentTurn.toString());
+      
+      console.log(`[Assessment] Fetching questions for turn ${currentTurn}...`);
+      const response = await getGeminiResponse(prompt);
+      const parsed = parseClarifyingQuestions(response);
+
+      setQuestions(parsed.questions);
+      setCurrentStep(0); // Reset local step for the new batch
+      setTotalEstimatedSteps((prev) => prev + parsed.questions.length);
+      
+      // Add message to conversation if it's the first turn
+      if (turnCount === 1 && parsed.questions.length > 0) {
+        const firstQ = parsed.questions[0];
+        const introText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I'd like to ask a few clarifying questions.\n\n${firstQ.text}`;
+
+        setMessages([
+          {
+            id: 'intro',
+            text: introText,
+            sender: 'assistant',
+          },
+        ]);
+      } else if (parsed.questions.length > 0) {
+        // For subsequent AI-driven turns
+        const firstQ = parsed.questions[0];
+        const assistantMsg: Message = {
+          id: `ai-${turnCount}-${Date.now()}`,
+          text: firstQ.text,
+          sender: 'assistant',
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
       }
+
+      return parsed.questions.length;
     } catch (err: unknown) {
       const error = err as Error;
       console.error(error);
@@ -387,6 +405,7 @@ const SymptomAssessmentScreen = () => {
       } else {
         setError('Unable to generate assessment questions. Please try again.');
       }
+      return 0;
     } finally {
       setLoading(false);
     }
@@ -464,7 +483,9 @@ const SymptomAssessmentScreen = () => {
       !isSkip &&
       (currentQuestion.id === 'age' ||
         currentQuestion.id === 'duration' ||
-        currentQuestion.id === 'severity')
+        currentQuestion.id === 'severity' ||
+        currentQuestion.id === 'progression' ||
+        currentQuestion.id === 'red_flag_denials')
     ) {
       setCapturedSlots((prev) => ({ ...prev, [currentQuestion.id]: finalAnswer }));
     }
@@ -498,12 +519,12 @@ const SymptomAssessmentScreen = () => {
       return;
     }
 
-    // Move to next step or finish with a thoughtful delay
+    // Move to next step or fetch more questions with a thoughtful delay
     setIsTyping(true);
 
     const delay = 1500; // 1.5 seconds delay for a more natural feel
 
-    typingTimeoutRef.current = setTimeout(() => {
+    typingTimeoutRef.current = setTimeout(async () => {
       typingTimeoutRef.current = null;
       if (currentStep < questions.length - 1) {
         const nextStep = currentStep + 1;
@@ -533,12 +554,33 @@ const SymptomAssessmentScreen = () => {
         setTimeout(() => {
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
-      } else {
-        setIsTyping(false);
-        setCurrentStep(questions.length); // Final step
-        finishAssessment(newAnswers);
-      }
-    }, delay);
+            } else {
+              // We reached the end of current batch of questions.
+              const nextTurn = turnCount + 1;
+              setTurnCount(nextTurn);
+      
+              // Limit to 5 total dialogue turns (AI batches)
+              if (nextTurn > 5) {
+                console.log('[Assessment] Max turns reached (5). Finishing assessment.');
+                setIsTyping(false);
+                setCurrentStep(questions.length); // Final step
+                finishAssessment(newAnswers);
+                return;
+              }
+      
+              // Ask AI for more if needed, or finish.
+              // We use nextTurn here to avoid waiting for state update
+              const newBatchCount = await fetchQuestions(newAnswers, nextTurn);
+              
+              if (newBatchCount === 0) {
+                setIsTyping(false);
+                setCurrentStep(questions.length); // Final step
+                finishAssessment(newAnswers);
+              } else {
+                // fetchQuestions already added the first question of the new batch to messages
+                setIsTyping(false);
+              }
+            }    }, delay);
   };
 
   const finishAssessment = (finalAnswers: Record<string, string>) => {
@@ -711,6 +753,8 @@ const SymptomAssessmentScreen = () => {
                 {renderSlotIndicator('Age', capturedSlots.age, 'account-clock')}
                 {renderSlotIndicator('Duration', capturedSlots.duration, 'clock-outline')}
                 {renderSlotIndicator('Severity', capturedSlots.severity, 'alert-circle-outline')}
+                {renderSlotIndicator('Progression', capturedSlots.progression, 'chart-line')}
+                {renderSlotIndicator('Red Flags', capturedSlots.red_flag_denials, 'shield-check-outline')}
               </ScrollView>
             </Animated.View>
           )}
