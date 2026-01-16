@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
+import { FacilityService } from '../types';
 
 // Configuration
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
@@ -30,7 +31,7 @@ export interface AssessmentResponse {
   recommended_action: string;
   key_concerns: string[];
   critical_warnings: string[];
-  relevant_services: string[];
+  relevant_services: FacilityService[];
   red_flags: string[];
   confidence_score?: number;
   ambiguity_detected?: boolean;
@@ -213,7 +214,7 @@ export class GeminiClient {
           'Go to the nearest emergency room or call emergency services (911) immediately.',
         key_concerns: emergency.matchedKeywords.map((k) => `Urgent: ${k}`),
         critical_warnings: ['Life-threatening condition possible'],
-        relevant_services: ['Emergency Care', 'Trauma Support'],
+        relevant_services: ['Emergency'],
         red_flags: emergency.matchedKeywords,
         confidence_score: 1.0,
       };
@@ -229,7 +230,7 @@ export class GeminiClient {
           'Please reach out to a crisis hotline or go to the nearest hospital immediately.',
         key_concerns: ['Risk of self-harm or severe distress'],
         critical_warnings: ['You are not alone. Professional help is available now.'],
-        relevant_services: ['Mental Health Support', 'Crisis Intervention'],
+        relevant_services: ['Mental Health'],
         red_flags: mhCrisis.matchedKeywords,
         confidence_score: 1.0,
       };
