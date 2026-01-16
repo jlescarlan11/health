@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
 import { TextInput, IconButton, ActivityIndicator, useTheme } from 'react-native-paper';
+import { VoiceVisualizer } from './VoiceVisualizer';
 
 interface InputCardProps {
   value: string;
@@ -12,6 +13,7 @@ interface InputCardProps {
   onBlur?: () => void;
   maxLength?: number;
   isRecording?: boolean;
+  volume?: number;
   isProcessingAudio?: boolean;
   onVoicePress?: () => void;
   containerStyle?: StyleProp<ViewStyle>;
@@ -35,6 +37,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
     onBlur,
     maxLength,
     isRecording = false,
+    volume = 0,
     isProcessingAudio = false,
     onVoicePress,
     containerStyle,
@@ -139,18 +142,9 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
         ) : (
           onVoicePress && (
             <View style={[styles.micContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-              {isRecording && (
-                <Animated.View
-                  style={[
-                    styles.recordingPulse,
-                    {
-                      opacity: fadeAnim,
-                      backgroundColor: theme.colors.error,
-                      transform: [{ scale: scaleAnim }],
-                    },
-                  ]}
-                />
-              )}
+              {isRecording ? (
+                <VoiceVisualizer volume={volume} isRecording={isRecording} />
+              ) : null}
               <IconButton
                 icon={isRecording ? 'stop' : 'microphone'}
                 size={24}

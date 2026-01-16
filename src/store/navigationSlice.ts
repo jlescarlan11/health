@@ -21,6 +21,8 @@ interface NavigationState {
   recommendation: Recommendation | null;
   isLoading: boolean;
   error: string | null;
+  isHighRisk: boolean;
+  lastRiskTimestamp: number;
 }
 
 const initialState: NavigationState = {
@@ -29,6 +31,8 @@ const initialState: NavigationState = {
   recommendation: null,
   isLoading: false,
   error: null,
+  isHighRisk: false,
+  lastRiskTimestamp: 0,
 };
 
 const navigationSlice = createSlice({
@@ -50,6 +54,14 @@ const navigationSlice = createSlice({
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
+    setHighRisk: (state, action: PayloadAction<boolean>) => {
+      state.isHighRisk = action.payload;
+      if (action.payload) {
+        state.lastRiskTimestamp = Date.now();
+      } else {
+        state.lastRiskTimestamp = 0;
+      }
+    },
     clearSession: (state) => {
       state.chatHistory = [];
       state.currentSymptoms = [];
@@ -59,6 +71,6 @@ const navigationSlice = createSlice({
   },
 });
 
-export const { addMessage, setSymptoms, setRecommendation, setLoading, setError, clearSession } =
+export const { addMessage, setSymptoms, setRecommendation, setLoading, setError, setHighRisk, clearSession } =
   navigationSlice.actions;
 export default navigationSlice.reducer;

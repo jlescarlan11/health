@@ -29,18 +29,32 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   choking: 10,
   'severe abdominal pain': 10,
   'suicide attempt': 10,
+  dying: 10,
+  'feel like dying': 10,
+  'feeling like dying': 10,
+  'facial drooping': 10,
+  'arm weakness': 10,
+  'cannot speak': 10,
+  'chest tightness': 10,
+  'active labor': 10,
+  'water broke': 10,
+  'electric shock': 10,
+  drowning: 10,
 
   // Moderate to High (Score 8-9 - Likely Emergency)
   'broken bone': 8,
   'deep wound': 8,
   'vomiting blood': 8,
   'black stool': 8,
+  'blood in stool': 8,
   'vision loss': 8,
   'sudden blindness': 8,
   'stiff neck': 8,
   confusion: 8,
   'high fever': 8, // Especially if > 40C or with other symptoms
   'severe dehydration': 8,
+  'jaundice': 8,
+  'persistent vomiting': 8,
 };
 
 interface EmergencyDetectionResult {

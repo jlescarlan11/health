@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
-import { Audio } from 'expo-av';
+import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { SlideToCall } from '../../components/common/SlideToCall';
-import { InputCard } from '../../components/common';
+import { InputCard, SafetyRecheckModal } from '../../components/common';
+import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
+import { setHighRisk } from '../../store/navigationSlice';
 
 type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
 
@@ -15,6 +18,7 @@ const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 
 
 const NavigatorHomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+  const dispatch = useDispatch();
   const theme = useTheme();
 
   const insets = useSafeAreaInsets();
@@ -23,9 +27,10 @@ const NavigatorHomeScreen = () => {
 
   const [symptom, setSymptom] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [volume, setVolume] = useState(0);
   const [isProcessingAudio, setIsProcessingAudio] = useState(false);
+  const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -57,60 +62,73 @@ const NavigatorHomeScreen = () => {
   }, []);
 
   useEffect(() => {
-    if (recording) {
-      return () => {
-        recording.stopAndUnloadAsync();
-      };
-    }
-  }, [recording]);
+    return () => {
+      speechService.destroy();
+    };
+  }, []);
 
   const startRecording = async () => {
+    if (!speechService.isAvailable) {
+      Alert.alert(
+        'Voice Unavailable',
+        'Voice recognition is not available on this device/simulator. Please type your symptoms.',
+      );
+      return;
+    }
+
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (permission.status === 'granted') {
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-        const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY,
-        );
-        setRecording(recording);
-        setIsRecording(true);
-      } else {
-        Alert.alert('Permission Denied', 'Microphone permission is required for voice input.');
-      }
+      setIsRecording(true);
+      setVolume(0);
+      await speechService.startListening(
+        (text) => {
+          setSymptom(text);
+        },
+        (error) => {
+          console.error('STT Error:', error);
+          setIsRecording(false);
+          setVolume(0);
+          Alert.alert('Speech Error', error.message || 'Could not recognize speech. Please try again.');
+        },
+        (vol) => {
+          setVolume(vol);
+        },
+      );
     } catch (err) {
       console.error('Failed to start recording', err);
-      Alert.alert('Error', 'Failed to start recording.');
+      setIsRecording(false);
+      setVolume(0);
+      Alert.alert('Error', 'Failed to start voice recognition.');
     }
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
     setIsRecording(false);
-    setIsProcessingAudio(true);
+    setVolume(0);
     try {
-      await recording.stopAndUnloadAsync();
-      // Simulation of STT (Replace with actual API call)
-      setTimeout(() => {
-        setSymptom((prev) => prev + (prev ? ' ' : '') + 'I have a severe headache and fever.');
-        setIsProcessingAudio(false);
-        setRecording(null);
-      }, 1500);
+      await speechService.stopListening();
     } catch (error) {
       console.error(error);
-      setIsProcessingAudio(false);
-      Alert.alert('Error', 'Failed to process audio.');
+      Alert.alert('Error', 'Failed to stop recording.');
     }
   };
 
   const handleSubmit = () => {
     if (!symptom.trim()) return;
 
-    // Check for mental health crisis
+    // 1. Check for immediate Emergency
+    const emergencyCheck = detectEmergency(symptom);
+    if (emergencyCheck.isEmergency) {
+      dispatch(setHighRisk(true));
+      navigation.navigate('Recommendation', {
+        assessmentData: { symptoms: symptom, answers: {} },
+      });
+      return;
+    }
+
+    // 2. Check for mental health crisis
     const crisisCheck = detectMentalHealthCrisis(symptom);
     if (crisisCheck.isCrisis) {
+      dispatch(setHighRisk(true));
       // @ts-ignore - CrisisSupport is added to navigator but TS might need full restart to pick up
       navigation.navigate('CrisisSupport');
       return;
@@ -120,14 +138,8 @@ const NavigatorHomeScreen = () => {
   };
 
   const handleEmergencyCall = () => {
-    Alert.alert(
-      'Emergency Call',
-      'This will initiate a call to emergency services (911). Do you want to continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Call 911', onPress: () => console.log('Calling 911...'), style: 'destructive' },
-      ],
-    );
+    setSafetyModalVisible(true);
+    dispatch(setHighRisk(true));
   };
 
   const handleInputFocus = () => {
@@ -256,10 +268,16 @@ const NavigatorHomeScreen = () => {
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           isRecording={isRecording}
+          volume={volume}
           isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>
+
+      <SafetyRecheckModal
+        visible={safetyModalVisible}
+        onDismiss={() => setSafetyModalVisible(false)}
+      />
     </View>
   );
 };

@@ -1,19 +1,21 @@
 import { GoogleGenerativeAI, GenerativeModel, Content } from '@google/generative-ai';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT } from '../constants/prompts';
+import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 
 // Configuration
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const MODEL_NAME = 'gemini-2.5-flash'; // As requested
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_RETRIES = 3;
 const RATE_LIMIT_RPM = 15;
 const RATE_LIMIT_DAILY = 1500;
 const STORAGE_KEY_DAILY_COUNT = 'gemini_daily_usage_count';
 const STORAGE_KEY_DAILY_DATE = 'gemini_daily_usage_date';
+const STORAGE_KEY_CACHE_PREFIX = 'gemini_cache_';
+const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -42,7 +44,6 @@ interface CacheEntry {
 export class GeminiClient {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
-  private cache: Map<string, CacheEntry>;
   private requestTimestamps: number[]; // For RPM tracking
 
   constructor() {
@@ -54,7 +55,6 @@ export class GeminiClient {
       model: MODEL_NAME,
       generationConfig: { responseMimeType: 'application/json' },
     });
-    this.cache = new Map();
     this.requestTimestamps = [];
   }
 
@@ -132,7 +132,9 @@ export class GeminiClient {
           json.recommended_action || 'Please follow the recommended level of care.',
         key_concerns: json.key_concerns || [],
         critical_warnings: json.critical_warnings || [],
-        relevant_services: json.relevant_services || [],
+        relevant_services: (json.relevant_services || []).filter((s: string) =>
+          VALID_SERVICES.includes(s),
+        ),
         red_flags: json.red_flags || [],
         confidence_score: json.confidence_score,
         ambiguity_detected: json.ambiguity_detected,
@@ -144,12 +146,60 @@ export class GeminiClient {
   }
 
   /**
+   * Periodically clears all cached assessments to maintain medical relevance.
+   * Runs if more than 24 hours have passed since the last bulk cleanup.
+   */
+  private async performCacheCleanup(): Promise<void> {
+    try {
+      const now = Date.now();
+      const lastCleanup = await AsyncStorage.getItem(STORAGE_KEY_LAST_CLEANUP);
+      const lastCleanupTime = lastCleanup ? parseInt(lastCleanup, 10) : 0;
+
+      if (now - lastCleanupTime > 24 * 60 * 60 * 1000) {
+        const allKeys = await AsyncStorage.getAllKeys();
+        const cacheKeys = allKeys.filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
+
+        if (cacheKeys.length > 0) {
+          await AsyncStorage.multiRemove(cacheKeys);
+          console.log(`[GeminiClient] Automatically cleared ${cacheKeys.length} stale cache entries.`);
+        }
+
+        await AsyncStorage.setItem(STORAGE_KEY_LAST_CLEANUP, now.toString());
+      }
+    } catch (error) {
+      console.warn('[GeminiClient] Periodic cache cleanup failed:', error);
+    }
+  }
+
+  /**
+   * Manually clears all cached assessments from storage.
+   * Useful for debugging or when a user wants to reset their assessment history.
+   */
+  public async clearCache(): Promise<void> {
+    try {
+      const allKeys = await AsyncStorage.getAllKeys();
+      const cacheKeys = allKeys.filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
+
+      if (cacheKeys.length > 0) {
+        await AsyncStorage.multiRemove(cacheKeys);
+        console.log(`[GeminiClient] Manually cleared ${cacheKeys.length} cache entries.`);
+      }
+    } catch (error) {
+      console.error('[GeminiClient] Failed to clear assessment cache:', error);
+      throw new Error('Failed to clear assessment cache.');
+    }
+  }
+
+  /**
    * Main assessment function.
    */
   public async assessSymptoms(
     symptoms: string,
     history: ChatMessage[] = [],
   ): Promise<AssessmentResponse> {
+    // 0. Periodic Cleanup
+    await this.performCacheCleanup();
+
     // 1. Safety Overrides (Local Logic)
     // Only check overrides on the latest user input (symptoms),
     // unless we want to check the whole context. Usually checking the latest input is sufficient for immediate triggers.
@@ -187,12 +237,20 @@ export class GeminiClient {
 
     // 2. Cache Check
     const cacheKey = this.getCacheKey(symptoms, history);
-    const cached = this.cache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      console.log('[GeminiClient] Returning cached response');
-      return cached.data;
-    } else if (cached) {
-      this.cache.delete(cacheKey);
+    const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
+    try {
+      const cachedJson = await AsyncStorage.getItem(fullCacheKey);
+      if (cachedJson) {
+        const cached = JSON.parse(cachedJson) as CacheEntry;
+        if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+          console.log('[GeminiClient] Returning cached response from storage');
+          return cached.data;
+        } else {
+          await AsyncStorage.removeItem(fullCacheKey);
+        }
+      }
+    } catch (error) {
+      console.warn('[GeminiClient] Cache read failed:', error);
     }
 
     // 3. API Call with Retry
@@ -269,10 +327,17 @@ export class GeminiClient {
         // -----------------------------------
 
         // Update Cache
-        this.cache.set(cacheKey, {
-          data: parsed,
-          timestamp: Date.now(),
-        });
+        try {
+          await AsyncStorage.setItem(
+            fullCacheKey,
+            JSON.stringify({
+              data: parsed,
+              timestamp: Date.now(),
+            }),
+          );
+        } catch (error) {
+          console.warn('[GeminiClient] Cache write failed:', error);
+        }
 
         return parsed;
       } catch (error) {
