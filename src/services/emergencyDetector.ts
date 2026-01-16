@@ -133,6 +133,10 @@ const NEGATION_KEYWORDS = [
   'hindi',
   'nope',
   'nah',
+  'nothing',
+  'not experiencing',
+  'none of these',
+  'not present'
 ];
 
 // Affirmative patterns that override negation
@@ -146,7 +150,10 @@ const AFFIRMATIVE_KEYWORDS = [
   'i am',
   "i'm",
   'iam',
-  'im'
+  'im',
+  'present',
+  'experiencing',
+  'meron'
 ];
 
 // **NEW: Question/System indicators** - Critical for filtering non-user input
@@ -166,6 +173,12 @@ const SYSTEM_INDICATORS = [
   'nearest',
   '{"question"',
   'answers:',
+  'clinical profile:',
+  'duration:',
+  'severity:',
+  'progression:',
+  'red flag status:',
+  'summary:'
 ];
 
 interface EmergencyDetectionResult {
@@ -204,48 +217,46 @@ interface KeywordMatch {
   affirmationFound: boolean;
 }
 
+/**
+ * Enhanced sanitization to remove system labels and identifiers
+ */
 const sanitizeInput = (
   text: string,
 ): { sanitized: string; rejected: Array<{ text: string; reason: string }> } => {
   const rejected: Array<{ text: string; reason: string }> = [];
   
-  // We no longer strip JSON structures aggressively because they may contain user answers 
-  // (e.g. in the final triage context string).
-  // Instead, we focus on removing specific system prefixes/indicators.
+  // 1. Remove JSON structures and technical metadata while preserving content
+  let cleaned = text
+    .replace(/\{"question":".*?","answer":"(.*?)"\}/g, '$1') // Extract answer from JSON pairs
+    .replace(/\[|\]|\{|\}/g, ' ') // Remove brackets
+    .replace(/"answer":/g, ' ')
+    .replace(/"question":/g, ' ')
+    .replace(/"/g, ' ');
 
-  // Filter system indicators by removing the indicator text itself, 
-  // rather than dropping the whole segment if it contains the indicator.
-  let cleaned = text;
-  
+  // 2. Remove system labels
   for (const indicator of SYSTEM_INDICATORS) {
     const regex = new RegExp(indicator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    if (regex.test(cleaned)) {
-       // Check if it's a "whole segment" rejection scenario or just a label
-       // For labels like "Initial Symptom:", we just want to remove the label.
-       // For "slot_ids", it's likely debug noise, but let's just strip the keyword.
-       cleaned = cleaned.replace(regex, '');
-       // We don't log every removal as "rejected segment" anymore since we are keeping the content.
-    }
+    cleaned = cleaned.replace(regex, ' ');
   }
 
-  // Split into segments for analysis
+  // 3. Tokenize into clean segments
   const segments = cleaned
-    .split(/[.,?!;]+/)
+    .split(/[.,?!;:\n]+/)
     .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+    .filter((s) => s.length > 1);
     
-  // Further filtering of purely technical segments if needed
-  const validSegments: string[] = [];
-
-  for (const segment of segments) {
-     // If a segment is just punctuation or empty after stripping, ignore
-     if (segment.length < 2) continue;
-     
-     // Check for JSON artifacts that might remain and are purely structural
-     if (/^["}\]]+$/.test(segment)) continue;
-
-     validSegments.push(segment);
-  }
+  // 4. Filter out purely numeric or short noise segments
+  const validSegments = segments.filter(segment => {
+    // If it's just a number or very short, it's likely noise or a score (e.g. "6")
+    if (/^\d+$/.test(segment)) return false;
+    if (segment.length < 2) return false;
+    
+    // Check if segment is essentially empty or just system words
+    const lower = segment.toLowerCase();
+    if (lower === 'unknown' || lower === 'none' || lower === 'denied' || lower === 'none reported') return false;
+    
+    return true;
+  });
 
   return {
     sanitized: validSegments.join('. '),
@@ -260,7 +271,7 @@ export const tokenizeSentences = (text: string): string[] => {
   if (!text) return [];
 
   return text
-    .split(/[.,?!;]+/)
+    .split(/[.,?!;:\n]+/)
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 };
@@ -272,15 +283,10 @@ export const isNegated = (
   segment: string,
   keyword: string,
 ): { negated: boolean; hasAffirmation: boolean; contextWindow: string } => {
-  const PROXIMITY_WINDOW = 5; // words before/after keyword
+  const PROXIMITY_WINDOW = 4; // Tightened window for better precision
 
-  const words = segment
-    .toLowerCase()
-    .replace(/['']/g, '')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((w) => w.length > 0);
-
+  const normalizedSegment = segment.toLowerCase().replace(/[^a-z0-9\s]/g, ' ');
+  const words = normalizedSegment.split(/\s+/).filter((w) => w.length > 0);
   const keywordWords = keyword.toLowerCase().split(/\s+/);
 
   if (keywordWords.length === 0 || words.length === 0) {
@@ -293,7 +299,7 @@ export const isNegated = (
     const window = words.slice(i, i + keywordWords.length).join(' ');
     const distance = getLevenshteinDistance(window, keyword.toLowerCase());
 
-    if (distance <= FUZZY_THRESHOLD) {
+    if (distance <= Math.min(1, FUZZY_THRESHOLD)) { // Stricter distance for short keywords
       keywordStart = i;
       break;
     }
@@ -314,18 +320,33 @@ export const isNegated = (
   let hasAffirmation = false;
 
   for (let k = 0; k < contextWords.length; k++) {
-    // Skip the keyword itself
     const absolutePos = start + k;
+    // Skip words that are part of the keyword
     if (absolutePos >= keywordStart && absolutePos < keywordStart + keywordWords.length) {
       continue;
     }
 
-    if (NEGATION_KEYWORDS.includes(contextWords[k])) {
-      hasNegation = true;
+    const currentWord = contextWords[k];
+    
+    // Check for negation keywords
+    if (NEGATION_KEYWORDS.some(neg => currentWord === neg || contextWindow.includes(neg))) {
+       // Check if negation is directly related to the keyword (nearby)
+       if (Math.abs(absolutePos - keywordStart) <= PROXIMITY_WINDOW) {
+         hasNegation = true;
+       }
     }
-    if (AFFIRMATIVE_KEYWORDS.includes(contextWords[k])) {
-      hasAffirmation = true;
+
+    // Check for affirmative overrides
+    if (AFFIRMATIVE_KEYWORDS.some(aff => currentWord === aff)) {
+       if (Math.abs(absolutePos - keywordStart) <= 2) { // Affirmation must be very close
+         hasAffirmation = true;
+       }
     }
+  }
+
+  // Check for explicit "Denied" anywhere in the segment if it's a short segment
+  if (segment.toLowerCase().includes('denied') || segment.toLowerCase().includes('wala')) {
+    hasNegation = true;
   }
 
   // Affirmative overrides negation

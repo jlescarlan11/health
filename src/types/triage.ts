@@ -34,11 +34,14 @@ export interface AssessmentProfile {
   progression: string | null;
   red_flag_denials: string | null;
   summary: string;
+  confidence_score?: number;
+  ambiguity_detected?: boolean;
 }
 
 export interface AssessmentQuestion {
   id: string;
   text: string;
+  type?: 'text' | 'multi-select';
   options?: string[];
 }
 

@@ -1,8 +1,3 @@
- LOG  Database initialized successfully
- LOG  Starting facilities sync...
- LOG  Saved 10 facilities to offline storage
- LOG  Facilities sync completed successfully
- LOG  
 === EMERGENCY DETECTION START ===
  LOG  Input: "Fever"
  LOG  Input Type: USER INPUT
@@ -11,14 +6,16 @@ Sanitization:
  LOG    Sanitized input: "Fever"
  LOG 
 Segment: "fever"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "fever" (severity: 5)
+ LOG        Context: "fever"
+ LOG    Segment max score: 5
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 0/10
+ LOG  Score: 5/10
  LOG  Emergency: NO
- LOG  Active keywords: []
- LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  Active keywords: [fever]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): fever.     
  LOG  === EMERGENCY DETECTION END ===
  LOG  
 === EMERGENCY DETECTION START ===
@@ -29,28 +26,26 @@ Sanitization:
  LOG    Sanitized input: "Fever"
  LOG 
 Segment: "fever"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "fever" (severity: 5)
+ LOG        Context: "fever"
+ LOG    Segment max score: 5
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 0/10
+ LOG  Score: 5/10
  LOG  Emergency: NO
- LOG  Active keywords: []
- LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  Active keywords: [fever]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): fever.     
  LOG  === EMERGENCY DETECTION END ===
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "I am 21 Years old, I have this fever for 2 days"
+ LOG  Input: "21 years old"
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "I am 21 Years old. I have this fever for 2 days"
+ LOG    Sanitized input: "21 years old"
  LOG 
-Segment: "i am 21 years old"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "i have this fever for 2 days"
+Segment: "21 years old"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -62,54 +57,23 @@ Segment: "i have this fever for 2 days"
  LOG  === EMERGENCY DETECTION END ===
  LOG 
 ╔═══ CONVERSATION STEP 0 ═══╗
- LOG  ║ Q: How old are you, and how long have you had this fever?
- LOG  ║ A: I am 21 Years old, I have this fever for 2 days
+ LOG  ║ Q: Ilang taon na po kayo? (How old are you?)
+ LOG  ║ A: 21 years old
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "5, i feel like not doing anything and just lay down in my bed. its just the same tho"
+ LOG  Input: "I have: Kahapon (Yesterday)"
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "5. i feel like not doing anything and just lay down in my bed. its just the same tho"
+ LOG    Sanitized input: "I have. Kahapon (Yesterday)"
  LOG 
-Segment: "5"
+Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "i feel like not doing anything and just lay down in my bed"     
- LOG    Potential matches: 1
- LOG      ✗ SUPPRESSED (negated) - "dying" (severity: 10)
- LOG        Context: "i feel like not doing anything and just lay down"   
- LOG    Segment max score: 0
- LOG 
-Segment: "its just the same tho"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10
- LOG  Emergency: NO
- LOG  Active keywords: []
- LOG  Suppressed keywords: [dying]
- LOG  Reasoning: Emergency keywords negated by user (score 0/10): dying.  
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 1 ═══╗
- LOG  ║ Q: On a scale of 1 to 10 (10 being the worst), how much is this fever affecting your daily activities, and is it getting better, worse, or staying about the same?
- LOG  ║ A: 5, i feel like not doing anything and just lay down in my bed. its just the same tho
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "no"
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "no"
- LOG 
-Segment: "no"
+Segment: "kahapon (yesterday)"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -119,46 +83,305 @@ Segment: "no"
  LOG  Active keywords: []
  LOG  Reasoning: No emergency keywords detected in user input.
  LOG  === EMERGENCY DETECTION END ===
- LOG  
-╔═══ CONVERSATION STEP 2 ═══╗
- LOG  ║ Q: Are you experiencing any of the following: severe headache, stiff neck, confusion, unusual rash, persistent vomiting or diarrhea, severe difficulty breathing, or chest pain? (Please answer Yes or No)
- LOG  ║ A: no
+ LOG 
+╔═══ CONVERSATION STEP 1 ═══╗
+ LOG  ║ Q: Kailan po nagsimula ang lagnat? (When did the fever start?)    
+ LOG  ║ A: I have: Kahapon (Yesterday)
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Hindi komportable (nanginginig, masakit ang ulo) (Uncomfortable - chills, headache), Lumalala (Getting worse)"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Hindi komportable (nanginginig. masakit ang ulo) (Uncomfortable - chills. headache). Lumalala (Getting worse)"    
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "hindi komportable (nanginginig"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "masakit ang ulo) (uncomfortable - chills"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache)"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "lumalala (getting worse)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 5/10
+ LOG  Emergency: NO
+ LOG  Active keywords: [headache]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): headache.  
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 2 ═══╗
+ LOG  ║ Q: Ano po ang pakiramdam niyo sa lagnat at lumalala o bumubuti po ba ito? (How does the fever feel, and is it getting worse or better?)     
+ LOG  ║ A: I have: Hindi komportable (nanginginig, masakit ang ulo) (Uncomfortable - chills, headache), Lumalala (Getting worse)
+ LOG  ║ Emergency: false (score: 5)
+ LOG  ║ Keywords: headache
+ LOG  ╚══════════════════════════════╝
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Sipon o Ubo (Colds or Cough), Pananakit ng ulo (Headache), Walang gana kumain (Loss of appetite), Panghihina o pagkapagod (Weakness or fatigue)"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Sipon o Ubo (Colds or Cough). Pananakit ng ulo (Headache). Walang gana kumain (Loss of appetite). Panghihina o pagkapagod (Weakness or fatigue)"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "sipon o ubo (colds or cough)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "pananakit ng ulo (headache)"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "pananakit ng ulo headache"
+ LOG    Segment max score: 5
+ LOG  
+Segment: "walang gana kumain (loss of appetite)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "panghihina o pagkapagod (weakness or fatigue)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 5/10
+ LOG  Emergency: NO
+ LOG  Active keywords: [headache]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): headache.  
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 3 ═══╗
+ LOG  ║ Q: Nakakaranas din po ba kayo ng alinman sa mga sumusunod? (Are you also experiencing any of the following?)
+ LOG  ║ A: I have: Sipon o Ubo (Colds or Cough), Pananakit ng ulo (Headache), Walang gana kumain (Loss of appetite), Panghihina o pagkapagod (Weakness or fatigue)
+ LOG  ║ Emergency: false (score: 5)
+ LOG  ║ Keywords: headache
+ LOG  ╚══════════════════════════════╝
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Pagpapawis (Sweating)"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Pagpapawis (Sweating)"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "pagpapawis (sweating)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 4 ═══╗
+ LOG  ║ Q: Mayroon din po ba kayong alinman sa mga sumusunod na nararamdaman kasama ng lagnat? (Are you also experiencing any of the following symptoms with the fever?)
+ LOG  ║ A: I have: Pagpapawis (Sweating)
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 5 reached. Checking for early termination...      
+ LOG  [Assessment] High confidence (0.95) achieved early. Terminating.
  LOG  [Assessment] Finalizing... Extracting Slots.
  LOG  
 ╔═══ FINAL PROFILE EXTRACTION ═══╗
  LOG  {
-  "age": "21 Years old",
-  "duration": "2 days",
-  "severity": "5/10",
-  "progression": "Staying about the same",
+  "age": "21 years old",
+  "duration": "Yesterday",
+  "severity": "Uncomfortable (chills, headache)",
+  "progression": "Getting worse",
   "red_flag_denials": null,
-  "summary": "A 21-year-old user reports a fever for 2 days, rated 5/10 in severity, affecting daily activities by causing a desire to lay down, and its progression is staying about the same."
+  "summary": "A 21-year-old patient reports a fever that started yesterday, is getting worse, and is accompanied by discomfort, chills, headache, colds/cough, loss of appetite, weakness/fatigue, and sweating.",
+  "confidence_score": 0.95,
+  "ambiguity_detected": false
 }
  LOG  ╚════════════════════════════════╝
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "Initial Symptom: Fever. Answers: [{"question":"How old are you, and how long have you had this fever?","answer":"I am 21 Years old, I have this fever for 2 days"},{"question":"On a scale of 1 to 10 (10 being the worst), how much is this fever affecting your daily activities, and is it getting better, worse, or staying about the same?","answer":"5, i feel like not doing anything and just lay down in my bed. its just the same tho"},{"question":"Are you experiencing any of the following: severe headache, stiff neck, confusion, unusual rash, persistent vomiting or diarrhea, severe difficulty breathing, or chest pain? (Please answer Yes or No)","answer":"no"}]. Context: Nearest Health Center: Unknown, Nearest Hospital: Unknown"
+ LOG  Input: "Initial Symptom: Fever. Answers: 21 years old. I have: Kahapon (Yesterday). I have: Hindi komportable (nanginginig, masakit ang ulo) (Uncomfortable - chills, headache), Lumalala (Getting worse). I have: Sipon o Ubo (Colds or Cough), Pananakit ng ulo (Headache), Walang gana kumain (Loss of appetite), Panghihina o pagkapagod (Weakness or fatigue). I have: Pagpapawis (Sweating). Age: 21 years old. Duration: Yesterday. Severity: Uncomfortable (chills, headache). Progression: Getting worse. Summary: A 21-year-old patient reports a fever that started yesterday, is getting worse, and is accompanied by discomfort, chills, headache, colds/cough, loss of appetite, weakness/fatigue, and sweating."
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Rejected 8 segments:
- LOG      - "{"question":"How old are you, and how long have you had this..." (JSON structure removed)
- LOG      - "{"question":"On a scale of 1 to 10 (10 being the worst), how..." (JSON structure removed)
- LOG      - "{"question":"Are you experiencing any of the following: seve..." (JSON structure removed)
- LOG      - "[,,]..." (Array structure removed)
- LOG      - "Initial Symptom: Fever..." (System indicator: "initial symptom:")
- LOG      - "Answers:..." (System indicator: "answers:")
- LOG      - "Context: Nearest Health Center: Unknown..." (System indicator: "context:")
- LOG      - "Nearest Hospital: Unknown..." (System indicator: "nearest")  
- LOG    Sanitized input: ""
+ LOG    Sanitized input: "Fever. 21 years old. I have. Kahapon (Yesterday). I have. Hindi komportable (nanginginig. masakit ang ulo) (Uncomfortable - chills. headache). Lumalala (Getting worse). I have. Sipon o Ubo (Colds or Cough). Pananakit ng ulo (Headache). Walang gana kumain (Loss of appetite). Panghihina o pagkapagod (Weakness or fatigue). I have. Pagpapawis (Sweating). Age. 21 years old. Yesterday. Uncomfortable (chills. headache). Getting worse. A 21-year-old patient reports a fever that started yesterday. is getting worse. and is accompanied by discomfort. chills. headache. colds/cough. loss of appetite. weakness/fatigue. and sweating"
+ LOG 
+Segment: "fever"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "fever" (severity: 5)
+ LOG        Context: "fever"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "21 years old"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "kahapon (yesterday)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "hindi komportable (nanginginig"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "masakit ang ulo) (uncomfortable - chills"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache)"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "lumalala (getting worse)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "sipon o ubo (colds or cough)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG  
+Segment: "pananakit ng ulo (headache)"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "pananakit ng ulo headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "walang gana kumain (loss of appetite)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "panghihina o pagkapagod (weakness or fatigue)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "pagpapawis (sweating)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "age"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "21 years old"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "yesterday"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "uncomfortable (chills"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache)"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "getting worse"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "a 21-year-old patient reports a fever that started yesterday"   
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "fever" (severity: 5)
+ LOG        Context: "old patient reports a fever that started yesterday" 
+ LOG    Segment max score: 5
+ LOG 
+Segment: "is getting worse"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "and is accompanied by discomfort"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "chills"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "colds/cough"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "loss of appetite"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "weakness/fatigue"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "and sweating"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 0/10
+ LOG  Score: 5/10
  LOG  Emergency: NO
- LOG  Active keywords: []
- LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  Active keywords: [fever, headache]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): fever, headache.
  LOG  === EMERGENCY DETECTION END ===
  LOG  [GeminiClient] Sending request (Attempt 1)...
  LOG  Saved 10 facilities to offline storage
+ LOG  
+╔════════════════════════════════════════════════════════════╗
+ LOG  ║              FINAL ASSESSMENT & RECOMMENDATION             ║
+ LOG  ╠════════════════════════════════════════════════════════════╣      
+ LOG  ║ CONTEXT: Initial Symptom: Fever. Clinical Profile Summary... ║    
+ LOG  ╟────────────────────────────────────────────────────────────╢      
+ LOG  ║ RECOMMENDED LEVEL: HEALTH CENTER                            ║     
+ LOG  ║ CONFIDENCE: 90%      | AMBIGUITY: NO                       ║      
+ LOG  ╟────────────────────────────────────────────────────────────╢      
+ LOG  ║ ADVICE: Given your fever started yesterday and is now gett ║      
+ LOG  ║         ing worse, accompanied by chills, headache, colds/ ║      
+ LOG  ╟────────────────────────────────────────────────────────────╢      
+ LOG  ║ CLINICAL SOAP: S: A 21-year-old patient reports a fever th ║      
+ LOG  ╚════════════════════════════════════════════════════════════╝      

@@ -15,6 +15,8 @@ export const ClinicalNoteScreen = () => {
   const insets = useSafeAreaInsets();
   const latestAssessment = useSelector((state: RootState) => state.offline.latestAssessment);
 
+  const [copied, setCopied] = useState(false);
+
   if (!latestAssessment) {
     return (
       <View style={styles.centerContainer}>
@@ -41,6 +43,8 @@ export const ClinicalNoteScreen = () => {
       latestAssessment.timestamp
     );
     await Clipboard.setStringAsync(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const Section = ({ title, content }: { title: string; content?: string }) => {
@@ -96,10 +100,11 @@ export const ClinicalNoteScreen = () => {
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <Button 
-          variant="primary" 
+          variant={copied ? "outline" : "primary"} 
           onPress={handleShare}
           style={styles.shareButton}
-          title="Share Report"
+          title={copied ? "Copied!" : "Copy for Handover"}
+          icon={copied ? "check" : "content-copy"}
         />
       </View>
     </View>
