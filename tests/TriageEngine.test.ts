@@ -84,6 +84,28 @@ describe('TriageEngine', () => {
     expect(() => TriageEngine.processStep(mockFlow, 'o1', 'Yes')).toThrow(/Cannot process answer/);
   });
 
+  test('should support robust answer matching (Yes variations)', () => {
+    const variations = ['y', 'yeah', 'yep', 'correct', 'true', 'YES '];
+    variations.forEach(v => {
+      const result = TriageEngine.processStep(mockFlow, 'q1', v);
+      expect(result.node.id).toBe('q2');
+    });
+  });
+
+  test('should support robust answer matching (No variations)', () => {
+    const variations = ['n', 'nope', 'nah', 'incorrect', 'false', ' NO'];
+    variations.forEach(v => {
+      const result = TriageEngine.processStep(mockFlow, 'q1', v);
+      expect(result.node.id).toBe('o1');
+    });
+  });
+
+  test('should calculate estimated remaining steps', () => {
+    expect(TriageEngine.getEstimatedRemainingSteps(mockFlow, 'q1')).toBe(2);
+    expect(TriageEngine.getEstimatedRemainingSteps(mockFlow, 'q2')).toBe(1);
+    expect(TriageEngine.getEstimatedRemainingSteps(mockFlow, 'o1')).toBe(0);
+  });
+
   test('should validate a correct flow', () => {
     const errors = TriageEngine.validateFlow(mockFlow);
     expect(errors.length).toBe(0);

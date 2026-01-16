@@ -60,7 +60,37 @@
         },
         {
           "label": "No",
+          "next": "q_tropical_signs"
+        }
+      ]
+    },
+    "q_tropical_signs": {
+      "id": "q_tropical_signs",
+      "type": "question",
+      "text": "Are there signs of tropical illness: high fever with muscle/joint pain, pain behind eyes, a rash, or history of wading in floodwaters?",
+      "options": [
+        {
+          "label": "Yes",
+          "next": "q_tropical_warning_signs"
+        },
+        {
+          "label": "No",
           "next": "q_moderate_symptoms"
+        }
+      ]
+    },
+    "q_tropical_warning_signs": {
+      "id": "q_tropical_warning_signs",
+      "type": "question",
+      "text": "Are any of these present: severe abdominal pain, persistent vomiting, bleeding (gums/nose), or yellowing of the eyes/skin?",
+      "options": [
+        {
+          "label": "Yes",
+          "next": "o_hospital_tropical_urgent"
+        },
+        {
+          "label": "No",
+          "next": "o_suspected_dengue_stable"
         }
       ]
     },
@@ -158,6 +188,36 @@
           "Monitor symptoms closely for any changes or new red flags.",
           "Re-evaluate using the assistant if symptoms worsen.",
           "Use over-the-counter remedies as appropriate for age and history."
+        ]
+      }
+    },
+    "o_hospital_tropical_urgent": {
+      "id": "o_hospital_tropical_urgent",
+      "type": "outcome",
+      "recommendation": {
+        "level": "hospital",
+        "reasoning": "Suspected Dengue with Warning Signs or Leptospirosis detected. This is a medical emergency requiring immediate hospitalization.",
+        "actions": [
+          "Go to the nearest Hospital Emergency Department immediately.",
+          "Tell the staff about the fever and any warning signs (abdominal pain, vomiting, bleeding).",
+          "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid as these increase bleeding risk. Use only Paracetamol if prescribed.",
+          "Sip Oral Rehydration Salts (ORS) or water continuously on the way to the hospital.",
+          "Note the date the fever started and any history of floodwater exposure."
+        ]
+      }
+    },
+    "o_suspected_dengue_stable": {
+      "id": "o_suspected_dengue_stable",
+      "type": "outcome",
+      "recommendation": {
+        "level": "health-center",
+        "reasoning": "Symptoms are suggestive of early Dengue or Leptospirosis without immediate warning signs. Early testing and strict monitoring are required.",
+        "actions": [
+          "Visit your nearest Health Center or YAKAP clinic TODAY for an NS1 test or CBC.",
+          "HYDRATION: Drink at least 2 liters of fluids daily (ORS, water, fruit juice, or soup). Avoid dark-colored fluids that can mimic bleeding in vomit.",
+          "GO TO THE ER IMMEDIATELY IF YOU DEVELOP: Severe abdominal pain, persistent vomiting (3+ times in 24h), bleeding from gums/nose, or extreme weakness/dizziness.",
+          "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid. Use Paracetamol only for fever.",
+          "Rest under a mosquito net during the day to prevent spreading the virus to others."
         ]
       }
     }

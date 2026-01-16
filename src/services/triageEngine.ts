@@ -51,10 +51,16 @@ export class TriageEngine {
       throw new TriageError(`Question node "${currentNodeId}" has no options defined.`, 'INVALID_NODE');
     }
 
-    // Case-insensitive search for the matching option label
-    const selectedOption = currentNode.options.find(
-      (opt: TriageOption) => opt.label.toLowerCase() === answer.toLowerCase()
-    );
+    // Robust search for matching option label (case-insensitive + common variations)
+    const normalizedAnswer = answer.toLowerCase().trim();
+    const selectedOption = currentNode.options.find((opt: TriageOption) => {
+      const label = opt.label.toLowerCase();
+      return (
+        label === normalizedAnswer ||
+        (label === 'yes' && ['y', 'yeah', 'yep', 'correct', 'true'].includes(normalizedAnswer)) ||
+        (label === 'no' && ['n', 'nope', 'nah', 'incorrect', 'false'].includes(normalizedAnswer))
+      );
+    });
 
     if (!selectedOption) {
       throw new TriageError(`Invalid answer "${answer}" for question "${currentNodeId}".`, 'INVALID_ANSWER');
@@ -65,10 +71,38 @@ export class TriageEngine {
       throw new TriageError(`Next node "${selectedOption.next}" not found in flow.`, 'INVALID_NODE');
     }
 
+    // Robustness: Ensure outcome nodes always have a recommendation
+    if (nextNode.type === 'outcome' && !nextNode.recommendation) {
+      throw new TriageError(`Outcome node "${selectedOption.next}" is missing its recommendation payload.`, 'INVALID_NODE');
+    }
+
     return {
       node: nextNode,
       isOutcome: nextNode.type === 'outcome',
     };
+  }
+
+  /**
+   * Estimates the maximum number of steps remaining to reach an outcome.
+   * Used for UI progress indicators.
+   */
+  public static getEstimatedRemainingSteps(flow: TriageFlow, currentNodeId: string): number {
+    const visited = new Set<string>();
+    
+    const findMaxDepth = (id: string): number => {
+      if (visited.has(id)) return 0; // Prevent infinite loops
+      visited.add(id);
+
+      const node = flow.nodes[id];
+      if (!node || node.type === 'outcome') return 0;
+
+      if (!node.options || node.options.length === 0) return 0;
+
+      const depths = node.options.map(opt => findMaxDepth(opt.next));
+      return 1 + Math.max(...depths);
+    };
+
+    return findMaxDepth(currentNodeId);
   }
 
   /**
