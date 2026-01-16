@@ -125,6 +125,14 @@ const SymptomAssessmentScreen = () => {
   }, []);
 
   const startRecording = async () => {
+    if (!speechService.isAvailable) {
+      Alert.alert(
+        'Voice Unavailable',
+        'Voice recognition is not available on this device/simulator. Please type your answer.',
+      );
+      return;
+    }
+
     try {
       setIsRecording(true);
       setVolume(0);
@@ -136,7 +144,7 @@ const SymptomAssessmentScreen = () => {
           console.error('STT Error:', error);
           setIsRecording(false);
           setVolume(0);
-          Alert.alert('Speech Error', 'Could not recognize speech. Please try again.');
+          Alert.alert('Speech Error', error.message || 'Could not recognize speech. Please try again.');
         },
         (vol) => {
           setVolume(vol);
