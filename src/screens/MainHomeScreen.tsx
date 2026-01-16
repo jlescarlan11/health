@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, Paragraph, Title, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -15,24 +15,6 @@ export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
   const theme = useTheme();
 
-  useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        location: 'MainHomeScreen.tsx:30',
-        message: 'MainHomeScreen mounted',
-        data: { platform: Platform.OS, iconLibrary: '@expo/vector-icons' },
-        timestamp: Date.now(),
-        sessionId: 'debug-session',
-        runId: 'post-fix',
-        hypothesisId: 'A',
-      }),
-    }).catch(() => {});
-    // #endregion
-  }, []);
-
   const FeatureCard = ({
     title,
     subtitle,
@@ -44,30 +26,12 @@ export const MainHomeScreen = () => {
   }: {
     title: string;
     subtitle: string;
-    icon: any;
+    icon: keyof (typeof MaterialCommunityIcons)['glyphMap'];
     color: string;
     iconColor?: string;
     onPress: () => void;
     testID?: string;
   }) => {
-    // #region agent log
-    React.useEffect(() => {
-      fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          location: 'MainHomeScreen.tsx:42',
-          message: 'FeatureCard render',
-          data: { title, iconName: icon, color, iconLibrary: '@expo/vector-icons' },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          runId: 'post-fix',
-          hypothesisId: 'A',
-        }),
-      }).catch(() => {});
-    }, [title, icon, color]);
-    // #endregion
-
     return (
       <Card
         style={[

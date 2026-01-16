@@ -518,12 +518,7 @@
     {
       "id": "animal_bites",
       "name": "Animal Bites (Rabies Risk)",
-      "symptoms": [
-        "Broken skin from bite or scratch",
-        "Pain at the site",
-        "Swelling",
-        "Redness"
-      ],
+      "symptoms": ["Broken skin from bite or scratch", "Pain at the site", "Swelling", "Redness"],
       "red_flags": [
         "Bite on the head, neck, or hands",
         "Deep or large wounds",

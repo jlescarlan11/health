@@ -17,7 +17,7 @@ async function testEndpoint(url, name) {
           try {
             const json = JSON.parse(data);
             console.log(`  Response:`, JSON.stringify(json, null, 2));
-          } catch (e) {
+          } catch {
             console.log(`  Response:`, data);
           }
         }

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, View, TextInput, Pressable, ViewStyle } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 

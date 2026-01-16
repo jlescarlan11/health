@@ -20,7 +20,7 @@ const EnrollmentCompletionScreen = () => {
 
   const navigateToFacilities = () => {
     // Navigate to Find tab with YAKAP filter
-    // @ts-ignore - cross-tab navigation
+    // @ts-expect-error - cross-tab navigation
     navigation.navigate('Find', {
       screen: 'FacilityDirectory',
       params: { filter: 'yakap' },
@@ -44,7 +44,7 @@ const EnrollmentCompletionScreen = () => {
             ),
           style: 'default',
         },
-      ]
+      ],
     );
     return true; // Prevent default behavior
   }, [navigation]);
@@ -58,7 +58,7 @@ const EnrollmentCompletionScreen = () => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
       return () => subscription.remove();
-    }, [handleExitFlow])
+    }, [handleExitFlow]),
   );
 
   return (

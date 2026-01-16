@@ -51,7 +51,7 @@ describe('Gemini Service Retry Logic', () => {
 
     expect(result).toBe('Success response');
     expect(mockGenerateContent).toHaveBeenCalledTimes(3);
-    
+
     // Expect delay: 1000 + 2000 = 3000ms minimum
     expect(duration).toBeGreaterThanOrEqual(3000);
   }, 15000);
@@ -63,8 +63,8 @@ describe('Gemini Service Retry Logic', () => {
     try {
       await getGeminiResponse('test prompt');
       throw new Error('Should have thrown an error');
-    } catch (error: any) {
-      expect(error.message).toContain('The AI service is currently overloaded');
+    } catch (error: unknown) {
+      expect((error as Error).message).toContain('The AI service is currently overloaded');
     }
     const duration = Date.now() - start;
 
@@ -73,15 +73,15 @@ describe('Gemini Service Retry Logic', () => {
   }, 15000);
 
   it('should throw generic error after max retries if not 503', async () => {
-     mockGenerateContent.mockRejectedValue(new Error('Random Error'));
-     
-     try {
-       await getGeminiResponse('test prompt');
-       throw new Error('Should have thrown');
-     } catch (error: any) {
-       expect(error.message).toBe('Random Error');
-     }
-     
-     expect(mockGenerateContent).toHaveBeenCalledTimes(3);
+    mockGenerateContent.mockRejectedValue(new Error('Random Error'));
+
+    try {
+      await getGeminiResponse('test prompt');
+      throw new Error('Should have thrown');
+    } catch (error: unknown) {
+      expect((error as Error).message).toBe('Random Error');
+    }
+
+    expect(mockGenerateContent).toHaveBeenCalledTimes(3);
   }, 15000);
 });

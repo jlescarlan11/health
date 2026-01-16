@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
 import { getGeminiResponse } from '../src/services/gemini';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { View, Text, TouchableOpacity, TextInput as RNTextInput } from 'react-native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { navigationReducer, settingsReducer } from '../src/store';
@@ -19,7 +18,7 @@ jest.mock('react-native-paper', () => {
   const React = require('react');
   const { View, Text, TouchableOpacity, TextInput: RNTextInput } = require('react-native');
   return {
-    Text: ({ children, style }: any) => <Text style={style}>{children}</Text>,
+    Text: ({ children, style }: { children: React.ReactNode; style?: import('react-native').StyleProp<import('react-native').TextStyle> }) => <Text style={style}>{children}</Text>,
     ActivityIndicator: () => <View testID="loading" />,
     useTheme: () => ({
       colors: {
@@ -36,13 +35,13 @@ jest.mock('react-native-paper', () => {
         outlineVariant: '#CCCCCC',
       },
     }),
-    Chip: ({ children, onPress, disabled }: any) => (
+    Chip: ({ children, onPress, disabled }: { children: React.ReactNode; onPress: () => void; disabled?: boolean }) => (
       <TouchableOpacity onPress={onPress} disabled={disabled} testID="chip">
         <Text>{children}</Text>
       </TouchableOpacity>
     ),
-    TextInput: (props: any) => <RNTextInput {...props} />,
-    IconButton: (props: any) => (
+    TextInput: (props: import('react-native').TextInputProps) => <RNTextInput {...props} />,
+    IconButton: (props: { onPress: () => void; disabled?: boolean; icon: string }) => (
       <TouchableOpacity onPress={props.onPress} disabled={props.disabled}>
         <Text>{props.icon}</Text>
       </TouchableOpacity>
@@ -68,7 +67,7 @@ jest.mock('../src/components/common', () => {
   const { View, Text, TouchableOpacity, TextInput } = require('react-native');
 
   return {
-    InputCard: React.forwardRef(({ value, onChangeText, onSubmit, disabled }: any, ref: any) => {
+    InputCard: React.forwardRef(({ value, onChangeText, onSubmit, disabled }: { value: string; onChangeText: (t: string) => void; onSubmit: () => void; disabled?: boolean }, ref: React.Ref<unknown>) => {
       React.useImperativeHandle(ref, () => ({
         focus: jest.fn(),
         blur: jest.fn(),
@@ -90,14 +89,14 @@ jest.mock('../src/components/common', () => {
     }),
     TypingIndicator: () => <View testID="typing-indicator" />,
     SafetyRecheckModal: () => <View testID="safety-modal" />,
+    ProgressBar: () => <View testID="progress-bar" />,
   };
 });
 
 jest.mock('../src/components/common/Button', () => {
-  const React = require('react');
   const { Text, TouchableOpacity } = require('react-native');
   return {
-    Button: ({ title, onPress }: any) => (
+    Button: ({ title, onPress }: { title: string; onPress: () => void }) => (
       <TouchableOpacity onPress={onPress}>
         <Text>{title}</Text>
       </TouchableOpacity>
@@ -106,11 +105,10 @@ jest.mock('../src/components/common/Button', () => {
 });
 
 jest.mock('../src/components/common/StandardHeader', () => {
-  const React = require('react');
   const { View, Text, TouchableOpacity } = require('react-native');
   return {
     __esModule: true,
-    default: ({ onBackPress, title }: any) => (
+    default: ({ onBackPress, title }: { onBackPress: () => void; title: string }) => (
       <View testID="header">
         <TouchableOpacity testID="header-back" onPress={onBackPress}>
           <Text>Back</Text>
@@ -132,7 +130,7 @@ const mockThreeQuestions = {
 describe('SymptomAssessmentScreen Step-Back Navigation', () => {
   const mockNavigate = jest.fn();
   const mockSetOptions = jest.fn();
-  let store: any;
+  let store: import('@reduxjs/toolkit').EnhancedStore;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -183,7 +181,6 @@ describe('SymptomAssessmentScreen Step-Back Navigation', () => {
     renderScreen();
 
     await waitFor(() => expect(screen.getByText(/Question 1: Duration\?/)).toBeTruthy());
-
 
     const input = screen.getByTestId('input-text');
     const submitBtn = screen.getByTestId('submit-button');

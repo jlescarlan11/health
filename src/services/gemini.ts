@@ -11,7 +11,10 @@ const BASE_DELAY = 1000;
  */
 const generateContentWithRetry = async (
   model: GenerativeModel,
-  params: string | (string | { inlineData: { data: string; mimeType: string } })[] | GenerateContentRequest
+  params:
+    | string
+    | (string | { inlineData: { data: string; mimeType: string } })[]
+    | GenerateContentRequest,
 ): Promise<string> => {
   let attempt = 0;
   while (attempt < MAX_RETRIES) {
@@ -19,19 +22,19 @@ const generateContentWithRetry = async (
       const result = await model.generateContent(params);
       const response = await result.response;
       return response.text();
-    } catch (error: any) {
+    } catch (error: unknown) {
       attempt++;
-      const isOverloaded = error.message?.includes('503') || error.status === 503;
-      const isThrottled = error.message?.includes('429') || error.status === 429;
-      
-      console.warn(`[Gemini Service] Attempt ${attempt} failed. Error: ${error.message}`);
+      const err = error as { message?: string; status?: number };
+      const isOverloaded = err.message?.includes('503') || err.status === 503;
+
+      console.warn(`[Gemini Service] Attempt ${attempt} failed. Error: ${err.message}`);
 
       if (attempt >= MAX_RETRIES) {
         console.error('[Gemini Service] Max retries reached. Throwing error.');
         if (isOverloaded) {
-           throw new Error('The AI service is currently overloaded. Please try again in a moment.');
+          throw new Error('The AI service is currently overloaded. Please try again in a moment.');
         }
-        throw error;
+        throw err;
       }
 
       // Calculate delay with exponential backoff (1s, 2s, 4s...)

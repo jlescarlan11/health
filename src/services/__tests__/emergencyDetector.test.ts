@@ -1,19 +1,10 @@
-import {
-  detectEmergency,
-  tokenizeSentences,
-  isNegated,
-} from '../emergencyDetector';
+import { detectEmergency, tokenizeSentences, isNegated } from '../emergencyDetector';
 
 describe('tokenizeSentences', () => {
   it('should split by period, comma, question mark, and exclamation point', () => {
     const text = 'Help! I have chest pain. Can you help me, please?';
     const tokens = tokenizeSentences(text);
-    expect(tokens).toEqual([
-      'Help',
-      'I have chest pain',
-      'Can you help me',
-      'please',
-    ]);
+    expect(tokens).toEqual(['Help', 'I have chest pain', 'Can you help me', 'please']);
   });
 
   it('should handle multiple consecutive punctuation marks', () => {
@@ -55,9 +46,7 @@ describe('isNegated', () => {
 
   it('should not detect negation if outside 3-word window', () => {
     // "No" is 4 words before "chest"
-    expect(
-      isNegated('No I really think that chest pain is bad', 'chest pain')
-    ).toBe(false);
+    expect(isNegated('No I really think that chest pain is bad', 'chest pain')).toBe(false);
   });
 
   it('should return false if keyword is not present', () => {
@@ -108,18 +97,14 @@ describe('detectEmergency', () => {
   });
 
   it('should detect emergency if one symptom is negated but another is present', () => {
-    const result = detectEmergency(
-      'I have no chest pain, but I am difficulty breathing'
-    );
+    const result = detectEmergency('I have no chest pain, but I am difficulty breathing');
     expect(result.isEmergency).toBe(true);
     expect(result.matchedKeywords).toContain('difficulty breathing');
     expect(result.matchedKeywords).not.toContain('chest pain');
   });
 
   it('should accurately identify non-negated symptom while excluding negated one ("I do not have chest pain, but I have a deep wound")', () => {
-    const result = detectEmergency(
-      'I do not have chest pain, but I have a deep wound'
-    );
+    const result = detectEmergency('I do not have chest pain, but I have a deep wound');
     expect(result.isEmergency).toBe(true);
     expect(result.matchedKeywords).toContain('deep wound');
     expect(result.matchedKeywords).not.toContain('chest pain');
@@ -176,5 +161,50 @@ describe('detectEmergency', () => {
     expect(result.isEmergency).toBe(true);
     expect(result.score).toBe(10);
     expect(result.matchedKeywords).toContain('feel like dying');
+  });
+
+  describe('fuzzy matching', () => {
+    it('should detect emergency with single-word typo (unconscious)', () => {
+      // unconsious (missing 'c')
+      const result = detectEmergency('The patient is unconsious');
+      expect(result.isEmergency).toBe(true);
+      expect(result.matchedKeywords).toContain('unconscious');
+    });
+
+    it('should detect emergency with multi-word typo (chest pain)', () => {
+      // chesrt pain (extra 'r')
+      const result = detectEmergency('I have chesrt pain');
+      expect(result.isEmergency).toBe(true);
+      expect(result.matchedKeywords).toContain('chest pain');
+    });
+
+    it('should detect emergency with sliding window fuzzy match', () => {
+      // "difficulty breathin" (missing 'g')
+      const result = detectEmergency('Having difficulty breathin right now');
+      expect(result.isEmergency).toBe(true);
+      expect(result.matchedKeywords).toContain('difficulty breathing');
+    });
+
+    it('should not detect emergency for very different words', () => {
+      // "chest" is 5 chars, "chess" is 5 chars, distance 1.
+      // But "chess" is not an emergency.
+      const result = detectEmergency('I am playing chess');
+      expect(result.isEmergency).toBe(false);
+      expect(result.matchedKeywords).not.toContain('chest pain');
+    });
+
+    it('should detect emergency with informal language / missing chars (seizure)', () => {
+      // "seizure" -> "sezure" (distance 1)
+      const result = detectEmergency('He is having a sezure');
+      expect(result.isEmergency).toBe(true);
+      expect(result.matchedKeywords).toContain('seizure');
+    });
+
+    it('should handle longer phrase typos (shortness of breath)', () => {
+      // "shortness of breth" (missing 'a')
+      const result = detectEmergency('severe shortness of breth');
+      expect(result.isEmergency).toBe(true);
+      expect(result.matchedKeywords).toContain('shortness of breath');
+    });
   });
 });

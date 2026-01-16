@@ -1,11 +1,10 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme, Divider } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import HeroSection from '../../components/heroes/HeroSection';
 import { Button } from '../../components/common/Button';
 import StandardHeader from '../../components/common/StandardHeader';
 import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
@@ -40,7 +39,7 @@ const YakapHomeScreen = () => {
           ]}
         >
           <MaterialCommunityIcons
-            name={benefit.icon as any}
+            name={benefit.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
             size={32}
             color={theme.colors.primary}
           />

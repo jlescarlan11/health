@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 
 import { YAKAP_FAQS, YakapFAQ } from './yakapContent';
 import StandardHeader from '../../components/common/StandardHeader';
+import { MD3Theme } from 'react-native-paper';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -28,7 +28,7 @@ const FaqItem = ({
   faq: YakapFAQ;
   isExpanded: boolean;
   onPress: () => void;
-  theme: any;
+  theme: MD3Theme;
 }) => (
   <View style={styles.faqItemWrapper}>
     <TouchableOpacity
@@ -78,7 +78,6 @@ const FaqItem = ({
 
 const YakapFaqScreen = () => {
   const theme = useTheme();
-  const navigation = useNavigation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleAccordionPress = (id: string) => {

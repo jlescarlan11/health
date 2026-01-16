@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Location from 'expo-location';
 import { useDispatch } from 'react-redux';
 import { setUserLocation } from '../store/facilitiesSlice';
-import { Alert, Linking, Platform } from 'react-native';
+import { Alert, Linking } from 'react-native';
 
 interface UseUserLocationOptions {
   watch?: boolean;

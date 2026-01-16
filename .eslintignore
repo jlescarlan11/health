@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+android/
+ios/
+dist/
+backend/dist/
+backend/generated/
+backend/node_modules/
+*.json
+google-services.json
+GoogleService-Info.plist

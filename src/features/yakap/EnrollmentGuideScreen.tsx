@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, ScrollView, BackHandler, Alert } from 'react-na
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ProgressBar, useTheme } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
@@ -37,7 +36,7 @@ const EnrollmentGuideScreen = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // @ts-ignore - navigation to completion
+      // @ts-expect-error - navigation to completion
       navigation.navigate('EnrollmentCompletion');
     }
   };

@@ -1,17 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Linking, Platform, BackHandler } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Text,
   Card,
-  Avatar,
-  IconButton,
   useTheme,
   ActivityIndicator,
   Divider,
   Surface,
 } from 'react-native-paper';
-import { useRoute, useNavigation, RouteProp, useFocusEffect, CommonActions } from '@react-navigation/native';
+import {
+  useRoute,
+  useNavigation,
+  RouteProp,
+  useFocusEffect,
+  CommonActions,
+} from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
@@ -39,9 +43,11 @@ const RecommendationScreen = () => {
   useUserLocation({ watch: false });
 
   const { assessmentData } = route.params;
-  const { facilities, isLoading: isFacilitiesLoading, userLocation } = useSelector(
-    (state: RootState) => state.facilities,
-  );
+  const {
+    facilities,
+    isLoading: isFacilitiesLoading,
+    userLocation,
+  } = useSelector((state: RootState) => state.facilities);
 
   const [loading, setLoading] = useState(true);
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
@@ -127,17 +133,15 @@ const RecommendationScreen = () => {
           if (dist < nearestHealthCenterDist) nearestHealthCenterDist = dist;
         }
 
-        if (
-          type.includes('hospital') ||
-          type.includes('infirmary') ||
-          type.includes('emergency')
-        ) {
+        if (type.includes('hospital') || type.includes('infirmary') || type.includes('emergency')) {
           if (dist < nearestHospitalDist) nearestHospitalDist = dist;
         }
       });
 
       const hcDistStr =
-        nearestHealthCenterDist !== Infinity ? `${nearestHealthCenterDist.toFixed(1)}km` : 'Unknown';
+        nearestHealthCenterDist !== Infinity
+          ? `${nearestHealthCenterDist.toFixed(1)}km`
+          : 'Unknown';
       const hospDistStr =
         nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
@@ -208,21 +212,6 @@ const RecommendationScreen = () => {
     scoredFacilities.sort((a, b) => b.score - a.score);
 
     setRecommendedFacilities(scoredFacilities.map((s) => s.facility).slice(0, 3));
-  };
-
-  const handleCall = (phoneNumber?: string) => {
-    if (phoneNumber) Linking.openURL(`tel:${phoneNumber}`);
-  };
-
-  const handleDirections = (facility: Facility) => {
-    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-    const latLng = `${facility.latitude},${facility.longitude}`;
-    const label = facility.name;
-    const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`,
-    });
-    if (url) Linking.openURL(url);
   };
 
   const handleViewDetails = (facilityId: string) => {
@@ -331,7 +320,7 @@ const RecommendationScreen = () => {
           <Card.Content style={styles.cardHeader}>
             <Surface style={[styles.careBadge, { backgroundColor: 'white' }]} elevation={1}>
               <MaterialCommunityIcons
-                name={careInfo.icon as any}
+                name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
                 size={20}
                 color={careInfo.color}
               />

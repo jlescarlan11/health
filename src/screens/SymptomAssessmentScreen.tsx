@@ -30,14 +30,20 @@ import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
-import { TriageFlow, TriageNode } from '../types/triage';
+import { TriageFlow } from '../types/triage';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 
 // Import common components
 import StandardHeader from '../components/common/StandardHeader';
 import { Button } from '../components/common/Button';
-import { InputCard, TypingIndicator, InputCardRef, SafetyRecheckModal, ProgressBar } from '../components/common';
+import {
+  InputCard,
+  TypingIndicator,
+  InputCardRef,
+  SafetyRecheckModal,
+  ProgressBar,
+} from '../components/common';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -80,12 +86,11 @@ const SymptomAssessmentScreen = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Voice Input State
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [inputText, setInputText] = useState('');
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
@@ -157,7 +162,10 @@ const SymptomAssessmentScreen = () => {
           console.error('STT Error:', error);
           setIsRecording(false);
           setVolume(0);
-          Alert.alert('Speech Error', error.message || 'Could not recognize speech. Please try again.');
+          Alert.alert(
+            'Speech Error',
+            error.message || 'Could not recognize speech. Please try again.',
+          );
         },
         (vol) => {
           setVolume(vol);
@@ -184,14 +192,10 @@ const SymptomAssessmentScreen = () => {
 
   const handleBack = useCallback(() => {
     if (isOfflineMode) {
-      Alert.alert(
-        'Cancel Assessment',
-        'Are you sure you want to stop the offline check?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Stop', style: 'destructive', onPress: () => navigation.goBack() },
-        ],
-      );
+      Alert.alert('Cancel Assessment', 'Are you sure you want to stop the offline check?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Stop', style: 'destructive', onPress: () => navigation.goBack() },
+      ]);
       return;
     }
 
@@ -242,8 +246,13 @@ const SymptomAssessmentScreen = () => {
       return newAnswers;
     });
 
-    if (questionToUndo && (questionToUndo.id === 'age' || questionToUndo.id === 'duration' || questionToUndo.id === 'severity')) {
-      setCapturedSlots(prev => ({ ...prev, [questionToUndo.id]: '' }));
+    if (
+      questionToUndo &&
+      (questionToUndo.id === 'age' ||
+        questionToUndo.id === 'duration' ||
+        questionToUndo.id === 'severity')
+    ) {
+      setCapturedSlots((prev) => ({ ...prev, [questionToUndo.id]: '' }));
     }
 
     // 3. Revert step
@@ -302,12 +311,12 @@ const SymptomAssessmentScreen = () => {
     setIsNetworkError(false);
     const startNode = TriageEngine.getStartNode(triageFlow);
     setCurrentOfflineNodeId(startNode.id);
-    
+
     // Dynamically calculate estimated steps for the progress bar
     const estimatedSteps = TriageEngine.getEstimatedRemainingSteps(triageFlow, startNode.id);
     setTotalEstimatedSteps(estimatedSteps);
     setCurrentStep(0);
-    
+
     setMessages([
       {
         id: 'offline-intro',
@@ -320,9 +329,9 @@ const SymptomAssessmentScreen = () => {
         text: startNode.text || '',
         sender: 'assistant',
         isOffline: true,
-      }
+      },
     ]);
-    
+
     setLoading(false);
     setError('');
   };
@@ -365,9 +374,14 @@ const SymptomAssessmentScreen = () => {
       } else {
         throw new Error('Failed to parse questions');
       }
-    } catch (err: any) {
-      console.error(err);
-      if (err.message === 'NETWORK_ERROR' || err.message?.includes('network') || err.message?.includes('fetch')) {
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error(error);
+      if (
+        error.message === 'NETWORK_ERROR' ||
+        error.message?.includes('network') ||
+        error.message?.includes('fetch')
+      ) {
         setIsNetworkError(true);
         setError('Connection lost. We can continue with an emergency-focused check while offline.');
       } else {
@@ -395,7 +409,7 @@ const SymptomAssessmentScreen = () => {
     setTimeout(() => {
       try {
         const result = TriageEngine.processStep(triageFlow, currentOfflineNodeId, answer);
-        
+
         if (result.isOutcome) {
           const rec = result.node.recommendation!;
           // Navigate to recommendation with offline data
@@ -446,8 +460,13 @@ const SymptomAssessmentScreen = () => {
     setAnswers(newAnswers);
 
     // Update captured slots visually
-    if (!isSkip && (currentQuestion.id === 'age' || currentQuestion.id === 'duration' || currentQuestion.id === 'severity')) {
-      setCapturedSlots(prev => ({ ...prev, [currentQuestion.id]: finalAnswer }));
+    if (
+      !isSkip &&
+      (currentQuestion.id === 'age' ||
+        currentQuestion.id === 'duration' ||
+        currentQuestion.id === 'severity')
+    ) {
+      setCapturedSlots((prev) => ({ ...prev, [currentQuestion.id]: finalAnswer }));
     }
 
     // Add user message
@@ -583,11 +602,20 @@ const SymptomAssessmentScreen = () => {
         style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}
       >
         {isAssistant && (
-          <View style={[styles.avatar, { backgroundColor: message.isOffline ? theme.colors.secondaryContainer : theme.colors.primaryContainer }]}>
-            <MaterialCommunityIcons 
-              name={message.isOffline ? "shield-check" : "robot"} 
-              size={18} 
-              color={message.isOffline ? theme.colors.secondary : theme.colors.primary} 
+          <View
+            style={[
+              styles.avatar,
+              {
+                backgroundColor: message.isOffline
+                  ? theme.colors.secondaryContainer
+                  : theme.colors.primaryContainer,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              name={message.isOffline ? 'shield-check' : 'robot'}
+              size={18}
+              color={message.isOffline ? theme.colors.secondary : theme.colors.primary}
             />
           </View>
         )}
@@ -611,13 +639,37 @@ const SymptomAssessmentScreen = () => {
     );
   };
 
-  const renderSlotIndicator = (label: string, value: string, icon: string) => {
+  const renderSlotIndicator = (
+    label: string,
+    value: string,
+    icon: keyof (typeof MaterialCommunityIcons)['glyphMap'],
+  ) => {
     if (!value) return null;
     return (
-      <View style={[styles.slotBadge, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant }]}>
-        <MaterialCommunityIcons name={icon as any} size={14} color={theme.colors.primary} />
-        <Text variant="labelSmall" style={[styles.slotLabel, { color: theme.colors.onSurfaceVariant }]}>{label}:</Text>
-        <Text variant="labelSmall" numberOfLines={1} style={[styles.slotValue, { color: theme.colors.onSurface }]}>{value}</Text>
+      <View
+        style={[
+          styles.slotBadge,
+          { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
+        ]}
+      >
+        <MaterialCommunityIcons
+          name={icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
+          size={14}
+          color={theme.colors.primary}
+        />
+        <Text
+          variant="labelSmall"
+          style={[styles.slotLabel, { color: theme.colors.onSurfaceVariant }]}
+        >
+          {label}:
+        </Text>
+        <Text
+          variant="labelSmall"
+          numberOfLines={1}
+          style={[styles.slotValue, { color: theme.colors.onSurface }]}
+        >
+          {value}
+        </Text>
       </View>
     );
   };
@@ -625,22 +677,27 @@ const SymptomAssessmentScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-        <ProgressBar 
-          progress={totalEstimatedSteps > 0 ? (currentStep) / totalEstimatedSteps : 0} 
-          label={isOfflineMode ? "Offline Check Progress" : "Assessment Progress"}
+        <ProgressBar
+          progress={totalEstimatedSteps > 0 ? currentStep / totalEstimatedSteps : 0}
+          label={isOfflineMode ? 'Offline Check Progress' : 'Assessment Progress'}
           showPercentage
           height={6}
         />
-        
-        {!isOfflineMode && (capturedSlots.age || capturedSlots.duration || capturedSlots.severity) && (
-          <Animated.View style={styles.slotsContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.slotsScrollContent}>
-              {renderSlotIndicator('Age', capturedSlots.age, 'account-clock')}
-              {renderSlotIndicator('Duration', capturedSlots.duration, 'clock-outline')}
-              {renderSlotIndicator('Severity', capturedSlots.severity, 'alert-circle-outline')}
-            </ScrollView>
-          </Animated.View>
-        )}
+
+        {!isOfflineMode &&
+          (capturedSlots.age || capturedSlots.duration || capturedSlots.severity) && (
+            <Animated.View style={styles.slotsContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.slotsScrollContent}
+              >
+                {renderSlotIndicator('Age', capturedSlots.age, 'account-clock')}
+                {renderSlotIndicator('Duration', capturedSlots.duration, 'clock-outline')}
+                {renderSlotIndicator('Severity', capturedSlots.severity, 'alert-circle-outline')}
+              </ScrollView>
+            </Animated.View>
+          )}
       </View>
       {isOfflineMode && (
         <View style={[styles.offlineBanner, { backgroundColor: theme.colors.secondaryContainer }]}>
@@ -650,7 +707,7 @@ const SymptomAssessmentScreen = () => {
           </Text>
         </View>
       )}
-      
+
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
@@ -662,21 +719,28 @@ const SymptomAssessmentScreen = () => {
         <View style={styles.messagesContainer}>
           {messages.map(renderMessage)}
           {isTyping && renderTypingIndicator()}
-          
+
           {isNetworkError && (
             <View style={[styles.errorCard, { backgroundColor: theme.colors.surfaceVariant }]}>
-              <MaterialCommunityIcons name="alert-circle-outline" size={32} color={theme.colors.error} style={styles.errorIcon} />
-              <Text variant="titleMedium" style={{ color: theme.colors.error, fontWeight: 'bold' }}>Connection Issue</Text>
+              <MaterialCommunityIcons
+                name="alert-circle-outline"
+                size={32}
+                color={theme.colors.error}
+                style={styles.errorIcon}
+              />
+              <Text variant="titleMedium" style={{ color: theme.colors.error, fontWeight: 'bold' }}>
+                Connection Issue
+              </Text>
               <Text style={styles.errorDescription}>{error}</Text>
               <View style={styles.errorActions}>
-                <Button 
-                  title="START OFFLINE CHECK" 
+                <Button
+                  title="START OFFLINE CHECK"
                   onPress={startOfflineTriage}
                   variant="primary"
                   style={{ flex: 1, marginRight: 8 }}
                 />
-                <Button 
-                  title="RETRY" 
+                <Button
+                  title="RETRY"
                   onPress={fetchQuestions}
                   variant="outline"
                   style={{ flex: 1 }}
@@ -763,12 +827,11 @@ const SymptomAssessmentScreen = () => {
           value={inputText}
           onChangeText={setInputText}
           onSubmit={() => handleNext()}
-          label={isOfflineMode ? "Please use options above" : "Type your answer..."}
+          label={isOfflineMode ? 'Please use options above' : 'Type your answer...'}
           placeholder=""
           onFocus={handleInputFocus}
           isRecording={isRecording}
           volume={volume}
-          isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
           disabled={isTyping || isOfflineMode}
         />
@@ -904,4 +967,3 @@ const styles = StyleSheet.create({
 });
 
 export default SymptomAssessmentScreen;
-

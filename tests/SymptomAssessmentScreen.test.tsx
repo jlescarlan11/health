@@ -1,13 +1,12 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
 import { getGeminiResponse } from '../src/services/gemini';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 jest.mock('react-native-paper', () => {
   const React = require('react');
   return {
-    Text: ({ children }: any) => React.createElement('Text', {}, children),
+    Text: ({ children }: { children: React.ReactNode }) => React.createElement('Text', {}, children),
     ActivityIndicator: () => React.createElement('ActivityIndicator'),
     useTheme: () => ({
       colors: {
@@ -20,9 +19,9 @@ jest.mock('react-native-paper', () => {
         onPrimary: '#FFFFFF',
       },
     }),
-    Chip: ({ children, onPress, disabled }: any) =>
+    Chip: ({ children, onPress, disabled }: { children: React.ReactNode; onPress: () => void; disabled?: boolean }) =>
       React.createElement('View', { onPress, disabled }, React.createElement('Text', {}, children)),
-    Provider: ({ children }: any) => children,
+    Provider: ({ children }: { children: React.ReactNode }) => children,
     DefaultTheme: {},
   };
 });
@@ -59,7 +58,7 @@ jest.mock('expo-av', () => ({
 jest.mock('../src/components/common', () => {
   const React = require('react');
   return {
-    InputCard: React.forwardRef((props: any, ref: any) => {
+    InputCard: React.forwardRef((props: Record<string, unknown>, ref: React.Ref<unknown>) => {
       React.useImperativeHandle(ref, () => ({
         focus: jest.fn(),
         blur: jest.fn(),
@@ -69,11 +68,12 @@ jest.mock('../src/components/common', () => {
     }),
     TypingIndicator: () => React.createElement('TypingIndicator'),
     SafetyRecheckModal: () => React.createElement('SafetyRecheckModal'),
+    ProgressBar: () => React.createElement('ProgressBar'),
   };
 });
 
 jest.mock('../src/components/common/Button', () => ({
-  Button: (props: any) => {
+  Button: (props: Record<string, unknown>) => {
     const React = require('react');
     return React.createElement('Button', props);
   },
@@ -83,7 +83,7 @@ jest.mock('../src/components/common/StandardHeader', () => {
   const React = require('react');
   return {
     __esModule: true,
-    default: (props: any) => React.createElement('StandardHeader', props),
+    default: (props: Record<string, unknown>) => React.createElement('StandardHeader', props),
   };
 });
 
@@ -97,8 +97,7 @@ const mockQuestions = {
 describe('SymptomAssessmentScreen Skip Functionality', () => {
   const mockNavigate = jest.fn();
   const mockSetOptions = jest.fn();
-  const mockReplace = jest.fn();
-  let store: any;
+  let store: import('@reduxjs/toolkit').EnhancedStore;
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -13,8 +13,8 @@ const migrateTableSchema = async (
 
   try {
     // Get existing columns
-    const tableInfo = await db.getAllAsync<any>(`PRAGMA table_info(${tableName})`);
-    const existingColumnNames = tableInfo.map((col: any) => col.name);
+    const tableInfo = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${tableName})`);
+    const existingColumnNames = tableInfo.map((col) => col.name);
 
     // Check and add missing columns
     for (const requiredColumn of requiredColumns) {
@@ -24,7 +24,7 @@ const migrateTableSchema = async (
         );
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error migrating ${tableName} schema:`, error);
     throw error;
   }
@@ -139,12 +139,39 @@ export const saveFacilities = async (facilities: Facility[]) => {
   }
 };
 
+interface FacilityRow {
+  id: string;
+  name: string;
+  type: string;
+  services: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  phone: string | null;
+  yakapAccredited: number;
+  hours: string | null;
+  photoUrl: string | null;
+  lastUpdated: number;
+  data: string;
+}
+
+interface EmergencyContactRow {
+  id: string;
+  name: string;
+  category: string;
+  phone: string;
+  available24x7: number;
+  description: string | null;
+  lastUpdated: number;
+  data: string;
+}
+
 export const getFacilities = async (): Promise<Facility[]> => {
   if (!db) await initDatabase();
   if (!db) throw new Error('Database not initialized');
 
   try {
-    const result = await db.getAllAsync<any>('SELECT * FROM facilities');
+    const result = await db.getAllAsync<FacilityRow>('SELECT * FROM facilities');
 
     return result
       .map((row) => {
@@ -181,7 +208,7 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
   if (!db) throw new Error('Database not initialized');
 
   try {
-    const row = await db.getFirstAsync<any>('SELECT * FROM facilities WHERE id = ?', [id]);
+    const row = await db.getFirstAsync<FacilityRow>('SELECT * FROM facilities WHERE id = ?', [id]);
 
     if (!row) return null;
 
@@ -258,7 +285,7 @@ export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
   if (!db) throw new Error('Database not initialized');
 
   try {
-    const result = await db.getAllAsync<any>('SELECT * FROM emergency_contacts');
+    const result = await db.getAllAsync<EmergencyContactRow>('SELECT * FROM emergency_contacts');
 
     return result
       .map((row) => {

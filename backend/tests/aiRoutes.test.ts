@@ -5,7 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 jest.mock('@google/generative-ai');
 
 describe('AI Routes', () => {
-  let app: any;
+  let app: import('express').Application;
   let mockGenerateContent: jest.Mock;
 
   beforeAll(() => {

@@ -57,10 +57,10 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   showPercentage = false,
 }) => {
   const theme = useTheme();
-  
+
   // Ensure progress is within [0, 1]
   const clampedProgress = Math.min(Math.max(progress, 0), 1);
-  
+
   // Animation value
   const animatedProgress = useRef(new Animated.Value(clampedProgress)).current;
 
@@ -92,7 +92,9 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
             <Animated.Text style={[styles.label, { color: theme.colors.onSurface }]}>
               {label}
             </Animated.Text>
-          ) : <View />}
+          ) : (
+            <View />
+          )}
           {showPercentage && (
             <Animated.Text style={[styles.percentage, { color: theme.colors.onSurfaceVariant }]}>
               {`${Math.round(clampedProgress * 100)}%`}

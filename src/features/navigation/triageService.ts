@@ -2,9 +2,16 @@ import { geminiClient, AssessmentResponse } from '../../api/geminiClient';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 
+interface MentalHealthDetectionResult {
+  isCrisis: boolean;
+  matchedKeywords: string[];
+  message?: string;
+  resources?: { name: string; number: string; description: string }[];
+}
+
 interface TriageResult {
   type: 'EMERGENCY' | 'CRISIS' | 'ASSESSMENT';
-  data: AssessmentResponse | any;
+  data: AssessmentResponse | MentalHealthDetectionResult;
 }
 
 export const performTriage = async (

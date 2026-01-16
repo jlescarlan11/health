@@ -1,13 +1,15 @@
-import { FeatureCollection, LineString } from 'geojson';
+import { LineString } from 'geojson';
 import Constants from 'expo-constants';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Mapbox: any = null;
 const isExpoGo = Constants.appOwnership === 'expo';
 
 if (!isExpoGo) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     Mapbox = require('@rnmapbox/maps');
-  } catch (error) {
+  } catch {
     console.warn('Mapbox native module not found in service');
   }
 }
@@ -49,13 +51,13 @@ export const getDirections = async (
     }
 
     return {
-      routes: data.routes.map((route: any) => ({
+      routes: data.routes.map((route: { geometry: LineString; duration: number; distance: number }) => ({
         geometry: route.geometry,
         duration: route.duration,
         distance: route.distance,
       })),
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching directions:', error);
     return null;
   }
@@ -76,15 +78,15 @@ export const downloadOfflineMap = async (
         minZoom: 10,
         maxZoom: 16,
       },
-      (region: any, status: any) => {
+      (_region: unknown, status: { percentage: number }) => {
         console.log(`Offline pack ${name} progress: ${status.percentage}`);
       },
-      (region: any, error: any) => {
-        console.error(`Offline pack ${name} error:`, error);
+      (_region: unknown, _error: unknown) => {
+        console.error(`Offline pack ${name} error:`, _error);
       },
     );
     console.log(`Offline pack ${name} download started`);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating offline pack:', error);
   }
 };

@@ -1,5 +1,5 @@
 import { TriageEngine } from '../src/services/triageEngine';
-import { TriageFlow } from '../src/types/triage';
+import { TriageFlow, TriageNode } from '../src/types/triage';
 
 // Mock Triage Flow
 const mockFlow: TriageFlow = {
@@ -86,7 +86,7 @@ describe('TriageEngine', () => {
 
   test('should support robust answer matching (Yes variations)', () => {
     const variations = ['y', 'yeah', 'yep', 'correct', 'true', 'YES '];
-    variations.forEach(v => {
+    variations.forEach((v) => {
       const result = TriageEngine.processStep(mockFlow, 'q1', v);
       expect(result.node.id).toBe('q2');
     });
@@ -94,7 +94,7 @@ describe('TriageEngine', () => {
 
   test('should support robust answer matching (No variations)', () => {
     const variations = ['n', 'nope', 'nah', 'incorrect', 'false', ' NO'];
-    variations.forEach(v => {
+    variations.forEach((v) => {
       const result = TriageEngine.processStep(mockFlow, 'q1', v);
       expect(result.node.id).toBe('o1');
     });
@@ -112,7 +112,7 @@ describe('TriageEngine', () => {
   });
 
   test('should detect errors in an invalid flow', () => {
-    const invalidFlow: any = {
+    const invalidFlow = {
       version: '1.0.0',
       name: 'Invalid Flow',
       startNode: 'missing',
@@ -121,14 +121,14 @@ describe('TriageEngine', () => {
           id: 'q1',
           type: 'question',
           options: [{ label: 'Yes', next: 'non-existent' }],
-        },
+        } as unknown as TriageNode,
         o1: {
           id: 'o1',
           type: 'outcome',
           // missing recommendation
-        },
+        } as unknown as TriageNode,
       },
-    };
+    } as unknown as TriageFlow;
     const errors = TriageEngine.validateFlow(invalidFlow);
     expect(errors).toContain('Start node "missing" does not exist.');
     expect(errors).toContain('Question node "q1" points to non-existent node "non-existent".');

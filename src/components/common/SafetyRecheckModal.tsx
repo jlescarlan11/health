@@ -22,7 +22,7 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
   const handleCall = (number: string) => {
     const cleanNumber = number.replace(/[^\d+]/g, '');
     const url = Platform.OS === 'android' ? `tel:${cleanNumber}` : `telprompt:${cleanNumber}`;
-    
+
     Linking.canOpenURL(url)
       .then((supported) => {
         if (supported) {
@@ -34,11 +34,7 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
   };
 
   return (
-    <Modal
-      visible={visible}
-      onDismiss={onDismiss}
-      contentContainerStyle={styles.modalContent}
-    >
+    <Modal visible={visible} onDismiss={onDismiss} contentContainerStyle={styles.modalContent}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: theme.colors.errorContainer }]}>
           <MaterialCommunityIcons name="alert-decagram" size={32} color={theme.colors.error} />
@@ -47,7 +43,8 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
       </View>
 
       <Text style={styles.description}>
-        If you or someone else is in immediate danger or experiencing a life-threatening emergency, please contact emergency services right away.
+        If you or someone else is in immediate danger or experiencing a life-threatening emergency,
+        please contact emergency services right away.
       </Text>
 
       <View style={styles.emergencySection}>
@@ -56,14 +53,19 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
           label="Slide to call 911"
           containerStyle={styles.slideToCall}
         />
-        
+
         <View style={styles.divider}>
           <View style={[styles.line, { backgroundColor: theme.colors.outlineVariant }]} />
-          <Text style={[styles.dividerText, { color: theme.colors.onSurfaceVariant }]}>OR CONTACT LOCAL SERVICES</Text>
+          <Text style={[styles.dividerText, { color: theme.colors.onSurfaceVariant }]}>
+            OR CONTACT LOCAL SERVICES
+          </Text>
           <View style={[styles.line, { backgroundColor: theme.colors.outlineVariant }]} />
         </View>
 
-        <Surface style={[styles.contactCard, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
+        <Surface
+          style={[styles.contactCard, { backgroundColor: theme.colors.surfaceVariant }]}
+          elevation={0}
+        >
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>NCGH Emergency</Text>
             <Text style={styles.contactPhone}>(054) 473-3111</Text>
@@ -77,7 +79,10 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
           />
         </Surface>
 
-        <Surface style={[styles.contactCard, { backgroundColor: theme.colors.surfaceVariant }]} elevation={0}>
+        <Surface
+          style={[styles.contactCard, { backgroundColor: theme.colors.surfaceVariant }]}
+          elevation={0}
+        >
           <View style={styles.contactInfo}>
             <Text style={styles.contactName}>Mental Health Crisis</Text>
             <Text style={styles.contactPhone}>1553</Text>

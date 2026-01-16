@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import { Card as PaperCard, Text, useTheme } from 'react-native-paper';
+import { Card as PaperCard } from 'react-native-paper';
 
 interface CardProps {
   children: React.ReactNode;
@@ -27,8 +27,6 @@ export const Card: React.FC<CardProps> = ({
   accessibilityHint,
   rippleColor,
 }) => {
-  const theme = useTheme();
-
   return (
     <PaperCard
       style={[styles.card, style]}

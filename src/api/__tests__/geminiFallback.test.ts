@@ -39,7 +39,7 @@ describe('GeminiClient Fallback Strategy', () => {
     client = new GeminiClient();
   });
 
-  const mockAIResponse = (responseObj: any) => {
+  const mockAIResponse = (responseObj: Record<string, unknown>) => {
     mockSendMessage.mockResolvedValue({
       response: {
         text: () => JSON.stringify(responseObj),

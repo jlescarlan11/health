@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
-import { View, StyleSheet, PanResponder, Animated } from 'react-native';
+import { View, StyleSheet, PanResponder, Animated, StyleProp, ViewStyle } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface SlideToCallProps {
   onSwipeComplete: () => void;
-  containerStyle?: any;
+  containerStyle?: StyleProp<ViewStyle>;
   label?: string;
 }
 
