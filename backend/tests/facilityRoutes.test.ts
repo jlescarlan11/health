@@ -16,6 +16,8 @@ describe('Facility Routes', () => {
     operating_hours: { description: 'Mon-Fri: 8am-5pm' },
     photos: ['url1'],
     barangay: 'Test Barangay',
+    specialized_services: [],
+    is_24_7: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

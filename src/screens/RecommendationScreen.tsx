@@ -31,7 +31,7 @@ import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance, scoreFacility } from '../utils';
+import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -224,16 +224,26 @@ const RecommendationScreen = () => {
     const targetLevel = recommendation.recommended_level;
     const requiredServices = recommendation.relevant_services || [];
 
-    // Calculate scores for all facilities and sort
-    const scoredFacilities = facilities.map((facility) => ({
-      facility,
-      score: scoreFacility(facility, targetLevel, requiredServices),
-    }));
+    // 1. Get high-precision matches based on specialized services
+    const precisionMatches = filterFacilitiesByServices(facilities, requiredServices);
 
-    // Sort by score descending (highest priority first)
-    scoredFacilities.sort((a, b) => b.score - a.score);
+    // 2. Get all facilities with general scoring (level + distance)
+    const scoredFacilities = facilities
+      .map((facility) => ({
+        facility,
+        score: scoreFacility(facility, targetLevel, requiredServices),
+      }))
+      .sort((a, b) => b.score - a.score);
 
-    setRecommendedFacilities(scoredFacilities.map((s) => s.facility).slice(0, 3));
+    // 3. Combine them: Precision matches first, then fill remaining slots with highest general scores
+    const precisionIds = new Set(precisionMatches.map((f) => f.id));
+    const fillFacilities = scoredFacilities
+      .filter((s) => !precisionIds.has(s.facility.id))
+      .map((s) => s.facility);
+
+    const finalRecommendations = [...precisionMatches, ...fillFacilities].slice(0, 3);
+
+    setRecommendedFacilities(finalRecommendations);
   };
 
   const handleViewDetails = (facilityId: string) => {

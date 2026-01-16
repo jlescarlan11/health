@@ -29,7 +29,9 @@ export type FacilityService =
   | 'Pediatrics'
   | 'Primary Care'
   | 'Radiology'
+  | 'Stroke Unit'
   | 'Surgery'
+  | 'Trauma Care'
   | 'X-ray';
 
 export interface Facility {
@@ -52,6 +54,8 @@ export interface Facility {
   };
   photoUrl?: string;
   distance?: number; // Optional calculated field
+  specialized_services?: string[];
+  is_24_7?: boolean;
 }
 
 export interface EmergencyContact {

@@ -28,6 +28,8 @@ const mapToFacility = (f: FacilityWithDistance) => {
     operatingHours: f.operating_hours, // Expose full structured data
     photoUrl: f.photos && f.photos.length > 0 ? f.photos[0] : null,
     distance: f.distance, // Preserve if present
+    specialized_services: f.specialized_services,
+    is_24_7: f.is_24_7,
   };
 };
 

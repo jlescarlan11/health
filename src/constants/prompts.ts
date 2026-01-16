@@ -48,7 +48,9 @@ export const VALID_SERVICES = [
   'Pediatrics',
   'Primary Care',
   'Radiology',
+  'Stroke Unit',
   'Surgery',
+  'Trauma Care',
   'X-ray',
 ];
 
