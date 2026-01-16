@@ -184,9 +184,9 @@ const RecommendationScreen = () => {
       setRecommendation({
         recommended_level: 'health_center',
         condition_summary: 'Based on your symptoms, we recommend a professional medical check-up.',
-        recommended_action: 'Visit your local health center for an initial assessment.',
+        recommended_action: 'Visit your local health center or the Bicol Health Center for an assessment.',
         key_concerns: ['Persistent symptoms', 'Need for professional evaluation'],
-        critical_warnings: [],
+        critical_warnings: ['Follow DOH hydration protocols: Drink 2L of fluids daily.'],
         relevant_services: ['Consultation'],
         red_flags: [],
         follow_up_questions: [],

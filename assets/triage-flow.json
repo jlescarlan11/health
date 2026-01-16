@@ -60,18 +60,18 @@
         },
         {
           "label": "No",
-          "next": "q_tropical_signs"
+          "next": "q_tropical_check"
         }
       ]
     },
-    "q_tropical_signs": {
-      "id": "q_tropical_signs",
+    "q_tropical_check": {
+      "id": "q_tropical_check",
       "type": "question",
-      "text": "Are there signs of tropical illness: high fever with muscle/joint pain, pain behind eyes, a rash, or history of wading in floodwaters?",
+      "text": "In the last 14 days, have you had a fever or been exposed to floodwaters or heavy rain?",
       "options": [
         {
           "label": "Yes",
-          "next": "q_tropical_warning_signs"
+          "next": "q_tropical_signs"
         },
         {
           "label": "No",
@@ -79,20 +79,36 @@
         }
       ]
     },
-    "q_tropical_warning_signs": {
-      "id": "q_tropical_warning_signs",
+    "q_tropical_signs": {
+      "id": "q_tropical_signs",
       "type": "question",
-      "text": "Are any of these present: severe abdominal pain, persistent vomiting, bleeding (gums/nose), or yellowing of the eyes/skin?",
+      "text": "Are there signs of tropical illness: muscle/joint pain, pain behind eyes, or a rash?",
       "options": [
         {
           "label": "Yes",
-          "next": "o_hospital_tropical_urgent"
+          "next": "o_dengue_warning"
         },
         {
           "label": "No",
-          "next": "o_suspected_dengue_stable"
+          "next": "q_moderate_symptoms"
         }
       ]
+    },
+    "o_dengue_warning": {
+      "id": "o_dengue_warning",
+      "type": "outcome",
+      "recommendation": {
+        "level": "hospital",
+        "reasoning": "Fever combined with tropical symptoms (rash, joint pain, or pain behind eyes) suggests suspected Dengue. This requires urgent clinical assessment to monitor for progression.",
+        "actions": [
+          "Seek medical evaluation at the Bicol Health Center or a Hospital TODAY.",
+          "DOH HYDRATION PROTOCOL: Drink at least 2 liters of fluids daily (ORS, water, fruit juice, or soup).",
+          "AVOID dark-colored foods and drinks (e.g., chocolate, cola, beets) that can mimic bleeding in vomit or stool.",
+          "Inform the healthcare provider of the fever onset and specific symptoms.",
+          "CRITICAL: Monitor for warning signs: severe abdominal pain, persistent vomiting, or bleeding (gums/nose).",
+          "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid; use only Paracetamol for fever."
+        ]
+      }
     },
     "q_moderate_symptoms": {
       "id": "q_moderate_symptoms",
@@ -159,6 +175,7 @@
         "reasoning": "Symptoms indicate a potentially serious condition that requires diagnostic testing available at a hospital.",
         "actions": [
           "Go to a hospital emergency department or urgent care center today.",
+          "DOH HYDRATION: Ensure adequate fluid intake (water, ORS, fruit juice) while seeking care.",
           "Monitor for any worsening of symptoms.",
           "Do not wait for symptoms to 'go away' on their own."
         ]
@@ -172,6 +189,7 @@
         "reasoning": "Symptoms are not immediately life-threatening but require professional evaluation at a primary care facility.",
         "actions": [
           "Visit your nearest Health Center or clinic during operating hours.",
+          "HYDRATION: Drink at least 1.5 to 2 liters of water or ORS daily if you have a fever.",
           "Bring any current medications or health records.",
           "Follow up if symptoms do not improve within 48 hours."
         ]
@@ -184,40 +202,10 @@
         "level": "self-care",
         "reasoning": "No high-risk red flags detected. Symptoms may be managed with rest and monitoring.",
         "actions": [
-          "Rest and stay hydrated.",
+          "Rest and stay hydrated according to DOH standards (water, fruit juice, or ORS).",
           "Monitor symptoms closely for any changes or new red flags.",
           "Re-evaluate using the assistant if symptoms worsen.",
           "Use over-the-counter remedies as appropriate for age and history."
-        ]
-      }
-    },
-    "o_hospital_tropical_urgent": {
-      "id": "o_hospital_tropical_urgent",
-      "type": "outcome",
-      "recommendation": {
-        "level": "hospital",
-        "reasoning": "Suspected Dengue with Warning Signs or Leptospirosis detected. This is a medical emergency requiring immediate hospitalization.",
-        "actions": [
-          "Go to the nearest Hospital Emergency Department immediately.",
-          "Tell the staff about the fever and any warning signs (abdominal pain, vomiting, bleeding).",
-          "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid as these increase bleeding risk. Use only Paracetamol if prescribed.",
-          "Sip Oral Rehydration Salts (ORS) or water continuously on the way to the hospital.",
-          "Note the date the fever started and any history of floodwater exposure."
-        ]
-      }
-    },
-    "o_suspected_dengue_stable": {
-      "id": "o_suspected_dengue_stable",
-      "type": "outcome",
-      "recommendation": {
-        "level": "health-center",
-        "reasoning": "Symptoms are suggestive of early Dengue or Leptospirosis without immediate warning signs. Early testing and strict monitoring are required.",
-        "actions": [
-          "Visit your nearest Health Center or YAKAP clinic TODAY for an NS1 test or CBC.",
-          "HYDRATION: Drink at least 2 liters of fluids daily (ORS, water, fruit juice, or soup). Avoid dark-colored fluids that can mimic bleeding in vomit.",
-          "GO TO THE ER IMMEDIATELY IF YOU DEVELOP: Severe abdominal pain, persistent vomiting (3+ times in 24h), bleeding from gums/nose, or extreme weakness/dizziness.",
-          "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid. Use Paracetamol only for fever.",
-          "Rest under a mosquito net during the day to prevent spreading the virus to others."
         ]
       }
     }

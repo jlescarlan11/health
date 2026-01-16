@@ -93,8 +93,12 @@ JSON Schema:
 
 Rules:
 1. **Safety First:** If ANY red flag is present (chest pain, severe bleeding, unconsciousness, stroke signs, suicide risk, feeling like dying), "recommended_level" MUST be "emergency".
-2. **Clinical Professionalism:** The "soap_note" must be written in the style of a professional triage nurse. Use standard medical abbreviations and formal terminology. Avoid conversational language in this section.
-3. **Follow-up:** If the user's input is vague, provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
+2. **Tropical Disease Protocol:** For suspected Dengue/Leptospirosis (fever + rash, joint pain, or floodwater exposure):
+   - Explicitly recommend **Bicol Health Center** or a Hospital.
+   - Include **DOH Hydration Protocol**: "Drink at least 2 liters of fluids daily (ORS, water, fruit juice, or soup). Avoid dark-colored foods/drinks."
+   - Explicitly warn: "DO NOT take Aspirin, Ibuprofen, or Mefenamic Acid; use only Paracetamol."
+3. **Clinical Professionalism:** The "soap_note" must be written in the style of a professional triage nurse. Use standard medical abbreviations and formal terminology. Avoid conversational language in this section.
+4. **Follow-up:** If the user's input is vague, provide "recommended_level" based on the worst-case plausible scenario but EMPHASIZE the need to answer the "follow_up_questions". Set "ambiguity_detected" to true.
 `;
 
 export const CLARIFYING_QUESTIONS_PROMPT = `
