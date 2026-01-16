@@ -16,7 +16,7 @@ import { setHighRisk } from './src/store/navigationSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
-import { theme } from './src/theme';
+import { theme, navigationTheme } from './src/theme';
 import { useAppDispatch, useAppSelector } from './src/hooks';
 
 const prefix = Linking.createURL('/');
@@ -142,7 +142,7 @@ export default function App() {
         args[0]?.message?.includes('Native module')
       ) {
         errorHandler(args[0]);
-        return; // Suppress the error
+        return; // Suppress the error;
       }
       originalError(...args);
     };
@@ -157,7 +157,7 @@ export default function App() {
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
           <PaperProvider theme={theme}>
-            <NavigationContainer linking={linking}>
+            <NavigationContainer linking={linking} theme={navigationTheme}>
               <AppContent />
             </NavigationContainer>
           </PaperProvider>

@@ -8,7 +8,10 @@ const PrivacyPolicyScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
+      <ScrollView 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={[styles.title, { color: theme.colors.onSurface }]}>Privacy Policy</Text>
         <Text style={[styles.paragraph, { color: theme.colors.onSurfaceVariant }]}>
           This is a placeholder for the Privacy Policy. The full text will be available in a future

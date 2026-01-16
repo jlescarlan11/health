@@ -59,6 +59,23 @@ jest.mock('../src/components/common', () => {
     TypingIndicator: () => <View testID="typing-indicator" />,
     SafetyRecheckModal: () => <View testID="safety-modal" />,
     ProgressBar: () => <View testID="progress-bar" />,
+    MultiSelectChecklist: ({ options, selectedIds, onSelectionChange }: any) => (
+      <View testID="multi-select-checklist">
+        {options.map((opt: any) => (
+          <TouchableOpacity 
+            key={opt.id} 
+            testID={`option-${opt.id}`} 
+            onPress={() => onSelectionChange(
+              selectedIds.includes(opt.id) 
+                ? selectedIds.filter((id: string) => id !== opt.id) 
+                : [...selectedIds, opt.id]
+            )}
+          >
+            <Text>{opt.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    ),
   };
 });
 

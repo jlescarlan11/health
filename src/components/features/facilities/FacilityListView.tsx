@@ -115,6 +115,7 @@ export const FacilityListView: React.FC = () => {
       contentContainerStyle={styles.listContent}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.5}
+      showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={isLoading && page === 1} onRefresh={handleRefresh} />
       }

@@ -75,6 +75,7 @@ jest.mock('../src/components/common', () => {
     TypingIndicator: () => React.createElement('TypingIndicator'),
     SafetyRecheckModal: () => React.createElement('SafetyRecheckModal'),
     ProgressBar: () => React.createElement('ProgressBar'),
+    MultiSelectChecklist: (props: Record<string, unknown>) => React.createElement('MultiSelectChecklist', props),
   };
 });
 

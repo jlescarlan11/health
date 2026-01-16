@@ -86,7 +86,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <View style={[styles.root, style]}>
-      {(label || showPercentage) && (
+      {!!(label || showPercentage) && (
         <View style={styles.labelContainer}>
           {label ? (
             <Animated.Text style={[styles.label, { color: theme.colors.onSurface }]}>

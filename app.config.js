@@ -41,7 +41,7 @@ module.exports = {
         '@rnmapbox/maps',
         {
           RNMapboxMapsImpl: 'mapbox',
-          RNMapboxMapsDownloadToken: process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN,
+          RNMAPBOX_MAPS_DOWNLOAD_TOKEN: process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN,
         },
       ],
       'expo-sqlite',

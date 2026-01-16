@@ -196,20 +196,26 @@ export class GeminiClient {
 
   /**
    * Main assessment function.
+   * @param symptoms The clinical context for the LLM (may include history/questions)
+   * @param history Optional conversation history
+   * @param safetyContext Optional specialized string for local safety scanning (user-only content)
    */
   public async assessSymptoms(
     symptoms: string,
     history: ChatMessage[] = [],
+    safetyContext?: string,
   ): Promise<AssessmentResponse> {
     // 0. Periodic Cleanup
     await this.performCacheCleanup();
 
     // 1. Safety Overrides (Local Logic)
-    // Only check overrides on the latest user input (symptoms),
-    // unless we want to check the whole context. Usually checking the latest input is sufficient for immediate triggers.
-    const emergency = detectEmergency(symptoms);
+    // Use safetyContext if provided (more accurate user-only content), 
+    // otherwise fallback to full symptoms string.
+    const scanInput = safetyContext || symptoms;
+    const emergency = detectEmergency(scanInput);
+    
     if (emergency.isEmergency) {
-      return {
+      const response: AssessmentResponse = {
         recommended_level: 'emergency',
         follow_up_questions: [],
         user_advice:
@@ -222,11 +228,14 @@ export class GeminiClient {
         red_flags: emergency.matchedKeywords,
         confidence_score: 1.0,
       };
+
+      this.logFinalResult(response, scanInput);
+      return response;
     }
 
-    const mhCrisis = detectMentalHealthCrisis(symptoms);
+    const mhCrisis = detectMentalHealthCrisis(scanInput);
     if (mhCrisis.isCrisis) {
-      return {
+      const response: AssessmentResponse = {
         recommended_level: 'emergency',
         follow_up_questions: [],
         user_advice:
@@ -239,6 +248,9 @@ export class GeminiClient {
         red_flags: mhCrisis.matchedKeywords,
         confidence_score: 1.0,
       };
+
+      this.logFinalResult(response, scanInput);
+      return response;
     }
 
     // 2. Cache Check
@@ -268,6 +280,8 @@ export class GeminiClient {
           if (!data.clinical_soap && data.soap_note) {
              data.clinical_soap = JSON.stringify(data.soap_note);
           }
+
+          this.logFinalResult(data as AssessmentResponse, symptoms);
           return data as AssessmentResponse;
         } else {
           await AsyncStorage.removeItem(fullCacheKey);
@@ -363,6 +377,7 @@ export class GeminiClient {
           console.warn('[GeminiClient] Cache write failed:', error);
         }
 
+        this.logFinalResult(parsed, symptoms);
         return parsed;
       } catch (error) {
         attempt++;
@@ -380,6 +395,62 @@ export class GeminiClient {
     }
 
     throw new Error('Unexpected error in Gemini client.');
+  }
+
+  /**
+   * Logs a formatted summary of the assessment and recommendation to the console.
+   */
+  private logFinalResult(recommendation: AssessmentResponse, assessmentText: string) {
+    const BOX_WIDTH = 60;
+    const divider = '─'.repeat(BOX_WIDTH);
+    
+    console.log(`\n╔${'═'.repeat(BOX_WIDTH)}╗`);
+    console.log(`║${'FINAL ASSESSMENT & RECOMMENDATION'.padStart(47).padEnd(BOX_WIDTH)}║`);
+    console.log(`╠${'═'.repeat(BOX_WIDTH)}╣`);
+    
+    // Assessment Context (Shortened)
+    const context = assessmentText.replace(/\n/g, ' ').substring(0, BOX_WIDTH - 12);
+    console.log(`║ CONTEXT: ${(`${context}${assessmentText.length > BOX_WIDTH - 12 ? '...' : ''}`).padEnd(BOX_WIDTH - 10)} ║`);
+    console.log(`╟${divider}╢`);
+    
+    // Care Level
+    const levelLabel = recommendation.recommended_level.replace(/_/g, ' ').toUpperCase();
+    console.log(`║ RECOMMENDED LEVEL: ${levelLabel.padEnd(BOX_WIDTH - 20)} ║`);
+    
+    // Confidence & Ambiguity
+    const conf = recommendation.confidence_score !== undefined 
+      ? `${(recommendation.confidence_score * 100).toFixed(0)}%` 
+      : 'N/A';
+    const ambig = recommendation.ambiguity_detected ? 'YES' : 'NO';
+    const stats = `CONFIDENCE: ${conf.padEnd(8)} | AMBIGUITY: ${ambig.padEnd(8)}`;
+    console.log(`║ ${stats.padEnd(BOX_WIDTH - 2)} ║`);
+    
+    console.log(`╟${divider}╢`);
+    
+    // Advice (Simple wrapping for 2 lines)
+    const advice = recommendation.user_advice.replace(/\n/g, ' ');
+    const line1 = advice.substring(0, BOX_WIDTH - 10);
+    console.log(`║ ADVICE: ${line1.padEnd(BOX_WIDTH - 10)} ║`);
+    if (advice.length > BOX_WIDTH - 10) {
+        const line2 = advice.substring(BOX_WIDTH - 10, (BOX_WIDTH - 10) * 2);
+        console.log(`║         ${line2.padEnd(BOX_WIDTH - 10)} ║`);
+    }
+
+    // Red Flags
+    if (recommendation.red_flags && recommendation.red_flags.length > 0) {
+      console.log(`╟${divider}╢`);
+      const redFlagsStr = recommendation.red_flags.join(', ');
+      console.log(`║ RED FLAGS: ${redFlagsStr.substring(0, BOX_WIDTH - 13).padEnd(BOX_WIDTH - 13)} ║`);
+    }
+
+    // SOAP Summary
+    if (recommendation.clinical_soap) {
+      console.log(`╟${divider}╢`);
+      const soap = recommendation.clinical_soap.replace(/\n/g, ' ').substring(0, BOX_WIDTH - 17);
+      console.log(`║ CLINICAL SOAP: ${soap.padEnd(BOX_WIDTH - 17)} ║`);
+    }
+
+    console.log(`╚${'═'.repeat(BOX_WIDTH)}╝\n`);
   }
 }
 

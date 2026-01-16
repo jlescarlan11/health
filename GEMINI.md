@@ -7,6 +7,9 @@
 ### Key Features
 
 - **AI Navigation Assistant:** Uses Google Gemini 2.5 Flash to triage symptoms and recommend care levels (Self-Care, Health Center, Hospital, Emergency).
+- **Model Note**: The project explicitly uses 'gemini-2.5-flash' as verified by the user.
+- **AI Question Generator**: The generator must assign the identifier `red_flags` to relevant screening questions in `prompts.ts`.
+- **UI Components**: Implemented `MultiSelectChecklist` for red flag screening in `SymptomAssessmentScreen.tsx`.
 - **Facility Directory:** Lists 29 healthcare facilities in Naga City with details like services, hours, and YAKAP accreditation.
 - **YAKAP Enrollment:** Guides eligible residents through the process of enrolling in the free YAKAP healthcare program.
 - **Offline Capability:** Core directory and emergency features function without internet access.
@@ -196,9 +199,17 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Tone & Naturalness:** Ensured the AI maintains an empathetic and professional tone while strictly adhering to the JSON schema for seamless UI integration.
   - **Files Modified:** `src/constants/prompts.ts`.
 
-* **Assessment Progress & Logic Fix (Jan 16, 2026):**
+- **Symptom Assessment Progress & Logic Fix (Jan 16, 2026):**
   - **Progress Tracking:** Fixed the "progress reset" bug by changing the progress calculation to track the total number of unique questions answered (`Object.keys(answers).length`) rather than the index within the current question batch.
   - **Global Question State:** Refactored `SymptomAssessmentScreen` to maintain a global, cumulative list of questions instead of replacing state with each new AI batch. This ensures that the report generation at the end of the assessment has access to the text of all questions asked, not just the last batch.
   - **Parsing Resilience:** Updated `src/services/gemini.ts` to gracefully handle empty question arrays from the AI (indicating "no more questions") instead of throwing a parsing error.
   - **Test Coverage:** Updated `tests/SymptomAssessmentTurns.test.tsx` to accurately mock the 5-turn assessment flow and verified that all frontend tests pass.
   - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/services/gemini.ts`, `tests/SymptomAssessmentTurns.test.tsx`.
+
+- **Comprehensive Dead Code Cleanup (Jan 17, 2026):**
+  - **File Deletion:** Removed 8 dead files including legacy Auth components (`OTPInput`, `PhoneInput`), unused shared components (`Alert`, `Input`, `CustomHeader`), legacy storage services (`storageService`, `storageLoader`), and the obsolete `slotExtractor.ts`.
+  - **Active Code Refinement:** Eliminated unused imports, variables, and state in 10+ active files (`ClinicalNoteScreen`, `SymptomAssessmentScreen`, `NavigatorHomeScreen`, `StandardHeader`, etc.) as identified by static analysis.
+  - **Backend Consolidation:** Created `backend/src/utils/constants.ts` to centralize `VALID_SERVICES`, removing redundancy in `aiService.ts`.
+  - **Navigation Fix:** Corrected a bug in `StandardHeader.tsx` where `handleBackPress` used the wrong reference for `backRoute` navigation.
+  - **Migration Cleanup:** Refactored Redux Persist migrations in `src/store/index.ts` to use a cleaner `delete` strategy for legacy state purging.
+  - **Linting Compliance:** Achieved a significant reduction in ESLint warnings (from 42 down to 22), focusing on reachable production code.

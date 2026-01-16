@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import prisma from '../lib/prisma';
 import { Facility } from '../../generated/prisma/client';
+import { VALID_SERVICES } from '../utils/constants';
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -63,12 +64,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     ${facilityContext}
 
     VALID_SERVICES = [
-      "Adolescent Health", "Animal Bite Clinic", "Blood Bank", "Clinical Chemistry", 
-      "Clinical Microscopy", "Consultation", "Dental", "Dermatology", "Dialysis", 
-      "ECG", "ENT", "Emergency", "Eye Center", "Family Planning", "General Medicine", 
-      "HIV Treatment", "Hematology", "Immunization", "Internal Medicine", "Laboratory", 
-      "Maternal Care", "Mental Health", "Nutrition Services", "OB-GYN", "Pediatrics", 
-      "Primary Care", "Radiology", "Stroke Unit", "Surgery", "Trauma Care", "X-ray"
+      ${VALID_SERVICES.map(s => `"${s}"`).join(', ')}
     ]
 
     Task:
@@ -106,41 +102,6 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     console.error('Failed to parse Gemini response:', cleanedText);
     throw new Error('AI service unavailable');
   }
-
-  // Validate relevant_services against VALID_SERVICES
-  const VALID_SERVICES = [
-    'Adolescent Health',
-    'Animal Bite Clinic',
-    'Blood Bank',
-    'Clinical Chemistry',
-    'Clinical Microscopy',
-    'Consultation',
-    'Dental',
-    'Dermatology',
-    'Dialysis',
-    'ECG',
-    'ENT',
-    'Emergency',
-    'Eye Center',
-    'Family Planning',
-    'General Medicine',
-    'HIV Treatment',
-    'Hematology',
-    'Immunization',
-    'Internal Medicine',
-    'Laboratory',
-    'Maternal Care',
-    'Mental Health',
-    'Nutrition Services',
-    'OB-GYN',
-    'Pediatrics',
-    'Primary Care',
-    'Radiology',
-    'Stroke Unit',
-    'Surgery',
-    'Trauma Care',
-    'X-ray',
-  ];
 
   if (parsedResponse.relevant_services) {
     parsedResponse.relevant_services = parsedResponse.relevant_services.filter((s: string) =>

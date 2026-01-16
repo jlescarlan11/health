@@ -25,7 +25,6 @@ import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
-import { DoctorHandoverCard } from '../components/features/navigation/DoctorHandoverCard';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
@@ -33,7 +32,34 @@ import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
 
+import { AssessmentProfile } from '../types/triage';
+
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
+
+const isFallbackProfile = (profile?: AssessmentProfile) => {
+  if (!profile || !profile.summary) return false;
+  // If age/duration etc are all null and summary contains dialogue tags, it's a fallback
+  const isDataEmpty = !profile.age && !profile.duration && !profile.severity && !profile.progression;
+  const hasDialogueTags = profile.summary.includes('USER:') || profile.summary.includes('ASSISTANT:');
+  return isDataEmpty && hasDialogueTags;
+};
+
+const formatClinicalSummary = (profile?: AssessmentProfile) => {
+  if (!profile) return '';
+  
+  if (isFallbackProfile(profile)) {
+    return profile.summary; // Return raw history for direct analysis
+  }
+
+  const parts = [];
+  if (profile.age) parts.push(`Age: ${profile.age}`);
+  if (profile.duration) parts.push(`Duration: ${profile.duration}`);
+  if (profile.severity) parts.push(`Severity: ${profile.severity}`);
+  if (profile.progression) parts.push(`Progression: ${profile.progression}`);
+  if (profile.red_flag_denials) parts.push(`Red Flag Status: ${profile.red_flag_denials}`);
+  if (profile.summary) parts.push(`Summary: ${profile.summary}`);
+  return parts.join('. ');
+};
 
 const RecommendationScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
@@ -55,7 +81,6 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
-  const [showHandover, setShowHandover] = useState(false);
   const analysisStarted = useRef(false);
 
   const handleBack = useCallback(() => {
@@ -149,10 +174,26 @@ const RecommendationScreen = () => {
         nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
-      const triageContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
-        assessmentData.answers,
-      )}. Context: ${distanceContext}`;
-      const response = await geminiClient.assessSymptoms(triageContext);
+      const profile = assessmentData.extractedProfile;
+      const profileSummary = formatClinicalSummary(profile);
+      
+      // Clinical Context for LLM - Optimized to use summary as primary source
+      let triageContext = `Initial Symptom: ${assessmentData.symptoms}.\nClinical Profile Summary: ${profileSummary}.\n\nContext: ${distanceContext}`;
+
+      // Only include full answers if profile is fallback or confidence is low
+      if (isFallbackProfile(profile) || (profile?.confidence_score && profile.confidence_score < 0.7)) {
+        triageContext += `\nRaw History for analysis: ${JSON.stringify(assessmentData.answers)}`;
+      }
+
+      // **NEW: Safety Context for local scan (User-only content)**
+      const userAnswersOnly = assessmentData.answers
+        .map(a => a.answer)
+        .filter(a => a && !['denied', 'none', 'wala', 'hindi', 'not answered'].includes(a.toLowerCase()))
+        .join('. ');
+
+      const safetyContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${userAnswersOnly}. ${profileSummary || ''}`;
+
+      const response = await geminiClient.assessSymptoms(triageContext, [], safetyContext);
       setRecommendation(response);
 
       // Save to Redux for persistence and offline access
@@ -336,101 +377,88 @@ const RecommendationScreen = () => {
           </Surface>
         )}
 
-        {/* Recommendation Card */}
-        <Card
-          mode="outlined"
-          style={[
-            styles.card,
-            {
-              backgroundColor: careInfo.bgColor,
-              borderColor: careInfo.borderColor,
-              borderWidth: 1,
-            },
-          ]}
-        >
-          <Card.Content style={styles.cardHeader}>
-            <Surface style={[styles.careBadge, { backgroundColor: 'white' }]} elevation={1}>
-              <MaterialCommunityIcons
-                name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
-                size={20}
-                color={careInfo.color}
-              />
-              <Text variant="labelLarge" style={[styles.careLabel, { color: careInfo.color }]}>
-                {careInfo.label}
-              </Text>
-            </Surface>
-          </Card.Content>
+        {/* Care Level Badge */}
+        <Surface style={[styles.careBadge, { backgroundColor: careInfo.bgColor, marginBottom: 12 }]} elevation={1}>
+          <MaterialCommunityIcons
+            name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
+            size={20}
+            color={careInfo.color}
+          />
+          <Text variant="labelLarge" style={[styles.careLabel, { color: careInfo.color }]}>
+            {careInfo.label}
+          </Text>
+        </Surface>
 
-          <Surface style={styles.adviceContainer} elevation={0}>
-            <View style={styles.adviceHeader}>
-              <MaterialCommunityIcons 
-                name="heart-pulse" 
-                size={24} 
-                color={theme.colors.primary} 
-              />
-              <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
-                ASSESSMENT & ADVICE
-              </Text>
-            </View>
-            <Text variant="bodyLarge" style={styles.adviceText}>
-              {recommendation.user_advice}
+        {/* Assessment & Advice - Integrated Layout */}
+        <View style={styles.adviceSection}>
+          <View style={styles.adviceHeader}>
+            <MaterialCommunityIcons 
+              name="heart-pulse" 
+              size={24} 
+              color={theme.colors.primary} 
+            />
+            <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
+              ASSESSMENT & GUIDANCE
             </Text>
-          </Surface>
+          </View>
+          <Text variant="bodyLarge" style={styles.adviceText}>
+            {recommendation.user_advice}
+          </Text>
+        </View>
 
-          {(recommendation.key_concerns.length > 0 ||
-            recommendation.critical_warnings.length > 0) && (
-            <View style={styles.warningContainer}>
-              {recommendation.critical_warnings.length > 0 && (
-                <View style={styles.warningSection}>
-                  <Text
-                    variant="labelMedium"
-                    style={[styles.sectionLabel, { color: theme.colors.error }]}
-                  >
-                    RED FLAGS
-                  </Text>
-                  {recommendation.critical_warnings.map((warning, idx) => (
-                    <View key={`warn-${idx}`} style={styles.warningRow}>
+        {(recommendation.key_concerns.length > 0 ||
+          recommendation.critical_warnings.length > 0) && (
+          <View style={styles.warningContainer}>
+            {recommendation.critical_warnings.length > 0 && (
+              <View style={styles.warningSection}>
+                <Text
+                  variant="labelMedium"
+                  style={[styles.sectionLabel, { color: theme.colors.error }]}
+                >
+                  WARNING SIGNS TO MONITOR
+                </Text>
+                {recommendation.critical_warnings.map((warning, idx) => (
+                  <View key={`warn-${idx}`} style={styles.warningRow}>
+                    <MaterialCommunityIcons
+                      name="alert-circle-outline"
+                      size={20}
+                      color={theme.colors.error}
+                    />
+                    <Text
+                      variant="bodyMedium"
+                      style={[styles.warningText, { color: theme.colors.error }]}
+                    >
+                      {warning}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {recommendation.key_concerns.length > 0 && (
+              <View style={styles.concernsSection}>
+                <Text variant="labelMedium" style={styles.sectionLabel}>
+                  KEY OBSERVATIONS
+                </Text>
+                <View style={styles.concernsList}>
+                  {recommendation.key_concerns.map((concern, idx) => (
+                    <View key={`concern-${idx}`} style={styles.concernRow}>
                       <MaterialCommunityIcons
-                        name="alert-octagon"
-                        size={20}
-                        color={theme.colors.error}
+                        name="information-outline"
+                        size={16}
+                        color="rgba(0,0,0,0.4)"
+                        style={{ marginTop: 2 }}
                       />
-                      <Text
-                        variant="bodyMedium"
-                        style={[styles.warningText, { color: theme.colors.error }]}
-                      >
-                        {warning}
+                      <Text variant="bodyMedium" style={styles.concernText}>
+                        {concern}
                       </Text>
                     </View>
                   ))}
                 </View>
-              )}
-
-              {recommendation.key_concerns.length > 0 && (
-                <View style={styles.concernsSection}>
-                  <Text variant="labelMedium" style={styles.sectionLabel}>
-                    KEY OBSERVATIONS
-                  </Text>
-                  <View style={styles.concernsList}>
-                    {recommendation.key_concerns.map((concern, idx) => (
-                      <View key={`concern-${idx}`} style={styles.concernRow}>
-                        <MaterialCommunityIcons
-                          name="information-outline"
-                          size={16}
-                          color="rgba(0,0,0,0.4)"
-                          style={{ marginTop: 2 }}
-                        />
-                        <Text variant="bodyMedium" style={styles.concernText}>
-                          {concern}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
-        </Card>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Facilities Section */}
         {recommendation.recommended_level !== 'self_care' && (
@@ -484,7 +512,7 @@ const RecommendationScreen = () => {
         )}
 
         {/* Clinical Handover Section */}
-        {recommendation.clinical_soap && (
+        {!!recommendation.clinical_soap && (
           <View style={styles.handoverSection}>
             <Divider style={styles.restartDivider} />
             <View style={styles.handoverHeader}>
@@ -494,21 +522,15 @@ const RecommendationScreen = () => {
               </Text>
             </View>
             <Text variant="bodySmall" style={styles.handoverSubtitle}>
-              If you are at the facility, you can show this clinical triage note to the nurse or doctor.
+              If you are at the facility, you can share this clinical handover report with the nurse or doctor.
             </Text>
             <Button
-              title={showHandover ? 'Hide Clinical Note' : 'Show Clinical Note'}
-              onPress={() => setShowHandover(!showHandover)}
+              title="View Handover Report"
+              onPress={() => navigation.navigate('ClinicalNote')}
               variant="outline"
-              icon={showHandover ? 'eye-off' : 'eye'}
+              icon="file-document-outline"
               style={styles.handoverButton}
             />
-            {showHandover && (
-              <DoctorHandoverCard
-                clinicalSoap={recommendation.clinical_soap}
-                timestamp={Date.now()}
-              />
-            )}
           </View>
         )}
 
@@ -571,8 +593,6 @@ const styles = StyleSheet.create({
   emergencySubtitle: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '600' },
   emergencyButton: { borderRadius: 12, marginVertical: 0 },
 
-  card: { marginBottom: 32, borderRadius: 24, overflow: 'hidden' },
-  cardHeader: { paddingTop: 16, paddingBottom: 4 },
   careBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -583,32 +603,9 @@ const styles = StyleSheet.create({
   },
   careLabel: { marginLeft: 8, fontWeight: '900', letterSpacing: 1, fontSize: 12 },
 
-  section: { paddingVertical: 12 },
-  sectionLabel: {
-    fontWeight: 'bold',
-    color: 'rgba(0,0,0,0.5)',
-    marginBottom: 8,
-    fontSize: 12,
-    letterSpacing: 1.2,
-  },
-  conditionText: {
-    lineHeight: 24,
-    fontWeight: '400',
-    color: 'rgba(0,0,0,0.8)',
-  },
-  actionText: {
-    lineHeight: 26,
-    fontWeight: '700',
-    fontSize: 17,
-  },
-
-  adviceContainer: {
-    margin: 16,
-    padding: 20,
-    backgroundColor: '#E8F5F1', // Soft Green/Blue background (primaryContainer)
-    borderRadius: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#379777', // Primary Green
+  adviceSection: {
+    paddingVertical: 16,
+    paddingHorizontal: 4,
   },
   adviceHeader: {
     flexDirection: 'row',
@@ -624,13 +621,16 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     color: '#2C3333',
     fontWeight: '500',
+    fontSize: 17,
   },
 
   warningContainer: {
-    marginTop: 8,
-    backgroundColor: 'rgba(255,255,255,0.5)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    marginTop: 16,
+    marginBottom: 32,
+    backgroundColor: '#FFF7ED', // Very soft orange/amber background
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FED7AA',
   },
   warningSection: {
     padding: 16,
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
   warningText: {
     flex: 1,
     marginLeft: 12,
-    fontWeight: '800',
+    fontWeight: '700',
     lineHeight: 22,
   },
   concernsList: { paddingLeft: 0, marginTop: 4 },

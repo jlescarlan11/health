@@ -26,39 +26,40 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
   return (
-    <Stack.Navigator>
-      <Stack.Screen name="Home" component={MainHomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Check" component={CheckNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="Find" component={FacilitiesNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="YAKAP" component={YakapNavigator} options={{ headerShown: false }} />
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+        cardStyle: { backgroundColor: '#F5F7F8' }, // Matches app background exactly
+        cardShadowEnabled: false, // Prevents the vertical line shadow artifact
+        animationEnabled: true,
+      }}
+    >
+      <Stack.Screen name="Home" component={MainHomeScreen} />
+      <Stack.Screen name="Check" component={CheckNavigator} />
+      <Stack.Screen name="Find" component={FacilitiesNavigator} />
+      <Stack.Screen name="YAKAP" component={YakapNavigator} />
 
       {/* AI Navigator Flow */}
       <Stack.Screen
         name="SymptomAssessment"
         component={SymptomAssessmentScreen}
-        options={{
-          headerShown: false,
-        }}
       />
       <Stack.Screen
         name="Recommendation"
         component={RecommendationScreen}
         options={{
+          headerShown: true,
           header: () => <StandardHeader title="Recommendation" />,
         }}
       />
       <Stack.Screen
         name="ClinicalNote"
         component={ClinicalNoteScreen}
-        options={{
-          headerShown: false,
-        }}
       />
       <Stack.Screen
         name="CrisisSupport"
         component={CrisisSupportScreen}
         options={{
-          headerShown: false,
           presentation: 'modal',
         }}
       />
@@ -67,32 +68,25 @@ const AppNavigator = () => {
       <Stack.Screen
         name="FacilityDetails"
         component={FacilityDetailsScreen}
-        options={{
-          headerShown: false,
-        }}
       />
 
       {/* YAKAP Flow */}
-      <Stack.Screen name="YakapFaq" component={YakapFaqScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="YakapFaq" component={YakapFaqScreen} />
       <Stack.Screen
         name="EligibilityChecker"
         component={EligibilityCheckerScreen}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="EnrollmentPathway"
         component={EnrollmentPathwayScreen}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="EnrollmentGuide"
         component={EnrollmentGuideScreen}
-        options={{ headerShown: false }}
       />
       <Stack.Screen
         name="EnrollmentCompletion"
         component={EnrollmentCompletionScreen}
-        options={{ headerShown: false }}
       />
 
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />

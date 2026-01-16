@@ -34,7 +34,8 @@ const migrations = {
   1: (state: any) => {
     // Surgical removal of legacy auth state if it exists
     if (state && state.auth) {
-      const { auth, ...newState } = state;
+      const newState = { ...state };
+      delete newState.auth;
       return newState;
     }
     return state;
@@ -42,7 +43,8 @@ const migrations = {
   2: (state: any) => {
     // Purge enrollment state when migrating to version 2
     if (state && state.enrollment) {
-      const { enrollment, ...newState } = state;
+      const newState = { ...state };
+      delete newState.enrollment;
       return newState;
     }
     return state;
