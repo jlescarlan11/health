@@ -12,15 +12,14 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
-import { useSelector, useDispatch } from 'react-redux';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
-import { selectFacility } from '../store/facilitiesSlice';
 import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
@@ -47,7 +46,7 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
 
   return (
     <MaterialIcons
-      name={getIconName(serviceName)}
+      name={getIconName(serviceName) as keyof (typeof MaterialIcons)['glyphMap']}
       size={24}
       color={theme.colors.primary}
       style={styles.serviceIcon}
@@ -59,8 +58,7 @@ export const FacilityDetailsScreen = () => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const route = useRoute<FacilityDetailsRouteProp>();
-  const navigation = useNavigation<any>();
-  const dispatch = useDispatch();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const { facilityId } = route.params || { facilityId: '' };
 
   const facility = useSelector((state: RootState) =>
@@ -98,9 +96,9 @@ export const FacilityDetailsScreen = () => {
 
   const handleCall = () => {
     if (facility.phone) {
-      Linking.openURL(`tel:${facility.phone}`).catch(() => alert('Failed to open dialer.'));
+      Linking.openURL(`tel:${facility.phone}`).catch(() => Alert.alert('Error', 'Failed to open dialer.'));
     } else {
-      alert('Phone number is not available.');
+      Alert.alert('Not Available', 'Phone number is not available.');
     }
   };
 
@@ -113,7 +111,7 @@ export const FacilityDetailsScreen = () => {
       android: `${scheme}${latLng}(${label})`,
     });
 
-    if (url) Linking.openURL(url).catch(() => alert('Failed to open maps.'));
+    if (url) Linking.openURL(url).catch(() => Alert.alert('Error', 'Failed to open maps.'));
   };
 
   const handleDirections = () => {
@@ -126,12 +124,12 @@ export const FacilityDetailsScreen = () => {
         message: `${facility.name}\nAddress: ${facility.address}\nView on map: https://www.google.com/maps/search/?api=1&query=${facility.latitude},${facility.longitude}`,
         title: `Check out ${facility.name}`,
       });
-    } catch (error) {
-      alert('Failed to share.');
+    } catch {
+      Alert.alert('Error', 'Failed to share.');
     }
   };
 
-  const { isOpen, text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
+  const { text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -271,7 +269,9 @@ export const FacilityDetailsScreen = () => {
                 Operating Hours
               </Text>
               <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
-                {facility.hours || 'Hours not available'}
+                {facility.is_24_7
+                  ? 'Open 24 Hours, 7 Days a Week'
+                  : facility.hours || 'Hours not available'}
               </Text>
               <View
                 style={[
@@ -333,6 +333,35 @@ export const FacilityDetailsScreen = () => {
               ))}
             </View>
           </View>
+
+          {facility.specialized_services && facility.specialized_services.length > 0 && (
+            <View style={styles.servicesSection}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+                Specialized Capabilities
+              </Text>
+              <View style={styles.servicesGrid}>
+                {facility.specialized_services.map((service, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.serviceItem,
+                      { backgroundColor: theme.colors.primaryContainer + '30' },
+                    ]}
+                  >
+                    <MaterialIcons
+                      name="stars"
+                      size={24}
+                      color={theme.colors.primary}
+                      style={styles.serviceIcon}
+                    />
+                    <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
+                      {service}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>

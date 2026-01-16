@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, Platform, Dimensions } from 'react-native';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import Constants from 'expo-constants';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootState } from '../../../store';
 import { selectFacility } from '../../../store/facilitiesSlice';
 import { Facility } from '../../../types';
@@ -14,16 +14,19 @@ import { FeatureCollection, Geometry, GeoJsonProperties, LineString } from 'geoj
 import { getDirections, downloadOfflineMap } from '../../../services/mapService';
 
 // Lazy load Mapbox to prevent module load errors
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let Mapbox: any = null;
 let mapboxImportError: Error | null = null;
 const isExpoGo = Constants.appOwnership === 'expo';
 
 if (!isExpoGo) {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     Mapbox = require('@rnmapbox/maps');
-  } catch (error: any) {
-    mapboxImportError = error;
-    console.warn('@rnmapbox/maps native module not available:', error?.message);
+  } catch (_error: unknown) {
+    const err = _error as Error;
+    mapboxImportError = err;
+    console.warn('@rnmapbox/maps native module not available:', err?.message);
   }
 } else {
   console.log('Running in Expo Go - Mapbox disabled');
@@ -34,8 +37,8 @@ const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (Mapbox && MAPBOX_TOKEN) {
   try {
     Mapbox.setAccessToken(MAPBOX_TOKEN);
-  } catch (error) {
-    console.warn('Failed to set Mapbox access token:', error);
+  } catch (_error) {
+    console.warn('Failed to set Mapbox access token:', _error);
     Mapbox = null; // Disable Mapbox if initialization fails
   }
 } else if (Mapbox && !MAPBOX_TOKEN) {
@@ -47,7 +50,7 @@ const DEFAULT_ZOOM_LEVEL = 13;
 
 export const FacilityMapView: React.FC = () => {
   const dispatch = useDispatch();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { facilities, selectedFacilityId, userLocation } = useSelector(
@@ -57,7 +60,9 @@ export const FacilityMapView: React.FC = () => {
   const [routeGeoJSON, setRouteGeoJSON] = useState<LineString | null>(null);
   const [routeInfo, setRouteInfo] = useState<{ duration: number; distance: number } | null>(null);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cameraRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
   const [currentZoom, setCurrentZoom] = useState(DEFAULT_ZOOM_LEVEL);
 
@@ -221,7 +226,7 @@ export const FacilityMapView: React.FC = () => {
     }
   };
 
-  const onShapePress = (event: any) => {
+  const onShapePress = (event: { features: Array<{ properties?: Record<string, unknown>; geometry: { coordinates: [number, number] } }> }) => {
     const feature = event.features[0];
     if (feature.properties?.cluster) {
       if (cameraRef.current) {
@@ -235,7 +240,7 @@ export const FacilityMapView: React.FC = () => {
       }
     } else {
       const id = feature.properties?.id;
-      if (id) {
+      if (typeof id === 'string') {
         dispatch(selectFacility(id));
       }
     }
@@ -247,7 +252,7 @@ export const FacilityMapView: React.FC = () => {
     }
   };
 
-  const onCameraChanged = (state: any) => {
+  const onCameraChanged = (state: { properties: { zoomLevel: number } }) => {
     if (state && state.properties && state.properties.zoomLevel) {
       setCurrentZoom(state.properties.zoomLevel);
     }

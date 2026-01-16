@@ -1,31 +1,37 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Linking, Platform, BackHandler } from 'react-native';
+import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Text,
   Card,
-  Avatar,
-  IconButton,
   useTheme,
   ActivityIndicator,
   Divider,
   Surface,
 } from 'react-native-paper';
-import { useRoute, useNavigation, RouteProp, useFocusEffect, CommonActions } from '@react-navigation/native';
+import {
+  useRoute,
+  useNavigation,
+  RouteProp,
+  useFocusEffect,
+  CommonActions,
+} from '@react-navigation/native';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
-import { setHighRisk } from '../store/navigationSlice';
+import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
+import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient, AssessmentResponse } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
+import { DoctorHandoverCard } from '../components/features/navigation/DoctorHandoverCard';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance } from '../utils';
+import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -39,14 +45,17 @@ const RecommendationScreen = () => {
   useUserLocation({ watch: false });
 
   const { assessmentData } = route.params;
-  const { facilities, isLoading: isFacilitiesLoading, userLocation } = useSelector(
-    (state: RootState) => state.facilities,
-  );
+  const {
+    facilities,
+    isLoading: isFacilitiesLoading,
+    userLocation,
+  } = useSelector((state: RootState) => state.facilities);
 
   const [loading, setLoading] = useState(true);
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+  const [showHandover, setShowHandover] = useState(false);
   const analysisStarted = useRef(false);
 
   const handleBack = useCallback(() => {
@@ -127,26 +136,42 @@ const RecommendationScreen = () => {
           if (dist < nearestHealthCenterDist) nearestHealthCenterDist = dist;
         }
 
-        if (
-          type.includes('hospital') ||
-          type.includes('infirmary') ||
-          type.includes('emergency')
-        ) {
+        if (type.includes('hospital') || type.includes('infirmary') || type.includes('emergency')) {
           if (dist < nearestHospitalDist) nearestHospitalDist = dist;
         }
       });
 
       const hcDistStr =
-        nearestHealthCenterDist !== Infinity ? `${nearestHealthCenterDist.toFixed(1)}km` : 'Unknown';
+        nearestHealthCenterDist !== Infinity
+          ? `${nearestHealthCenterDist.toFixed(1)}km`
+          : 'Unknown';
       const hospDistStr =
         nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
-      const context = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
+      const triageContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${JSON.stringify(
         assessmentData.answers,
       )}. Context: ${distanceContext}`;
-      const response = await geminiClient.assessSymptoms(context);
+      const response = await geminiClient.assessSymptoms(triageContext);
       setRecommendation(response);
+
+      // Save to Redux for persistence and offline access
+      dispatch(
+        setReduxRecommendation({
+          level: response.recommended_level,
+          user_advice: response.user_advice,
+          clinical_soap: response.clinical_soap,
+        }),
+      );
+
+      if (response.clinical_soap) {
+        dispatch(
+          saveClinicalNote({
+            clinical_soap: response.clinical_soap,
+            recommendationLevel: response.recommended_level,
+          }),
+        );
+      }
 
       // If emergency, set high risk status for persistence
       if (response.recommended_level === 'emergency') {
@@ -157,10 +182,10 @@ const RecommendationScreen = () => {
       // Fallback
       setRecommendation({
         recommended_level: 'health_center',
-        condition_summary: 'Based on your symptoms, we recommend a professional medical check-up.',
-        recommended_action: 'Visit your local health center for an initial assessment.',
+        user_advice: 'Based on your symptoms, we recommend a professional medical check-up at your local health center. Please follow DOH hydration protocols.',
+        clinical_soap: 'S: Symptoms reported. O: N/A. A: Fallback triage. P: Refer to Health Center.',
         key_concerns: ['Persistent symptoms', 'Need for professional evaluation'],
-        critical_warnings: [],
+        critical_warnings: ['Follow DOH hydration protocols: Drink 2L of fluids daily.'],
         relevant_services: ['Consultation'],
         red_flags: [],
         follow_up_questions: [],
@@ -196,45 +221,28 @@ const RecommendationScreen = () => {
     if (!recommendation) return;
 
     const targetLevel = recommendation.recommended_level;
+    const requiredServices = recommendation.relevant_services || [];
 
-    // Normalize types for matching
-    const isEmergency = targetLevel === 'emergency' || targetLevel === 'hospital';
-    const isHealthCenter = targetLevel === 'health_center';
+    // 1. Get high-precision matches based on specialized services
+    const precisionMatches = filterFacilitiesByServices(facilities, requiredServices);
 
-    let filtered = facilities.filter((f) => {
-      const type = f.type?.toLowerCase() || '';
-      if (isEmergency)
-        return (
-          type.includes('hospital') || type.includes('infirmary') || type.includes('emergency')
-        );
-      if (isHealthCenter)
-        return type.includes('health') || type.includes('unit') || type.includes('center');
-      return true; // Default to all if unsure
-    });
+    // 2. Get all facilities with general scoring (level + distance)
+    const scoredFacilities = facilities
+      .map((facility) => ({
+        facility,
+        score: scoreFacility(facility, targetLevel, requiredServices),
+      }))
+      .sort((a, b) => b.score - a.score);
 
-    // If no matches found with strict filtering, fallback to all sorted by distance
-    if (filtered.length === 0) filtered = [...facilities];
+    // 3. Combine them: Precision matches first, then fill remaining slots with highest general scores
+    const precisionIds = new Set(precisionMatches.map((f) => f.id));
+    const fillFacilities = scoredFacilities
+      .filter((s) => !precisionIds.has(s.facility.id))
+      .map((s) => s.facility);
 
-    // Sort by distance (assuming distance is populated in store)
-    // Facilities with undefined distance go to the end
-    filtered.sort((a, b) => (a.distance ?? 9999) - (b.distance ?? 9999));
+    const finalRecommendations = [...precisionMatches, ...fillFacilities].slice(0, 3);
 
-    setRecommendedFacilities(filtered.slice(0, 3));
-  };
-
-  const handleCall = (phoneNumber?: string) => {
-    if (phoneNumber) Linking.openURL(`tel:${phoneNumber}`);
-  };
-
-  const handleDirections = (facility: Facility) => {
-    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-    const latLng = `${facility.latitude},${facility.longitude}`;
-    const label = facility.name;
-    const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`,
-    });
-    if (url) Linking.openURL(url);
+    setRecommendedFacilities(finalRecommendations);
   };
 
   const handleViewDetails = (facilityId: string) => {
@@ -343,7 +351,7 @@ const RecommendationScreen = () => {
           <Card.Content style={styles.cardHeader}>
             <Surface style={[styles.careBadge, { backgroundColor: 'white' }]} elevation={1}>
               <MaterialCommunityIcons
-                name={careInfo.icon as any}
+                name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
                 size={20}
                 color={careInfo.color}
               />
@@ -353,23 +361,21 @@ const RecommendationScreen = () => {
             </Surface>
           </Card.Content>
 
-          <Card.Content style={styles.section}>
-            <Text variant="labelMedium" style={styles.sectionLabel}>
-              YOUR CONDITION
+          <Surface style={styles.adviceContainer} elevation={0}>
+            <View style={styles.adviceHeader}>
+              <MaterialCommunityIcons 
+                name="heart-pulse" 
+                size={24} 
+                color={theme.colors.primary} 
+              />
+              <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
+                ASSESSMENT & ADVICE
+              </Text>
+            </View>
+            <Text variant="bodyLarge" style={styles.adviceText}>
+              {recommendation.user_advice}
             </Text>
-            <Text variant="bodyLarge" style={styles.conditionText}>
-              {recommendation.condition_summary}
-            </Text>
-          </Card.Content>
-
-          <Card.Content style={styles.section}>
-            <Text variant="labelMedium" style={styles.sectionLabel}>
-              RECOMMENDED ACTION
-            </Text>
-            <Text variant="bodyLarge" style={[styles.actionText, { color: careInfo.color }]}>
-              {recommendation.recommended_action}
-            </Text>
-          </Card.Content>
+          </Surface>
 
           {(recommendation.key_concerns.length > 0 ||
             recommendation.critical_warnings.length > 0) && (
@@ -477,6 +483,35 @@ const RecommendationScreen = () => {
           </View>
         )}
 
+        {/* Clinical Handover Section */}
+        {recommendation.clinical_soap && (
+          <View style={styles.handoverSection}>
+            <Divider style={styles.restartDivider} />
+            <View style={styles.handoverHeader}>
+              <MaterialCommunityIcons name="doctor" size={24} color={theme.colors.primary} />
+              <Text variant="titleMedium" style={styles.handoverTitle}>
+                For Healthcare Professionals
+              </Text>
+            </View>
+            <Text variant="bodySmall" style={styles.handoverSubtitle}>
+              If you are at the facility, you can show this clinical triage note to the nurse or doctor.
+            </Text>
+            <Button
+              title={showHandover ? 'Hide Clinical Note' : 'Show Clinical Note'}
+              onPress={() => setShowHandover(!showHandover)}
+              variant="outline"
+              icon={showHandover ? 'eye-off' : 'eye'}
+              style={styles.handoverButton}
+            />
+            {showHandover && (
+              <DoctorHandoverCard
+                clinicalSoap={recommendation.clinical_soap}
+                timestamp={Date.now()}
+              />
+            )}
+          </View>
+        )}
+
         {/* Restart Section */}
         <View style={styles.restartSection}>
           <Divider style={styles.restartDivider} />
@@ -567,6 +602,30 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
 
+  adviceContainer: {
+    margin: 16,
+    padding: 20,
+    backgroundColor: '#E8F5F1', // Soft Green/Blue background (primaryContainer)
+    borderRadius: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#379777', // Primary Green
+  },
+  adviceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  adviceTitle: {
+    marginLeft: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  adviceText: {
+    lineHeight: 26,
+    color: '#2C3333',
+    fontWeight: '500',
+  },
+
   warningContainer: {
     marginTop: 8,
     backgroundColor: 'rgba(255,255,255,0.5)',
@@ -607,6 +666,29 @@ const styles = StyleSheet.create({
   sectionHeader: { marginBottom: 16 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },
   sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },
+
+  handoverSection: {
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  handoverHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  handoverTitle: {
+    marginLeft: 12,
+    fontWeight: 'bold',
+  },
+  handoverSubtitle: {
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  handoverButton: {
+    marginBottom: 16,
+  },
 
   emptyState: {
     padding: 40,

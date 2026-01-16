@@ -3,9 +3,14 @@ import { Facility } from '../types';
 export const getOpenStatus = (
   facility: Facility,
 ): { isOpen: boolean; text: string; color: string } => {
-  const { hours, operatingHours } = facility;
+  const { hours, operatingHours, is_24_7 } = facility;
 
-  // 1. Check structured data first
+  // 0. Check explicit 24/7 flag first
+  if (is_24_7) {
+    return { isOpen: true, text: 'Open 24/7', color: 'green' };
+  }
+
+  // 1. Check structured data next
   if (operatingHours) {
     if (operatingHours.is24x7) {
       return { isOpen: true, text: 'Open 24/7', color: 'green' };
@@ -90,4 +95,106 @@ export const getOpenStatus = (
   }
 
   return { isOpen: false, text: 'Closed', color: 'red' };
+};
+
+/**
+ * Calculates a priority score for a facility based on care level, service matches, and distance.
+ * Higher score = higher priority.
+ */
+export const scoreFacility = (
+  facility: Facility,
+  targetLevel: string,
+  requiredServices: string[],
+) => {
+  let score = 0;
+
+  // 1. Level match (Primary weight)
+  const type = facility.type?.toLowerCase() || '';
+  const isEmergencyTarget = targetLevel === 'emergency' || targetLevel === 'hospital';
+  const isHealthCenterTarget = targetLevel === 'health_center';
+
+  const matchesEmergency =
+    type.includes('hospital') || type.includes('infirmary') || type.includes('emergency');
+  const matchesHealthCenter =
+    type.includes('health') || type.includes('unit') || type.includes('center');
+
+  if ((isEmergencyTarget && matchesEmergency) || (isHealthCenterTarget && matchesHealthCenter)) {
+    score += 1000;
+  }
+
+  // 2. Service matches (Secondary weight)
+  if (requiredServices.length > 0) {
+    const allFacilityServices = [
+      ...facility.services,
+      ...(facility.specialized_services || []),
+    ];
+
+    const matches = requiredServices.filter((req) =>
+      allFacilityServices.some(
+        (s) =>
+          s.toLowerCase().includes(req.toLowerCase()) ||
+          req.toLowerCase().includes(s.toLowerCase()),
+      ),
+    );
+
+    // Score based on proportion of matches (up to 500 points)
+    score += (matches.length / requiredServices.length) * 500;
+
+    // Bonus for matching ALL services (extra 100 points)
+    if (matches.length === requiredServices.length) {
+      score += 100;
+    }
+  }
+
+  // 3. Distance (Tertiary weight - subtractive)
+  // Each km subtracts 1 point, so closer facilities win tie-breakers
+  const distance = facility.distance || 0;
+  score -= Math.min(distance, 100); // Max penalty 100 points
+
+  return score;
+};
+
+/**
+ * Filter and score facilities based on relevant services from an assessment.
+ * Returns facilities with an additional matchScore and explanation of matches.
+ */
+export interface ScoredFacility extends Facility {
+  matchScore: number;
+  matchedServices: string[];
+}
+
+export const filterFacilitiesByServices = (
+  facilities: Facility[],
+  relevantServices: string[],
+): ScoredFacility[] => {
+  if (!relevantServices || relevantServices.length === 0) {
+    return facilities.map((f) => ({ ...f, matchScore: 0, matchedServices: [] }));
+  }
+
+  return facilities
+    .map((facility) => {
+      const allFacilityServices = [
+        ...facility.services,
+        ...(facility.specialized_services || []),
+      ];
+
+      const matchedServices = relevantServices.filter((req) =>
+        allFacilityServices.some(
+          (s) =>
+            s.toLowerCase().includes(req.toLowerCase()) ||
+            req.toLowerCase().includes(s.toLowerCase()),
+        ),
+      );
+
+      // Deterministic scoring: 100 points per match
+      const matchScore = matchedServices.length * 100;
+
+      return {
+        ...facility,
+        matchScore,
+        matchedServices,
+      };
+    })
+    .filter((f) => f.matchScore > 0)
+    .sort((a, b) => b.matchScore - a.matchScore);
 };

@@ -5,14 +5,14 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: number;
-  metadata?: any; // For additional context like facility IDs
+  metadata?: Record<string, unknown>; // For additional context like facility IDs
 }
 
 interface Recommendation {
-  level: 'self-care' | 'health-center' | 'hospital' | 'emergency';
+  level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
   facilityType?: string;
-  reasoning: string;
-  actions: string[];
+  user_advice: string;
+  clinical_soap: string;
 }
 
 interface NavigationState {
@@ -71,6 +71,13 @@ const navigationSlice = createSlice({
   },
 });
 
-export const { addMessage, setSymptoms, setRecommendation, setLoading, setError, setHighRisk, clearSession } =
-  navigationSlice.actions;
+export const {
+  addMessage,
+  setSymptoms,
+  setRecommendation,
+  setLoading,
+  setError,
+  setHighRisk,
+  clearSession,
+} = navigationSlice.actions;
 export default navigationSlice.reducer;

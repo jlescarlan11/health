@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
-import { useTheme } from 'react-native-paper';
 import { Button } from './Button';
 
 interface EmergencyButtonProps {
@@ -16,8 +15,6 @@ export const EmergencyButton: React.FC<EmergencyButtonProps> = ({
   buttonColor,
   textColor,
 }) => {
-  const theme = useTheme();
-
   return (
     <Button
       variant="danger"

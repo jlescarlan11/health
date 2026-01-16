@@ -1,13 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+  Keyboard,
+  ScrollView,
+  Animated,
+  Linking,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
-import { SlideToCall } from '../../components/common/SlideToCall';
-import { InputCard, SafetyRecheckModal } from '../../components/common';
+import { InputCard, SafetyRecheckModal, EmergencyActions } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk } from '../../store/navigationSlice';
@@ -26,10 +34,8 @@ const NavigatorHomeScreen = () => {
   const keyboardHeight = useRef(new Animated.Value(0)).current;
 
   const [symptom, setSymptom] = useState('');
-  const [isInputFocused, setIsInputFocused] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   useEffect(() => {
@@ -83,11 +89,14 @@ const NavigatorHomeScreen = () => {
         (text) => {
           setSymptom(text);
         },
-        (error) => {
+        (error: any) => {
           console.error('STT Error:', error);
           setIsRecording(false);
           setVolume(0);
-          Alert.alert('Speech Error', error.message || 'Could not recognize speech. Please try again.');
+          Alert.alert(
+            'Speech Error',
+            error?.message || 'Could not recognize speech. Please try again.',
+          );
         },
         (vol) => {
           setVolume(vol);
@@ -120,7 +129,7 @@ const NavigatorHomeScreen = () => {
     if (emergencyCheck.isEmergency) {
       dispatch(setHighRisk(true));
       navigation.navigate('Recommendation', {
-        assessmentData: { symptoms: symptom, answers: {} },
+        assessmentData: { symptoms: symptom, answers: [] },
       });
       return;
     }
@@ -129,25 +138,11 @@ const NavigatorHomeScreen = () => {
     const crisisCheck = detectMentalHealthCrisis(symptom);
     if (crisisCheck.isCrisis) {
       dispatch(setHighRisk(true));
-      // @ts-ignore - CrisisSupport is added to navigator but TS might need full restart to pick up
       navigation.navigate('CrisisSupport');
       return;
     }
 
     navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
-  };
-
-  const handleEmergencyCall = () => {
-    setSafetyModalVisible(true);
-    dispatch(setHighRisk(true));
-  };
-
-  const handleInputFocus = () => {
-    setIsInputFocused(true);
-  };
-
-  const handleInputBlur = () => {
-    setIsInputFocused(false);
   };
 
   return (
@@ -162,27 +157,42 @@ const NavigatorHomeScreen = () => {
         <View style={styles.mainContent}>
           <View style={styles.emergencyLayoutContainer}>
             <Card
-              mode="contained"
-              style={[styles.emergencyCard, { backgroundColor: theme.colors.errorContainer }]}
+              mode="elevated"
+              style={[
+                styles.emergencyCard,
+                {
+                  backgroundColor: theme.colors.surface,
+                  borderWidth: 1,
+                  borderColor: theme.colors.surface,
+                  shadowColor: theme.colors.shadow,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 10,
+                  elevation: 2,
+                },
+              ]}
             >
               <Card.Content style={styles.emergencyCardContent}>
                 <View style={styles.emergencyTextContent}>
                   <Text
                     variant="titleLarge"
-                    style={[styles.emergencyTitle, { color: theme.colors.onErrorContainer }]}
+                    style={[styles.emergencyTitle, { color: theme.colors.error }]}
                   >
                     Emergency?
                   </Text>
 
                   <Text
                     variant="bodyMedium"
-                    style={[styles.emergencySubtitle, { color: theme.colors.onErrorContainer }]}
+                    style={[styles.emergencySubtitle, { color: theme.colors.onSurfaceVariant }]}
                   >
-                    Call 911 immediately if you need urgent care.
+                    Contact emergency services immediately if you need urgent care.
                   </Text>
                 </View>
 
-                <SlideToCall onSwipeComplete={handleEmergencyCall} label="Slide to call 911" />
+                <EmergencyActions
+                  onCallInitiated={() => dispatch(setHighRisk(true))}
+                  variant="light"
+                />
               </Card.Content>
             </Card>
           </View>
@@ -265,11 +275,8 @@ const NavigatorHomeScreen = () => {
           label="Symptom Details"
           placeholder=""
           maxLength={500}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
           isRecording={isRecording}
           volume={volume}
-          isProcessingAudio={isProcessingAudio}
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>

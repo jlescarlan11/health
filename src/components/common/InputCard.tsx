@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
-import { TextInput, IconButton, ActivityIndicator, useTheme } from 'react-native-paper';
+import { TextInput, IconButton, useTheme } from 'react-native-paper';
 import { VoiceVisualizer } from './VoiceVisualizer';
 
 interface InputCardProps {
@@ -14,7 +14,6 @@ interface InputCardProps {
   maxLength?: number;
   isRecording?: boolean;
   volume?: number;
-  isProcessingAudio?: boolean;
   onVoicePress?: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
@@ -38,13 +37,13 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
     maxLength,
     isRecording = false,
     volume = 0,
-    isProcessingAudio = false,
     onVoicePress,
     containerStyle,
     disabled = false,
   } = props;
 
   const theme = useTheme();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inputRef = useRef<any>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -97,7 +96,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
   }, [isRecording, fadeAnim, scaleAnim]);
 
   const hasText = value.trim().length > 0;
-  const showSend = hasText && !isRecording && !isProcessingAudio;
+  const showSend = hasText && !isRecording;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -124,13 +123,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
       </View>
 
       <View style={styles.actionContainer}>
-        {isProcessingAudio ? (
-          <View
-            style={[styles.iconButtonPlaceholder, { backgroundColor: theme.colors.surfaceVariant }]}
-          >
-            <ActivityIndicator size="small" color={theme.colors.primary} />
-          </View>
-        ) : showSend ? (
+        {showSend ? (
           <IconButton
             icon="send"
             size={24}
@@ -142,9 +135,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
         ) : (
           onVoicePress && (
             <View style={[styles.micContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-              {isRecording ? (
-                <VoiceVisualizer volume={volume} isRecording={isRecording} />
-              ) : null}
+              {isRecording ? <VoiceVisualizer volume={volume} isRecording={isRecording} /> : null}
               <IconButton
                 icon={isRecording ? 'stop' : 'microphone'}
                 size={24}
@@ -213,20 +204,5 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-  },
-  iconButtonPlaceholder: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-  },
-  recordingPulse: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    position: 'absolute',
-    opacity: 0.3,
   },
 });

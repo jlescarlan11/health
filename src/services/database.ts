@@ -13,8 +13,8 @@ const migrateTableSchema = async (
 
   try {
     // Get existing columns
-    const tableInfo = await db.getAllAsync<any>(`PRAGMA table_info(${tableName})`);
-    const existingColumnNames = tableInfo.map((col: any) => col.name);
+    const tableInfo = await db.getAllAsync<{ name: string }>(`PRAGMA table_info(${tableName})`);
+    const existingColumnNames = tableInfo.map((col) => col.name);
 
     // Check and add missing columns
     for (const requiredColumn of requiredColumns) {
@@ -24,7 +24,7 @@ const migrateTableSchema = async (
         );
       }
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error migrating ${tableName} schema:`, error);
     throw error;
   }
@@ -57,7 +57,11 @@ export const initDatabase = async () => {
       `);
 
       // Migrate facilities table schema (add missing columns if table already existed)
-      await migrateTableSchema('facilities', [{ name: 'lastUpdated', type: 'INTEGER' }]);
+      await migrateTableSchema('facilities', [
+        { name: 'lastUpdated', type: 'INTEGER' },
+        { name: 'specialized_services', type: 'TEXT' },
+        { name: 'is_24_7', type: 'INTEGER' },
+      ]);
 
       // Create Emergency Contacts Table
       await db.execAsync(`
@@ -98,7 +102,7 @@ export const saveFacilities = async (facilities: Facility[]) => {
     await db.execAsync('BEGIN TRANSACTION');
 
     const statement = await db.prepareAsync(
-      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $data)`,
+      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, specialized_services, is_24_7, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $specialized_services, $is_24_7, $data)`,
     );
 
     try {
@@ -116,6 +120,8 @@ export const saveFacilities = async (facilities: Facility[]) => {
           $hours: facility.hours || null,
           $photoUrl: facility.photoUrl || null,
           $lastUpdated: timestamp,
+          $specialized_services: JSON.stringify(facility.specialized_services || []),
+          $is_24_7: facility.is_24_7 ? 1 : 0,
           $data: JSON.stringify(facility),
         });
       }
@@ -139,12 +145,41 @@ export const saveFacilities = async (facilities: Facility[]) => {
   }
 };
 
+interface FacilityRow {
+  id: string;
+  name: string;
+  type: string;
+  services: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  phone: string | null;
+  yakapAccredited: number;
+  hours: string | null;
+  photoUrl: string | null;
+  lastUpdated: number;
+  specialized_services: string | null;
+  is_24_7: number | null;
+  data: string;
+}
+
+interface EmergencyContactRow {
+  id: string;
+  name: string;
+  category: string;
+  phone: string;
+  available24x7: number;
+  description: string | null;
+  lastUpdated: number;
+  data: string;
+}
+
 export const getFacilities = async (): Promise<Facility[]> => {
   if (!db) await initDatabase();
   if (!db) throw new Error('Database not initialized');
 
   try {
-    const result = await db.getAllAsync<any>('SELECT * FROM facilities');
+    const result = await db.getAllAsync<FacilityRow>('SELECT * FROM facilities');
 
     return result
       .map((row) => {
@@ -163,6 +198,10 @@ export const getFacilities = async (): Promise<Facility[]> => {
             yakapAccredited: Boolean(row.yakapAccredited),
             hours: row.hours,
             photoUrl: row.photoUrl,
+            specialized_services: row.specialized_services
+              ? JSON.parse(row.specialized_services)
+              : [],
+            is_24_7: Boolean(row.is_24_7),
           };
         } catch (e) {
           console.error('Error parsing facility row:', e);
@@ -181,7 +220,7 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
   if (!db) throw new Error('Database not initialized');
 
   try {
-    const row = await db.getFirstAsync<any>('SELECT * FROM facilities WHERE id = ?', [id]);
+    const row = await db.getFirstAsync<FacilityRow>('SELECT * FROM facilities WHERE id = ?', [id]);
 
     if (!row) return null;
 
@@ -199,6 +238,8 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
       yakapAccredited: Boolean(row.yakapAccredited),
       hours: row.hours,
       photoUrl: row.photoUrl,
+      specialized_services: row.specialized_services ? JSON.parse(row.specialized_services) : [],
+      is_24_7: Boolean(row.is_24_7),
     };
   } catch (error) {
     console.error('Error getting facility by ID:', error);
@@ -258,7 +299,7 @@ export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
   if (!db) throw new Error('Database not initialized');
 
   try {
-    const result = await db.getAllAsync<any>('SELECT * FROM emergency_contacts');
+    const result = await db.getAllAsync<EmergencyContactRow>('SELECT * FROM emergency_contacts');
 
     return result
       .map((row) => {

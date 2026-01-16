@@ -1,15 +1,23 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+interface LatestAssessment {
+  clinical_soap: string;
+  recommendationLevel: string;
+  timestamp: number;
+}
+
 interface OfflineState {
   isOffline: boolean;
   lastSync: number | null;
   pendingSyncs: number;
+  latestAssessment: LatestAssessment | null;
 }
 
 const initialState: OfflineState = {
   isOffline: false,
   lastSync: null,
   pendingSyncs: 0,
+  latestAssessment: null,
 };
 
 const offlineSlice = createSlice({
@@ -32,9 +40,42 @@ const offlineSlice = createSlice({
     resetSyncStatus: (state) => {
       state.pendingSyncs = 0;
     },
+    saveClinicalNote: (state, action: PayloadAction<Omit<LatestAssessment, 'timestamp'>>) => {
+      state.latestAssessment = {
+        ...action.payload,
+        timestamp: Date.now(),
+      };
+    },
+    clearLatestAssessment: (state) => {
+      state.latestAssessment = null;
+    },
   },
 });
 
-export const { setOfflineStatus, syncCompleted, setLastSync, addPendingSync, resetSyncStatus } =
-  offlineSlice.actions;
+export const {
+  setOfflineStatus,
+  syncCompleted,
+  setLastSync,
+  addPendingSync,
+  resetSyncStatus,
+  saveClinicalNote,
+  clearLatestAssessment,
+} = offlineSlice.actions;
+
+// Thunk to check TTL
+export const checkAssessmentTTL = () => (dispatch: any, getState: () => { offline: OfflineState }) => {
+  const { latestAssessment } = getState().offline;
+  if (latestAssessment) {
+    const now = Date.now();
+    const ttl = 24 * 60 * 60 * 1000; // 24 hours
+    if (now - latestAssessment.timestamp > ttl) {
+      dispatch(clearLatestAssessment());
+    }
+  }
+};
+
+// Selectors
+export const selectLatestClinicalNote = (state: { offline: OfflineState }) => 
+  state.offline.latestAssessment;
+
 export default offlineSlice.reducer;

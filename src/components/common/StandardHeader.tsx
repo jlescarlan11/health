@@ -9,7 +9,7 @@ import {
   TextStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,7 +18,7 @@ interface StandardHeaderProps {
   showBackButton?: boolean;
   onBackPress?: () => void;
   backRoute?: string;
-  backParams?: any;
+  backParams?: Record<string, unknown>;
   rightActions?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
@@ -34,7 +34,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
   style,
   titleStyle,
 }) => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -44,7 +44,7 @@ const StandardHeader: React.FC<StandardHeaderProps> = ({
     } else if (navigation.canGoBack()) {
       navigation.goBack();
     } else if (backRoute) {
-      navigation.navigate(backRoute, backParams);
+      navigation.navigate(onBackPress as any);
     }
   };
 

@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getFacilities } from '../services/facilityService';
-import { Facility } from '../types';
+import { Facility, FacilityService } from '../types';
 import { calculateDistance } from '../utils/locationUtils';
 import { getOpenStatus } from '../utils/facilityUtils';
 
 interface FacilityFilters {
   type?: string;
-  services?: string[];
+  services?: FacilityService[];
   yakapAccredited?: boolean;
   searchQuery?: string;
   openNow?: boolean;
@@ -101,7 +101,14 @@ const facilitiesSlice = createSlice({
         // Simple service match (has at least one of the filtered services)
         // Adjust logic as needed (e.g., must have ALL)
         const matchesServices =
-          !services || services.length === 0 || services.some((s) => facility.services.includes(s));
+          !services ||
+          services.length === 0 ||
+          services.some(
+            (s) =>
+              facility.services.includes(s) ||
+              (facility.specialized_services &&
+                facility.specialized_services.includes(s as string)),
+          );
 
         const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
 
@@ -184,7 +191,12 @@ const facilitiesSlice = createSlice({
           const matchesServices =
             !services ||
             services.length === 0 ||
-            services.some((s) => facility.services.includes(s));
+            services.some(
+              (s) =>
+                facility.services.includes(s) ||
+                (facility.specialized_services &&
+                  facility.specialized_services.includes(s as string)),
+            );
 
           const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
 

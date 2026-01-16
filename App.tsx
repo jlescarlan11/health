@@ -11,7 +11,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { OfflineBanner, SafetyRecheckModal } from './src/components/common';
-import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
+import { setOfflineStatus, setLastSync, checkAssessmentTTL } from './src/store/offlineSlice';
 import { setHighRisk } from './src/store/navigationSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
@@ -66,6 +66,9 @@ const AppContent = () => {
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   useEffect(() => {
+    // Check TTL on app start
+    dispatch(checkAssessmentTTL());
+
     // Check for high risk status on mount
     if (isHighRisk) {
       setSafetyModalVisible(true);
@@ -111,10 +114,7 @@ const AppContent = () => {
     <View style={styles.container}>
       <OfflineBanner />
       <AppNavigator />
-      <SafetyRecheckModal
-        visible={safetyModalVisible}
-        onDismiss={handleDismissSafetyModal}
-      />
+      <SafetyRecheckModal visible={safetyModalVisible} onDismiss={handleDismissSafetyModal} />
     </View>
   );
 };

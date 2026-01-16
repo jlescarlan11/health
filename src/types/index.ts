@@ -1,11 +1,44 @@
 export * from './navigation';
 export * from './triage';
 
+export type FacilityService =
+  | 'Adolescent Health'
+  | 'Animal Bite Clinic'
+  | 'Blood Bank'
+  | 'Clinical Chemistry'
+  | 'Clinical Microscopy'
+  | 'Consultation'
+  | 'Dental'
+  | 'Dermatology'
+  | 'Dialysis'
+  | 'ECG'
+  | 'ENT'
+  | 'Emergency'
+  | 'Eye Center'
+  | 'Family Planning'
+  | 'General Medicine'
+  | 'HIV Treatment'
+  | 'Hematology'
+  | 'Immunization'
+  | 'Internal Medicine'
+  | 'Laboratory'
+  | 'Maternal Care'
+  | 'Mental Health'
+  | 'Nutrition Services'
+  | 'OB-GYN'
+  | 'Pediatrics'
+  | 'Primary Care'
+  | 'Radiology'
+  | 'Stroke Unit'
+  | 'Surgery'
+  | 'Trauma Care'
+  | 'X-ray';
+
 export interface Facility {
   id: string;
   name: string;
   type: string;
-  services: string[];
+  services: FacilityService[];
   address: string;
   latitude: number;
   longitude: number;
@@ -21,6 +54,8 @@ export interface Facility {
   };
   photoUrl?: string;
   distance?: number; // Optional calculated field
+  specialized_services?: string[];
+  is_24_7?: boolean;
 }
 
 export interface EmergencyContact {

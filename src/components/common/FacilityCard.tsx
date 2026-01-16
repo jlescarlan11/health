@@ -1,8 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle, TouchableOpacity } from 'react-native';
-import { Card, Text, Chip, useTheme } from 'react-native-paper';
+import { Card, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Facility } from '../../types';
+import { Facility, FacilityService } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
 import { getOpenStatus } from '../../utils';
 
@@ -12,7 +12,7 @@ interface FacilityCardProps {
   style?: ViewStyle;
   showDistance?: boolean;
   distance?: number;
-  relevantServices?: string[];
+  relevantServices?: FacilityService[];
   simplified?: boolean;
 }
 
@@ -49,26 +49,43 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 }) => {
   const theme = useTheme();
   const [showAllServices, setShowAllServices] = React.useState(false);
-  const { isOpen, text: statusText, color: statusColor } = getOpenStatus(facility);
+  const { text: statusText, color: statusColor } = getOpenStatus(facility);
 
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${showDistance && distance !== undefined ? `, Distance: ${formatDistance(distance)}` : ''}`;
 
   // Determine which services to show
   const displayServices = React.useMemo(() => {
-    if (showAllServices) return facility.services;
+    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+
+    if (showAllServices) return allServices;
 
     if (relevantServices && relevantServices.length > 0) {
       // Prioritize relevant services if they exist in facility services
-      const relevant = facility.services.filter((s) =>
+      const relevant = allServices.filter((s) =>
         relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
       );
       if (relevant.length > 0) return relevant.slice(0, 3);
     }
 
-    return simplified ? facility.services.slice(0, 3) : facility.services.slice(0, 4);
-  }, [facility.services, relevantServices, simplified, showAllServices]);
+    return simplified ? allServices.slice(0, 3) : allServices.slice(0, 4);
+  }, [
+    facility.services,
+    facility.specialized_services,
+    relevantServices,
+    simplified,
+    showAllServices,
+  ]);
 
-  const hasMoreServices = facility.services.length > displayServices.length;
+  const totalServicesCount = facility.services.length + (facility.specialized_services?.length || 0);
+  const hasMoreServices = totalServicesCount > displayServices.length;
+
+  const hasMatches = React.useMemo(() => {
+    if (!relevantServices || relevantServices.length === 0) return false;
+    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+    return relevantServices.some((rs) =>
+      allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
+    );
+  }, [facility.services, facility.specialized_services, relevantServices]);
 
   return (
     <Card
@@ -137,6 +154,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           </View>
         </View>
 
+        {hasMatches && (
+          <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9' }]}>
+            <MaterialCommunityIcons name="check-circle" size={14} color="#2E7D32" />
+            <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Your Needs</Text>
+          </View>
+        )}
+
         <View style={styles.content}>
           <View style={styles.statusRow}>
             <Text
@@ -145,14 +169,17 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             >
               {statusText.toUpperCase()}
             </Text>
-            {facility.hours && !facility.hours.includes('24/7') && (
-              <Text
-                variant="labelSmall"
-                style={{ marginLeft: 12, color: 'rgba(0,0,0,0.4)', fontWeight: '600' }}
-              >
-                {facility.hours}
-              </Text>
-            )}
+            {facility.hours &&
+              !facility.hours.includes('24/7') &&
+              !facility.hours.toLowerCase().includes('24 hours') &&
+              !facility.is_24_7 && (
+                <Text
+                  variant="labelSmall"
+                  style={{ marginLeft: 12, color: 'rgba(0,0,0,0.4)', fontWeight: '600' }}
+                >
+                  {facility.hours}
+                </Text>
+              )}
           </View>
 
           <Text variant="bodySmall" numberOfLines={1} style={styles.address}>
@@ -169,7 +196,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 ]}
               >
                 <MaterialCommunityIcons
-                  name={getServiceIcon(service) as any}
+                  name={getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']}
                   size={12}
                   color={theme.colors.primary}
                 />
@@ -193,7 +220,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                   variant="labelSmall"
                   style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10 }}
                 >
-                  +{facility.services.length - displayServices.length} MORE
+                  +{totalServicesCount - displayServices.length} MORE
                 </Text>
               </TouchableOpacity>
             )}
@@ -273,6 +300,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     marginLeft: 4,
+  },
+  matchBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 16,
+    alignSelf: 'flex-start',
+  },
+  matchText: {
+    fontSize: 12,
+    fontWeight: '800',
+    marginLeft: 6,
+    letterSpacing: 0.3,
   },
   content: {
     marginTop: 0,

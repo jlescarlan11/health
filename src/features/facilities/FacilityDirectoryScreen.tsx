@@ -3,19 +3,17 @@ import {
   View,
   StyleSheet,
   Keyboard,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Searchbar, Chip, useTheme, Text } from 'react-native-paper';
-import { useDispatch, useSelector } from 'react-redux';
+import { Searchbar, Chip, useTheme } from 'react-native-paper';
+import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
-import { AppDispatch, RootState } from '../../store';
+import { AppDispatch } from '../../store';
 import { fetchFacilities, setFilters } from '../../store/facilitiesSlice';
 import { FacilityListView } from '../../components/features/facilities';
 import StandardHeader from '../../components/common/StandardHeader';

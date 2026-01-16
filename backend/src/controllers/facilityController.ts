@@ -1,11 +1,17 @@
 import { Request, Response } from 'express';
 import * as facilityService from '../services/facilityService';
+import { Facility } from '../../generated/prisma/client';
+
+interface FacilityWithDistance extends Facility {
+  distance?: number;
+}
 
 // Helper to map DB model to Frontend Interface
-const mapToFacility = (f: any) => {
+const mapToFacility = (f: FacilityWithDistance) => {
+  const operatingHours = f.operating_hours as Record<string, unknown>;
   const hours =
-    f.operating_hours && typeof f.operating_hours === 'object'
-      ? (f.operating_hours as any).description || ''
+    operatingHours && typeof operatingHours === 'object'
+      ? (operatingHours.description as string) || ''
       : '';
 
   return {
@@ -22,6 +28,8 @@ const mapToFacility = (f: any) => {
     operatingHours: f.operating_hours, // Expose full structured data
     photoUrl: f.photos && f.photos.length > 0 ? f.photos[0] : null,
     distance: f.distance, // Preserve if present
+    specialized_services: f.specialized_services,
+    is_24_7: f.is_24_7,
   };
 };
 

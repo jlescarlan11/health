@@ -27,8 +27,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 describe('MainHomeScreen', () => {
   // Create a mock icon component for PaperProvider
-  const MockIcon = ({ name, size, color, ...props }: any) =>
-    React.createElement('Icon', { name, size, color, ...props });
+  const MockIcon = ({ name, size, color }: any) =>
+    React.createElement('Icon', { name, size, color });
 
   const component = (
     <Provider store={store}>
@@ -48,7 +48,7 @@ describe('MainHomeScreen', () => {
   });
 
   it('renders correctly', () => {
-    const { getByText, getByLabelText } = render(component);
+    const { getByText } = render(component);
 
     expect(getByText('Kumusta!')).toBeTruthy();
     expect(getByText('Check Symptoms')).toBeTruthy();

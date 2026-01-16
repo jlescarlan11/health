@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
-import { TextInput, HelperText, useTheme } from 'react-native-paper';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import { TextInput, HelperText } from 'react-native-paper';
 
 interface InputProps extends Omit<React.ComponentProps<typeof TextInput>, 'theme'> {
   errorText?: string;
@@ -19,7 +19,6 @@ export const Input: React.FC<InputProps> = ({
   accessibilityHint,
   ...props
 }) => {
-  const theme = useTheme();
   const hasError = !!errorText;
 
   return (

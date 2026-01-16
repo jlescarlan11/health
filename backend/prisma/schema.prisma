@@ -20,6 +20,8 @@ model Facility {
   operating_hours  Json
   photos           String[]
   barangay         String?
+  specialized_services String[] @default([])
+  is_24_7          Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

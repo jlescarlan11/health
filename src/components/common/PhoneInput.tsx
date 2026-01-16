@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { TextInput, HelperText, useTheme, Text } from 'react-native-paper';
+import { TextInput, HelperText } from 'react-native-paper';
 
 interface PhoneInputProps {
   value: string;
@@ -19,7 +19,6 @@ export const PhoneInput: React.FC<PhoneInputProps> = ({
   containerStyle,
   disabled = false,
 }) => {
-  const theme = useTheme();
   const [countryCode, setCountryCode] = useState('+63'); // Default to Philippines
 
   const hasError = !!errorText;

@@ -60,81 +60,17 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
-// #region agent log
-const logDebug = (location: string, message: string, data: any) => {
-  // Also log to console for visibility in Metro bundler
-  console.log(`[DEBUG] ${location}: ${message}`, data);
-  fetch('http://127.0.0.1:7243/ingest/30defc92-940a-4196-8b8c-19e76254013a', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      location,
-      message,
-      data,
-      timestamp: Date.now(),
-      sessionId: 'debug-session',
-      runId: 'post-fix',
-      hypothesisId: 'A',
-    }),
-  }).catch(() => {});
-};
-// #endregion
-
-// #region agent log
-const configUrl = Constants.expoConfig?.extra?.apiUrl || Constants.expoConfig?.extra?.backendUrl;
-const hostUri = Constants.expoConfig?.hostUri || Constants.manifest?.hostUri;
-logDebug('facilityService.ts:32', 'API URL resolved', {
-  apiUrl: API_URL,
-  platform: Platform.OS,
-  configUrl,
-  hostUri,
-  expoConfigKeys: Object.keys(Constants.expoConfig?.extra || {}),
-  manifestHostUri: Constants.manifest?.hostUri,
-});
-// #endregion
-
 import {
   getFacilities as getFacilitiesFromDb,
   saveFacilities as saveFacilitiesToDb,
 } from './database';
 import NetInfo from '@react-native-community/netinfo';
 
-// ... (existing code)
-
 export const fetchFacilitiesFromApi = async (params: { limit?: number; offset?: number } = {}) => {
-  // #region agent log
-  logDebug('facilityService.ts:50', 'fetchFacilitiesFromApi entry', {
-    apiUrl: API_URL,
-    expoConfigExtra: Constants.expoConfig?.extra,
-    fullUrl: `${API_URL}/facilities`,
-    params,
-  });
-  // #endregion
   try {
-    // #region agent log
-    logDebug('facilityService.ts:54', 'Before axios.get', {
-      requestUrl: `${API_URL}/facilities`,
-      params,
-    });
-    // #endregion
     const response = await axios.get(`${API_URL}/facilities`, { params });
-    // #region agent log
-    logDebug('facilityService.ts:57', 'After axios.get success', {
-      status: response.status,
-      dataLength: response.data?.length || response.data?.facilities?.length || 0,
-    });
-    // #endregion
     return response.data;
-  } catch (error: any) {
-    // #region agent log
-    logDebug('facilityService.ts:61', 'Error in fetchFacilitiesFromApi', {
-      errorMessage: error?.message,
-      errorCode: error?.code,
-      errorResponse: error?.response?.status,
-      requestUrl: `${API_URL}/facilities`,
-      isAxiosError: error?.isAxiosError,
-    });
-    // #endregion
+  } catch (error: unknown) {
     console.error('Error fetching facilities from API:', error);
     throw error;
   }

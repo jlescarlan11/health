@@ -25,7 +25,7 @@ jest.mock('../../../components/common/StandardHeader', () => {
   const { Text } = require('react-native');
   return {
     __esModule: true,
-    default: ({ title }: any) => <Text>{title}</Text>,
+    default: ({ title }: { title: string }) => <Text>{title}</Text>,
   };
 });
 
@@ -57,7 +57,7 @@ describe('EnrollmentGuideScreen', () => {
   });
 
   it('navigates back if no pathway selected (invalid id)', () => {
-    // @ts-ignore
+    // @ts-expect-error - testing null pathwayId
     mockParams = { pathwayId: null };
 
     render(renderComponent());

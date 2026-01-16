@@ -19,6 +19,8 @@ interface FacilityRecord {
   operating_hours: string;
   photos: string;
   barangay: string;
+  specialized_services?: string;
+  is_24_7?: string;
 }
 
 // Load environment variables
@@ -229,6 +231,9 @@ async function main() {
       const services = record.services
         ? record.services.split(';').map((s: string) => s.trim())
         : [];
+      const specialized_services = record.specialized_services
+        ? record.specialized_services.split(';').map((s: string) => s.trim())
+        : [];
       const photos = record.photos
         ? record.photos
             .split(';')
@@ -264,7 +269,9 @@ async function main() {
         phone: record.phone || null,
         yakap_accredited: record.yakap_accredited === 'true',
         services,
+        specialized_services,
         operating_hours: operatingHours,
+        is_24_7: record.is_24_7 === 'true' || operatingHours.is24x7,
         photos,
         barangay: record.barangay || null,
       };
