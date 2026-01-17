@@ -11,6 +11,7 @@ const FALSE_POSITIVES: Record<string, string[]> = {
   lying: ['dying'],
   trying: ['dying'],
   drying: ['dying'],
+  'want to give': ['want to die'],
 };
 
 /**

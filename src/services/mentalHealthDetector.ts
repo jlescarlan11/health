@@ -1,32 +1,37 @@
+import { KeywordDetector } from './base/KeywordDetector';
+
 // Keywords derived from medical-knowledge.json and crisis intervention guidelines
-const CRISIS_KEYWORDS = [
-  'suicide',
-  'kill myself',
-  'hurt myself',
-  'self-harm',
-  'hopelessness',
-  'want to die',
-  'dying',
-  'feel like dying',
-  'feeling like dying',
-  'end my life',
-  'hearing voices',
-  'hallucinations',
-  'severe depression',
-  'uncontrollable anger',
-  'better off dead',
-  'no reason to live',
-  'panic attack',
-  'want to end it',
-  "can't go on",
-  'give up',
-  'tired of living',
-  'make it stop',
-  'hang myself',
-  'cut myself',
-  'overdose',
-  'take all the pills',
-];
+// Critical (10): Immediate intent or active plan
+// High (8-9): Ideation or severe symptoms
+// Medium (5-7): Distress indicators
+const CRISIS_KEYWORDS_SCORED: Record<string, number> = {
+  'suicide': 10,
+  'kill myself': 10,
+  'hurt myself': 10,
+  'want to die': 10,
+  'end my life': 10,
+  'hang myself': 10,
+  'cut myself': 10,
+  'overdose': 10,
+  'take all the pills': 10,
+  'better off dead': 10,
+  'dying': 9,
+  'feel like dying': 9,
+  'feeling like dying': 9,
+  'self-harm': 9,
+  'hearing voices': 9,
+  'hallucinations': 9,
+  'no reason to live': 9,
+  'severe depression': 7,
+  'uncontrollable anger': 7,
+  'panic attack': 7,
+  "can't go on": 7,
+  'give up': 6,
+  'tired of living': 7,
+  'make it stop': 6,
+  'hopelessness': 6,
+  'want to end it': 8,
+};
 
 export interface MentalHealthResource {
   name: string;
@@ -62,33 +67,43 @@ interface MentalHealthDetectionResult {
   matchedKeywords: string[];
   message?: string;
   resources?: MentalHealthResource[];
+  score: number;
 }
 
-export const detectMentalHealthCrisis = (text: string): MentalHealthDetectionResult => {
-  const normalizedText = text.toLowerCase().trim();
-  const matchedKeywords: string[] = [];
-
-  for (const keyword of CRISIS_KEYWORDS) {
-    if (normalizedText.includes(keyword)) {
-      matchedKeywords.push(keyword);
-    }
+class MentalHealthDetector extends KeywordDetector {
+  protected getKeywords(): Record<string, number> {
+    return CRISIS_KEYWORDS_SCORED;
   }
 
-  const isCrisis = matchedKeywords.length > 0;
+  public detectCrisis(text: string): MentalHealthDetectionResult {
+    const { matchedKeywords, score } = this.detect(text, true);
+    
+    // Threshold based decision
+    const isCrisis = score >= 8;
 
-  if (isCrisis) {
-    console.log(`[MentalHealthDetector] Crisis keywords detected: ${matchedKeywords.join(', ')}`);
+    if (isCrisis) {
+      console.log(`[MentalHealthDetector] Crisis keywords detected: ${matchedKeywords.join(', ')} (Score: ${score})`);
+      return {
+        isCrisis: true,
+        matchedKeywords,
+        score,
+        message:
+          'You are not alone. Help is available. If you are in immediate danger, please go to the nearest hospital or call emergency services immediately.',
+        resources: MENTAL_HEALTH_RESOURCES,
+      };
+    }
+
     return {
-      isCrisis: true,
+      isCrisis: false,
       matchedKeywords,
-      message:
-        'You are not alone. Help is available. If you are in immediate danger, please go to the nearest hospital or call emergency services immediately.',
-      resources: MENTAL_HEALTH_RESOURCES,
+      score
     };
   }
+}
 
-  return {
-    isCrisis: false,
-    matchedKeywords: [],
-  };
+// Singleton instance
+const detector = new MentalHealthDetector();
+
+export const detectMentalHealthCrisis = (text: string): MentalHealthDetectionResult => {
+  return detector.detectCrisis(text);
 };
