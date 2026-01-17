@@ -71,6 +71,10 @@ RULES:
    - Set "ambiguity_detected" to true if core details are vague, anatomical locations are unclear, or clinical conflict is detected.
    - Set "internal_inconsistency_detected" to true if user answers medically contradict each other.
 6. **Red Flags**: Set "red_flags_resolved" to true ONLY if the red flags question was explicitly answered and the response is medically definitive.
+7. **Denial Confidence**: Infer "denial_confidence" ('high'|'medium'|'low') for red flags.
+   - 'high': Explicit, definitive denials (e.g., "definitely not", "absolutely no", "none").
+   - 'low': Hedged or uncertain language (e.g., "I don't think so", "not sure", "maybe").
+   - 'medium': Standard denials without intensifiers or hedges.
 
 OUTPUT FORMAT (Strict JSON):
 {
@@ -79,6 +83,7 @@ OUTPUT FORMAT (Strict JSON):
   "severity": "...",
   "progression": "...",
   "red_flag_denials": "...",
+  "denial_confidence": "high",
   "summary": "1-sentence summary",
   "triage_readiness_score": 0.0,
   "ambiguity_detected": false,

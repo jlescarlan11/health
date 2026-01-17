@@ -713,6 +713,11 @@ const styles = StyleSheet.create({
   restartButton: {
     width: '100%',
   },
+  sectionLabel: {
+    marginBottom: 8,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });
 
 export default RecommendationScreen;

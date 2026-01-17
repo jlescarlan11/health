@@ -12,6 +12,16 @@ const FALSE_POSITIVES: Record<string, string[]> = {
   trying: ['dying'],
   drying: ['dying'],
   'want to give': ['want to die'],
+  
+  // False positives for short Bicolano keywords
+  bar: ['bari'], // 'bari' (broken)
+  bare: ['bari'],
+  bear: ['bari'],
+  suck: ['suka'], // 'suka' (vomit)
+  dug: ['dugi'], // 'dugi' (choking/fishbone)
+  hopes: ['hapos'], // 'hapos' (asthma)
+  hop: ['hapos'],
+  pods: ['pudos'], // 'pudos' (shortness of breath)
 };
 
 /**

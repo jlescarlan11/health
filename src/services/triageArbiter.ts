@@ -46,7 +46,17 @@ export class TriageArbiter {
       };
     }
 
-    // --- 2. DETERMINISTIC TURN FLOORS (Non-Overridable) ---
+    // --- 2. CLINICAL SANITY & FRICTION OVERRIDE (Early Intervention) ---
+    const sanityResult = this.evaluateClinicalSanity(profile, remainingQuestions);
+    
+    // IMMEDIATE INTERVENTION: These signals override the turn floor because they require specific active resolution.
+    if (sanityResult.signal === 'RESOLVE_AMBIGUITY' || 
+        sanityResult.signal === 'RESOLVE_FRICTION' || 
+        sanityResult.signal === 'REQUIRE_CLARIFICATION') {
+      return sanityResult;
+    }
+
+    // --- 3. DETERMINISTIC TURN FLOORS (Non-Overridable for Termination) ---
     const isComplexCategory = profile.symptom_category === 'complex' || profile.symptom_category === 'critical' || profile.is_complex_case;
     const minTurnsRequired = isComplexCategory ? this.MIN_TURNS_COMPLEX : this.MIN_TURNS_SIMPLE;
 
@@ -58,13 +68,14 @@ export class TriageArbiter {
         };
     }
 
-    // --- 3. CLINICAL SANITY & FRICTION OVERRIDE ---
-    const sanityResult = this.evaluateClinicalSanity(profile, remainingQuestions);
+    // --- 4. RESUME SANITY CHECK (Soft Continue) ---
+    // If we are above the floor, we must now respect "soft" continue signals (e.g., missing progression)
+    // that were held back to allow the floor check to take precedence if needed.
     if (sanityResult.signal !== 'TERMINATE') {
       return sanityResult;
     }
 
-    // --- 4. TIER 3 EXHAUSTION FOR COMPLEX/FRICTION CASES ---
+    // --- 5. TIER 3 EXHAUSTION FOR COMPLEX/FRICTION CASES ---
     if (isComplexCategory || profile.clinical_friction_detected) {
         const hasUnattemptedTier3 = remainingQuestions.some(q => q.tier === 3);
         if (hasUnattemptedTier3) {
@@ -76,7 +87,7 @@ export class TriageArbiter {
         }
     }
 
-    // --- 5. DATA COMPLETENESS GATE ---
+    // --- 6. DATA COMPLETENESS GATE ---
     const completenessResult = this.evaluateDataCompleteness(profile);
     
     if (completenessResult.signal === 'TERMINATE' && 
@@ -94,7 +105,7 @@ export class TriageArbiter {
       return completenessResult;
     }
 
-    // --- 6. TERMINATION EXECUTION ---
+    // --- 7. TERMINATION EXECUTION ---
     const isExhausted = currentTurn >= totalPlannedQuestions;
 
     if (isExhausted || currentTurn >= 10) { // Safety ceiling increased to allow for Turn 7 floor

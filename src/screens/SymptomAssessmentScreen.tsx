@@ -30,6 +30,7 @@ import {
   generateAssessmentPlan,
   extractClinicalProfile,
   getGeminiResponse,
+  streamGeminiResponse,
 } from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
@@ -115,11 +116,13 @@ const SymptomAssessmentScreen = () => {
   const [processing, setProcessing] = useState(false);
   const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
   const [expansionCount, setExpansionCount] = useState(0);
+  const [readiness, setReadiness] = useState(0.0); // 0.0 to 1.0
   const MAX_EXPANSIONS = 2;
   
   // UI Interactions
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
   
   // Voice
   const [isRecording, setIsRecording] = useState(false);
@@ -130,6 +133,13 @@ const SymptomAssessmentScreen = () => {
     setSelectedRedFlags([]);
   }, [currentQuestionIndex]);
 
+  // --- READINESS VISUALIZATION ---
+  const getReadinessVisuals = (score: number) => {
+    if (score <= 0.40) return { label: "Gathering initial symptoms…", color: theme.colors.error }; // Red/Orange
+    if (score <= 0.70) return { label: "Checking risk factors…", color: theme.colors.secondary }; // Yellow
+    if (score <= 0.90) return { label: "Analyzing specifics…", color: theme.colors.primary }; // Green
+    return { label: "Finalizing recommendation…", color: '#2196F3' }; // Blue
+  };
 
     // Offline
     const [isOfflineMode, setIsOfflineMode] = useState(false);
@@ -347,8 +357,8 @@ const SymptomAssessmentScreen = () => {
 
           // --- NEW: Unified Triage Arbiter Gate ---
           // The Arbiter now has authority over whether we continue or stop.
-          // We check this starting at Turn 4 to allow for early exits for simple cases.
-          if (nextIdx >= 4 || isAtEnd) {
+          // We check this starting at Turn 0 (every turn) to allow for early interventions.
+          if (nextIdx >= 0 || isAtEnd) {
               console.log(`[Assessment] Turn ${nextIdx} reached. Consulting Arbiter...`);
               try {
                   const historyItems = nextHistory.map(m => ({
@@ -357,6 +367,11 @@ const SymptomAssessmentScreen = () => {
                   }));
                   const profile = await extractClinicalProfile(historyItems);
                   
+                  // Update Readiness Visualization
+                  if (profile.triage_readiness_score !== undefined) {
+                    setReadiness(profile.triage_readiness_score);
+                  }
+
                   // --- CONTRADICTION LOCK (Deterministic Guardrail) ---
                   const isAmbiguous = profile.ambiguity_detected === true;
                   const hasFriction = profile.clinical_friction_detected === true;
@@ -456,35 +471,49 @@ const SymptomAssessmentScreen = () => {
                       
                       const followUpPrompt = `The assessment for "${initialSymptom}" is incomplete or ambiguous. History: ${historyItems.map(h => h.text).join('. ')}. Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns. Return JSON format matching the original question schema.`;
                       try {
-                          const response = await getGeminiResponse(followUpPrompt);
-                          if (response) {
-                              const jsonMatch = response.match(/\{[\s\S]*\}/);
+                          let accumulatedResponse = '';
+                          setStreamingText(''); // Initialize streaming bubble
+                          
+                          const stream = streamGeminiResponse(followUpPrompt);
+                          for await (const chunk of stream) {
+                            accumulatedResponse += chunk;
+                            setStreamingText(prev => (prev || '') + chunk);
+                          }
+                          
+                          if (accumulatedResponse) {
+                              const jsonMatch = accumulatedResponse.match(/\{[\s\S]*\}/);
                               if (jsonMatch) {
                                   const parsed = JSON.parse(jsonMatch[0]);
                                   const newQuestions = (parsed.questions || []).map((q: any, i: number) => ({...q, id: `extra-${nextIdx}-${currentExpansion}-${i}`, tier: 3}));
+                                  
                                   if (newQuestions.length > 0) {
                                       const updatedQuestions = [...questions, ...newQuestions];
+                                      const nextQ = updatedQuestions[nextIdx];
+                                      
+                                      // Commit finalized message
+                                      setMessages(prev => [...prev, {
+                                          id: `ai-extra-${nextIdx}-${currentExpansion}`,
+                                          text: clarificationHeader + nextQ.text,
+                                          sender: 'assistant'
+                                      }]);
+                                      
                                       setQuestions(updatedQuestions);
                                       setExpansionCount(currentExpansion + 1);
+                                      setCurrentQuestionIndex(nextIdx);
                                       
-                                      // Transition to the next question manually
-                                      setTimeout(() => {
-                                          const nextQ = updatedQuestions[nextIdx];
-                                          setMessages(prev => [...prev, {
-                                              id: `ai-extra-${nextIdx}-${currentExpansion}`,
-                                              text: clarificationHeader + nextQ.text,
-                                              sender: 'assistant'
-                                          }]);
-                                          setCurrentQuestionIndex(nextIdx);
-                                          setIsTyping(false);
-                                          setProcessing(false);
-                                      }, 600);
+                                      // Clear streaming state AFTER committing message to avoid flicker
+                                      setStreamingText(null); 
+                                      setIsTyping(false);
+                                      setProcessing(false);
                                       return; 
                                   }
                               }
                           }
+                          // Fallback if parsing fails or no questions
+                          setStreamingText(null);
                       } catch (err) {
                           console.error('[Assessment] Failed to fetch expansion questions:', err);
+                          setStreamingText(null);
                       }
                   }
                   
@@ -524,7 +553,7 @@ const SymptomAssessmentScreen = () => {
           }
 
           if (!isAtEnd) {
-              // Next Question (Pre-Turn 4)
+              // Next Question (Fallback if Arbiter check fails or is skipped)
               setIsTyping(true);
               setTimeout(() => {
                   const nextQ = questions[nextIdx];
@@ -720,14 +749,17 @@ const SymptomAssessmentScreen = () => {
     ? triageFlow.nodes[currentOfflineNodeId]?.options 
     : null;
 
+  const readinessVisuals = getReadinessVisuals(readiness);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
       
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
          <ProgressBar 
-            progress={isOfflineMode ? 0.5 : ((currentQuestionIndex + 1) / (questions.length || 1))}
-            label={isOfflineMode ? "Emergency Check" : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
+            progress={isOfflineMode ? 0.5 : readiness}
+            label={isOfflineMode ? "Emergency Check" : readinessVisuals.label}
+            color={isOfflineMode ? theme.colors.primary : readinessVisuals.color}
          />
       </View>
 
@@ -739,7 +771,18 @@ const SymptomAssessmentScreen = () => {
               showsVerticalScrollIndicator={false}
           >
             {messages.map(renderMessage)}
-        {isTyping && (
+            {/* Streaming Message Bubble */}
+            {streamingText && (
+              <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+                <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+                  <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+                </View>
+                <View style={[styles.bubble, styles.assistantBubble, { backgroundColor: theme.colors.surface }]}>
+                  <Text style={[styles.messageText, { color: theme.colors.onSurface }]}>{streamingText}</Text>
+                </View>
+              </View>
+            )}
+            {isTyping && !streamingText && (
              <View style={[styles.messageWrapper, styles.assistantWrapper]}>
                 <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
                   <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />

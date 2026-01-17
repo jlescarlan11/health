@@ -1,6 +1,6 @@
 import { AssessmentProfile } from '../types/triage';
 import { AssessmentResponse } from '../api/geminiClient';
-import { KeywordDetector, KeywordMatch, SegmentAnalysis, SystemIndicator } from './base/KeywordDetector';
+import { KeywordDetector, KeywordMatch, SegmentAnalysis } from './base/KeywordDetector';
 
 // --- KEYWORD CATEGORIES ---
 
@@ -16,7 +16,9 @@ const CARDIAC_KEYWORDS: Record<string, number> = {
   // Bicolano / Local
   'kulog sa daghan': 10, // chest pain
   'kulog sa dagan': 10, // chest pain (variant)
+  'makulog na daghan': 10, // painful chest
   'malipot na ribok': 10, // cold sweat (often cardiac)
+  'pumitik': 6, // palpitations/throbbing
 };
 
 const RESPIRATORY_KEYWORDS: Record<string, number> = {
@@ -31,6 +33,9 @@ const RESPIRATORY_KEYWORDS: Record<string, number> = {
   'hingalo': 10, // gasping for breath / near death
   'naghihingalo': 10, // actively dying / gasping
   'dai makahinga': 10, // cannot breathe
+  'masakit an hinangos': 10, // difficulty breathing
+  'masakit maghinga': 10, // hard to breathe
+  'pudos': 10, // shortness of breath
   'dugi': 10, // choking/foreign object in throat
   'bakitog': 10, // difficulty breathing / wheezing
   'hapos': 6, // asthma/difficulty breathing
@@ -57,7 +62,15 @@ const NEURO_KEYWORDS: Record<string, number> = {
   // Bicolano / Local
   'nagkukumbulsion': 10, // actively seizing
   'kumbulsion': 10, // seizure
+  'bontog': 10, // seizure/convulsion
+  'bontogon': 10, // epileptic/seizing
+  'nadismayo': 10, // fainted
+  'nawaran malay': 10, // lost consciousness
+  'nawara an malay': 10, // lost consciousness
+  'dai makataram': 10, // cannot speak
+  'ngaut': 10, // slurred speech
   'nalulula': 5, // dizzy/vertigo
+  'ribong': 6, // dizzy/confused
   'nalilibog': 5, // confused/disoriented
 };
 
@@ -69,6 +82,14 @@ const TRAUMA_KEYWORDS: Record<string, number> = {
   'deep wound': 8,
   'electric shock': 10,
   'drowning': 10,
+
+  // Bicolano / Local
+  'nagdudugo': 10, // bleeding
+  'dakulang dugo': 10, // heavy bleeding (lit. big blood)
+  'nalapnos': 8, // burned/scalded
+  'napaso': 8, // burned
+  'bari': 8, // broken/fracture
+  'naglulubog': 10, // drowning
 };
 
 const OTHER_EMERGENCY_KEYWORDS: Record<string, number> = {
@@ -99,6 +120,11 @@ const OTHER_EMERGENCY_KEYWORDS: Record<string, number> = {
 
   // Bicolano / Local
   'garo gadan': 10, // feels like dying
+  'suka na dugo': 9, // vomiting blood
+  'nagsusuka dugo': 9, // vomiting blood
+  'nag-udo dugo': 8, // bloody stool
+  'mangaki': 10, // giving birth
+  'nagtutubig': 10, // water broke
   'nangungulog': 6, // general pain
   'grabeng lagnat': 5, // high fever
   'mainiton na marhay': 5, // very hot/feverish
@@ -106,11 +132,14 @@ const OTHER_EMERGENCY_KEYWORDS: Record<string, number> = {
   'pusi-pusi': 6, // pale/anemic looking
   'gadot': 5, // muscle pain/cramps
   'kulog sa tulak': 5, // stomach ache
+  'makulog na tulak': 6, // painful stomach
   'nagpapanit an tulak': 7, // peeling stomach (severe pain)
   'impacho': 4, // indigestion
   'nagluluya': 6, // weak
+  'maluya': 6, // weak
   'lupaypay': 7, // prostrate/very weak
   'langkag': 5, // malaise
+  'kalentura': 5, // fever
 };
 
 // Consolidated map for the base detector

@@ -1,8 +1,6 @@
 export {
   initDatabase,
   saveFacilities,
-  saveEmergencyContacts,
-  getEmergencyContacts,
   getFacilityById,
 } from './database';
 export * from './facilityService';

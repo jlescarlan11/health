@@ -43,7 +43,7 @@ export interface AssessmentProfile {
   clinical_friction_details?: string;
   is_complex_case?: boolean;
   symptom_category?: 'simple' | 'complex' | 'critical';
-  red_flags_resolved?: boolean;
+  denial_confidence?: 'high' | 'medium' | 'low';
 }
 
 export interface AssessmentQuestion {

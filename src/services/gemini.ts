@@ -115,3 +115,53 @@ export const getGeminiResponse = async (prompt: string) => {
     throw error;
   }
 };
+
+/**
+ * Streams the AI response chunk by chunk (Async Generator)
+ * Useful for real-time UI updates.
+ */
+export const streamGeminiResponse = async function* (
+  prompt: string | (string | { inlineData: { data: string; mimeType: string } })[]
+): AsyncGenerator<string, void, unknown> {
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+  let result;
+  let attempt = 0;
+
+  // Retry logic for establishing the stream
+  while (attempt < MAX_RETRIES) {
+    try {
+      result = await model.generateContentStream(prompt);
+      break;
+    } catch (error: unknown) {
+      attempt++;
+      const err = error as { message?: string; status?: number };
+      const isOverloaded = err.message?.includes('503') || err.status === 503;
+
+      console.warn(`[Gemini Service] Stream init attempt ${attempt} failed. Error: ${err.message}`);
+
+      if (attempt >= MAX_RETRIES) {
+        if (isOverloaded) {
+          throw new Error('The AI service is currently overloaded. Please try again in a moment.');
+        }
+        throw err;
+      }
+
+      const delay = BASE_DELAY * Math.pow(2, attempt - 1);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  if (!result) return;
+
+  try {
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      if (chunkText) {
+        yield chunkText;
+      }
+    }
+  } catch (error) {
+    console.error('[Gemini Service] Error during stream iteration:', error);
+    throw error;
+  }
+};
