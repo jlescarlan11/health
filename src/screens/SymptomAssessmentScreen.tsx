@@ -423,7 +423,7 @@ const SymptomAssessmentScreen = () => {
 
                   if (canTerminate) {
                       console.log('[Assessment] Arbiter approved termination. Finalizing.');
-                      setIsTyping(true);
+                      setIsTyping(false);
                       setMessages(prev => [...prev, {
                           id: 'early-exit',
                           text: "Thank you. I have sufficient information to provide a safe recommendation.",
@@ -520,7 +520,7 @@ const SymptomAssessmentScreen = () => {
                   // If we reached here and it'sAtEnd and we can't terminate, we might have hit MAX_EXPANSIONS or expansion failed
                   if (isAtEnd && !canTerminate) {
                       console.log(`[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`);
-                      setIsTyping(true);
+                      setIsTyping(false);
                       setMessages(prev => [...prev, {
                           id: 'finalizing-safety-fallback',
                           text: "I have gathered enough initial information to provide a safe recommendation.",
@@ -568,7 +568,7 @@ const SymptomAssessmentScreen = () => {
               }, 600);
           } else {
               // EXHAUSTED QUESTIONS -> Finalize
-              setIsTyping(true);
+              setIsTyping(false);
               setMessages(prev => [...prev, {
                   id: 'finalizing',
                   text: "Thank you. I'm now analyzing your responses to provide the best guidance...",
@@ -821,9 +821,29 @@ const SymptomAssessmentScreen = () => {
              <View style={{ maxHeight: SCREEN_HEIGHT / 3 }}>
                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                  <MultiSelectChecklist
-                   options={currentQuestion.options ? currentQuestion.options.map(opt => ({ id: opt, label: opt })) : parseRedFlags(currentQuestion.text)}
+                   options={
+                     currentQuestion.options
+                       ? currentQuestion.options.map(opt => {
+                           if (typeof opt === 'string') return { id: opt, label: opt };
+                           return {
+                             category: opt.category,
+                             items: opt.items.map(i => ({ id: i, label: i }))
+                           };
+                         })
+                       : parseRedFlags(currentQuestion.text)
+                   }
                    selectedIds={selectedRedFlags}
-                   onSelectionChange={setSelectedRedFlags}
+                   onSelectionChange={(ids) => {
+                     // Mutual exclusivity for "None"
+                     const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
+                     if (lastAdded?.toLowerCase() === 'none') {
+                        setSelectedRedFlags([lastAdded]);
+                     } else if (ids.length > 1 && ids.some(id => id.toLowerCase() === 'none')) {
+                        setSelectedRedFlags(ids.filter(id => id.toLowerCase() !== 'none'));
+                     } else {
+                        setSelectedRedFlags(ids);
+                     }
+                   }}
                  />
                </ScrollView>
              </View>
@@ -831,7 +851,23 @@ const SymptomAssessmentScreen = () => {
                 <Button 
                   testID="button-confirm"
                   variant="primary"
-                  onPress={() => handleNext(selectedRedFlags.length > 0 ? `I have: ${selectedRedFlags.join(', ')}` : "None")}
+                  onPress={() => {
+                    if (selectedRedFlags.length === 0 || (selectedRedFlags.length === 1 && selectedRedFlags[0].toLowerCase() === 'none')) {
+                      handleNext("No, I don’t have any of those.");
+                    } else {
+                      const labels = selectedRedFlags.filter(i => i.toLowerCase() !== 'none').map(i => i.toLowerCase());
+                      let message = "I’m experiencing ";
+                      if (labels.length === 1) {
+                        message += labels[0];
+                      } else if (labels.length === 2) {
+                        message += `${labels[0]} and ${labels[1]}`;
+                      } else {
+                        const last = labels.pop();
+                        message += `${labels.join(', ')}, and ${last}`;
+                      }
+                      handleNext(message + ".");
+                    }
+                  }}
                   title="Confirm"
                   style={{ width: '100%' }}
                   disabled={processing}
@@ -851,20 +887,19 @@ const SymptomAssessmentScreen = () => {
                  </ScrollView>
              )}
 
-             {/* AI Generated Options */}
-             {!isOfflineMode && currentQuestion?.options && (
-                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
-                     {currentQuestion.options.map(opt => (
-                         <Chip key={opt} onPress={() => handleNext(opt)} disabled={processing}>{opt}</Chip>
-                     ))}
-                 </ScrollView>
-             )}
-             
-             {/* Skip Button for AI Mode */}
+             {/* AI Generated Options & Skip Option */}
              {!isOfflineMode && (
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingBottom: 8 }}>
-                    <Chip mode="outlined" compact onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
-                </View>
+                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
+                     {currentQuestion?.options?.map(opt => {
+                         if (typeof opt !== 'string') return null; // Skip grouped options in single-select chip view
+                         return (
+                            <Chip key={opt} onPress={() => handleNext(opt)} disabled={processing}>{opt}</Chip>
+                         );
+                     })}
+                     <Chip onPress={() => handleNext(undefined, true)} disabled={processing}>
+                        I'm not sure
+                     </Chip>
+                 </ScrollView>
              )}
 
              <InputCard

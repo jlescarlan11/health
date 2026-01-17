@@ -46,11 +46,16 @@ export interface AssessmentProfile {
   denial_confidence?: 'high' | 'medium' | 'low';
 }
 
+export interface GroupedOption {
+  category: string;
+  items: string[];
+}
+
 export interface AssessmentQuestion {
   id: string;
   text: string;
   type?: 'text' | 'multi-select';
-  options?: string[];
+  options?: string[] | GroupedOption[];
   tier?: number;
   is_red_flag?: boolean;
 }

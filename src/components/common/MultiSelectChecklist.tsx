@@ -7,8 +7,13 @@ export interface ChecklistOption {
   label: string;
 }
 
+export interface GroupedChecklistOption {
+  category: string;
+  items: ChecklistOption[];
+}
+
 interface MultiSelectChecklistProps {
-  options: ChecklistOption[];
+  options: ChecklistOption[] | GroupedChecklistOption[];
   selectedIds: string[];
   onSelectionChange: (selectedIds: string[]) => void;
   title?: string;
@@ -34,6 +39,24 @@ export const MultiSelectChecklist: React.FC<MultiSelectChecklistProps> = ({
     onSelectionChange(newSelected);
   };
 
+  const renderOptionItem = (option: ChecklistOption) => (
+    <Checkbox.Item
+      key={option.id}
+      label={option.label}
+      status={selectedIds.includes(option.id) ? 'checked' : 'unchecked'}
+      onPress={() => toggleOption(option.id)}
+      color={theme.colors.primary}
+      position="leading"
+      labelStyle={styles.label}
+      style={styles.item}
+      mode="android"
+    />
+  );
+
+  const isGrouped = (opts: any[]): opts is GroupedChecklistOption[] => {
+    return opts.length > 0 && 'category' in opts[0];
+  };
+
   return (
     <View style={styles.container}>
       {!!title && (
@@ -45,19 +68,21 @@ export const MultiSelectChecklist: React.FC<MultiSelectChecklistProps> = ({
         </Text>
       )}
       <View style={styles.listContainer}>
-        {options.map((option) => (
-          <Checkbox.Item
-            key={option.id}
-            label={option.label}
-            status={selectedIds.includes(option.id) ? 'checked' : 'unchecked'}
-            onPress={() => toggleOption(option.id)}
-            color={theme.colors.primary}
-            position="leading"
-            labelStyle={styles.label}
-            style={styles.item}
-            mode="android" // Ensures consistent ripple and layout across platforms
-          />
-        ))}
+        {isGrouped(options) ? (
+          options.map((group, index) => (
+            <View key={group.category} style={index > 0 ? styles.groupContainer : undefined}>
+              <Text 
+                 variant="labelMedium" 
+                 style={[styles.groupTitle, { color: theme.colors.primary }]}
+              >
+                {group.category}
+              </Text>
+              {group.items.map(renderOptionItem)}
+            </View>
+          ))
+        ) : (
+          (options as ChecklistOption[]).map(renderOptionItem)
+        )}
       </View>
     </View>
   );
@@ -73,6 +98,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     fontWeight: '700',
     fontSize: 12,
+  },
+  groupContainer: {
+    marginTop: 16,
+  },
+  groupTitle: {
+    paddingHorizontal: 16,
+    paddingBottom: 4,
+    fontWeight: '600',
   },
   listContainer: {
     backgroundColor: 'transparent',

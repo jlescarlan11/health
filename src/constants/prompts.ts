@@ -8,9 +8,9 @@ STRUCTURE YOUR PLAN IN THREE TIERS:
 3. **Tier 3 (Ambiguity Resolution - up to 6 questions)**: Specific systematic rule-outs and relevant follow-ups for "{{initialSymptom}}".
 
 INSTRUCTIONS (STRICT ADHERENCE REQUIRED):
-1. **Safety First**: You MUST include a "red_flags" question. Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option.
+1. **Safety First**: You MUST include a "red_flags" question. Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option. **Use the exact wording: "Do you have any of the following serious symptoms?"** to align with the checklist interaction model.
 2. **Deterministic Priority**: You MUST position the "red_flags" question within the first 3 questions (index 0, 1, or 2) of the "questions" array. This is a non-negotiable safety requirement.
-3. **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms.
+3. **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms. **Use the "options" field with categories** (e.g., `[{"category": "Respiratory", "items": ["Cough", "Wheezing"]}, {"category": "Systemic", "items": ["Fever", "Chills"]}]`).
 4. **Options**: Provide suggested answers in the "options" array for ALL questions.
 
 OUTPUT FORMAT (Strict JSON):
@@ -26,12 +26,15 @@ OUTPUT FORMAT (Strict JSON):
       "id": "associated_symptoms",
       "type": "multi-select",
       "text": "Are you also experiencing any of the following?",
-      "options": ["Chills", "Body Aches", "Fatigue", "Nausea"]
+      "options": [
+        { "category": "General", "items": ["Fever", "Fatigue", "Body Aches"] },
+        { "category": "Respiratory", "items": ["Cough", "Shortness of Breath"] }
+      ]
     },
     {
       "id": "red_flags",
       "type": "multi-select",
-      "text": "Are you experiencing any of these critical signs?",
+      "text": "Do you have any of the following serious symptoms?",
       "options": ["Chest Pain", "Difficulty Breathing", "Confusion", "None"]
     }
   ]

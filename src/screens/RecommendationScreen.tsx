@@ -406,58 +406,62 @@ const RecommendationScreen = () => {
           </Text>
         </View>
 
-        {(recommendation.key_concerns.length > 0 ||
-          recommendation.critical_warnings.length > 0) && (
-          <View style={styles.warningContainer}>
-            {recommendation.critical_warnings.length > 0 && (
-              <View style={styles.warningSection}>
+        {/* Critical Warnings Section - High Visibility */}
+        {recommendation.critical_warnings.length > 0 && (
+          <Surface style={styles.criticalWarningsContainer} elevation={0}>
+            <View style={styles.sectionHeaderRow}>
+              <MaterialCommunityIcons name="alert" size={24} color={theme.colors.error} />
+              <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.error }]}>
+                CRITICAL ALERTS
+              </Text>
+            </View>
+            <Text variant="bodySmall" style={[styles.sectionSubtitle, { color: theme.colors.error, marginTop: 4, marginBottom: 12 }]}>
+              Seek immediate care if any of these develop:
+            </Text>
+            {recommendation.critical_warnings.map((warning, idx) => (
+              <View key={`warn-${idx}`} style={styles.warningRow}>
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={20}
+                  color={theme.colors.error}
+                  style={{ marginTop: 2 }}
+                />
                 <Text
-                  variant="labelMedium"
-                  style={[styles.sectionLabel, { color: theme.colors.error }]}
+                  variant="bodyMedium"
+                  style={[styles.warningText, { color: theme.colors.onSurface }]}
                 >
-                  WARNING SIGNS TO MONITOR
+                  {warning}
                 </Text>
-                {recommendation.critical_warnings.map((warning, idx) => (
-                  <View key={`warn-${idx}`} style={styles.warningRow}>
-                    <MaterialCommunityIcons
-                      name="alert-circle-outline"
-                      size={20}
-                      color={theme.colors.error}
-                    />
-                    <Text
-                      variant="bodyMedium"
-                      style={[styles.warningText, { color: theme.colors.error }]}
-                    >
-                      {warning}
-                    </Text>
-                  </View>
-                ))}
               </View>
-            )}
+            ))}
+          </Surface>
+        )}
 
-            {recommendation.key_concerns.length > 0 && (
-              <View style={styles.concernsSection}>
-                <Text variant="labelMedium" style={styles.sectionLabel}>
-                  KEY OBSERVATIONS
-                </Text>
-                <View style={styles.concernsList}>
-                  {recommendation.key_concerns.map((concern, idx) => (
-                    <View key={`concern-${idx}`} style={styles.concernRow}>
-                      <MaterialCommunityIcons
-                        name="information-outline"
-                        size={16}
-                        color="rgba(0,0,0,0.4)"
-                        style={{ marginTop: 2 }}
-                      />
-                      <Text variant="bodyMedium" style={styles.concernText}>
-                        {concern}
-                      </Text>
-                    </View>
-                  ))}
+        {/* Key Observations Section - Neutral/Informational */}
+        {recommendation.key_concerns.length > 0 && (
+          <Surface style={styles.observationsContainer} elevation={0}>
+            <View style={styles.sectionHeaderRow}>
+              <MaterialCommunityIcons name="clipboard-text-search-outline" size={22} color={theme.colors.secondary} />
+              <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.secondary }]}>
+                KEY OBSERVATIONS
+              </Text>
+            </View>
+            <View style={styles.concernsList}>
+              {recommendation.key_concerns.map((concern, idx) => (
+                <View key={`concern-${idx}`} style={styles.concernRow}>
+                  <MaterialCommunityIcons
+                    name="check-circle-outline"
+                    size={18}
+                    color={theme.colors.secondary}
+                    style={{ marginTop: 2 }}
+                  />
+                  <Text variant="bodyMedium" style={styles.concernText}>
+                    {concern}
+                  </Text>
                 </View>
-              </View>
-            )}
-          </View>
+              ))}
+            </View>
+          </Surface>
         )}
 
         {/* Facilities Section */}
@@ -624,42 +628,54 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
 
-  warningContainer: {
-    marginTop: 16,
-    marginBottom: 32,
-    backgroundColor: '#FFF7ED', // Very soft orange/amber background
-    borderRadius: 16,
+  criticalWarningsContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FED7AA',
-  },
-  warningSection: {
+    borderColor: '#FCA5A5',
     padding: 16,
-    paddingBottom: 8,
+    borderLeftWidth: 6,
+    borderLeftColor: '#EF4444', // Red 500
   },
-  concernsSection: {
+  observationsContainer: {
+    marginBottom: 24,
+    backgroundColor: '#F5F7F8',
+    borderRadius: 12,
     padding: 16,
-    paddingTop: 8,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    marginLeft: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  
   warningRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 8,
     marginTop: 4,
   },
   warningText: {
     flex: 1,
     marginLeft: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 22,
   },
-  concernsList: { paddingLeft: 0, marginTop: 4 },
-  concernRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
+  concernsList: { paddingLeft: 0, marginTop: 8 },
+  concernRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   concernText: {
     flex: 1,
-    color: 'rgba(0,0,0,0.7)',
+    color: '#45474B',
     lineHeight: 20,
     marginLeft: 10,
-    fontWeight: '500',
+    fontWeight: '400',
   },
 
   facilitiesSection: { marginBottom: 24 },
