@@ -212,7 +212,10 @@ export class GeminiClient {
     // Use safetyContext if provided (more accurate user-only content), 
     // otherwise fallback to full symptoms string.
     const scanInput = safetyContext || symptoms;
-    const emergency = detectEmergency(scanInput);
+    const emergency = detectEmergency(scanInput, { 
+      isUserInput: true,
+      historyContext: safetyContext || symptoms 
+    });
     
     if (emergency.isEmergency) {
       const response: AssessmentResponse = {
@@ -350,7 +353,7 @@ export class GeminiClient {
 
         // Upgrade if Low Confidence or Ambiguity Detected
         const isLowConfidence =
-          parsed.confidence_score !== undefined && parsed.confidence_score < 0.8;
+          parsed.confidence_score !== undefined && parsed.confidence_score < 0.75;
         const isAmbiguous = parsed.ambiguity_detected === true;
 
         if ((isLowConfidence || isAmbiguous) && currentLevelIdx < 3) {

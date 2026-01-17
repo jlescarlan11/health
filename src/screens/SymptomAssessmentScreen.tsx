@@ -35,6 +35,7 @@ import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
 import { TriageFlow, AssessmentQuestion } from '../types/triage';
+import { extractClinicalSlots } from '../utils/clinicalUtils';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 
@@ -106,6 +107,7 @@ const SymptomAssessmentScreen = () => {
   // Core State
   const [messages, setMessages] = useState<Message[]>([]);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
+  const [fullPlan, setFullPlan] = useState<AssessmentQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({}); // Map question ID -> User Answer
   const [loading, setLoading] = useState(true);
@@ -205,10 +207,45 @@ const SymptomAssessmentScreen = () => {
         if (!netInfo.isConnected) throw new Error('NETWORK_ERROR');
   
         const plan = await generateAssessmentPlan(initialSymptom || '');
-        setQuestions(plan);
+        setFullPlan(plan);
+        
+        // --- NEW: Dynamic Question Pruning ---
+        // Use deterministic slot extraction to identify if Tier 1 questions are already answered
+        const slots = extractClinicalSlots(initialSymptom || '');
+        const initialAnswers: Record<string, string> = {};
+        
+        const prunedPlan = plan.filter(q => {
+            // SAFETY: Never prune red-flag questions or Tier 2/3 context questions
+            if (q.id === 'red_flags' || !['basics', 'age', 'duration'].includes(q.id)) return true;
+            
+            // Check for Tier 1 questions
+            if (q.id === 'basics') {
+                if (slots.age && slots.duration) {
+                    console.log(`[Assessment] Pruning basics. Found Age: ${slots.age}, Duration: ${slots.duration}`);
+                    initialAnswers[q.id] = `${slots.age}, for ${slots.duration}`;
+                    return false;
+                }
+            } else if (q.id === 'age') {
+                if (slots.age) {
+                    console.log(`[Assessment] Pruning age. Found: ${slots.age}`);
+                    initialAnswers[q.id] = slots.age;
+                    return false;
+                }
+            } else if (q.id === 'duration') {
+                if (slots.duration) {
+                    console.log(`[Assessment] Pruning duration. Found: ${slots.duration}`);
+                    initialAnswers[q.id] = slots.duration;
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        setQuestions(prunedPlan);
+        setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
         
         // Add Intro & First Question
-        const firstQ = plan[0];
+        const firstQ = prunedPlan[0];
         const introText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
         
         setMessages([
@@ -251,7 +288,16 @@ const SymptomAssessmentScreen = () => {
       // 2. Emergency Check (Local, Deterministic)
       // Only check if it's NOT a skip
       if (!isSkip && !isOfflineMode) {
-          const safetyCheck = detectEmergency(answer, { isUserInput: true });
+          // Provide context of what has been discussed so far for the SOAP note
+          const historyContext = messages
+            .filter(m => m.sender === 'user')
+            .map(m => m.text)
+            .join('. ');
+
+          const safetyCheck = detectEmergency(answer, { 
+            isUserInput: true,
+            historyContext: historyContext
+          });
           
           // Log the step
           logConversationStep(currentQuestionIndex, currentQ.text, answer, safetyCheck);
@@ -358,7 +404,7 @@ const SymptomAssessmentScreen = () => {
           console.log(`╚${'═'.repeat(32)}╝\n`);
   
           // Format for Recommendation Screen
-          const formattedAnswers = questions.map(q => ({
+          const formattedAnswers = fullPlan.map(q => ({
               question: q.text,
               answer: finalAnswers[q.id] || "Not answered"
           }));

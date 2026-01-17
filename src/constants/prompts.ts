@@ -7,11 +7,11 @@ STRUCTURE YOUR PLAN IN THREE TIERS:
 2. **Tier 2 (Context - 2-3 questions)**: Associated symptoms and "Character" (e.g., sharp vs dull, dry vs wet cough).
 3. **Tier 3 (Ambiguity Resolution - up to 6 questions)**: Specific systematic rule-outs and relevant follow-ups for "{{initialSymptom}}".
 
-INSTRUCTIONS:
-- Generate a JSON object containing a "questions" array.
-- **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms (e.g., "Are you experiencing chills, body aches, or a rash?"). 
-- **Red Flags**: You MUST include a "red_flags" question (usually in Tier 1 or 2). Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option.
-- **Options**: Provide suggested answers in the "options" array for all questions to improve user speed.
+INSTRUCTIONS (STRICT ADHERENCE REQUIRED):
+1. **Safety First**: You MUST include a "red_flags" question. Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option.
+2. **Deterministic Priority**: You MUST position the "red_flags" question within the first 3 questions (index 0, 1, or 2) of the "questions" array. This is a non-negotiable safety requirement.
+3. **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms.
+4. **Options**: Provide suggested answers in the "options" array for ALL questions.
 
 OUTPUT FORMAT (Strict JSON):
 {
@@ -129,9 +129,11 @@ Your role is to analyze a patient's symptoms and conversation history to recomme
 Choose only from this list:
 ${VALID_SERVICES.join(', ')}
 
-**Instructions:**
-- Analyze the user's age, symptom duration, severity, and progression.
-- If "red_flag_denials" is "Denied", trust it but remain vigilant for other indicators.
-- If the user is a child or elderly, have a lower threshold for recommending professional care.
-- Ensure "relevant_services" are accurate for the condition (e.g., "Dental" for toothache, "Pediatrics" for children).
+**Instructions (SAFETY CRITICAL):**
+1. **Conservative Recommendation**: Analyze age, duration, severity, and progression.
+2. **Escalation Rule**: If "confidence_score" < 0.75 OR "ambiguity_detected" is true, you MUST upgrade the "recommended_level" by exactly one tier (e.g., self_care -> health_center). This is a deterministic safety rule.
+3. **Transparency**: Explicitly explain this conservative approach in "user_advice" when an upgrade occurs.
+4. **Child/Elderly Threshold**: Maintain a lower threshold for recommending professional care for these vulnerable groups.
+5. **Maternal Emergencies**: If potential active labor or maternal emergency is detected, recommend 'hospital' or 'emergency' immediately.
+6. **Service Accuracy**: Ensure "relevant_services" strictly match the patient's needs using the provided list.
 `;

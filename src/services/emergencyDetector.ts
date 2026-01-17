@@ -65,13 +65,32 @@ const EMERGENCY_KEYWORDS: Record<string, number> = {
   nausea: 4,
 
   // Bicolano / Local terms
-  'hingalo': 10,
-  'naghihingalo': 10,
-  'kulog sa daghan': 10,
-  'kulog sa dagan': 10,
-  'garo gadan': 10,
-  'nagkukumbulsion': 10,
-  'kumbulsion': 10,
+  'hingalo': 10, // gasping for breath / near death
+  'naghihingalo': 10, // actively dying / gasping
+  'kulog sa daghan': 10, // chest pain
+  'kulog sa dagan': 10, // chest pain (variant spelling)
+  'garo gadan': 10, // feels like dying
+  'nagkukumbulsion': 10, // actively seizing
+  'kumbulsion': 10, // seizure
+  'dai makahinga': 10, // cannot breathe
+  'nangungulog': 8, // severe aching/pain (upgraded weight)
+  'grabeng lagnat': 8, // severe fever
+  'mainiton na marhay': 8, // extremely hot (fever)
+  'nagkakalyo': 9, // burning with fever
+  'nalulula': 6, // dizziness/vertigo
+  'nalilibog': 6, // dizzy/confused
+  'pusi-pusi': 7, // severe spinning sensation
+  'gadot': 6, // abdominal cramping
+  'kulog sa tulak': 6, // abdominal pain
+  'nagpapanit an tulak': 8, // severe/sharp abdominal pain
+  'impacho': 5, // severe indigestion/bloating
+  'dugi': 8, // choking/foreign object in throat
+  'nagluluya': 7, // sudden weakness/lethargy
+  'lupaypay': 8, // extreme weakness / collapse
+  'malipot na ribok': 8, // cold sweat (often cardiac)
+  'bakitog': 8, // difficulty breathing / wheezing
+  'hapos': 7, // shortness of breath / fatigue
+  'langkag': 6, // confusion / feeling out of it
 };
 
 /**
@@ -136,7 +155,11 @@ const NEGATION_KEYWORDS = [
   'nothing',
   'not experiencing',
   'none of these',
-  'not present'
+  'not present',
+  'bako', // Bicolano: not
+  'dae', // Bicolano: no/not
+  'dai', // Bicolano: no/not (variant)
+  'wara', // Bicolano: none
 ];
 
 // Affirmative patterns that override negation
@@ -153,7 +176,9 @@ const AFFIRMATIVE_KEYWORDS = [
   'im',
   'present',
   'experiencing',
-  'meron'
+  'meron',
+  'iyo', // Bicolano: yes
+  'igwa', // Bicolano: has/present
 ];
 
 // **NEW: Question/System indicators** - Critical for filtering non-user input
@@ -420,7 +445,7 @@ const analyzeSegment = (
  */
 export const detectEmergency = (
   text: string,
-  options: { isUserInput?: boolean } = {},
+  options: { isUserInput?: boolean; historyContext?: string } = {},
 ): EmergencyDetectionResult => {
   console.log(`\n=== EMERGENCY DETECTION START ===`);
   console.log(`Input: "${text}"`);
@@ -569,10 +594,14 @@ export const detectEmergency = (
       ? `CRITICAL: High risk combination detected (${combinationReason}). Go to the nearest emergency room immediately.`
       : 'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room immediately.';
 
+    const subjective = options.historyContext 
+      ? `Patient reported: ${options.historyContext}. Current acute symptoms: ${matchedKeywords.join(', ')}.`
+      : `Patient reports acute ${matchedKeywords.join(', ')}.`;
+
     overrideResponse = {
       recommended_level: 'emergency',
       user_advice: advice,
-      clinical_soap: `S: Patient reports ${matchedKeywords.join(', ')}. O: Emergency keywords detected${combinationReason ? ` - Risk: ${combinationReason}` : ''}. A: Potential life-threatening condition. P: Immediate ED referral.`,
+      clinical_soap: `S: ${subjective} O: Emergency keywords detected${combinationReason ? ` - Risk: ${combinationReason}` : ''}. A: Potential life-threatening condition. P: Immediate ED referral.`,
       key_concerns: matchedKeywords.map((k) => `Urgent symptom: ${k}`),
       critical_warnings: ['Immediate medical attention required', 'Do not delay care'],
       relevant_services: ['Emergency', 'Trauma Care'],
