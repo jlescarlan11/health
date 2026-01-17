@@ -124,7 +124,10 @@ const NavigatorHomeScreen = () => {
     if (!symptom.trim()) return;
 
     // 1. Check for immediate Emergency
-    const emergencyCheck = detectEmergency(symptom);
+    const emergencyCheck = detectEmergency(symptom, { 
+      isUserInput: true,
+      historyContext: `Initial report: ${symptom}`
+    });
     if (emergencyCheck.isEmergency) {
       dispatch(setHighRisk(true));
       navigation.navigate('Recommendation', {

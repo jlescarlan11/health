@@ -5,10 +5,11 @@ import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/p
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { FacilityService } from '../types';
+import { AssessmentProfile } from '../types/triage';
 
 // Configuration
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
-const MODEL_NAME = 'gemini-2.5-flash'; // As requested
+const MODEL_NAME = 'gemini-2.5-flash';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 const MAX_RETRIES = 3;
 const RATE_LIMIT_RPM = 15;
@@ -32,7 +33,7 @@ export interface AssessmentResponse {
   critical_warnings: string[];
   relevant_services: FacilityService[];
   red_flags: string[];
-  confidence_score?: number;
+  triage_readiness_score?: number;
   ambiguity_detected?: boolean;
 }
 
@@ -138,7 +139,7 @@ export class GeminiClient {
           VALID_SERVICES.includes(s),
         ),
         red_flags: json.red_flags || [],
-        confidence_score: json.confidence_score,
+        triage_readiness_score: json.triage_readiness_score,
         ambiguity_detected: json.ambiguity_detected,
       };
     } catch (error) {
@@ -199,11 +200,13 @@ export class GeminiClient {
    * @param symptoms The clinical context for the LLM (may include history/questions)
    * @param history Optional conversation history
    * @param safetyContext Optional specialized string for local safety scanning (user-only content)
+   * @param profile Optional structured assessment profile for context-aware triage
    */
   public async assessSymptoms(
     symptoms: string,
     history: ChatMessage[] = [],
     safetyContext?: string,
+    profile?: AssessmentProfile,
   ): Promise<AssessmentResponse> {
     // 0. Periodic Cleanup
     await this.performCacheCleanup();
@@ -212,7 +215,11 @@ export class GeminiClient {
     // Use safetyContext if provided (more accurate user-only content), 
     // otherwise fallback to full symptoms string.
     const scanInput = safetyContext || symptoms;
-    const emergency = detectEmergency(scanInput);
+    const emergency = detectEmergency(scanInput, { 
+      isUserInput: true,
+      historyContext: safetyContext || symptoms,
+      profile: profile 
+    });
     
     if (emergency.isEmergency) {
       const response: AssessmentResponse = {
@@ -226,7 +233,7 @@ export class GeminiClient {
         critical_warnings: ['Life-threatening condition possible', 'Do not delay care'],
         relevant_services: ['Emergency'],
         red_flags: emergency.matchedKeywords,
-        confidence_score: 1.0,
+        triage_readiness_score: 1.0,
       };
 
       this.logFinalResult(response, scanInput);
@@ -246,7 +253,7 @@ export class GeminiClient {
         critical_warnings: ['You are not alone. Professional help is available now.'],
         relevant_services: ['Mental Health'],
         red_flags: mhCrisis.matchedKeywords,
-        confidence_score: 1.0,
+        triage_readiness_score: 1.0,
       };
 
       this.logFinalResult(response, scanInput);
@@ -348,19 +355,47 @@ export class GeminiClient {
           currentLevelIdx = 3;
         }
 
-        // Upgrade if Low Confidence or Ambiguity Detected
-        const isLowConfidence =
-          parsed.confidence_score !== undefined && parsed.confidence_score < 0.8;
+        // Upgrade if Low Readiness or Ambiguity Detected
+        const isLowReadiness =
+          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < 0.80;
         const isAmbiguous = parsed.ambiguity_detected === true;
 
-        if ((isLowConfidence || isAmbiguous) && currentLevelIdx < 3) {
+        if ((isLowReadiness || isAmbiguous) && currentLevelIdx < 3) {
           const nextLevel = levels[currentLevelIdx + 1] as AssessmentResponse['recommended_level'];
           console.log(
-            `[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Conf: ${isLowConfidence}, Ambiguous: ${isAmbiguous}`,
+            `[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Readiness: ${isLowReadiness}, Ambiguous: ${isAmbiguous}`,
           );
 
           parsed.recommended_level = nextLevel;
           parsed.user_advice += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
+        }
+
+        // --- NEW: AUTHORITY BLOCK ---
+        // If AI recommended Emergency but profile explicitly denies red flags, downgrade based on detector score
+        if (parsed.recommended_level === 'emergency' && profile?.red_flags_resolved === true) {
+            const denials = (profile.red_flag_denials || '').toLowerCase();
+            const hasDenials = denials.includes('none') || denials.includes('no critical') || denials.includes('wala');
+            
+            if (hasDenials) {
+                // If local detector also confirmed it's not an absolute emergency (emergency.isEmergency was false)
+                // We use the score from the earlier detection run (Line 245)
+                const fallbackLevel = emergency.score <= 5 ? 'health_center' : 'hospital';
+                
+                console.log(`[GeminiClient] Authority Block: Downgrading AI Emergency recommendation to ${fallbackLevel} as red flags were denied.`);
+                
+                parsed.recommended_level = fallbackLevel;
+                
+                if (fallbackLevel === 'health_center') {
+                    parsed.user_advice = 'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present. (Note: Care level adjusted as no critical signs were reported).';
+                } else {
+                    parsed.user_advice = 'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised. (Note: Care level adjusted as no critical signs were reported).';
+                }
+                
+                // Add clear escalation instructions to warnings
+                if (!parsed.critical_warnings.some(w => w.includes('stiff neck'))) {
+                    parsed.critical_warnings.unshift('Go to the Emergency Room IMMEDIATELY if you develop: stiff neck, confusion, or difficulty breathing.');
+                }
+            }
         }
         // -----------------------------------
 
@@ -417,12 +452,12 @@ export class GeminiClient {
     const levelLabel = recommendation.recommended_level.replace(/_/g, ' ').toUpperCase();
     console.log(`║ RECOMMENDED LEVEL: ${levelLabel.padEnd(BOX_WIDTH - 20)} ║`);
     
-    // Confidence & Ambiguity
-    const conf = recommendation.confidence_score !== undefined 
-      ? `${(recommendation.confidence_score * 100).toFixed(0)}%` 
+    // Readiness & Ambiguity
+    const readiness = recommendation.triage_readiness_score !== undefined 
+      ? `${(recommendation.triage_readiness_score * 100).toFixed(0)}%` 
       : 'N/A';
     const ambig = recommendation.ambiguity_detected ? 'YES' : 'NO';
-    const stats = `CONFIDENCE: ${conf.padEnd(8)} | AMBIGUITY: ${ambig.padEnd(8)}`;
+    const stats = `READINESS: ${readiness.padEnd(10)} | AMBIGUITY: ${ambig.padEnd(8)}`;
     console.log(`║ ${stats.padEnd(BOX_WIDTH - 2)} ║`);
     
     console.log(`╟${divider}╢`);

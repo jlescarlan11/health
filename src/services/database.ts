@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { Facility, EmergencyContact } from '../types';
+import { Facility } from '../types';
 
 let db: SQLite.SQLiteDatabase | null = null;
 let initPromise: Promise<void> | null = null;
@@ -163,17 +163,6 @@ interface FacilityRow {
   data: string;
 }
 
-interface EmergencyContactRow {
-  id: string;
-  name: string;
-  category: string;
-  phone: string;
-  available24x7: number;
-  description: string | null;
-  lastUpdated: number;
-  data: string;
-}
-
 export const getFacilities = async (): Promise<Facility[]> => {
   if (!db) await initDatabase();
   if (!db) throw new Error('Database not initialized');
@@ -243,85 +232,6 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
     };
   } catch (error) {
     console.error('Error getting facility by ID:', error);
-    throw error;
-  }
-};
-
-export const saveEmergencyContacts = async (contacts: EmergencyContact[]) => {
-  if (!db) await initDatabase();
-  if (!db) throw new Error('Database not initialized');
-
-  const timestamp = Date.now();
-
-  try {
-    // Start manual transaction
-    await db.execAsync('BEGIN TRANSACTION');
-
-    const statement = await db.prepareAsync(
-      `INSERT OR REPLACE INTO emergency_contacts (id, name, category, phone, available24x7, description, lastUpdated, data) VALUES ($id, $name, $category, $phone, $available24x7, $description, $lastUpdated, $data)`,
-    );
-
-    try {
-      for (const contact of contacts) {
-        await statement.executeAsync({
-          $id: contact.id,
-          $name: contact.name,
-          $category: contact.category,
-          $phone: contact.phone,
-          $available24x7: contact.available24x7 ? 1 : 0,
-          $description: contact.description || null,
-          $lastUpdated: timestamp,
-          $data: JSON.stringify(contact),
-        });
-      }
-
-      await db.execAsync('COMMIT');
-      console.log(`Saved ${contacts.length} emergency contacts to offline storage`);
-    } catch (innerError) {
-      console.error('Error during emergency contact save loop:', innerError);
-      try {
-        await db.execAsync('ROLLBACK');
-      } catch (rollbackError) {
-        console.error('Failed to rollback emergency contact transaction:', rollbackError);
-      }
-      throw innerError;
-    } finally {
-      await statement.finalizeAsync();
-    }
-  } catch (error) {
-    console.error('Error in saveEmergencyContacts:', error);
-    throw error;
-  }
-};
-
-export const getEmergencyContacts = async (): Promise<EmergencyContact[]> => {
-  if (!db) await initDatabase();
-  if (!db) throw new Error('Database not initialized');
-
-  try {
-    const result = await db.getAllAsync<EmergencyContactRow>('SELECT * FROM emergency_contacts');
-
-    return result
-      .map((row) => {
-        try {
-          const fullData = row.data ? JSON.parse(row.data) : {};
-          return {
-            ...fullData,
-            id: row.id,
-            name: row.name,
-            category: row.category,
-            phone: row.phone,
-            available24x7: Boolean(row.available24x7),
-            description: row.description,
-          };
-        } catch (e) {
-          console.error('Error parsing emergency contact row:', e);
-          return null;
-        }
-      })
-      .filter((c): c is EmergencyContact => c !== null);
-  } catch (error) {
-    console.error('Error getting emergency contacts:', error);
     throw error;
   }
 };

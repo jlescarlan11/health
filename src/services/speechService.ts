@@ -3,9 +3,7 @@ import Voice, {
   SpeechErrorEvent,
   SpeechVolumeChangeEvent,
 } from '@react-native-voice/voice';
-import * as Speech from 'expo-speech';
 import { NativeModules } from 'react-native';
-import { audioToText } from './gemini';
 
 class SpeechService {
   private isListening = false;
@@ -99,34 +97,6 @@ class SpeechService {
     } catch (e) {
       console.error('Failed to destroy Voice:', e);
     }
-  }
-
-  // Text-to-Speech (TTS)
-  speak(text: string, options?: Speech.SpeechOptions) {
-    Speech.speak(text, {
-      language: 'en-US',
-      pitch: 1.0,
-      rate: 1.0,
-      ...options,
-    });
-  }
-
-  stopSpeaking() {
-    Speech.stop();
-  }
-
-  isSpeaking() {
-    return Speech.isSpeakingAsync();
-  }
-
-  /**
-   * High-precision cloud-based transcription using Gemini.
-   * Useful for complex symptoms where on-device STT might fail.
-   * @param base64Audio Base64 encoded audio data
-   * @param mimeType MIME type of the audio (e.g., 'audio/wav', 'audio/m4a')
-   */
-  async cloudTranscribe(base64Audio: string, mimeType: string) {
-    return audioToText(base64Audio, mimeType);
   }
 }
 

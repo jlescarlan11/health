@@ -115,22 +115,3 @@ export const getGeminiResponse = async (prompt: string) => {
     throw error;
   }
 };
-
-export const audioToText = async (base64Audio: string, mimeType: string) => {
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const prompt = [
-      {
-        inlineData: {
-          data: base64Audio,
-          mimeType: mimeType,
-        },
-      },
-      'Transcribe this audio. Return only the transcription text.',
-    ];
-    return await generateContentWithRetry(model, prompt);
-  } catch (error) {
-    console.error('Gemini Audio Transcription Error:', error);
-    throw error;
-  }
-};

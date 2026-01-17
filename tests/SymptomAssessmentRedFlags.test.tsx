@@ -17,10 +17,14 @@ jest.mock('@react-navigation/native', () => ({
 jest.mock('../src/services/gemini', () => ({
   generateAssessmentPlan: jest.fn(),
   extractClinicalProfile: jest.fn(),
+  getGeminiResponse: jest.fn(),
 }));
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),
+}));
+
+jest.mock('../src/services/mentalHealthDetector', () => ({
   detectMentalHealthCrisis: jest.fn(() => ({ isCrisis: false, matchedKeywords: [] })),
 }));
 
@@ -123,6 +127,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
   test('renders checklist when question ID is red_flags', async () => {
     const redFlagQuestion = {
       id: 'red_flags',
+      type: 'multi-select',
       text: 'Do you have any of the following: Chest pain, Difficulty breathing, or Dizziness?',
     };
 
@@ -143,21 +148,29 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     expect(screen.getByText('Dizziness')).toBeTruthy();
 
     // Verify buttons
-    expect(screen.getByText(/None of these apply/)).toBeTruthy();
-    // Confirm button only shows when selection > 0
-    expect(screen.queryByText(/Confirm/)).toBeNull();
+    expect(screen.getByTestId('button-confirm')).toBeTruthy();
 
     // Select an option
     fireEvent.press(screen.getByTestId('option-Chest pain'));
 
-    // Confirm button should now appear
-    expect(screen.getByText(/Confirm/)).toBeTruthy();
+    // Confirm button should remain
+    expect(screen.getByTestId('button-confirm')).toBeTruthy();
   });
 
-  test('None of these apply button sends "Denied"', async () => {
-    const redFlagQuestion = { id: 'red_flags', text: 'Signs: Fever, Cough' };
+  test('Confirming with no selection sends "None"', async () => {
+    const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
     (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({ summary: 'Summary' });
+    (extractClinicalProfile as jest.Mock).mockResolvedValue({ 
+      summary: 'Summary',
+      age: '30',
+      duration: '1 day',
+      severity: 'Mild',
+      red_flag_denials: 'None',
+      ambiguity_detected: false,
+      internal_inconsistency_detected: false,
+      red_flags_resolved: true,
+      triage_readiness_score: 0.95
+    });
 
     render(
       <ReduxProvider store={store}>
@@ -167,19 +180,29 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(() => expect(screen.getByTestId('multi-select-checklist')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('button-none-of-these-apply'));
+    fireEvent.press(screen.getByTestId('button-confirm'));
 
     await waitFor(() => {
       expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: 'Denied' })
+        expect.objectContaining({ text: 'None' })
       ]));
-    });
+    }, { timeout: 3000 });
   });
 
   test('Confirm button sends selected symptoms', async () => {
-    const redFlagQuestion = { id: 'red_flags', text: 'Signs: Fever, Cough' };
+    const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
     (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({ summary: 'Summary' });
+    (extractClinicalProfile as jest.Mock).mockResolvedValue({ 
+      summary: 'Summary',
+      age: '30',
+      duration: '1 day',
+      severity: 'Mild',
+      red_flag_denials: 'None',
+      ambiguity_detected: false,
+      internal_inconsistency_detected: false,
+      red_flags_resolved: true,
+      triage_readiness_score: 0.95
+    });
 
     render(
       <ReduxProvider store={store}>
@@ -197,6 +220,6 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
       expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
         expect.objectContaining({ text: expect.stringContaining('Fever, Cough') })
       ]));
-    });
+    }, { timeout: 3000 });
   });
 });

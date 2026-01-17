@@ -37,43 +37,69 @@ Segment: "fever"
  LOG  Active keywords: [fever]
  LOG  Reasoning: Non-emergency symptoms detected (score 5/10): fever.     
  LOG  === EMERGENCY DETECTION END ===
+ ERROR  Error fetching facilities from API: [AxiosError: Network Error]
+ ERROR  Sync failed: [AxiosError: Network Error]
+ LOG  Initial sync failed (likely offline or error): [AxiosError: Network Error]
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "21 years old"
+ LOG  Input: "I'm 21 years old. My fever started yesterday"
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "21 years old"
+ LOG    Sanitized input: "I'm 21 years old. My fever started yesterday"   
  LOG 
-Segment: "21 years old"
+Segment: "i'm 21 years old"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
+Segment: "my fever started yesterday"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "fever" (severity: 5)
+ LOG        Context: "my fever started yesterday"
+ LOG    Segment max score: 5
+ LOG 
 --- FINAL RESULT ---
- LOG  Score: 0/10
+ LOG  Score: 5/10
  LOG  Emergency: NO
- LOG  Active keywords: []
- LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  Active keywords: [fever]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): fever.     
  LOG  === EMERGENCY DETECTION END ===
  LOG 
 ╔═══ CONVERSATION STEP 0 ═══╗
- LOG  ║ Q: Ilang taon na po kayo? (How old are you?)
- LOG  ║ A: 21 years old
- LOG  ║ Emergency: false (score: 0)
+ LOG  ║ Q: How old is the patient (if different from yourself), and when did the fever first start?
+ LOG  ║ A: I'm 21 years old. My fever started yesterday
+ LOG  ║ Emergency: false (score: 5)
+ LOG  ║ Keywords: fever
  LOG  ╚══════════════════════════════╝
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "I have: Kahapon (Yesterday)"
+ LOG  Input: "I have: 39.0-39.9°C (102.1-103.8°F) - High, Getting worse"
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "I have. Kahapon (Yesterday)"
+ LOG    Sanitized input: "I have. 0-39. 9°C (102. 1-103. 8°F) - High. Getting worse"
  LOG 
 Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "kahapon (yesterday)"
+Segment: "0-39"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "9°c (102"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "1-103"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "8°f) - high"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "getting worse"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -85,109 +111,23 @@ Segment: "kahapon (yesterday)"
  LOG  === EMERGENCY DETECTION END ===
  LOG 
 ╔═══ CONVERSATION STEP 1 ═══╗
- LOG  ║ Q: Kailan po nagsimula ang lagnat? (When did the fever start?)    
- LOG  ║ A: I have: Kahapon (Yesterday)
+ LOG  ║ Q: What is the highest temperature recorded (if known), and how has the fever progressed?
+ LOG  ║ A: I have: 39.0-39.9°C (102.1-103.8°F) - High, Getting worse      
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "I have: Hindi komportable (nanginginig, masakit ang ulo) (Uncomfortable - chills, headache), Lumalala (Getting worse)"
+ LOG  Input: "I have: None of the above"
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "I have. Hindi komportable (nanginginig. masakit ang ulo) (Uncomfortable - chills. headache). Lumalala (Getting worse)"    
+ LOG    Sanitized input: "I have. None of the above"
  LOG 
 Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "hindi komportable (nanginginig"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "masakit ang ulo) (uncomfortable - chills"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "headache)"
- LOG    Potential matches: 1
- LOG      ✓ ACTIVE - "headache" (severity: 5)
- LOG        Context: "headache"
- LOG    Segment max score: 5
- LOG 
-Segment: "lumalala (getting worse)"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
---- FINAL RESULT ---
- LOG  Score: 5/10
- LOG  Emergency: NO
- LOG  Active keywords: [headache]
- LOG  Reasoning: Non-emergency symptoms detected (score 5/10): headache.  
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 2 ═══╗
- LOG  ║ Q: Ano po ang pakiramdam niyo sa lagnat at lumalala o bumubuti po ba ito? (How does the fever feel, and is it getting worse or better?)     
- LOG  ║ A: I have: Hindi komportable (nanginginig, masakit ang ulo) (Uncomfortable - chills, headache), Lumalala (Getting worse)
- LOG  ║ Emergency: false (score: 5)
- LOG  ║ Keywords: headache
- LOG  ╚══════════════════════════════╝
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "I have: Sipon o Ubo (Colds or Cough), Pananakit ng ulo (Headache), Walang gana kumain (Loss of appetite), Panghihina o pagkapagod (Weakness or fatigue)"
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "I have. Sipon o Ubo (Colds or Cough). Pananakit ng ulo (Headache). Walang gana kumain (Loss of appetite). Panghihina o pagkapagod (Weakness or fatigue)"
- LOG 
-Segment: "i have"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "sipon o ubo (colds or cough)"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "pananakit ng ulo (headache)"
- LOG    Potential matches: 1
- LOG      ✓ ACTIVE - "headache" (severity: 5)
- LOG        Context: "pananakit ng ulo headache"
- LOG    Segment max score: 5
- LOG  
-Segment: "walang gana kumain (loss of appetite)"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "panghihina o pagkapagod (weakness or fatigue)"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
---- FINAL RESULT ---
- LOG  Score: 5/10
- LOG  Emergency: NO
- LOG  Active keywords: [headache]
- LOG  Reasoning: Non-emergency symptoms detected (score 5/10): headache.  
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 3 ═══╗
- LOG  ║ Q: Nakakaranas din po ba kayo ng alinman sa mga sumusunod? (Are you also experiencing any of the following?)
- LOG  ║ A: I have: Sipon o Ubo (Colds or Cough), Pananakit ng ulo (Headache), Walang gana kumain (Loss of appetite), Panghihina o pagkapagod (Weakness or fatigue)
- LOG  ║ Emergency: false (score: 5)
- LOG  ║ Keywords: headache
- LOG  ╚══════════════════════════════╝
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "I have: Pagpapawis (Sweating)"
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "I have. Pagpapawis (Sweating)"
- LOG 
-Segment: "i have"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "pagpapawis (sweating)"
+Segment: "none of the above"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -198,34 +138,305 @@ Segment: "pagpapawis (sweating)"
  LOG  Reasoning: No emergency keywords detected in user input.
  LOG  === EMERGENCY DETECTION END ===
  LOG 
-╔═══ CONVERSATION STEP 4 ═══╗
- LOG  ║ Q: Mayroon din po ba kayong alinman sa mga sumusunod na nararamdaman kasama ng lagnat? (Are you also experiencing any of the following symptoms with the fever?)
- LOG  ║ A: I have: Pagpapawis (Sweating)
+╔═══ CONVERSATION STEP 2 ═══╗
+ LOG  ║ Q: Are you experiencing any of these critical signs that require urgent attention?
+ LOG  ║ A: I have: None of the above
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 5 reached. Checking for early termination...      
- LOG  [Assessment] High confidence (0.95) achieved early. Terminating.
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Chills or excessive sweating, Headache, Cough, Runny nose or nasal congestion"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Chills or excessive sweating. Headache. Cough. Runny nose or nasal congestion"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "chills or excessive sweating"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "cough"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "runny nose or nasal congestion"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 5/10
+ LOG  Emergency: NO
+ LOG  Active keywords: [headache]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): headache.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 3 ═══╗
+ LOG  ║ Q: Are you also experiencing any other general symptoms?
+ LOG  ║ A: I have: Chills or excessive sweating, Headache, Cough, Runny nose or nasal congestion
+ LOG  ║ Emergency: false (score: 5)
+ LOG  ║ Keywords: headache
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 4 reached. Consulting Arbiter...
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=4, Required=7
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 4, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true)
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Cough: Productive (with phlegm/mucus), Headache: Mild"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Cough. Productive (with phlegm/mucus). Headache. Mild"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "cough"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "productive (with phlegm/mucus)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "headache" (severity: 5)
+ LOG        Context: "headache"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "mild"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 5/10
+ LOG  Emergency: NO
+ LOG  Active keywords: [headache]
+ LOG  Reasoning: Non-emergency symptoms detected (score 5/10): headache.  
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 4 ═══╗
+ LOG  ║ Q: If you have a cough, what is it like? Or describe any specific pain you are feeling.
+ LOG  ║ A: I have: Cough: Productive (with phlegm/mucus), Headache: Mild  
+ LOG  ║ Emergency: false (score: 5)
+ LOG  ║ Keywords: headache
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 5 reached. Consulting Arbiter...
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=5, Required=7
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 5, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true)
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: None of these"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. None of these"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "none of these"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 5 ═══╗
+ LOG  ║ Q: Are you experiencing any urinary or reproductive symptoms?     
+ LOG  ║ A: I have: None of these
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 6 reached. Consulting Arbiter...
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=6, Required=7
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 6, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true)
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: None of these apply"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. None of these apply"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "none of these apply"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 6 ═══╗
+ LOG  ║ Q: Have you recently traveled, been exposed to sick individuals, or have any specific risk factors?
+ LOG  ║ A: I have: None of these apply
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 7 reached. Consulting Arbiter...
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: Continuing planned path to maximize clinical data density
+ LOG  [Assessment] Effective Readiness: 1 (Ambiguity: false, Friction: false, BelowFloor: false)
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Drinking plenty of fluids, Reduced food intake due to loss of appetite"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Drinking plenty of fluids. Reduced food intake due to loss of appetite"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "drinking plenty of fluids"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "reduced food intake due to loss of appetite"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 7 ═══╗
+ LOG  ║ Q: How is your fluid intake and ability to tolerate food?
+ LOG  ║ A: I have: Drinking plenty of fluids, Reduced food intake due to loss of appetite
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 8 reached. Consulting Arbiter...
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: Continuing planned path to maximize clinical data density
+ LOG  [Assessment] Effective Readiness: 1 (Ambiguity: false, Friction: false, BelowFloor: false)
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Paracetamol (Biogesic, Tempra, etc.), Has helped a little"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Paracetamol (Biogesic. Tempra. etc. Has helped a little"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "paracetamol (biogesic"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "tempra"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "etc"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "has helped a little"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 8 ═══╗
+ LOG  ║ Q: What medications have you taken for the fever or other symptoms, and have they helped?
+ LOG  ║ A: I have: Paracetamol (Biogesic, Tempra, etc.), Has helped a little
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 9 reached. Consulting Arbiter...
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: READINESS FAIL: Triage readiness score 0.85 below 0.90 threshold
+ LOG  [Assessment] Effective Readiness: 0.85 (Ambiguity: false, Friction: false, BelowFloor: false)
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I have: Fully vaccinated for COVID-19"
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have. Fully vaccinated for COVID-19"
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "fully vaccinated for covid-19"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10
+ LOG  Emergency: NO
+ LOG  Active keywords: []
+ LOG  Reasoning: No emergency keywords detected in user input.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 9 ═══╗
+ LOG  ║ Q: Are you up to date with your vaccinations for common diseases? 
+ LOG  ║ A: I have: Fully vaccinated for COVID-19
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 10 reached. Consulting Arbiter...
+ LOG  [Assessment] Arbiter Signal: TERMINATE. Reason: CLINICAL CLOSURE: Case is complete, coherent, and safety-verified.
+ LOG  [Assessment] Effective Readiness: 1 (Ambiguity: false, Friction: false, BelowFloor: false)
+ LOG  [Assessment] Arbiter approved termination. Finalizing.
  LOG  [Assessment] Finalizing... Extracting Slots.
  LOG  
 ╔═══ FINAL PROFILE EXTRACTION ═══╗
  LOG  {
   "age": "21 years old",
-  "duration": "Yesterday",
-  "severity": "Uncomfortable (chills, headache)",
+  "duration": "yesterday",
+  "severity": "High (39.0-39.9°C)",
   "progression": "Getting worse",
-  "red_flag_denials": null,
-  "summary": "A 21-year-old patient reports a fever that started yesterday, is getting worse, and is accompanied by discomfort, chills, headache, colds/cough, loss of appetite, weakness/fatigue, and sweating.",
-  "confidence_score": 0.95,
-  "ambiguity_detected": false
+  "red_flag_denials": "None of the above",
+  "summary": "The patient is a 21-year-old experiencing a high fever (39.0-39.9°C) that started yesterday and is getting worse, accompanied by chills, headache, productive cough, runny nose, reduced food intake, and has responded slightly to Paracetamol, with no critical signs.",
+  "triage_readiness_score": 1,
+  "ambiguity_detected": false,
+  "internal_inconsistency_detected": false,
+  "clinical_friction_detected": false,
+  "clinical_friction_details": null,
+  "is_complex_case": true,
+  "symptom_category": "complex",
+  "red_flags_resolved": true
 }
  LOG  ╚════════════════════════════════╝
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "Initial Symptom: Fever. Answers: 21 years old. I have: Kahapon (Yesterday). I have: Hindi komportable (nanginginig, masakit ang ulo) (Uncomfortable - chills, headache), Lumalala (Getting worse). I have: Sipon o Ubo (Colds or Cough), Pananakit ng ulo (Headache), Walang gana kumain (Loss of appetite), Panghihina o pagkapagod (Weakness or fatigue). I have: Pagpapawis (Sweating). Age: 21 years old. Duration: Yesterday. Severity: Uncomfortable (chills, headache). Progression: Getting worse. Summary: A 21-year-old patient reports a fever that started yesterday, is getting worse, and is accompanied by discomfort, chills, headache, colds/cough, loss of appetite, weakness/fatigue, and sweating."
+ LOG  Input: "Initial Symptom: Fever. Answers: I'm 21 years old. My fever started yesterday. I have: 39.0-39.9°C (102.1-103.8°F) - High, Getting worse. I have: None of the above. I have: Chills or excessive sweating, Headache, Cough, Runny nose or nasal congestion. I have: Cough: Productive (with phlegm/mucus), Headache: Mild. I have: None of these. I have: None of these apply. I have: Drinking plenty of fluids, Reduced food intake due to loss of appetite. I have: Paracetamol (Biogesic, Tempra, etc.), Has helped a little. I have: Fully vaccinated for COVID-19. Age: 21 years old. Duration: yesterday. Severity: High (39.0-39.9°C). Progression: Getting worse. Red Flag Status: None of the above. Summary: The patient is a 21-year-old experiencing a high fever (39.0-39.9°C) that started yesterday and is getting worse, accompanied by chills, headache, productive cough, runny nose, reduced food intake, and has responded slightly to Paracetamol, with no critical signs."
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "Fever. 21 years old. I have. Kahapon (Yesterday). I have. Hindi komportable (nanginginig. masakit ang ulo) (Uncomfortable - chills. headache). Lumalala (Getting worse). I have. Sipon o Ubo (Colds or Cough). Pananakit ng ulo (Headache). Walang gana kumain (Loss of appetite). Panghihina o pagkapagod (Weakness or fatigue). I have. Pagpapawis (Sweating). Age. 21 years old. Yesterday. Uncomfortable (chills. headache). Getting worse. A 21-year-old patient reports a fever that started yesterday. is getting worse. and is accompanied by discomfort. chills. headache. colds/cough. loss of appetite. weakness/fatigue. and sweating"
+ LOG    Sanitized input: "Fever. I'm 21 years old. My fever started yesterday. I have. 0-39. 9°C (102. 1-103. 8°F) - High. Getting worse. I have. None of the above. I have. Chills or excessive sweating. Headache. Cough. Runny nose or nasal congestion. I have. Cough. Productive (with phlegm/mucus). Headache. Mild. I have. None of these. I have. None of these apply. I have. Drinking plenty of fluids. Reduced food intake due to loss of appetite. I have. Paracetamol (Biogesic. Tempra. etc. Has helped a little. I have. Fully vaccinated for COVID-19. Age. 21 years old. yesterday. High (39. 0-39. 9°C). Getting worse. None of the above. The patient is a 21-year-old experiencing a high fever (39. 0-39. 9°C) that started yesterday and is getting worse. accompanied by chills. headache. productive cough. runny nose. reduced food intake. and has responded slightly to Paracetamol. with no critical signs"
  LOG 
 Segment: "fever"
  LOG    Potential matches: 1
@@ -233,7 +444,37 @@ Segment: "fever"
  LOG        Context: "fever"
  LOG    Segment max score: 5
  LOG 
-Segment: "21 years old"
+Segment: "i'm 21 years old"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "my fever started yesterday"
+ LOG    Potential matches: 1
+ LOG      ✓ ACTIVE - "fever" (severity: 5)
+ LOG        Context: "my fever started yesterday"
+ LOG    Segment max score: 5
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "0-39"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "9°c (102"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "1-103"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "8°f) - high"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "getting worse"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -241,7 +482,7 @@ Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "kahapon (yesterday)"
+Segment: "none of the above"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -249,21 +490,21 @@ Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "hindi komportable (nanginginig"
+Segment: "chills or excessive sweating"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "masakit ang ulo) (uncomfortable - chills"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "headache)"
+Segment: "headache"
  LOG    Potential matches: 1
  LOG      ✓ ACTIVE - "headache" (severity: 5)
  LOG        Context: "headache"
  LOG    Segment max score: 5
  LOG 
-Segment: "lumalala (getting worse)"
+Segment: "cough"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "runny nose or nasal congestion"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -271,21 +512,21 @@ Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "sipon o ubo (colds or cough)"
+Segment: "cough"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
- LOG  
-Segment: "pananakit ng ulo (headache)"
+ LOG 
+Segment: "productive (with phlegm/mucus)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "headache"
  LOG    Potential matches: 1
  LOG      ✓ ACTIVE - "headache" (severity: 5)
- LOG        Context: "pananakit ng ulo headache"
+ LOG        Context: "headache"
  LOG    Segment max score: 5
  LOG 
-Segment: "walang gana kumain (loss of appetite)"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "panghihina o pagkapagod (weakness or fatigue)"
+Segment: "mild"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -293,7 +534,55 @@ Segment: "i have"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "pagpapawis (sweating)"
+Segment: "none of these"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "none of these apply"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "drinking plenty of fluids"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "reduced food intake due to loss of appetite"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "paracetamol (biogesic"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "tempra"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "etc"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "has helped a little"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "i have"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "fully vaccinated for covid-19"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -309,35 +598,44 @@ Segment: "yesterday"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "uncomfortable (chills"
+Segment: "high (39"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "headache)"
- LOG    Potential matches: 1
- LOG      ✓ ACTIVE - "headache" (severity: 5)
- LOG        Context: "headache"
- LOG    Segment max score: 5
+Segment: "0-39"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "9°c)"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
  LOG 
 Segment: "getting worse"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "a 21-year-old patient reports a fever that started yesterday"   
- LOG    Potential matches: 1
+Segment: "none of the above"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "the patient is a 21-year-old experiencing a high fever (39"     
+ LOG    Potential matches: 2
+ LOG      ✓ ACTIVE - "high fever" (severity: 8)
+ LOG        Context: "the patient is a 21-year-old experiencing a high fever 39"
+ LOG        Affirmation override detected
  LOG      ✓ ACTIVE - "fever" (severity: 5)
- LOG        Context: "old patient reports a fever that started yesterday" 
- LOG    Segment max score: 5
+ LOG        Context: "the patient is a 21-year-old experiencing a high fever 39"
+ LOG    Segment max score: 8
  LOG 
-Segment: "is getting worse"
+Segment: "0-39"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG  
+Segment: "9°c) that started yesterday and is getting worse"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "and is accompanied by discomfort"
- LOG    No emergency keywords found
- LOG    Segment max score: 0
- LOG 
-Segment: "chills"
+Segment: "accompanied by chills"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
@@ -347,41 +645,45 @@ Segment: "headache"
  LOG        Context: "headache"
  LOG    Segment max score: 5
  LOG 
-Segment: "colds/cough"
+Segment: "productive cough"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "loss of appetite"
+Segment: "runny nose"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "weakness/fatigue"
+Segment: "reduced food intake"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
-Segment: "and sweating"
+Segment: "and has responded slightly to paracetamol"
+ LOG    No emergency keywords found
+ LOG    Segment max score: 0
+ LOG 
+Segment: "with no critical signs"
  LOG    No emergency keywords found
  LOG    Segment max score: 0
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 5/10
- LOG  Emergency: NO
- LOG  Active keywords: [fever, headache]
- LOG  Reasoning: Non-emergency symptoms detected (score 5/10): fever, headache.
+ LOG  Score: 8/10
+ LOG  Emergency: YES
+ LOG  Active keywords: [fever, headache, high fever]
+ LOG  Reasoning: Emergency detected with score 8/10. Active symptoms: fever, headache, high fever.
  LOG  === EMERGENCY DETECTION END ===
- LOG  [GeminiClient] Sending request (Attempt 1)...
- LOG  Saved 10 facilities to offline storage
- LOG  
+ LOG 
 ╔════════════════════════════════════════════════════════════╗
- LOG  ║              FINAL ASSESSMENT & RECOMMENDATION             ║
+ LOG  ║              FINAL ASSESSMENT & RECOMMENDATION             ║      
  LOG  ╠════════════════════════════════════════════════════════════╣      
- LOG  ║ CONTEXT: Initial Symptom: Fever. Clinical Profile Summary... ║    
+ LOG  ║ CONTEXT: Initial Symptom: Fever. Answers: I'm 21 years ol... ║    
  LOG  ╟────────────────────────────────────────────────────────────╢      
- LOG  ║ RECOMMENDED LEVEL: HEALTH CENTER                            ║     
- LOG  ║ CONFIDENCE: 90%      | AMBIGUITY: NO                       ║      
+ LOG  ║ RECOMMENDED LEVEL: EMERGENCY                                ║     
+ LOG  ║ READINESS: 100%       | AMBIGUITY: NO                      ║      
  LOG  ╟────────────────────────────────────────────────────────────╢      
- LOG  ║ ADVICE: Given your fever started yesterday and is now gett ║      
- LOG  ║         ing worse, accompanied by chills, headache, colds/ ║      
+ LOG  ║ ADVICE: CRITICAL: Potential life-threatening condition det ║      
+ LOG  ║         ected based on your symptoms. Go to the nearest em ║      
  LOG  ╟────────────────────────────────────────────────────────────╢      
- LOG  ║ CLINICAL SOAP: S: A 21-year-old patient reports a fever th ║      
+ LOG  ║ RED FLAGS: fever, headache, high fever                     ║      
+ LOG  ╟────────────────────────────────────────────────────────────╢      
+ LOG  ║ CLINICAL SOAP: S: Patient reports fever, headache, high fe ║      
  LOG  ╚════════════════════════════════════════════════════════════╝      

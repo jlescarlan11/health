@@ -50,10 +50,10 @@ describe('GeminiClient Fallback Strategy', () => {
     });
   };
 
-  test('should upgrade Self-Care to Health Center if confidence is low', async () => {
+  test('should upgrade Self-Care to Health Center if readiness is low', async () => {
     mockAIResponse({
       recommended_level: 'self_care',
-      confidence_score: 0.5,
+      triage_readiness_score: 0.5,
       ambiguity_detected: false,
       user_advice: 'Rest at home.',
       follow_up_questions: [],
@@ -68,7 +68,7 @@ describe('GeminiClient Fallback Strategy', () => {
   test('should upgrade Health Center to Hospital if ambiguity is detected', async () => {
     mockAIResponse({
       recommended_level: 'health_center',
-      confidence_score: 0.9,
+      triage_readiness_score: 0.9,
       ambiguity_detected: true,
       user_advice: 'Go to clinic.',
       follow_up_questions: [],
@@ -82,7 +82,7 @@ describe('GeminiClient Fallback Strategy', () => {
   test('should force Emergency if red flags are present but AI recommends Hospital', async () => {
     mockAIResponse({
       recommended_level: 'hospital',
-      confidence_score: 0.9,
+      triage_readiness_score: 0.9,
       ambiguity_detected: false,
       red_flags: ['Chest pain'],
       user_advice: 'Hospital checkup needed.',
@@ -94,10 +94,10 @@ describe('GeminiClient Fallback Strategy', () => {
     expect(result.user_advice).toContain('Upgraded to Emergency');
   });
 
-  test('should NOT upgrade if confidence is high and no ambiguity', async () => {
+  test('should NOT upgrade if readiness is high and no ambiguity', async () => {
     mockAIResponse({
       recommended_level: 'self_care',
-      confidence_score: 0.95,
+      triage_readiness_score: 0.95,
       ambiguity_detected: false,
       user_advice: 'Rest at home.',
       follow_up_questions: [],
