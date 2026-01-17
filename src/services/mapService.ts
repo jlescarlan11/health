@@ -90,10 +90,3 @@ export const downloadOfflineMap = async (
     console.error('Error creating offline pack:', error);
   }
 };
-
-export const checkOfflinePacks = async () => {
-  if (!Mapbox) return;
-  const packs = await Mapbox.offlineManager.getPacks();
-  console.log('Offline packs:', packs);
-  return packs;
-};

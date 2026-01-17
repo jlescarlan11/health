@@ -69,3 +69,50 @@ export const formatClinicalShareText = (
 
   return shareText.trim();
 };
+
+export interface ClinicalSlots {
+  age?: string;
+  duration?: string;
+}
+
+/**
+ * Deterministically extracts clinical slots (age, duration) from text.
+ * Used for dynamic question pruning in the symptom assessment flow.
+ */
+export const extractClinicalSlots = (text: string): ClinicalSlots => {
+  const lowerText = text.toLowerCase();
+  const slots: ClinicalSlots = {};
+
+  // 1. Extract Age
+  // Matches: "35 years old", "35 yo", "age 35", "35y", "35 y/o"
+  const ageRegex = /(\d+)\s*(?:years?\s*old|y\/?o|y\.?o\.?|yrs?\b|y\b)/i;
+  const ageMatch = lowerText.match(ageRegex);
+  
+  const altAgeRegex = /age\s*(\d+)/i;
+  const altAgeMatch = lowerText.match(altAgeRegex);
+
+  if (ageMatch) {
+    slots.age = ageMatch[0].trim();
+  } else if (altAgeMatch) {
+    slots.age = `Age ${altAgeMatch[1]}`;
+  }
+
+  // 2. Extract Duration
+  // Matches: "3 days", "2 hours", "since yesterday", "for a week", "started 2 hours ago"
+  const durationPatterns = [
+    /(\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)\s*(?:ago|now)?/i,
+    /since\s+(?:yesterday|last\s+\w+|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+)/i,
+    /for\s+(?:a|an|\d+)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)/i,
+    /started\s+(?:yesterday|\d+\s*\w+\s*ago)/i
+  ];
+
+  for (const pattern of durationPatterns) {
+    const match = lowerText.match(pattern);
+    if (match) {
+      slots.duration = match[0].trim();
+      break;
+    }
+  }
+
+  return slots;
+};

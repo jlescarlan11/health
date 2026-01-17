@@ -180,8 +180,8 @@ const RecommendationScreen = () => {
       // Clinical Context for LLM - Optimized to use summary as primary source
       let triageContext = `Initial Symptom: ${assessmentData.symptoms}.\nClinical Profile Summary: ${profileSummary}.\n\nContext: ${distanceContext}`;
 
-      // Only include full answers if profile is fallback or confidence is low
-      if (isFallbackProfile(profile) || (profile?.confidence_score && profile.confidence_score < 0.7)) {
+      // Only include full answers if profile is fallback or readiness is low
+      if (isFallbackProfile(profile) || (profile?.triage_readiness_score && profile.triage_readiness_score < 0.7)) {
         triageContext += `\nRaw History for analysis: ${JSON.stringify(assessmentData.answers)}`;
       }
 
@@ -191,9 +191,9 @@ const RecommendationScreen = () => {
         .filter(a => a && !['denied', 'none', 'wala', 'hindi', 'not answered'].includes(a.toLowerCase()))
         .join('. ');
 
-      const safetyContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${userAnswersOnly}. ${profileSummary || ''}`;
+      const safetyContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${userAnswersOnly}.`;
 
-      const response = await geminiClient.assessSymptoms(triageContext, [], safetyContext);
+      const response = await geminiClient.assessSymptoms(triageContext, [], safetyContext, profile);
       setRecommendation(response);
 
       // Save to Redux for persistence and offline access
@@ -223,14 +223,14 @@ const RecommendationScreen = () => {
       // Fallback
       setRecommendation({
         recommended_level: 'health_center',
-        user_advice: 'Based on your symptoms, we recommend a professional medical check-up at your local health center. Please follow DOH hydration protocols.',
+        user_advice: 'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening.',
         clinical_soap: 'S: Symptoms reported. O: N/A. A: Fallback triage. P: Refer to Health Center.',
-        key_concerns: ['Persistent symptoms', 'Need for professional evaluation'],
-        critical_warnings: ['Follow DOH hydration protocols: Drink 2L of fluids daily.'],
+        key_concerns: ['Need for professional evaluation'],
+        critical_warnings: ['Go to the Emergency Room IMMEDIATELY if you develop a stiff neck, confusion, or difficulty breathing.'],
         relevant_services: ['Consultation'],
         red_flags: [],
         follow_up_questions: [],
-        confidence_score: 0.5,
+        triage_readiness_score: 0.5,
       });
     } finally {
       setLoading(false);
@@ -294,23 +294,23 @@ const RecommendationScreen = () => {
     switch (level) {
       case 'emergency':
         return {
-          label: 'EMERGENCY ROOM',
-          color: theme.colors.error,
-          icon: 'alert-octagon',
+          label: 'EMERGENCY (LIFE-THREATENING)',
+          color: '#B91C1C', // Stronger but professional red
+          icon: 'alert-decagram',
           bgColor: '#FEF2F2',
           borderColor: '#FCA5A5',
         };
       case 'hospital':
         return {
-          label: 'HOSPITAL',
-          color: '#E67E22',
+          label: 'HOSPITAL (SPECIALIZED CARE)',
+          color: '#EA580C', // Professional orange
           icon: 'hospital-building',
           bgColor: '#FFF7ED',
           borderColor: '#FDBA74',
         };
       case 'health_center':
         return {
-          label: 'HEALTH CENTER',
+          label: 'HEALTH CENTER (PRIMARY CARE)',
           color: theme.colors.primary,
           icon: 'hospital-marker',
           bgColor: '#F0F9F6',
@@ -318,8 +318,8 @@ const RecommendationScreen = () => {
         };
       case 'self_care':
         return {
-          label: 'SELF CARE',
-          color: '#10B981',
+          label: 'SELF CARE (HOME)',
+          color: '#059669',
           icon: 'home-heart',
           bgColor: '#F0FDF4',
           borderColor: '#BBF7D0',

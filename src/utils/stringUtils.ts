@@ -5,6 +5,14 @@
 
 export const FUZZY_THRESHOLD = 2;
 
+const FALSE_POSITIVES: Record<string, string[]> = {
+  doing: ['dying'],
+  laying: ['dying'],
+  lying: ['dying'],
+  trying: ['dying'],
+  drying: ['dying'],
+};
+
 /**
  * Calculates the Levenshtein distance between two strings.
  * Early termination when distance exceeds threshold.
@@ -19,7 +27,6 @@ export const getLevenshteinDistance = (
   s2: string,
   maxDistance: number = Infinity,
 ): number => {
-  // Ensure s1 is the shorter string
   if (s1.length > s2.length) {
     return getLevenshteinDistance(s2, s1, maxDistance);
   }
@@ -27,11 +34,9 @@ export const getLevenshteinDistance = (
   const m = s1.length;
   const n = s2.length;
 
-  // Early exit: if length difference exceeds threshold, no need to calculate
   if (n - m > maxDistance) return Infinity;
   if (m === 0) return n;
 
-  // We only need two rows: previous and current
   let previousRow = Array.from({ length: m + 1 }, (_, i) => i);
   let currentRow = new Array(m + 1);
 
@@ -42,19 +47,17 @@ export const getLevenshteinDistance = (
     for (let i = 0; i < m; i++) {
       const substitutionCost = s1[i] === s2[j] ? 0 : 1;
       currentRow[i + 1] = Math.min(
-        previousRow[i + 1] + 1, // deletion
-        currentRow[i] + 1, // insertion
-        previousRow[i] + substitutionCost, // substitution
+        previousRow[i + 1] + 1,
+        currentRow[i] + 1,
+        previousRow[i] + substitutionCost,
       );
       minInRow = Math.min(minInRow, currentRow[i + 1]);
     }
 
-    // Early termination: if minimum value in current row exceeds threshold, abort
     if (minInRow > maxDistance) {
       return Infinity;
     }
 
-    // Swap arrays for next iteration
     const temp = previousRow;
     previousRow = currentRow;
     currentRow = temp;
@@ -69,15 +72,15 @@ export const getLevenshteinDistance = (
 interface NormalizedText {
   normalized: string;
   tokens: string[];
-  ngrams: Map<number, string[]>; // Cache for n-grams
+  ngrams: Map<number, string[]>;
 }
 
 const normalizeAndTokenize = (text: string): NormalizedText => {
   const normalized = text
     .toLowerCase()
-    .replace(/[^\w\s]/g, '')
+    .replace(/[^\w\s]/g, ' ')
     .trim();
-  const tokens = normalized.split(/\s+/).filter((t) => t.length > 0);
+  const tokens = normalized ? normalized.split(/\s+/) : [];
 
   return {
     normalized,
@@ -106,15 +109,6 @@ const getNgrams = (textData: NormalizedText, n: number): string[] => {
 };
 
 /**
- * Scans a text for fuzzy matches against a list of keywords using a sliding window approach.
- * Returns the first match found.
- */
-export const findFuzzyInString = (text: string, keywords: string[]): string | null => {
-  const matches = findAllFuzzyMatches(text, keywords);
-  return matches.length > 0 ? matches[0] : null;
-};
-
-/**
  * Scans a text for ALL fuzzy matches against a list of keywords.
  * Optimized with early exits, caching, and threshold-aware distance calculation.
  */
@@ -126,8 +120,6 @@ export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] 
 
   if (textData.tokens.length === 0) return [];
 
-  // Pre-normalize keywords and sort by length (process longer ones first)
-  // Longer keywords are more specific and less likely to match
   const normalizedKeywords = keywords
     .map((kw) => ({
       original: kw,
@@ -139,49 +131,32 @@ export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] 
   for (const { original, normalized, wordCount } of normalizedKeywords) {
     if (found.has(original)) continue;
 
-    // 1. Exact substring match for longer keywords (≥5 chars)
     if (normalized.length >= 5 && textData.normalized.includes(normalized)) {
       found.add(original);
       continue;
     }
 
-    // Dynamic threshold based on keyword length
-    // <= 3 chars: Exact match required (Threshold 0)
-    // 4-6 chars: Allow 1 edit (Threshold 1)
-    // > 6 chars: Allow 2 edits (Threshold 2)
     const len = normalized.length;
     let threshold = FUZZY_THRESHOLD;
-    
+
     if (len <= 3) threshold = 0;
     else if (len <= 6) threshold = 1;
     else threshold = 2;
 
-    // Explicitly exclude known distinct words that computationally look like keywords
-    // This prevents "doing" (valid word) from triggering "dying" (emergency keyword)
-    const FALSE_POSITIVES: Record<string, string[]> = {
-        'doing': ['dying'],
-        'laying': ['dying'],
-        'lying': ['dying'],
-        'trying': ['dying'],
-        'drying': ['dying'],
-    };
-
-    // Only check n-grams up to the keyword's word count (optimization)
-    const maxNgram = Math.min(wordCount + 1, 3); // Check up to trigrams
+    const maxNgram = Math.max(wordCount, 3);
     let matched = false;
 
     for (let n = 1; n <= maxNgram && !matched; n++) {
       const ngrams = getNgrams(textData, n);
 
       for (const ngram of ngrams) {
-        // Skip if length difference is too large (early exit)
-        if (Math.abs(ngram.length - normalized.length) > threshold) {
+        const lengthDiff = Math.abs(ngram.length - normalized.length);
+        if (lengthDiff > (wordCount > 1 ? threshold + 1 : threshold)) {
           continue;
         }
 
-        // Check false positives list
-        if (FALSE_POSITIVES[ngram] && FALSE_POSITIVES[ngram].includes(original)) {
-             continue;
+        if (FALSE_POSITIVES[ngram]?.includes(original)) {
+          continue;
         }
 
         const distance = getLevenshteinDistance(ngram, normalized, threshold);
