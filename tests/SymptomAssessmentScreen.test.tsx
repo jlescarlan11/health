@@ -126,6 +126,10 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
       progression: null,
       red_flag_denials: null,
       summary: 'Mock Summary',
+      ambiguity_detected: false,
+      internal_inconsistency_detected: false,
+      red_flags_resolved: true,
+      triage_readiness_score: 0.9
     });
 
     store = configureStore({

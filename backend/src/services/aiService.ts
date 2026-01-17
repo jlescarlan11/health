@@ -21,7 +21,7 @@ interface AIResponse {
 
 interface GeminiParsedResponse {
   recommendation: string;
-  confidence_score: number;
+  triage_readiness_score: number;
   ambiguity_detected: boolean;
   reasoning: string;
   relevant_services: string[];
@@ -76,7 +76,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     Output Schema (JSON only):
     {
       "recommendation": "One of: Self-Care, Health Center, Hospital, Emergency",
-      "confidence_score": 0.0 to 1.0,
+      "triage_readiness_score": 0.0 to 1.0,
       "ambiguity_detected": boolean,
       "reasoning": "Brief explanation...",
       "relevant_services": ["Service 1", "Service 2"],
@@ -113,11 +113,11 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   const levels = ['Self-Care', 'Health Center', 'Hospital', 'Emergency'];
   const currentIdx = levels.indexOf(parsedResponse.recommendation);
 
-  const isLowConfidence =
-    parsedResponse.confidence_score !== undefined && parsedResponse.confidence_score < 0.8;
+  const isLowReadiness =
+    parsedResponse.triage_readiness_score !== undefined && parsedResponse.triage_readiness_score < 0.80;
   const isAmbiguous = parsedResponse.ambiguity_detected === true;
 
-  if ((isLowConfidence || isAmbiguous) && currentIdx !== -1 && currentIdx < 3) {
+  if ((isLowReadiness || isAmbiguous) && currentIdx !== -1 && currentIdx < 3) {
     const nextLevel = levels[currentIdx + 1];
     parsedResponse.recommendation = nextLevel;
     parsedResponse.reasoning += ` (Note: Recommendation upgraded to ${nextLevel} due to uncertainty/ambiguity for safety.)`;

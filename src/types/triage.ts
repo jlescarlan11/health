@@ -34,8 +34,16 @@ export interface AssessmentProfile {
   progression: string | null;
   red_flag_denials: string | null;
   summary: string;
-  confidence_score?: number;
+  triage_readiness_score?: number;
   ambiguity_detected?: boolean;
+  internal_inconsistency_detected?: boolean;
+  internal_consistency_score?: number;
+  red_flags_resolved?: boolean;
+  clinical_friction_detected?: boolean;
+  clinical_friction_details?: string;
+  is_complex_case?: boolean;
+  symptom_category?: 'simple' | 'complex' | 'critical';
+  red_flags_resolved?: boolean;
 }
 
 export interface AssessmentQuestion {
@@ -43,6 +51,8 @@ export interface AssessmentQuestion {
   text: string;
   type?: 'text' | 'multi-select';
   options?: string[];
+  tier?: number;
+  is_red_flag?: boolean;
 }
 
 export interface AssessmentData {

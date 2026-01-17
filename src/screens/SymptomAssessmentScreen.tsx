@@ -29,12 +29,13 @@ import { RootStackScreenProps } from '../types/navigation';
 import {
   generateAssessmentPlan,
   extractClinicalProfile,
+  getGeminiResponse,
 } from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
-import { TriageEngine } from '../services/triageEngine';
-import { TriageFlow, AssessmentQuestion } from '../types/triage';
+import { TriageEngine, TriageArbiter } from '../services';
+import { TriageFlow, AssessmentQuestion, AssessmentProfile } from '../types/triage';
 import { extractClinicalSlots } from '../utils/clinicalUtils';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
@@ -113,6 +114,8 @@ const SymptomAssessmentScreen = () => {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
+  const [expansionCount, setExpansionCount] = useState(0);
+  const MAX_EXPANSIONS = 2;
   
   // UI Interactions
   const [inputText, setInputText] = useState('');
@@ -185,6 +188,14 @@ const SymptomAssessmentScreen = () => {
     useEffect(() => {
       initializeAssessment();
     }, []);
+
+    // --- AUTO-SCROLL LOGIC ---
+    useEffect(() => {
+      const scrollTimer = setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100); // Small delay to allow layout to settle
+      return () => clearTimeout(scrollTimer);
+    }, [messages, isTyping]);
   
     const initializeAssessment = async () => {
       // 1. Initial Emergency Check (Locally)
@@ -284,6 +295,7 @@ const SymptomAssessmentScreen = () => {
       };
       const nextHistory = [...messages, userMsg];
       setMessages(nextHistory);
+      setIsTyping(true);
   
       // 2. Emergency Check (Local, Deterministic)
       // Only check if it's NOT a skip
@@ -304,6 +316,7 @@ const SymptomAssessmentScreen = () => {
   
           if (safetyCheck.isEmergency) {
               dispatch(setHighRisk(true));
+              setIsTyping(false);
               console.log('[Assessment] EMERGENCY DETECTED during flow. Escalating.');
               navigation.replace('Recommendation', {
                   assessmentData: { 
@@ -329,36 +342,189 @@ const SymptomAssessmentScreen = () => {
           setAnswers(newAnswers);
   
           // 4. Progress or Finish
-          if (currentQuestionIndex < questions.length - 1) {
-              const nextIdx = currentQuestionIndex + 1;
+          const nextIdx = currentQuestionIndex + 1;
+          const isAtEnd = nextIdx >= questions.length;
 
-              // --- NEW: Early Termination Check at Turn 5 ---
-              if (nextIdx === 5) {
-                  console.log('[Assessment] Turn 5 reached. Checking for early termination...');
-                  try {
-                      const history = nextHistory.map(m => ({
-                          role: m.sender,
-                          text: m.text
-                      }));
-                      const profile = await extractClinicalProfile(history);
+          // --- NEW: Unified Triage Arbiter Gate ---
+          // The Arbiter now has authority over whether we continue or stop.
+          // We check this starting at Turn 4 to allow for early exits for simple cases.
+          if (nextIdx >= 4 || isAtEnd) {
+              console.log(`[Assessment] Turn ${nextIdx} reached. Consulting Arbiter...`);
+              try {
+                  const historyItems = nextHistory.map(m => ({
+                      role: m.sender as 'user' | 'assistant',
+                      text: m.text
+                  }));
+                  const profile = await extractClinicalProfile(historyItems);
+                  
+                  // --- CONTRADICTION LOCK (Deterministic Guardrail) ---
+                  const isAmbiguous = profile.ambiguity_detected === true;
+                  const hasFriction = profile.clinical_friction_detected === true;
+                  
+                  // Explicitly check for remaining Tier 3 questions in the active plan
+                  const remainingTier3 = questions.slice(nextIdx).filter(q => q.tier === 3);
+                  const hasUnattemptedTier3 = remainingTier3.length > 0;
+
+                  if (isAmbiguous || hasFriction || hasUnattemptedTier3) {
+                      console.warn(`[GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=${isAmbiguous}, Friction=${hasFriction}, UnattemptedTier3=${hasUnattemptedTier3}`);
+                  }
+
+                  // --- TURN FLOOR LOCK (Deterministic Category Floor) ---
+                  const isComplexCategory = profile.symptom_category === 'complex' || profile.symptom_category === 'critical' || profile.is_complex_case;
+                  const minTurnsRequired = isComplexCategory ? 7 : 4;
+                  const isBelowFloor = nextIdx < minTurnsRequired;
+
+                  if (isBelowFloor) {
+                      console.warn(`[GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=${isComplexCategory ? 'Complex' : 'Simple'}, Turns=${nextIdx}, Required=${minTurnsRequired}`);
+                  }
+
+                  const effectiveReadiness = (isAmbiguous || hasFriction || isBelowFloor) ? 0 : (profile.triage_readiness_score || 0);
+                  const TERMINATION_THRESHOLD = 0.90;
+
+                  const arbiterResult = TriageArbiter.evaluateAssessmentState(
+                    historyItems,
+                    profile, 
+                    nextIdx, 
+                    questions.length,
+                    questions.slice(nextIdx)
+                  );
+
+                  console.log(`[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`);
+                  console.log(`[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor})`);
+
+                  // HARD STOP: Contradiction Lock and Turn Floor Lock prevent termination regardless of readiness.
+                  const canTerminate = arbiterResult.signal === 'TERMINATE' && 
+                                     !isAmbiguous && 
+                                     !hasFriction && 
+                                     !hasUnattemptedTier3 &&
+                                     !isBelowFloor &&
+                                     effectiveReadiness >= TERMINATION_THRESHOLD;
+
+                  // --- CLARIFICATION FEEDBACK (User Guidance) ---
+                  const needsClarificationHeader = isAmbiguous || hasFriction || hasUnattemptedTier3;
+                  const clarificationHeader = needsClarificationHeader 
+                    ? "I've noticed some overlapping or conflicting details in your symptom report. To ensure my guidance is as safe and accurate as possible, I need a bit more specificity.\n\n"
+                    : "";
+
+                  if (canTerminate) {
+                      console.log('[Assessment] Arbiter approved termination. Finalizing.');
+                      setIsTyping(true);
+                      setMessages(prev => [...prev, {
+                          id: 'early-exit',
+                          text: "Thank you. I have sufficient information to provide a safe recommendation.",
+                          sender: 'assistant'
+                      }]);
+                      setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
+                      return;
+                  }
+
+                  // Handle Priority Signals
+                  if (arbiterResult.signal === 'PRIORITIZE_RED_FLAGS' || arbiterResult.signal === 'RESOLVE_AMBIGUITY' || arbiterResult.signal === 'RESOLVE_FRICTION') {
+                      console.log(`[Assessment] Reordering queue based on Arbiter signal: ${arbiterResult.signal}`);
+                      const remaining = questions.slice(nextIdx);
+                      const priority = remaining.filter(q => {
+                        if (arbiterResult.signal === 'PRIORITIZE_RED_FLAGS') return q.is_red_flag;
+                        if (arbiterResult.signal === 'RESOLVE_AMBIGUITY' || arbiterResult.signal === 'RESOLVE_FRICTION') return q.tier === 3;
+                        return false;
+                      });
+                      const nonPriority = remaining.filter(q => {
+                        if (arbiterResult.signal === 'PRIORITIZE_RED_FLAGS') return !q.is_red_flag;
+                        if (arbiterResult.signal === 'RESOLVE_AMBIGUITY' || arbiterResult.signal === 'RESOLVE_FRICTION') return q.tier !== 3;
+                        return true;
+                      });
                       
-                      if (profile.confidence_score && profile.confidence_score >= 0.85 && !profile.ambiguity_detected) {
-                          console.log(`[Assessment] High confidence (${profile.confidence_score}) achieved early. Terminating.`);
-                          setIsTyping(true);
+                      const reordered = [...questions.slice(0, nextIdx), ...priority, ...nonPriority];
+                      setQuestions(reordered);
+                  }
+
+                  // Handle Progress Reset / False Positive Safeguard
+                  if (arbiterResult.needs_reset) {
+                      console.log('[Assessment] Resetting progress indicators due to false positive completeness check');
+                      setMessages(prev => [...prev, {
+                          id: `system-reset-${Date.now()}`,
+                          text: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
+                          sender: 'assistant'
+                      }]);
+                  }
+                  
+                  // SAFETY GATE: If plan is exhausted but we are NOT ready to terminate (due to ambiguity or score)
+                  // we MUST generate additional resolution questions instead of terminating.
+                  const currentExpansion = expansionCount;
+                  if (isAtEnd && !canTerminate && currentExpansion < MAX_EXPANSIONS) {
+                      console.log(`[Assessment] Plan exhausted but safety criteria not met. Expansion ${currentExpansion + 1}/${MAX_EXPANSIONS}. Fetching more questions.`);
+                      setIsTyping(true);
+                      
+                      const followUpPrompt = `The assessment for "${initialSymptom}" is incomplete or ambiguous. History: ${historyItems.map(h => h.text).join('. ')}. Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns. Return JSON format matching the original question schema.`;
+                      try {
+                          const response = await getGeminiResponse(followUpPrompt);
+                          if (response) {
+                              const jsonMatch = response.match(/\{[\s\S]*\}/);
+                              if (jsonMatch) {
+                                  const parsed = JSON.parse(jsonMatch[0]);
+                                  const newQuestions = (parsed.questions || []).map((q: any, i: number) => ({...q, id: `extra-${nextIdx}-${currentExpansion}-${i}`, tier: 3}));
+                                  if (newQuestions.length > 0) {
+                                      const updatedQuestions = [...questions, ...newQuestions];
+                                      setQuestions(updatedQuestions);
+                                      setExpansionCount(currentExpansion + 1);
+                                      
+                                      // Transition to the next question manually
+                                      setTimeout(() => {
+                                          const nextQ = updatedQuestions[nextIdx];
+                                          setMessages(prev => [...prev, {
+                                              id: `ai-extra-${nextIdx}-${currentExpansion}`,
+                                              text: clarificationHeader + nextQ.text,
+                                              sender: 'assistant'
+                                          }]);
+                                          setCurrentQuestionIndex(nextIdx);
+                                          setIsTyping(false);
+                                          setProcessing(false);
+                                      }, 600);
+                                      return; 
+                                  }
+                              }
+                          }
+                      } catch (err) {
+                          console.error('[Assessment] Failed to fetch expansion questions:', err);
+                      }
+                  }
+                  
+                  // If we reached here and it'sAtEnd and we can't terminate, we might have hit MAX_EXPANSIONS or expansion failed
+                  if (isAtEnd && !canTerminate) {
+                      console.log(`[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`);
+                      setIsTyping(true);
+                      setMessages(prev => [...prev, {
+                          id: 'finalizing-safety-fallback',
+                          text: "I have gathered enough initial information to provide a safe recommendation.",
+                          sender: 'assistant'
+                      }]);
+                      setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
+                      return;
+                  }
+
+                  // If we are continuing within the planned questions after Turn 4 check
+                  if (!isAtEnd) {
+                      setIsTyping(true);
+                      setTimeout(() => {
+                          const nextQ = questions[nextIdx];
                           setMessages(prev => [...prev, {
-                              id: 'early-exit',
-                              text: "Thank you. I have enough information to provide a recommendation.",
+                              id: `ai-${nextIdx}`,
+                              text: clarificationHeader + nextQ.text,
                               sender: 'assistant'
                           }]);
-                          setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
-                          return;
-                      }
-                  } catch (e) {
-                      console.warn('[Assessment] Early termination check failed, continuing...', e);
+                          setCurrentQuestionIndex(nextIdx);
+                          setIsTyping(false);
+                          setProcessing(false);
+                      }, 600);
+                      return;
                   }
+                  
+              } catch (e) {
+                  console.warn('[Assessment] Arbiter consultation or follow-up failed, continuing planned path...', e);
               }
+          }
 
-              // Next Question
+          if (!isAtEnd) {
+              // Next Question (Pre-Turn 4)
               setIsTyping(true);
               setTimeout(() => {
                   const nextQ = questions[nextIdx];
@@ -370,10 +536,9 @@ const SymptomAssessmentScreen = () => {
                   setCurrentQuestionIndex(nextIdx);
                   setIsTyping(false);
                   setProcessing(false);
-                  setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
               }, 600);
           } else {
-              // FINISH -> Call #2 (Parsing)
+              // EXHAUSTED QUESTIONS -> Finalize
               setIsTyping(true);
               setMessages(prev => [...prev, {
                   id: 'finalizing',
@@ -451,6 +616,7 @@ const SymptomAssessmentScreen = () => {
       setTimeout(() => {
         const result = TriageEngine.processStep(triageFlow, currentOfflineNodeId, answer);
         if (result.isOutcome) {
+            setIsTyping(false);
             navigation.replace('Recommendation', {
                 assessmentData: {
                     symptoms: initialSymptom || '',
@@ -469,7 +635,6 @@ const SymptomAssessmentScreen = () => {
             setCurrentOfflineNodeId(nextNode.id);
             setIsTyping(false);
             setProcessing(false);
-            setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
         }
       }, 500);
   };
@@ -621,12 +786,13 @@ const SymptomAssessmentScreen = () => {
              </View>
              <View style={{ marginTop: 8 }}>
                 <Button 
+                  testID="button-confirm"
                   variant="primary"
                   onPress={() => handleNext(selectedRedFlags.length > 0 ? `I have: ${selectedRedFlags.join(', ')}` : "None")}
                   title="Confirm"
                   style={{ width: '100%' }}
                   disabled={processing}
-                  accessibilityLabel="Confirm selected symptoms"
+                  accessibilityLabel="Confirm selection"
                   accessibilityRole="button"
                 />
              </View>
