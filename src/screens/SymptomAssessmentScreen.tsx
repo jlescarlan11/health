@@ -417,9 +417,9 @@ const SymptomAssessmentScreen = () => {
                                      effectiveReadiness >= TERMINATION_THRESHOLD;
 
                   // --- CLARIFICATION FEEDBACK (User Guidance) ---
-                  const needsClarificationHeader = isAmbiguous || hasFriction || hasUnattemptedTier3;
+                  const needsClarificationHeader = isAmbiguous || hasFriction;
                   const clarificationHeader = needsClarificationHeader 
-                    ? "I've noticed some overlapping or conflicting details in your symptom report. To ensure my guidance is as safe and accurate as possible, I need a bit more specificity.\n\n"
+                    ? "To ensure I fully understand your situation and provide the safest advice, I'd like to clarify a few details.\n\n"
                     : "";
 
                   if (canTerminate) {

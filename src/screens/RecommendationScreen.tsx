@@ -369,35 +369,6 @@ const RecommendationScreen = () => {
           </Surface>
         )}
 
-        {/* Care Level Badge */}
-        <Surface style={[styles.careBadge, { backgroundColor: careInfo.bgColor, marginBottom: 12 }]} elevation={1}>
-          <MaterialCommunityIcons
-            name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
-            size={20}
-            color={careInfo.color}
-          />
-          <Text variant="labelLarge" style={[styles.careLabel, { color: careInfo.color }]}>
-            {careInfo.label}
-          </Text>
-        </Surface>
-
-        {/* Assessment & Advice - Integrated Layout */}
-        <View style={styles.adviceSection}>
-          <View style={styles.adviceHeader}>
-            <MaterialCommunityIcons 
-              name="heart-pulse" 
-              size={24} 
-              color={theme.colors.primary} 
-            />
-            <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
-              ASSESSMENT & GUIDANCE
-            </Text>
-          </View>
-          <Text variant="bodyLarge" style={styles.adviceText}>
-            {recommendation.user_advice}
-          </Text>
-        </View>
-
         {/* Critical Warnings Section - High Visibility */}
         {recommendation.critical_warnings.length > 0 && (
           <Surface style={styles.criticalWarningsContainer} elevation={0}>
@@ -428,6 +399,35 @@ const RecommendationScreen = () => {
             ))}
           </Surface>
         )}
+
+        {/* Care Level Badge */}
+        <Surface style={[styles.careBadge, { backgroundColor: careInfo.bgColor, marginBottom: 12 }]} elevation={1}>
+          <MaterialCommunityIcons
+            name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
+            size={20}
+            color={careInfo.color}
+          />
+          <Text variant="labelLarge" style={[styles.careLabel, { color: careInfo.color }]}>
+            {careInfo.label}
+          </Text>
+        </Surface>
+
+        {/* Assessment & Advice - Integrated Layout */}
+        <View style={styles.adviceSection}>
+          <View style={styles.adviceHeader}>
+            <MaterialCommunityIcons 
+              name="heart-pulse" 
+              size={24} 
+              color={theme.colors.primary} 
+            />
+            <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
+              ASSESSMENT & GUIDANCE
+            </Text>
+          </View>
+          <Text variant="bodyLarge" style={styles.adviceText}>
+            {recommendation.user_advice}
+          </Text>
+        </View>
 
         {/* Key Observations Section - Neutral/Informational */}
         {recommendation.key_concerns.length > 0 && (
