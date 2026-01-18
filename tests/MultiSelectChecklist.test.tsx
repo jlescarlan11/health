@@ -69,4 +69,48 @@ describe('MultiSelectChecklist', () => {
     fireEvent.press(getByLabelText('Option 1'));
     expect(onSelectionChange).toHaveBeenCalledWith(['2']);
   });
+
+  it('works in singleSelection mode', () => {
+    const onSelectionChange = jest.fn();
+    const { getByLabelText } = renderWithTheme(
+      <MultiSelectChecklist
+        options={options}
+        selectedIds={['1']}
+        onSelectionChange={onSelectionChange}
+        singleSelection={true}
+      />
+    );
+
+    fireEvent.press(getByLabelText('Option 2'));
+    expect(onSelectionChange).toHaveBeenCalledWith(['2']);
+  });
+
+  it('renders grouped options correctly', () => {
+    const groupedOptions = [
+      {
+        category: 'Group A',
+        items: [
+          { id: 'a1', label: 'Option A1' },
+          { id: 'a2', label: 'Option A2' },
+        ],
+      },
+      {
+        category: 'Group B',
+        items: [{ id: 'b1', label: 'Option B1' }],
+      },
+    ];
+
+    const { getByText, getByLabelText } = renderWithTheme(
+      <MultiSelectChecklist
+        options={groupedOptions}
+        selectedIds={[]}
+        onSelectionChange={() => {}}
+      />
+    );
+
+    expect(getByText('Group A')).toBeTruthy();
+    expect(getByText('Group B')).toBeTruthy();
+    expect(getByLabelText('Option A1')).toBeTruthy();
+    expect(getByLabelText('Option B1')).toBeTruthy();
+  });
 });

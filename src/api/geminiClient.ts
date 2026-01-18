@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
-import { FacilityService } from '../types';
+import { FacilityService, AssessmentResponse } from '../types';
 import { AssessmentProfile } from '../types/triage';
 
 // Configuration
@@ -22,19 +22,6 @@ const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
-}
-
-export interface AssessmentResponse {
-  recommended_level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
-  follow_up_questions: string[];
-  user_advice: string;
-  clinical_soap: string;
-  key_concerns: string[];
-  critical_warnings: string[];
-  relevant_services: FacilityService[];
-  red_flags: string[];
-  triage_readiness_score?: number;
-  ambiguity_detected?: boolean;
 }
 
 interface CacheEntry {
@@ -377,23 +364,31 @@ export class GeminiClient {
             const hasDenials = denials.includes('none') || denials.includes('no critical') || denials.includes('wala');
             
             if (hasDenials) {
-                // If local detector also confirmed it's not an absolute emergency (emergency.isEmergency was false)
-                // We use the score from the earlier detection run (Line 245)
-                const fallbackLevel = emergency.score <= 5 ? 'health_center' : 'hospital';
-                
-                console.log(`[GeminiClient] Authority Block: Downgrading AI Emergency recommendation to ${fallbackLevel} as red flags were denied.`);
-                
-                parsed.recommended_level = fallbackLevel;
-                
-                if (fallbackLevel === 'health_center') {
-                    parsed.user_advice = 'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present. (Note: Care level adjusted as no critical signs were reported).';
+                // Only downgrade if confidence is HIGH
+                if (profile.denial_confidence === 'high') {
+                    // If local detector also confirmed it's not an absolute emergency (emergency.isEmergency was false)
+                    // We use the score from the earlier detection run (Line 245)
+                    const fallbackLevel = emergency.score <= 5 ? 'health_center' : 'hospital';
+                    
+                    console.log(`[GeminiClient] Authority Block: Downgrading AI Emergency recommendation to ${fallbackLevel} as red flags were denied with HIGH confidence.`);
+                    
+                    parsed.recommended_level = fallbackLevel;
+                    
+                    if (fallbackLevel === 'health_center') {
+                        parsed.user_advice = 'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present. (Note: Care level adjusted as no critical signs were reported).';
+                    } else {
+                        parsed.user_advice = 'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised. (Note: Care level adjusted as no critical signs were reported).';
+                    }
+                    
+                    // Add clear escalation instructions to warnings
+                    if (!parsed.critical_warnings.some(w => w.includes('stiff neck'))) {
+                        parsed.critical_warnings.unshift('Go to the Emergency Room IMMEDIATELY if you develop: stiff neck, confusion, or difficulty breathing.');
+                    }
                 } else {
-                    parsed.user_advice = 'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised. (Note: Care level adjusted as no critical signs were reported).';
-                }
-                
-                // Add clear escalation instructions to warnings
-                if (!parsed.critical_warnings.some(w => w.includes('stiff neck'))) {
-                    parsed.critical_warnings.unshift('Go to the Emergency Room IMMEDIATELY if you develop: stiff neck, confusion, or difficulty breathing.');
+                    // If confidence is LOW or MEDIUM, RETAIN Emergency but add a warning
+                    console.log(`[GeminiClient] Authority Block: RETAINING Emergency despite denial (Confidence: ${profile.denial_confidence || 'unknown'}).`);
+                    parsed.user_advice += ' (Note: Critical symptoms were not definitively ruled out. Please verify immediately.)';
+                    parsed.critical_warnings.unshift('Please confirm you are NOT experiencing chest pain, difficulty breathing, or severe confusion.');
                 }
             }
         }

@@ -1,0 +1,147 @@
+[
+  {
+    "description": "Clear cardiac emergency",
+    "input": "I have crushing chest pain",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Respiratory emergency",
+    "input": "I am having difficulty breathing and gasping for air",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Stroke symptoms",
+    "input": "My speech is slurred and my face is drooping",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Severe trauma",
+    "input": "I have severe bleeding from a deep wound",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 8
+    }
+  },
+  {
+    "description": "Negated emergency symptom (Chest Pain)",
+    "input": "I do not have chest pain",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": false,
+      "maxScore": 0
+    }
+  },
+  {
+    "description": "Negated emergency symptom (Breathing)",
+    "input": "No difficulty breathing",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": false,
+      "maxScore": 0
+    }
+  },
+  {
+    "description": "Contextual negation - I am not dying",
+    "input": "I am not dying",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": false,
+      "maxScore": 0
+    }
+  },
+  {
+    "description": "General non-emergency symptom",
+    "input": "I have a mild headache",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": false,
+      "maxScore": 5
+    }
+  },
+  {
+    "description": "Local dialect emergency - Hingalo (Gasping/Dying)",
+    "input": "hingalo",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Local dialect emergency - Kulog sa daghan (Chest pain)",
+    "input": "kulog sa daghan",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Active suicidal intent",
+    "input": "I want to kill myself",
+    "detector": "mental_health",
+    "expected": {
+      "isCrisis": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Self-harm intent",
+    "input": "I am going to cut myself",
+    "detector": "mental_health",
+    "expected": {
+      "isCrisis": true,
+      "minScore": 10
+    }
+  },
+  {
+    "description": "Negated suicidal intent",
+    "input": "I do not want to die",
+    "detector": "mental_health",
+    "expected": {
+      "isCrisis": false,
+      "maxScore": 0
+    }
+  },
+  {
+    "description": "Distress but not immediate crisis",
+    "input": "I feel sad and lonely",
+    "detector": "mental_health",
+    "expected": {
+      "isCrisis": false,
+      "maxScore": 7
+    }
+  },
+  {
+    "description": "High distress indicators",
+    "input": "I feel hopeless and tired of living",
+    "detector": "mental_health",
+    "expected": {
+      "isCrisis": false,
+      "minScore": 6,
+      "maxScore": 7
+    }
+  },
+  {
+    "description": "Emergency detector catching suicide attempt",
+    "input": "suicide attempt",
+    "detector": "emergency",
+    "expected": {
+      "isEmergency": true,
+      "minScore": 10
+    }
+  }
+]

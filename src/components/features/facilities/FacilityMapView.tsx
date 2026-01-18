@@ -22,7 +22,9 @@ const isExpoGo = Constants.appOwnership === 'expo';
 if (!isExpoGo) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    Mapbox = require('@rnmapbox/maps');
+    const MapboxModule = require('@rnmapbox/maps');
+    // Handle both CommonJS and ESM default export
+    Mapbox = MapboxModule.default || MapboxModule;
   } catch (_error: unknown) {
     const err = _error as Error;
     mapboxImportError = err;
@@ -36,7 +38,11 @@ if (!isExpoGo) {
 const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN;
 if (Mapbox && MAPBOX_TOKEN) {
   try {
-    Mapbox.setAccessToken(MAPBOX_TOKEN);
+    if (typeof Mapbox.setAccessToken === 'function') {
+      Mapbox.setAccessToken(MAPBOX_TOKEN);
+    } else {
+      console.warn('Mapbox.setAccessToken is not a function. Check module import.');
+    }
   } catch (_error) {
     console.warn('Failed to set Mapbox access token:', _error);
     Mapbox = null; // Disable Mapbox if initialization fails

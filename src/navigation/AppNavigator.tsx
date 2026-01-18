@@ -31,7 +31,6 @@ const AppNavigator = () => {
         headerShown: false,
         cardStyle: { backgroundColor: '#F5F7F8' }, // Matches app background exactly
         cardShadowEnabled: false, // Prevents the vertical line shadow artifact
-        animationEnabled: true,
       }}
     >
       <Stack.Screen name="Home" component={MainHomeScreen} />

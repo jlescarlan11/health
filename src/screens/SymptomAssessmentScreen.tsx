@@ -30,12 +30,14 @@ import {
   generateAssessmentPlan,
   extractClinicalProfile,
   getGeminiResponse,
+  streamGeminiResponse,
 } from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
-import { TriageEngine, TriageArbiter } from '../services';
-import { TriageFlow, AssessmentQuestion, AssessmentProfile } from '../types/triage';
+import { TriageEngine } from '../services/triageEngine';
+import { TriageArbiter } from '../services/triageArbiter';
+import { TriageFlow, AssessmentQuestion, AssessmentProfile, GroupedOption } from '../types/triage';
 import { extractClinicalSlots } from '../utils/clinicalUtils';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
@@ -59,6 +61,14 @@ interface Message {
   sender: 'assistant' | 'user';
   isOffline?: boolean;
 }
+
+const isNoneOption = (text: string) => {
+  const lower = text.toLowerCase();
+  return lower === 'none' || 
+         lower === 'none of the above' || 
+         lower === 'none of these' || 
+         lower === 'none of these apply';
+};
 
 const parseRedFlags = (text: string): { id: string, label: string }[] => {
   // 1. Try to find a list after a colon
@@ -94,6 +104,36 @@ const parseRedFlags = (text: string): { id: string, label: string }[] => {
   }));
 };
 
+const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[]) => {
+  // 1. Handle "None"
+  const labels = selections.filter(i => !isNoneOption(i));
+  if (labels.length === 0) {
+     return "No, I don't have any of those.";
+  }
+  
+  const joined = labels.join(', ');
+
+  // 2. Context-aware formatting based on ID
+  switch (question.id) {
+      case 'age':
+          return `I am ${joined} years old.`;
+      case 'duration':
+          return `It has been happening for ${joined}.`;
+      case 'severity':
+          return `It is ${joined}.`;
+      case 'red_flags':
+          // Red flags explicitly implies symptoms
+          return `I'm experiencing ${joined}.`;
+      default:
+           // 3. Fallback based on question text content
+           const lowerText = question.text.toLowerCase();
+           if (lowerText.includes('symptom') || lowerText.includes('experiencing')) {
+               return `I'm experiencing ${joined}.`;
+           }
+           return joined; 
+  }
+};
+
 const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
@@ -102,6 +142,7 @@ const SymptomAssessmentScreen = () => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const inputCardRef = useRef<InputCardRef>(null);
+  const hasShownClarificationHeader = useRef(false);
   const keyboardHeight = useRef(new Animated.Value(0)).current;
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
@@ -115,11 +156,13 @@ const SymptomAssessmentScreen = () => {
   const [processing, setProcessing] = useState(false);
   const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
   const [expansionCount, setExpansionCount] = useState(0);
+  const [readiness, setReadiness] = useState(0.0); // 0.0 to 1.0
   const MAX_EXPANSIONS = 2;
   
   // UI Interactions
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
   
   // Voice
   const [isRecording, setIsRecording] = useState(false);
@@ -130,6 +173,13 @@ const SymptomAssessmentScreen = () => {
     setSelectedRedFlags([]);
   }, [currentQuestionIndex]);
 
+  // --- READINESS VISUALIZATION ---
+  const getReadinessVisuals = (score: number) => {
+    if (score <= 0.40) return { label: "Gathering initial symptoms…", color: theme.colors.error }; // Red/Orange
+    if (score <= 0.70) return { label: "Checking risk factors…", color: theme.colors.secondary }; // Yellow
+    if (score <= 0.90) return { label: "Analyzing specifics…", color: theme.colors.primary }; // Green
+    return { label: "Finalizing recommendation…", color: '#2196F3' }; // Blue
+  };
 
     // Offline
     const [isOfflineMode, setIsOfflineMode] = useState(false);
@@ -276,9 +326,9 @@ const SymptomAssessmentScreen = () => {
   
     // --- INTERACTION LOGIC ---
     
-    const handleNext = async (answerOverride?: string, isSkip: boolean = false) => {
+    const handleNext = async (answerOverride?: string) => {
       const answer = answerOverride || inputText;
-      if ((!answer.trim() && !isSkip) || processing) return;
+      if (!answer.trim() || processing) return;
   
       const currentQ = questions[currentQuestionIndex];
       if (!currentQ && !isOfflineMode) return;
@@ -289,7 +339,7 @@ const SymptomAssessmentScreen = () => {
       // 1. Append User Message
       const userMsg: Message = {
         id: `user-${Date.now()}`,
-        text: isSkip ? "I'm not sure" : answer,
+        text: answer,
         sender: 'user',
         isOffline: isOfflineMode
       };
@@ -298,8 +348,7 @@ const SymptomAssessmentScreen = () => {
       setIsTyping(true);
   
       // 2. Emergency Check (Local, Deterministic)
-      // Only check if it's NOT a skip
-      if (!isSkip && !isOfflineMode) {
+      if (!isOfflineMode) {
           // Provide context of what has been discussed so far for the SOAP note
           const historyContext = messages
             .filter(m => m.sender === 'user')
@@ -338,7 +387,7 @@ const SymptomAssessmentScreen = () => {
   
       // 3. Store Answer
       if (!isOfflineMode) {
-          const newAnswers = { ...answers, [currentQ.id]: isSkip ? "Skipped/Unknown" : answer };
+          const newAnswers = { ...answers, [currentQ.id]: answer };
           setAnswers(newAnswers);
   
           // 4. Progress or Finish
@@ -347,8 +396,8 @@ const SymptomAssessmentScreen = () => {
 
           // --- NEW: Unified Triage Arbiter Gate ---
           // The Arbiter now has authority over whether we continue or stop.
-          // We check this starting at Turn 4 to allow for early exits for simple cases.
-          if (nextIdx >= 4 || isAtEnd) {
+          // We check this starting at Turn 0 (every turn) to allow for early interventions.
+          if (nextIdx >= 0 || isAtEnd) {
               console.log(`[Assessment] Turn ${nextIdx} reached. Consulting Arbiter...`);
               try {
                   const historyItems = nextHistory.map(m => ({
@@ -357,6 +406,11 @@ const SymptomAssessmentScreen = () => {
                   }));
                   const profile = await extractClinicalProfile(historyItems);
                   
+                  // Update Readiness Visualization
+                  if (profile.triage_readiness_score !== undefined) {
+                    setReadiness(profile.triage_readiness_score);
+                  }
+
                   // --- CONTRADICTION LOCK (Deterministic Guardrail) ---
                   const isAmbiguous = profile.ambiguity_detected === true;
                   const hasFriction = profile.clinical_friction_detected === true;
@@ -401,14 +455,17 @@ const SymptomAssessmentScreen = () => {
                                      effectiveReadiness >= TERMINATION_THRESHOLD;
 
                   // --- CLARIFICATION FEEDBACK (User Guidance) ---
-                  const needsClarificationHeader = isAmbiguous || hasFriction || hasUnattemptedTier3;
-                  const clarificationHeader = needsClarificationHeader 
-                    ? "I've noticed some overlapping or conflicting details in your symptom report. To ensure my guidance is as safe and accurate as possible, I need a bit more specificity.\n\n"
-                    : "";
+                  const needsClarificationHeader = isAmbiguous || hasFriction;
+                  let clarificationHeader = "";
+
+                  if (needsClarificationHeader && !hasShownClarificationHeader.current) {
+                    clarificationHeader = "To ensure I fully understand your situation and provide the safest advice, I'd like to clarify a few details.\n\n";
+                    hasShownClarificationHeader.current = true;
+                  }
 
                   if (canTerminate) {
                       console.log('[Assessment] Arbiter approved termination. Finalizing.');
-                      setIsTyping(true);
+                      setIsTyping(false);
                       setMessages(prev => [...prev, {
                           id: 'early-exit',
                           text: "Thank you. I have sufficient information to provide a safe recommendation.",
@@ -456,42 +513,56 @@ const SymptomAssessmentScreen = () => {
                       
                       const followUpPrompt = `The assessment for "${initialSymptom}" is incomplete or ambiguous. History: ${historyItems.map(h => h.text).join('. ')}. Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns. Return JSON format matching the original question schema.`;
                       try {
-                          const response = await getGeminiResponse(followUpPrompt);
-                          if (response) {
-                              const jsonMatch = response.match(/\{[\s\S]*\}/);
+                          let accumulatedResponse = '';
+                          setStreamingText(''); // Initialize streaming bubble
+                          
+                          const stream = streamGeminiResponse(followUpPrompt);
+                          for await (const chunk of stream) {
+                            accumulatedResponse += chunk;
+                            setStreamingText(prev => (prev || '') + chunk);
+                          }
+                          
+                          if (accumulatedResponse) {
+                              const jsonMatch = accumulatedResponse.match(/\{[\s\S]*\}/);
                               if (jsonMatch) {
                                   const parsed = JSON.parse(jsonMatch[0]);
                                   const newQuestions = (parsed.questions || []).map((q: any, i: number) => ({...q, id: `extra-${nextIdx}-${currentExpansion}-${i}`, tier: 3}));
+                                  
                                   if (newQuestions.length > 0) {
                                       const updatedQuestions = [...questions, ...newQuestions];
+                                      const nextQ = updatedQuestions[nextIdx];
+                                      
+                                      // Commit finalized message
+                                      setMessages(prev => [...prev, {
+                                          id: `ai-extra-${nextIdx}-${currentExpansion}`,
+                                          text: clarificationHeader + nextQ.text,
+                                          sender: 'assistant'
+                                      }]);
+                                      
                                       setQuestions(updatedQuestions);
                                       setExpansionCount(currentExpansion + 1);
+                                      setCurrentQuestionIndex(nextIdx);
                                       
-                                      // Transition to the next question manually
-                                      setTimeout(() => {
-                                          const nextQ = updatedQuestions[nextIdx];
-                                          setMessages(prev => [...prev, {
-                                              id: `ai-extra-${nextIdx}-${currentExpansion}`,
-                                              text: clarificationHeader + nextQ.text,
-                                              sender: 'assistant'
-                                          }]);
-                                          setCurrentQuestionIndex(nextIdx);
-                                          setIsTyping(false);
-                                          setProcessing(false);
-                                      }, 600);
+                                      // Clear streaming state AFTER committing message to avoid flicker
+                                      setStreamingText(null); 
+                                      setIsTyping(false);
+                                      setProcessing(false);
                                       return; 
                                   }
                               }
                           }
+                          // Fallback if parsing fails or no questions
+                          setStreamingText(null);
                       } catch (err) {
                           console.error('[Assessment] Failed to fetch expansion questions:', err);
+                          setStreamingText(null);
                       }
                   }
                   
                   // If we reached here and it'sAtEnd and we can't terminate, we might have hit MAX_EXPANSIONS or expansion failed
                   if (isAtEnd && !canTerminate) {
                       console.log(`[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`);
-                      setIsTyping(true);
+                      setIsTyping(false);
                       setMessages(prev => [...prev, {
                           id: 'finalizing-safety-fallback',
                           text: "I have gathered enough initial information to provide a safe recommendation.",
@@ -524,7 +595,7 @@ const SymptomAssessmentScreen = () => {
           }
 
           if (!isAtEnd) {
-              // Next Question (Pre-Turn 4)
+              // Next Question (Fallback if Arbiter check fails or is skipped)
               setIsTyping(true);
               setTimeout(() => {
                   const nextQ = questions[nextIdx];
@@ -539,7 +610,7 @@ const SymptomAssessmentScreen = () => {
               }, 600);
           } else {
               // EXHAUSTED QUESTIONS -> Finalize
-              setIsTyping(true);
+              setIsTyping(false);
               setMessages(prev => [...prev, {
                   id: 'finalizing',
                   text: "Thank you. I'm now analyzing your responses to provide the best guidance...",
@@ -720,14 +791,37 @@ const SymptomAssessmentScreen = () => {
     ? triageFlow.nodes[currentOfflineNodeId]?.options 
     : null;
 
+  const readinessVisuals = getReadinessVisuals(readiness);
+
+  // Determine if current question has a "None" option and if it's mandatory
+  const currentOptions = currentQuestion?.options || (currentQuestion ? parseRedFlags(currentQuestion.text) : []);
+  const hasNoneOptionInCurrent = currentOptions.some((opt: any) => {
+    if (typeof opt === 'string') return isNoneOption(opt);
+    if (opt && typeof opt === 'object' && 'label' in opt) return isNoneOption((opt as any).label);
+    if (opt && typeof opt === 'object' && 'items' in opt) {
+        return (opt as any).items.some((i: any) => isNoneOption(typeof i === 'string' ? i : (i.id || i.label || '')));
+    }
+    return false;
+  });
+
+  const isMandatory = currentQuestion ? (
+    currentQuestion.text.toLowerCase().includes('drink') || 
+    currentQuestion.text.toLowerCase().includes('frequently') ||
+    currentQuestion.text.toLowerCase().includes('how often') ||
+    currentQuestion.text.toLowerCase().includes('how many')
+  ) : false;
+
+  const showNoneButton = hasNoneOptionInCurrent && !isMandatory && selectedRedFlags.length === 0;
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
       
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
          <ProgressBar 
-            progress={isOfflineMode ? 0.5 : ((currentQuestionIndex + 1) / (questions.length || 1))}
-            label={isOfflineMode ? "Emergency Check" : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
+            progress={isOfflineMode ? 0.5 : readiness}
+            label={isOfflineMode ? "Emergency Check" : readinessVisuals.label}
+            color={isOfflineMode ? theme.colors.primary : readinessVisuals.color}
          />
       </View>
 
@@ -739,7 +833,18 @@ const SymptomAssessmentScreen = () => {
               showsVerticalScrollIndicator={false}
           >
             {messages.map(renderMessage)}
-        {isTyping && (
+            {/* Streaming Message Bubble */}
+            {streamingText && (
+              <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+                <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+                  <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+                </View>
+                <View style={[styles.bubble, styles.assistantBubble, { backgroundColor: theme.colors.surface }]}>
+                  <Text style={[styles.messageText, { color: theme.colors.onSurface }]}>{streamingText}</Text>
+                </View>
+              </View>
+            )}
+            {isTyping && !streamingText && (
              <View style={[styles.messageWrapper, styles.assistantWrapper]}>
                 <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
                   <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
@@ -759,8 +864,8 @@ const SymptomAssessmentScreen = () => {
           paddingBottom: Math.max(insets.bottom, 16) + 8 
         }
       ]}>
-         {/* Multi-Select Checklist - Custom UI */}
-         {!isOfflineMode && currentQuestion?.type === 'multi-select' ? (
+         {/* Checklist / Radio UI */}
+         {!isOfflineMode && currentQuestion && currentQuestion.type === 'multi-select' ? (
            <View style={{ paddingBottom: 8 }}>
              <Text 
                variant="titleSmall" 
@@ -778,50 +883,97 @@ const SymptomAssessmentScreen = () => {
              <View style={{ maxHeight: SCREEN_HEIGHT / 3 }}>
                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                  <MultiSelectChecklist
-                   options={currentQuestion.options ? currentQuestion.options.map(opt => ({ id: opt, label: opt })) : parseRedFlags(currentQuestion.text)}
+                   options={
+                     (() => {
+                       const mapped = (currentQuestion.options
+                         ? currentQuestion.options.map(opt => {
+                             if (typeof opt === 'string') return { id: opt, label: opt };
+                             return {
+                               category: (opt as GroupedOption).category,
+                               items: (opt as GroupedOption).items.map(i => ({ id: i, label: i }))
+                             };
+                           })
+                         : parseRedFlags(currentQuestion.text)) as any;
+
+                       if (hasNoneOptionInCurrent && !isMandatory) {
+                         return mapped.map((opt: any) => {
+                           if ('id' in opt) return isNoneOption(opt.id) ? null : opt;
+                           return {
+                             ...opt,
+                             items: opt.items.filter((i: any) => !isNoneOption(i.id))
+                           };
+                         }).filter((opt: any) => {
+                           if (!opt) return false;
+                           if ('items' in opt) return opt.items.length > 0;
+                           return true;
+                         });
+                       }
+                       return mapped;
+                     })()
+                   }
                    selectedIds={selectedRedFlags}
-                   onSelectionChange={setSelectedRedFlags}
+                   singleSelection={false}
+                   onSelectionChange={(ids) => {
+                     // Mutual exclusivity for "None" in Multi-Select
+                     const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
+                     if (lastAdded && isNoneOption(lastAdded)) {
+                        setSelectedRedFlags([lastAdded]);
+                     } else if (ids.length > 1 && ids.some(id => isNoneOption(id))) {
+                        setSelectedRedFlags(ids.filter(id => !isNoneOption(id)));
+                     } else {
+                        setSelectedRedFlags(ids);
+                     }
+                   }}
                  />
                </ScrollView>
              </View>
-             <View style={{ marginTop: 8 }}>
-                <Button 
-                  testID="button-confirm"
-                  variant="primary"
-                  onPress={() => handleNext(selectedRedFlags.length > 0 ? `I have: ${selectedRedFlags.join(', ')}` : "None")}
-                  title="Confirm"
-                  style={{ width: '100%' }}
-                  disabled={processing}
-                  accessibilityLabel="Confirm selection"
-                  accessibilityRole="button"
-                />
+             <View style={{ marginTop: 8, gap: 8 }}>
+                {showNoneButton ? (
+                   <Button 
+                     testID="button-none"
+                     variant="outline"
+                     onPress={() => {
+                       handleNext(formatSelectionAnswer(currentQuestion, []));
+                     }}
+                     title="None of the above"
+                     style={{ width: '100%' }}
+                     disabled={processing}
+                     accessibilityLabel="None of the above"
+                     accessibilityRole="button"
+                   />
+                ) : (
+                   <Button 
+                     testID="button-confirm"
+                     variant="primary"
+                     onPress={() => {
+                       handleNext(formatSelectionAnswer(currentQuestion, selectedRedFlags));
+                     }}
+                     title="Confirm"
+                     style={{ width: '100%' }}
+                     disabled={processing || selectedRedFlags.length === 0}
+                     accessibilityLabel="Confirm selection"
+                     accessibilityRole="button"
+                   />
+                )}
              </View>
            </View>
          ) : (
            <>
-             {/* Offline Chips */}
-             {offlineOptions && (
+             {/* Suggestions / Offline Chips */}
+             {(offlineOptions || (!isOfflineMode && currentQuestion?.options && currentQuestion.options.length > 0)) && (
                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
-                     {offlineOptions.map(opt => (
-                         <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
-                     ))}
+                     {offlineOptions 
+                        ? offlineOptions.map(opt => (
+                             <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
+                          ))
+                        : currentQuestion!.options!.map((opt, idx) => {
+                             if (typeof opt === 'string') {
+                               return <Chip key={idx} onPress={() => handleNext(opt)} disabled={processing} style={{ marginRight: 8 }}>{opt}</Chip>;
+                             }
+                             return null;
+                        })
+                     }
                  </ScrollView>
-             )}
-
-             {/* AI Generated Options */}
-             {!isOfflineMode && currentQuestion?.options && (
-                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
-                     {currentQuestion.options.map(opt => (
-                         <Chip key={opt} onPress={() => handleNext(opt)} disabled={processing}>{opt}</Chip>
-                     ))}
-                 </ScrollView>
-             )}
-             
-             {/* Skip Button for AI Mode */}
-             {!isOfflineMode && (
-                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingBottom: 8 }}>
-                    <Chip mode="outlined" compact onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
-                </View>
              )}
 
              <InputCard

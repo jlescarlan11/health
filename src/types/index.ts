@@ -66,3 +66,16 @@ export interface EmergencyContact {
   available24x7: boolean;
   description?: string;
 }
+
+export interface AssessmentResponse {
+  recommended_level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
+  follow_up_questions: string[];
+  user_advice: string;
+  clinical_soap: string;
+  key_concerns: string[];
+  critical_warnings: string[];
+  relevant_services: FacilityService[];
+  red_flags: string[];
+  triage_readiness_score?: number;
+  ambiguity_detected?: boolean;
+}
