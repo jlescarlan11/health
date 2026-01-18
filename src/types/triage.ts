@@ -44,6 +44,7 @@ export interface AssessmentProfile {
   is_complex_case?: boolean;
   symptom_category?: 'simple' | 'complex' | 'critical';
   denial_confidence?: 'high' | 'medium' | 'low';
+  turn_count?: number;
 }
 
 export interface GroupedOption {

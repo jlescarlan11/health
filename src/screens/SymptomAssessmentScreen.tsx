@@ -96,6 +96,36 @@ const parseRedFlags = (text: string): { id: string, label: string }[] => {
   }));
 };
 
+const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[]) => {
+  // 1. Handle "None"
+  const labels = selections.filter(i => i.toLowerCase() !== 'none');
+  if (labels.length === 0) {
+     return "No, I don't have any of those.";
+  }
+  
+  const joined = labels.join(', ');
+
+  // 2. Context-aware formatting based on ID
+  switch (question.id) {
+      case 'age':
+          return `I am ${joined} years old.`;
+      case 'duration':
+          return `It has been happening for ${joined}.`;
+      case 'severity':
+          return `It is ${joined}.`;
+      case 'red_flags':
+          // Red flags explicitly implies symptoms
+          return `I'm experiencing ${joined}.`;
+      default:
+           // 3. Fallback based on question text content
+           const lowerText = question.text.toLowerCase();
+           if (lowerText.includes('symptom') || lowerText.includes('experiencing')) {
+               return `I'm experiencing ${joined}.`;
+           }
+           return joined; 
+  }
+};
+
 const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
@@ -104,6 +134,7 @@ const SymptomAssessmentScreen = () => {
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
   const inputCardRef = useRef<InputCardRef>(null);
+  const hasShownClarificationHeader = useRef(false);
   const keyboardHeight = useRef(new Animated.Value(0)).current;
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
@@ -418,9 +449,12 @@ const SymptomAssessmentScreen = () => {
 
                   // --- CLARIFICATION FEEDBACK (User Guidance) ---
                   const needsClarificationHeader = isAmbiguous || hasFriction;
-                  const clarificationHeader = needsClarificationHeader 
-                    ? "To ensure I fully understand your situation and provide the safest advice, I'd like to clarify a few details.\n\n"
-                    : "";
+                  let clarificationHeader = "";
+
+                  if (needsClarificationHeader && !hasShownClarificationHeader.current) {
+                    clarificationHeader = "To ensure I fully understand your situation and provide the safest advice, I'd like to clarify a few details.\n\n";
+                    hasShownClarificationHeader.current = true;
+                  }
 
                   if (canTerminate) {
                       console.log('[Assessment] Arbiter approved termination. Finalizing.');
@@ -803,8 +837,8 @@ const SymptomAssessmentScreen = () => {
           paddingBottom: Math.max(insets.bottom, 16) + 8 
         }
       ]}>
-         {/* Multi-Select Checklist - Custom UI */}
-         {!isOfflineMode && currentQuestion?.type === 'multi-select' ? (
+         {/* Checklist / Radio UI */}
+         {!isOfflineMode && currentQuestion && (currentQuestion.type === 'multi-select' || (currentQuestion.options && currentQuestion.options.length > 0)) ? (
            <View style={{ paddingBottom: 8 }}>
              <Text 
                variant="titleSmall" 
@@ -817,7 +851,7 @@ const SymptomAssessmentScreen = () => {
                  color: theme.colors.onSurfaceVariant 
                }}
              >
-               SELECT ALL THAT APPLY
+               {currentQuestion.type === 'multi-select' ? 'SELECT ALL THAT APPLY' : 'SELECT ONE'}
              </Text>
              <View style={{ maxHeight: SCREEN_HEIGHT / 3 }}>
                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
@@ -834,46 +868,45 @@ const SymptomAssessmentScreen = () => {
                        : parseRedFlags(currentQuestion.text)) as any
                    }
                    selectedIds={selectedRedFlags}
+                   singleSelection={currentQuestion.type !== 'multi-select'}
                    onSelectionChange={(ids) => {
-                     // Mutual exclusivity for "None"
-                     const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
-                     if (lastAdded?.toLowerCase() === 'none') {
-                        setSelectedRedFlags([lastAdded]);
-                     } else if (ids.length > 1 && ids.some(id => id.toLowerCase() === 'none')) {
-                        setSelectedRedFlags(ids.filter(id => id.toLowerCase() !== 'none'));
+                     // Mutual exclusivity for "None" in Multi-Select
+                     if (currentQuestion.type === 'multi-select') {
+                         const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
+                         if (lastAdded?.toLowerCase() === 'none') {
+                            setSelectedRedFlags([lastAdded]);
+                         } else if (ids.length > 1 && ids.some(id => id.toLowerCase() === 'none')) {
+                            setSelectedRedFlags(ids.filter(id => id.toLowerCase() !== 'none'));
+                         } else {
+                            setSelectedRedFlags(ids);
+                         }
                      } else {
-                        setSelectedRedFlags(ids);
+                         // Single select (Radio) logic is handled by the component returning [id]
+                         setSelectedRedFlags(ids);
                      }
                    }}
                  />
                </ScrollView>
              </View>
-             <View style={{ marginTop: 8 }}>
+             <View style={{ marginTop: 8, gap: 8 }}>
                 <Button 
                   testID="button-confirm"
                   variant="primary"
                   onPress={() => {
-                    if (selectedRedFlags.length === 0 || (selectedRedFlags.length === 1 && selectedRedFlags[0].toLowerCase() === 'none')) {
-                      handleNext("No, I don’t have any of those.");
-                    } else {
-                      const labels = selectedRedFlags.filter(i => i.toLowerCase() !== 'none').map(i => i.toLowerCase());
-                      let message = "I’m experiencing ";
-                      if (labels.length === 1) {
-                        message += labels[0];
-                      } else if (labels.length === 2) {
-                        message += `${labels[0]} and ${labels[1]}`;
-                      } else {
-                        const last = labels.pop();
-                        message += `${labels.join(', ')}, and ${last}`;
-                      }
-                      handleNext(message + ".");
-                    }
+                    handleNext(formatSelectionAnswer(currentQuestion, selectedRedFlags));
                   }}
                   title="Confirm"
                   style={{ width: '100%' }}
-                  disabled={processing}
+                  disabled={processing || (currentQuestion.type !== 'multi-select' && selectedRedFlags.length === 0)}
                   accessibilityLabel="Confirm selection"
                   accessibilityRole="button"
+                />
+                <Button 
+                   variant="text" 
+                   onPress={() => handleNext(undefined, true)} 
+                   disabled={processing}
+                   title="I'm not sure"
+                   textColor={theme.colors.onSurfaceVariant}
                 />
              </View>
            </View>
@@ -888,19 +921,11 @@ const SymptomAssessmentScreen = () => {
                  </ScrollView>
              )}
 
-             {/* AI Generated Options & Skip Option */}
-             {!isOfflineMode && (
-                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
-                     {currentQuestion?.options?.map(opt => {
-                         if (typeof opt !== 'string') return null; // Skip grouped options in single-select chip view
-                         return (
-                            <Chip key={opt} onPress={() => handleNext(opt)} disabled={processing}>{opt}</Chip>
-                         );
-                     })}
-                     <Chip onPress={() => handleNext(undefined, true)} disabled={processing}>
-                        I'm not sure
-                     </Chip>
-                 </ScrollView>
+             {/* Skip Option for Text Input */}
+             {!isOfflineMode && !offlineOptions && (
+               <View style={{ flexDirection: 'row', justifyContent: 'flex-start', paddingBottom: 8 }}>
+                  <Chip onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
+               </View>
              )}
 
              <InputCard

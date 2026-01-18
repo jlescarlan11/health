@@ -46,6 +46,7 @@ jest.mock('../src/services/gemini', () => {
     getGeminiResponse: jest.fn(),
     generateAssessmentPlan: jest.fn(),
     extractClinicalProfile: jest.fn(),
+    streamGeminiResponse: jest.fn(),
     parseClarifyingQuestions: actual.parseClarifyingQuestions,
   };
 });
@@ -79,12 +80,17 @@ jest.mock('../src/components/common', () => {
   };
 });
 
-jest.mock('../src/components/common/Button', () => ({
-  Button: (props: Record<string, unknown>) => {
-    const React = require('react');
-    return React.createElement('Button', props);
-  },
-}));
+jest.mock('../src/components/common/Button', () => {
+  const React = require('react');
+  const { Text, TouchableOpacity } = require('react-native');
+  return {
+    Button: ({ title, onPress, disabled, testID }: any) => (
+      <TouchableOpacity onPress={disabled ? undefined : onPress} testID={testID} disabled={disabled}>
+        <Text>{title}</Text>
+      </TouchableOpacity>
+    ),
+  };
+});
 
 jest.mock('../src/components/common/StandardHeader', () => {
   const React = require('react');
@@ -98,6 +104,8 @@ const mockQuestions = {
   questions: [
     { id: 'duration', text: 'How long have you had this?', type: 'text' },
     { id: 'severity', text: 'Is it sharp or dull?', type: 'choice', options: ['Sharp', 'Dull'] },
+    { id: 'progression', text: 'Is it getting better or worse?', type: 'text' },
+    { id: 'red_flags', text: 'Any chest pain or breathing issues?', type: 'multi-select' },
   ],
 };
 
@@ -187,21 +195,20 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
       expect(screen.getByText(/How long have you had this?/)).toBeTruthy();
     });
 
-    // Skip the first question
-    const skipChip = screen.getByText("I'm not sure");
-    fireEvent.press(skipChip);
-
-    // Skip the second question
-    await waitFor(
-      () => {
-        expect(screen.getByText(/Is it sharp or dull?/)).toBeTruthy();
-      },
-      { timeout: 3000 },
-    );
-
-    const skipChips = screen.getAllByText("I'm not sure");
-    // The last one is for the current question
-    fireEvent.press(skipChips[skipChips.length - 1]);
+    // Skip all 4 questions
+    for (let i = 0; i < 4; i++) {
+        const skipChips = screen.getAllByText("I'm not sure");
+        fireEvent.press(skipChips[skipChips.length - 1]);
+        
+        if (i < 3) {
+            const nextTexts = [
+                /Is it sharp or dull?/,
+                /Is it getting better or worse?/,
+                /Any chest pain or breathing issues?/
+            ];
+            await waitFor(() => expect(screen.getByText(nextTexts[i])).toBeTruthy(), { timeout: 3000 });
+        }
+    }
 
     // Verify navigation to Recommendation screen with correct data
     await waitFor(
@@ -214,6 +221,8 @@ describe('SymptomAssessmentScreen Skip Functionality', () => {
               answers: [
                 { question: 'How long have you had this?', answer: 'Skipped/Unknown' },
                 { question: 'Is it sharp or dull?', answer: 'Skipped/Unknown' },
+                { question: 'Is it getting better or worse?', answer: 'Skipped/Unknown' },
+                { question: 'Any chest pain or breathing issues?', answer: 'Skipped/Unknown' },
               ],
             }),
           }),

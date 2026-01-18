@@ -18,6 +18,7 @@ jest.mock('../src/services/gemini', () => ({
   generateAssessmentPlan: jest.fn(),
   extractClinicalProfile: jest.fn(),
   getGeminiResponse: jest.fn(),
+  streamGeminiResponse: jest.fn(),
 }));
 
 jest.mock('../src/services/emergencyDetector', () => ({
@@ -81,9 +82,13 @@ jest.mock('../src/components/common', () => {
 jest.mock('../src/components/common/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
-    Button: ({ title, onPress, variant }: { title: string; onPress: () => void; variant?: string }) => (
-      <TouchableOpacity onPress={onPress} testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}>
-        <Text>{title} ({variant})</Text>
+    Button: ({ title, onPress, disabled }: { title: string; onPress: () => void; disabled?: boolean }) => (
+      <TouchableOpacity 
+        onPress={disabled ? undefined : onPress} 
+        testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}
+        disabled={disabled}
+      >
+        <Text>{title}</Text>
       </TouchableOpacity>
     ),
   };
@@ -184,7 +189,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(() => {
       expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: 'None' })
+        expect.objectContaining({ text: "No, I don't have any of those." })
       ]));
     }, { timeout: 3000 });
   });
@@ -218,7 +223,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(() => {
       expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: expect.stringContaining('Fever, Cough') })
+        expect.objectContaining({ text: expect.stringContaining("I'm experiencing Fever, Cough") })
       ]));
     }, { timeout: 3000 });
   });

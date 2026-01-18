@@ -1,7 +1,15 @@
 import { GoogleGenerativeAI, GenerativeModel, GenerateContentRequest } from '@google/generative-ai';
 import Constants from 'expo-constants';
-import { GENERATE_ASSESSMENT_QUESTIONS_PROMPT, FINAL_SLOT_EXTRACTION_PROMPT } from '../constants/prompts';
+import {
+  GENERATE_ASSESSMENT_QUESTIONS_PROMPT,
+  FINAL_SLOT_EXTRACTION_PROMPT,
+} from '../constants/prompts';
 import { AssessmentProfile, AssessmentQuestion } from '../types/triage';
+import {
+  calculateTriageScore,
+  prioritizeQuestions,
+  parseAndValidateLLMResponse,
+} from '../utils/aiUtils';
 
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -47,25 +55,38 @@ const generateContentWithRetry = async (
 /**
  * Generates the fixed set of assessment questions (Call #1)
  */
-export const generateAssessmentPlan = async (initialSymptom: string): Promise<AssessmentQuestion[]> => {
+export const generateAssessmentPlan = async (
+  initialSymptom: string,
+): Promise<AssessmentQuestion[]> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace('{{initialSymptom}}', initialSymptom);
+    const prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace(
+      '{{initialSymptom}}',
+      initialSymptom,
+    );
 
     const responseText = await generateContentWithRetry(model, prompt);
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error('Invalid JSON from AI');
-    
-    const parsed = JSON.parse(jsonMatch[0]);
-    return parsed.questions || [];
+
+    const parsed = parseAndValidateLLMResponse<{ questions: AssessmentQuestion[] }>(responseText);
+    const questions = parsed.questions || [];
+
+    return prioritizeQuestions(questions);
   } catch (error) {
     console.error('[Gemini] Failed to generate assessment plan:', error);
     // Fallback questions if AI fails
     return [
-      { id: 'basics', text: 'Could you please tell me your age and how long you have had these symptoms?' },
-      { id: 'severity', text: 'On a scale of 1 to 10, how severe is it, and is it getting better or worse?' },
-      { id: 'red_flags', text: 'To be safe, are you experiencing any difficulty breathing, chest pain, or severe bleeding?' }
+      {
+        id: 'basics',
+        text: 'Could you please tell me your age and how long you have had these symptoms?',
+      },
+      {
+        id: 'severity',
+        text: 'On a scale of 1 to 10, how severe is it, and is it getting better or worse?',
+      },
+      {
+        id: 'red_flags',
+        text: 'To be safe, are you experiencing any difficulty breathing, chest pain, or severe bleeding?',
+      },
     ];
   }
 };
@@ -74,34 +95,45 @@ export const generateAssessmentPlan = async (initialSymptom: string): Promise<As
  * Extracts the final slots from the conversation (Call #2)
  */
 export const extractClinicalProfile = async (
-  history: { role: 'assistant' | 'user', text: string }[]
+  history: { role: 'assistant' | 'user'; text: string }[],
 ): Promise<AssessmentProfile> => {
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash', generationConfig: { responseMimeType: "application/json" } });
-    
-    const conversationText = history
-      .map(msg => `${msg.role.toUpperCase()}: ${msg.text}`)
-      .join('\n');
+  // Build conversation text once and reuse
+  const conversationText = history
+    .map((msg) => `${msg.role.toUpperCase()}: ${msg.text}`)
+    .join('\n');
 
-    const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace('{{conversationHistory}}', conversationText);
+  try {
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: { responseMimeType: 'application/json' },
+    });
+
+    const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace(
+      '{{conversationHistory}}',
+      conversationText,
+    );
 
     const responseText = await generateContentWithRetry(model, prompt);
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error('Invalid JSON from AI');
-    
-    return JSON.parse(jsonMatch[0]) as AssessmentProfile;
+
+    // Direct parse since responseMimeType is already "application/json"
+    const profile = JSON.parse(responseText) as AssessmentProfile;
+
+    // Deterministically calculate the score
+    profile.triage_readiness_score = calculateTriageScore(profile);
+
+    return profile;
   } catch (error) {
     console.error('[Gemini] Failed to extract profile:', error);
-    
-    // Return a fallback profile with summary concatenated from history
+
+    // Return a fallback profile with summary using the already-built conversation text
     return {
       age: null,
       duration: null,
       severity: null,
       progression: null,
       red_flag_denials: null,
-      summary: history.map(msg => `${msg.role.toUpperCase()}: ${msg.text}`).join('\n')
+      summary: conversationText,
+      triage_readiness_score: 0.0, // Default to 0 on failure
     };
   }
 };
@@ -121,47 +153,38 @@ export const getGeminiResponse = async (prompt: string) => {
  * Useful for real-time UI updates.
  */
 export const streamGeminiResponse = async function* (
-  prompt: string | (string | { inlineData: { data: string; mimeType: string } })[]
+  prompt: string | (string | { inlineData: { data: string; mimeType: string } })[],
 ): AsyncGenerator<string, void, unknown> {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-  let result;
-  let attempt = 0;
-
-  // Retry logic for establishing the stream
-  while (attempt < MAX_RETRIES) {
-    try {
-      result = await model.generateContentStream(prompt);
-      break;
-    } catch (error: unknown) {
-      attempt++;
-      const err = error as { message?: string; status?: number };
-      const isOverloaded = err.message?.includes('503') || err.status === 503;
-
-      console.warn(`[Gemini Service] Stream init attempt ${attempt} failed. Error: ${err.message}`);
-
-      if (attempt >= MAX_RETRIES) {
-        if (isOverloaded) {
-          throw new Error('The AI service is currently overloaded. Please try again in a moment.');
-        }
-        throw err;
-      }
-
-      const delay = BASE_DELAY * Math.pow(2, attempt - 1);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  if (!result) return;
 
   try {
+    // Attempt to stream
+    const result = await model.generateContentStream(prompt);
+
     for await (const chunk of result.stream) {
       const chunkText = chunk.text();
       if (chunkText) {
         yield chunkText;
       }
     }
-  } catch (error) {
-    console.error('[Gemini Service] Error during stream iteration:', error);
-    throw error;
+  } catch (error: unknown) {
+    const err = error as { message?: string };
+    console.warn(
+      '[Gemini Service] Streaming failed, attempting fallback to unary generation. Error:',
+      err.message || error,
+    );
+
+    // Fallback to non-streaming request with chunked delivery
+    try {
+      const result = await generateContentWithRetry(model, prompt);
+      // Split into smaller chunks to simulate streaming and maintain UX
+      const chunkSize = 50; // Characters per chunk
+      for (let i = 0; i < result.length; i += chunkSize) {
+        yield result.slice(i, i + chunkSize);
+      }
+    } catch (fallbackError) {
+      console.error('[Gemini Service] Fallback generation also failed:', fallbackError);
+      throw fallbackError;
+    }
   }
 };
