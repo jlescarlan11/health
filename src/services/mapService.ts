@@ -8,7 +8,9 @@ const isExpoGo = Constants.appOwnership === 'expo';
 if (!isExpoGo) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    Mapbox = require('@rnmapbox/maps');
+    const MapboxModule = require('@rnmapbox/maps');
+    // Handle both CommonJS and ESM default export
+    Mapbox = MapboxModule.default || MapboxModule;
   } catch {
     console.warn('Mapbox native module not found in service');
   }

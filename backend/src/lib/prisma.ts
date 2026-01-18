@@ -15,7 +15,9 @@ const prismaClientSingleton = () => {
     ssl: process.env.NODE_ENV === 'production' ? true : { rejectUnauthorized: false },
     max: 10, // Limit pool size
     idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000, // Increased from 2000 to 10000 to prevent timeouts
+    connectionTimeoutMillis: 20000, // Increased to 20s to prevent timeouts
+    keepAlive: true, // Enable TCP Keep-Alive to prevent dropped connections
+    keepAliveInitialDelayMillis: 10000,
   });
 
   pool.on('error', (err) => {

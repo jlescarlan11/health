@@ -206,6 +206,13 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Test Coverage:** Updated `tests/SymptomAssessmentTurns.test.tsx` to accurately mock the 5-turn assessment flow and verified that all frontend tests pass.
   - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/services/gemini.ts`, `tests/SymptomAssessmentTurns.test.tsx`.
 
+* **Symptom Assessment UI Improvements (Jan 18, 2026):**
+  - **Context-Aware Answer Formatting:** Resolved the issue where non-symptom answers (like Age or Duration) were incorrectly prefixed with "I'm experiencing...". Implemented `formatSelectionAnswer` to apply appropriate templates based on the question type (e.g., "I am [Age] years old").
+  - **Single-Select Radio Support:** Upgraded `MultiSelectChecklist` to support a `singleSelection` mode using Radio Buttons. Questions with defined options (excluding explicitly multi-select ones) now enforce single-selection logic with a clear Radio UI instead of auto-submitting Chips.
+  - **Interaction Refinement:** The "Confirm" button is now strictly disabled until a selection is made, preventing empty submissions. Added explicit "None" option handling for cleaner negative responses.
+  - **Fallback Logic:** Restored the "I'm not sure" Chip for open-text questions to ensure users can still skip if needed.
+  - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/components/common/MultiSelectChecklist.tsx`.
+
 - **Comprehensive Dead Code Cleanup (Jan 17, 2026):**
   - **File Deletion:** Removed 8 dead files including legacy Auth components (`OTPInput`, `PhoneInput`), unused shared components (`Alert`, `Input`, `CustomHeader`), legacy storage services (`storageService`, `storageLoader`), and the obsolete `slotExtractor.ts`.
   - **Active Code Refinement:** Eliminated unused imports, variables, and state in 10+ active files (`ClinicalNoteScreen`, `SymptomAssessmentScreen`, `NavigatorHomeScreen`, `StandardHeader`, etc.) as identified by static analysis.

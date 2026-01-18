@@ -1,14 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
+import { Text, useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Text,
-  Card,
-  useTheme,
-  ActivityIndicator,
-  Divider,
-  Surface,
-} from 'react-native-paper';
 import {
   useRoute,
   useNavigation,
@@ -21,17 +15,15 @@ import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
 import { saveClinicalNote } from '../store/offlineSlice';
-import { geminiClient, AssessmentResponse } from '../api/geminiClient';
+import { geminiClient } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Facility } from '../types';
+import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
-
 import { AssessmentProfile } from '../types/triage';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
@@ -39,26 +31,30 @@ type ScreenProps = RootStackScreenProps<'Recommendation'>;
 const isFallbackProfile = (profile?: AssessmentProfile) => {
   if (!profile || !profile.summary) return false;
   // If age/duration etc are all null and summary contains dialogue tags, it's a fallback
-  const isDataEmpty = !profile.age && !profile.duration && !profile.severity && !profile.progression;
-  const hasDialogueTags = profile.summary.includes('USER:') || profile.summary.includes('ASSISTANT:');
+  const isDataEmpty =
+    !profile.age && !profile.duration && !profile.severity && !profile.progression;
+  const hasDialogueTags =
+    profile.summary.includes('USER:') || profile.summary.includes('ASSISTANT:');
   return isDataEmpty && hasDialogueTags;
 };
 
 const formatClinicalSummary = (profile?: AssessmentProfile) => {
   if (!profile) return '';
-  
+
   if (isFallbackProfile(profile)) {
     return profile.summary; // Return raw history for direct analysis
   }
 
-  const parts = [];
-  if (profile.age) parts.push(`Age: ${profile.age}`);
-  if (profile.duration) parts.push(`Duration: ${profile.duration}`);
-  if (profile.severity) parts.push(`Severity: ${profile.severity}`);
-  if (profile.progression) parts.push(`Progression: ${profile.progression}`);
-  if (profile.red_flag_denials) parts.push(`Red Flag Status: ${profile.red_flag_denials}`);
-  if (profile.summary) parts.push(`Summary: ${profile.summary}`);
-  return parts.join('. ');
+  return [
+    profile.age && `Age: ${profile.age}`,
+    profile.duration && `Duration: ${profile.duration}`,
+    profile.severity && `Severity: ${profile.severity}`,
+    profile.progression && `Progression: ${profile.progression}`,
+    profile.red_flag_denials && `Red Flag Status: ${profile.red_flag_denials}`,
+    profile.summary && `Summary: ${profile.summary}`,
+  ]
+    .filter(Boolean)
+    .join('. ');
 };
 
 const RecommendationScreen = () => {
@@ -81,6 +77,8 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+
+  // Keep useRef for synchronous guard against duplicate LLM calls
   const analysisStarted = useRef(false);
 
   const handleBack = useCallback(() => {
@@ -133,62 +131,73 @@ const RecommendationScreen = () => {
     });
   }, [navigation, handleBack]);
 
+  // Memoize nearest distances calculation
+  const nearestDistances = useMemo(() => {
+    let nearestHealthCenterDist = Infinity;
+    let nearestHospitalDist = Infinity;
+
+    facilities.forEach((f) => {
+      const type = f.type?.toLowerCase() || '';
+      const dist =
+        f.distance ??
+        (userLocation
+          ? calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              f.latitude,
+              f.longitude,
+            )
+          : Infinity);
+
+      if (dist === Infinity) return;
+
+      if (type.includes('health') || type.includes('unit') || type.includes('center')) {
+        if (dist < nearestHealthCenterDist) nearestHealthCenterDist = dist;
+      }
+
+      if (type.includes('hospital') || type.includes('infirmary') || type.includes('emergency')) {
+        if (dist < nearestHospitalDist) nearestHospitalDist = dist;
+      }
+    });
+
+    return { nearestHealthCenterDist, nearestHospitalDist };
+  }, [facilities, userLocation]);
+
   const analyzeSymptoms = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Calculate distances to nearest Health Center and Hospital
-      let nearestHealthCenterDist = Infinity;
-      let nearestHospitalDist = Infinity;
-
-      facilities.forEach((f) => {
-        const type = f.type?.toLowerCase() || '';
-        // Use existing distance if available, otherwise calculate it if we have user location
-        const dist =
-          f.distance ??
-          (userLocation
-            ? calculateDistance(
-                userLocation.latitude,
-                userLocation.longitude,
-                f.latitude,
-                f.longitude,
-              )
-            : Infinity);
-
-        if (dist === Infinity) return;
-
-        if (type.includes('health') || type.includes('unit') || type.includes('center')) {
-          if (dist < nearestHealthCenterDist) nearestHealthCenterDist = dist;
-        }
-
-        if (type.includes('hospital') || type.includes('infirmary') || type.includes('emergency')) {
-          if (dist < nearestHospitalDist) nearestHospitalDist = dist;
-        }
-      });
-
       const hcDistStr =
-        nearestHealthCenterDist !== Infinity
-          ? `${nearestHealthCenterDist.toFixed(1)}km`
+        nearestDistances.nearestHealthCenterDist !== Infinity
+          ? `${nearestDistances.nearestHealthCenterDist.toFixed(1)}km`
           : 'Unknown';
       const hospDistStr =
-        nearestHospitalDist !== Infinity ? `${nearestHospitalDist.toFixed(1)}km` : 'Unknown';
+        nearestDistances.nearestHospitalDist !== Infinity
+          ? `${nearestDistances.nearestHospitalDist.toFixed(1)}km`
+          : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
       const profile = assessmentData.extractedProfile;
       const profileSummary = formatClinicalSummary(profile);
-      
+
       // Clinical Context for LLM - Optimized to use summary as primary source
       let triageContext = `Initial Symptom: ${assessmentData.symptoms}.\nClinical Profile Summary: ${profileSummary}.\n\nContext: ${distanceContext}`;
 
       // Only include full answers if profile is fallback or readiness is low
-      if (isFallbackProfile(profile) || (profile?.triage_readiness_score && profile.triage_readiness_score < 0.7)) {
+      if (
+        isFallbackProfile(profile) ||
+        (profile?.triage_readiness_score && profile.triage_readiness_score < 0.7)
+      ) {
         triageContext += `\nRaw History for analysis: ${JSON.stringify(assessmentData.answers)}`;
       }
 
       // **NEW: Safety Context for local scan (User-only content)**
       const userAnswersOnly = assessmentData.answers
-        .map(a => a.answer)
-        .filter(a => a && !['denied', 'none', 'wala', 'hindi', 'not answered'].includes(a.toLowerCase()))
+        .map((a) => a.answer)
+        .filter(
+          (a) =>
+            a && !['denied', 'none', 'wala', 'hindi', 'not answered'].includes(a.toLowerCase()),
+        )
         .join('. ');
 
       const safetyContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${userAnswersOnly}.`;
@@ -223,10 +232,14 @@ const RecommendationScreen = () => {
       // Fallback
       setRecommendation({
         recommended_level: 'health_center',
-        user_advice: 'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening.',
-        clinical_soap: 'S: Symptoms reported. O: N/A. A: Fallback triage. P: Refer to Health Center.',
+        user_advice:
+          'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening.',
+        clinical_soap:
+          'S: Symptoms reported. O: N/A. A: Fallback triage. P: Refer to Health Center.',
         key_concerns: ['Need for professional evaluation'],
-        critical_warnings: ['Go to the Emergency Room IMMEDIATELY if you develop a stiff neck, confusion, or difficulty breathing.'],
+        critical_warnings: [
+          'Go to the Emergency Room IMMEDIATELY if you develop a stiff neck, confusion, or difficulty breathing.',
+        ],
         relevant_services: ['Consultation'],
         red_flags: [],
         follow_up_questions: [],
@@ -235,7 +248,7 @@ const RecommendationScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [assessmentData, facilities, userLocation, dispatch]);
+  }, [assessmentData, nearestDistances, dispatch]);
 
   useEffect(() => {
     // Load facilities if they aren't in the store
@@ -246,45 +259,50 @@ const RecommendationScreen = () => {
 
   useEffect(() => {
     // Start analysis once facilities are loaded (or if they were already available)
+    // Use ref for synchronous guard to prevent duplicate expensive LLM calls
     if (!analysisStarted.current && (!isFacilitiesLoading || facilities.length > 0)) {
       analysisStarted.current = true;
       analyzeSymptoms();
     }
   }, [facilities.length, isFacilitiesLoading, analyzeSymptoms]);
 
-  useEffect(() => {
-    if (recommendation && (facilities.length > 0 || !isFacilitiesLoading)) {
-      filterFacilities();
-    }
-  }, [recommendation, facilities, isFacilitiesLoading]);
-
-  const filterFacilities = () => {
+  const filterFacilities = useCallback(() => {
     if (!recommendation) return;
 
     const targetLevel = recommendation.recommended_level;
     const requiredServices = recommendation.relevant_services || [];
 
-    // 1. Get high-precision matches based on specialized services
+    // Get precision matches first
     const precisionMatches = filterFacilitiesByServices(facilities, requiredServices);
+    const precisionIds = new Set(precisionMatches.map((f) => f.id));
 
-    // 2. Get all facilities with general scoring (level + distance)
-    const scoredFacilities = facilities
+    // Only process non-precision facilities if we need more
+    const needed = Math.max(0, 3 - precisionMatches.length);
+
+    if (needed === 0) {
+      setRecommendedFacilities(precisionMatches.slice(0, 3));
+      return;
+    }
+
+    // Score and find top N from remaining facilities
+    const topScored = facilities
+      .filter((f) => !precisionIds.has(f.id))
       .map((facility) => ({
         facility,
         score: scoreFacility(facility, targetLevel, requiredServices),
       }))
-      .sort((a, b) => b.score - a.score);
-
-    // 3. Combine them: Precision matches first, then fill remaining slots with highest general scores
-    const precisionIds = new Set(precisionMatches.map((f) => f.id));
-    const fillFacilities = scoredFacilities
-      .filter((s) => !precisionIds.has(s.facility.id))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, needed)
       .map((s) => s.facility);
 
-    const finalRecommendations = [...precisionMatches, ...fillFacilities].slice(0, 3);
+    setRecommendedFacilities([...precisionMatches, ...topScored]);
+  }, [recommendation, facilities]);
 
-    setRecommendedFacilities(finalRecommendations);
-  };
+  useEffect(() => {
+    if (recommendation && (facilities.length > 0 || !isFacilitiesLoading)) {
+      filterFacilities();
+    }
+  }, [recommendation, facilities, isFacilitiesLoading, filterFacilities]);
 
   const handleViewDetails = (facilityId: string) => {
     navigation.navigate('FacilityDetails', { facilityId });
@@ -378,7 +396,10 @@ const RecommendationScreen = () => {
         )}
 
         {/* Care Level Badge */}
-        <Surface style={[styles.careBadge, { backgroundColor: careInfo.bgColor, marginBottom: 12 }]} elevation={1}>
+        <Surface
+          style={[styles.careBadge, { backgroundColor: careInfo.bgColor, marginBottom: 12 }]}
+          elevation={1}
+        >
           <MaterialCommunityIcons
             name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
             size={20}
@@ -392,12 +413,11 @@ const RecommendationScreen = () => {
         {/* Assessment & Advice - Integrated Layout */}
         <View style={styles.adviceSection}>
           <View style={styles.adviceHeader}>
-            <MaterialCommunityIcons 
-              name="heart-pulse" 
-              size={24} 
-              color={theme.colors.primary} 
-            />
-            <Text variant="titleMedium" style={[styles.adviceTitle, { color: theme.colors.primary }]}>
+            <MaterialCommunityIcons name="heart-pulse" size={24} color={theme.colors.primary} />
+            <Text
+              variant="titleMedium"
+              style={[styles.adviceTitle, { color: theme.colors.primary }]}
+            >
               ASSESSMENT & GUIDANCE
             </Text>
           </View>
@@ -406,58 +426,78 @@ const RecommendationScreen = () => {
           </Text>
         </View>
 
-        {(recommendation.key_concerns.length > 0 ||
-          recommendation.critical_warnings.length > 0) && (
-          <View style={styles.warningContainer}>
-            {recommendation.critical_warnings.length > 0 && (
-              <View style={styles.warningSection}>
+        {/* Critical Warnings Section - High Visibility (Moved & unwrapped for consistency) */}
+        {recommendation.critical_warnings.length > 0 && (
+          <View style={styles.criticalWarningsSection}>
+            <View style={styles.sectionHeaderRow}>
+              <MaterialCommunityIcons name="alert" size={24} color={theme.colors.error} />
+              <Text
+                variant="titleMedium"
+                style={[styles.sectionTitle, { color: theme.colors.error }]}
+              >
+                CRITICAL ALERTS
+              </Text>
+            </View>
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.sectionSubtitle,
+                { color: theme.colors.error, marginTop: 4, marginBottom: 12 },
+              ]}
+            >
+              Seek immediate care if any of these develop:
+            </Text>
+            {recommendation.critical_warnings.map((warning, idx) => (
+              <View key={`warn-${idx}`} style={styles.warningRow}>
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={20}
+                  color={theme.colors.error}
+                  style={{ marginTop: 2 }}
+                />
                 <Text
-                  variant="labelMedium"
-                  style={[styles.sectionLabel, { color: theme.colors.error }]}
+                  variant="bodyMedium"
+                  style={[styles.warningText, { color: theme.colors.onSurface }]}
                 >
-                  WARNING SIGNS TO MONITOR
+                  {warning}
                 </Text>
-                {recommendation.critical_warnings.map((warning, idx) => (
-                  <View key={`warn-${idx}`} style={styles.warningRow}>
-                    <MaterialCommunityIcons
-                      name="alert-circle-outline"
-                      size={20}
-                      color={theme.colors.error}
-                    />
-                    <Text
-                      variant="bodyMedium"
-                      style={[styles.warningText, { color: theme.colors.error }]}
-                    >
-                      {warning}
-                    </Text>
-                  </View>
-                ))}
               </View>
-            )}
-
-            {recommendation.key_concerns.length > 0 && (
-              <View style={styles.concernsSection}>
-                <Text variant="labelMedium" style={styles.sectionLabel}>
-                  KEY OBSERVATIONS
-                </Text>
-                <View style={styles.concernsList}>
-                  {recommendation.key_concerns.map((concern, idx) => (
-                    <View key={`concern-${idx}`} style={styles.concernRow}>
-                      <MaterialCommunityIcons
-                        name="information-outline"
-                        size={16}
-                        color="rgba(0,0,0,0.4)"
-                        style={{ marginTop: 2 }}
-                      />
-                      <Text variant="bodyMedium" style={styles.concernText}>
-                        {concern}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            )}
+            ))}
           </View>
+        )}
+
+        {/* Key Observations Section - Neutral/Informational */}
+        {recommendation.key_concerns.length > 0 && (
+          <Surface style={styles.observationsContainer} elevation={0}>
+            <View style={styles.sectionHeaderRow}>
+              <MaterialCommunityIcons
+                name="clipboard-text-search-outline"
+                size={22}
+                color={theme.colors.secondary}
+              />
+              <Text
+                variant="titleMedium"
+                style={[styles.sectionTitle, { color: theme.colors.secondary }]}
+              >
+                KEY OBSERVATIONS
+              </Text>
+            </View>
+            <View style={styles.concernsList}>
+              {recommendation.key_concerns.map((concern, idx) => (
+                <View key={`concern-${idx}`} style={styles.concernRow}>
+                  <MaterialCommunityIcons
+                    name="check-circle-outline"
+                    size={18}
+                    color={theme.colors.secondary}
+                    style={{ marginTop: 2 }}
+                  />
+                  <Text variant="bodyMedium" style={styles.concernText}>
+                    {concern}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </Surface>
         )}
 
         {/* Facilities Section */}
@@ -522,7 +562,8 @@ const RecommendationScreen = () => {
               </Text>
             </View>
             <Text variant="bodySmall" style={styles.handoverSubtitle}>
-              If you are at the facility, you can share this clinical handover report with the nurse or doctor.
+              If you are at the facility, you can share this clinical handover report with the nurse
+              or doctor.
             </Text>
             <Button
               title="View Handover Report"
@@ -624,42 +665,48 @@ const styles = StyleSheet.create({
     fontSize: 17,
   },
 
-  warningContainer: {
-    marginTop: 16,
-    marginBottom: 32,
-    backgroundColor: '#FFF7ED', // Very soft orange/amber background
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FED7AA',
+  criticalWarningsSection: {
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    marginBottom: 8,
   },
-  warningSection: {
+  observationsContainer: {
+    marginBottom: 24,
+    backgroundColor: '#F5F7F8',
+    borderRadius: 12,
     padding: 16,
-    paddingBottom: 8,
   },
-  concernsSection: {
-    padding: 16,
-    paddingTop: 8,
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
   },
+  sectionTitle: {
+    marginLeft: 8,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+
   warningRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 8,
     marginTop: 4,
   },
   warningText: {
     flex: 1,
     marginLeft: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     lineHeight: 22,
   },
-  concernsList: { paddingLeft: 0, marginTop: 4 },
-  concernRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 10 },
+  concernsList: { paddingLeft: 0, marginTop: 8 },
+  concernRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   concernText: {
     flex: 1,
-    color: 'rgba(0,0,0,0.7)',
+    color: '#45474B',
     lineHeight: 20,
     marginLeft: 10,
-    fontWeight: '500',
+    fontWeight: '400',
   },
 
   facilitiesSection: { marginBottom: 24 },
@@ -712,6 +759,11 @@ const styles = StyleSheet.create({
   },
   restartButton: {
     width: '100%',
+  },
+  sectionLabel: {
+    marginBottom: 8,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
 

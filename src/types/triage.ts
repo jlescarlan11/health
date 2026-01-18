@@ -43,14 +43,20 @@ export interface AssessmentProfile {
   clinical_friction_details?: string;
   is_complex_case?: boolean;
   symptom_category?: 'simple' | 'complex' | 'critical';
-  red_flags_resolved?: boolean;
+  denial_confidence?: 'high' | 'medium' | 'low';
+  turn_count?: number;
+}
+
+export interface GroupedOption {
+  category: string;
+  items: string[];
 }
 
 export interface AssessmentQuestion {
   id: string;
   text: string;
   type?: 'text' | 'multi-select';
-  options?: string[];
+  options?: string[] | GroupedOption[];
   tier?: number;
   is_red_flag?: boolean;
 }

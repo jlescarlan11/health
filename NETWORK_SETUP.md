@@ -6,16 +6,16 @@ This guide explains how to resolve network connectivity issues between the mobil
 
 ### 1. Get Your Local IP Address
 
-Run this command to get your local IP address:
-
-```bash
-node get-local-ip.js
-```
-
-Or on Windows PowerShell:
+Run this command on Windows PowerShell:
 
 ```powershell
 Get-NetIPAddress -AddressFamily IPv4 | Where-Object {$_.IPAddress -like '192.168.*' -or $_.IPAddress -like '10.*'} | Select-Object -First 1 | ForEach-Object {$_.IPAddress}
+```
+
+On macOS/Linux:
+
+```bash
+ifconfig | grep "inet " | grep -v 127.0.0.1
 ```
 
 ### 2. Update Configuration
@@ -61,16 +61,13 @@ npm start -- --clear
 
 ### 5. Verify Backend is Accessible
 
-Test the health endpoint:
+Test the health endpoint using curl:
 
 ```bash
-node test-backend.js
+curl http://localhost:3000/health
 ```
 
-You should see:
-
-- ✓ Health Check (localhost): Status 200
-- ✓ Health Check (LAN IP): Status 200
+You should see a status 200 response with `{"status": "ok"}`.
 
 ## Configuration Files
 
@@ -136,9 +133,6 @@ You should see:
 # Using curl (if available)
 curl http://localhost:3000/health
 curl http://YOUR_LOCAL_IP:3000/health
-
-# Or use the test script
-node test-backend.js
 ```
 
 ### Test from Mobile Device

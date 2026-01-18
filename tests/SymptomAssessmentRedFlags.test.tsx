@@ -14,11 +14,7 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini', () => ({
-  generateAssessmentPlan: jest.fn(),
-  extractClinicalProfile: jest.fn(),
-  getGeminiResponse: jest.fn(),
-}));
+jest.mock('../src/services/gemini');
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),
@@ -81,9 +77,13 @@ jest.mock('../src/components/common', () => {
 jest.mock('../src/components/common/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
-    Button: ({ title, onPress, variant }: { title: string; onPress: () => void; variant?: string }) => (
-      <TouchableOpacity onPress={onPress} testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}>
-        <Text>{title} ({variant})</Text>
+    Button: ({ title, onPress, disabled }: { title: string; onPress: () => void; disabled?: boolean }) => (
+      <TouchableOpacity 
+        onPress={disabled ? undefined : onPress} 
+        testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}
+        disabled={disabled}
+      >
+        <Text>{title}</Text>
       </TouchableOpacity>
     ),
   };
@@ -157,20 +157,9 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     expect(screen.getByTestId('button-confirm')).toBeTruthy();
   });
 
-  test('Confirming with no selection sends "None"', async () => {
+  test('Confirm button is disabled until at least one selection is made', async () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
     (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({ 
-      summary: 'Summary',
-      age: '30',
-      duration: '1 day',
-      severity: 'Mild',
-      red_flag_denials: 'None',
-      ambiguity_detected: false,
-      internal_inconsistency_detected: false,
-      red_flags_resolved: true,
-      triage_readiness_score: 0.95
-    });
 
     render(
       <ReduxProvider store={store}>
@@ -180,13 +169,21 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(() => expect(screen.getByTestId('multi-select-checklist')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('button-confirm'));
+    // Verify button is disabled initially
+    const confirmButton = screen.getByTestId('button-confirm');
+    expect(confirmButton).toBeDisabled();
 
-    await waitFor(() => {
-      expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: 'None' })
-      ]));
-    }, { timeout: 3000 });
+    // Select an option
+    fireEvent.press(screen.getByTestId('option-Fever'));
+
+    // Verify button is now enabled
+    expect(confirmButton).not.toBeDisabled();
+    
+    // Deselect the option
+    fireEvent.press(screen.getByTestId('option-Fever'));
+    
+    // Verify button is disabled again
+    expect(confirmButton).toBeDisabled();
   });
 
   test('Confirm button sends selected symptoms', async () => {
@@ -218,7 +215,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(() => {
       expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: expect.stringContaining('Fever, Cough') })
+        expect.objectContaining({ text: expect.stringContaining("I'm experiencing Fever, Cough") })
       ]));
     }, { timeout: 3000 });
   });
