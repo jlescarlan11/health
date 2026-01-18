@@ -1,5 +1,4 @@
-import { AssessmentProfile } from '../types/triage';
-import { AssessmentResponse } from '../api/geminiClient';
+import { AssessmentProfile, AssessmentResponse } from '../types';
 import { KeywordDetector, KeywordMatch, SegmentAnalysis } from './base/KeywordDetector';
 
 // --- KEYWORD CATEGORIES ---

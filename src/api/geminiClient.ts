@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
-import { FacilityService } from '../types';
+import { FacilityService, AssessmentResponse } from '../types';
 import { AssessmentProfile } from '../types/triage';
 
 // Configuration
@@ -22,19 +22,6 @@ const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
-}
-
-export interface AssessmentResponse {
-  recommended_level: 'self_care' | 'health_center' | 'hospital' | 'emergency';
-  follow_up_questions: string[];
-  user_advice: string;
-  clinical_soap: string;
-  key_concerns: string[];
-  critical_warnings: string[];
-  relevant_services: FacilityService[];
-  red_flags: string[];
-  triage_readiness_score?: number;
-  ambiguity_detected?: boolean;
 }
 
 interface CacheEntry {

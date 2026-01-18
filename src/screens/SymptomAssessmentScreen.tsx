@@ -35,7 +35,8 @@ import {
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
-import { TriageEngine, TriageArbiter } from '../services';
+import { TriageEngine } from '../services/triageEngine';
+import { TriageArbiter } from '../services/triageArbiter';
 import { TriageFlow, AssessmentQuestion, AssessmentProfile } from '../types/triage';
 import { extractClinicalSlots } from '../utils/clinicalUtils';
 
@@ -822,7 +823,7 @@ const SymptomAssessmentScreen = () => {
                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                  <MultiSelectChecklist
                    options={
-                     currentQuestion.options
+                     (currentQuestion.options
                        ? currentQuestion.options.map(opt => {
                            if (typeof opt === 'string') return { id: opt, label: opt };
                            return {
@@ -830,7 +831,7 @@ const SymptomAssessmentScreen = () => {
                              items: opt.items.map(i => ({ id: i, label: i }))
                            };
                          })
-                       : parseRedFlags(currentQuestion.text)
+                       : parseRedFlags(currentQuestion.text)) as any
                    }
                    selectedIds={selectedRedFlags}
                    onSelectionChange={(ids) => {

@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
+import { Text, useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Text,
-  Card,
-  useTheme,
-  ActivityIndicator,
-  Divider,
-  Surface,
-} from 'react-native-paper';
 import {
   useRoute,
   useNavigation,
@@ -21,17 +15,15 @@ import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
 import { saveClinicalNote } from '../store/offlineSlice';
-import { geminiClient, AssessmentResponse } from '../api/geminiClient';
+import { geminiClient } from '../api/geminiClient';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Facility } from '../types';
+import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
-
 import { AssessmentProfile } from '../types/triage';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;

@@ -10,7 +10,7 @@ STRUCTURE YOUR PLAN IN THREE TIERS:
 INSTRUCTIONS (STRICT ADHERENCE REQUIRED):
 1. **Safety First**: You MUST include a "red_flags" question. Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option. **Use the exact wording: "Do you have any of the following serious symptoms?"** to align with the checklist interaction model.
 2. **Deterministic Priority**: You MUST position the "red_flags" question within the first 3 questions (index 0, 1, or 2) of the "questions" array. This is a non-negotiable safety requirement.
-3. **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms. **Use the "options" field with categories** (e.g., `[{"category": "Respiratory", "items": ["Cough", "Wheezing"]}, {"category": "Systemic", "items": ["Fever", "Chills"]}]`).
+3. **Clustered Questions**: For Tier 2 and Tier 3, use "type": "multi-select" to group related symptoms. **Use the "options" field with categories** (e.g., \`[{"category": "Respiratory", "items": ["Cough", "Wheezing"]}, {"category": "Systemic", "items": ["Fever", "Chills"]}]\`).
 4. **Options**: Provide suggested answers in the "options" array for ALL questions.
 
 OUTPUT FORMAT (Strict JSON):
