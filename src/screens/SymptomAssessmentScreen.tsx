@@ -318,9 +318,9 @@ const SymptomAssessmentScreen = () => {
   
     // --- INTERACTION LOGIC ---
     
-    const handleNext = async (answerOverride?: string, isSkip: boolean = false) => {
+    const handleNext = async (answerOverride?: string) => {
       const answer = answerOverride || inputText;
-      if ((!answer.trim() && !isSkip) || processing) return;
+      if (!answer.trim() || processing) return;
   
       const currentQ = questions[currentQuestionIndex];
       if (!currentQ && !isOfflineMode) return;
@@ -331,7 +331,7 @@ const SymptomAssessmentScreen = () => {
       // 1. Append User Message
       const userMsg: Message = {
         id: `user-${Date.now()}`,
-        text: isSkip ? "I'm not sure" : answer,
+        text: answer,
         sender: 'user',
         isOffline: isOfflineMode
       };
@@ -340,8 +340,7 @@ const SymptomAssessmentScreen = () => {
       setIsTyping(true);
   
       // 2. Emergency Check (Local, Deterministic)
-      // Only check if it's NOT a skip
-      if (!isSkip && !isOfflineMode) {
+      if (!isOfflineMode) {
           // Provide context of what has been discussed so far for the SOAP note
           const historyContext = messages
             .filter(m => m.sender === 'user')
@@ -380,7 +379,7 @@ const SymptomAssessmentScreen = () => {
   
       // 3. Store Answer
       if (!isOfflineMode) {
-          const newAnswers = { ...answers, [currentQ.id]: isSkip ? "Skipped/Unknown" : answer };
+          const newAnswers = { ...answers, [currentQ.id]: answer };
           setAnswers(newAnswers);
   
           // 4. Progress or Finish
@@ -901,13 +900,6 @@ const SymptomAssessmentScreen = () => {
                   accessibilityLabel="Confirm selection"
                   accessibilityRole="button"
                 />
-                <Button 
-                   variant="text" 
-                   onPress={() => handleNext(undefined, true)} 
-                   disabled={processing}
-                   title="I'm not sure"
-                   textColor={theme.colors.onSurfaceVariant}
-                />
              </View>
            </View>
          ) : (
@@ -919,13 +911,6 @@ const SymptomAssessmentScreen = () => {
                          <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
                      ))}
                  </ScrollView>
-             )}
-
-             {/* Skip Option for Text Input */}
-             {!isOfflineMode && !offlineOptions && (
-               <View style={{ flexDirection: 'row', justifyContent: 'flex-start', paddingBottom: 8 }}>
-                  <Chip onPress={() => handleNext(undefined, true)} disabled={processing}>I'm not sure</Chip>
-               </View>
              )}
 
              <InputCard
