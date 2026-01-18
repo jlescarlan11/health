@@ -162,20 +162,9 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     expect(screen.getByTestId('button-confirm')).toBeTruthy();
   });
 
-  test('Confirming with no selection sends "None"', async () => {
+  test('Confirm button is disabled until at least one selection is made', async () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
     (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({ 
-      summary: 'Summary',
-      age: '30',
-      duration: '1 day',
-      severity: 'Mild',
-      red_flag_denials: 'None',
-      ambiguity_detected: false,
-      internal_inconsistency_detected: false,
-      red_flags_resolved: true,
-      triage_readiness_score: 0.95
-    });
 
     render(
       <ReduxProvider store={store}>
@@ -185,13 +174,21 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(() => expect(screen.getByTestId('multi-select-checklist')).toBeTruthy());
 
-    fireEvent.press(screen.getByTestId('button-confirm'));
+    // Verify button is disabled initially
+    const confirmButton = screen.getByTestId('button-confirm');
+    expect(confirmButton).toBeDisabled();
 
-    await waitFor(() => {
-      expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: "No, I don't have any of those." })
-      ]));
-    }, { timeout: 3000 });
+    // Select an option
+    fireEvent.press(screen.getByTestId('option-Fever'));
+
+    // Verify button is now enabled
+    expect(confirmButton).not.toBeDisabled();
+    
+    // Deselect the option
+    fireEvent.press(screen.getByTestId('option-Fever'));
+    
+    // Verify button is disabled again
+    expect(confirmButton).toBeDisabled();
   });
 
   test('Confirm button sends selected symptoms', async () => {

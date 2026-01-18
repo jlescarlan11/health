@@ -37,7 +37,7 @@ import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
 import { TriageArbiter } from '../services/triageArbiter';
-import { TriageFlow, AssessmentQuestion, AssessmentProfile } from '../types/triage';
+import { TriageFlow, AssessmentQuestion, AssessmentProfile, GroupedOption } from '../types/triage';
 import { extractClinicalSlots } from '../utils/clinicalUtils';
 
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
@@ -61,6 +61,14 @@ interface Message {
   sender: 'assistant' | 'user';
   isOffline?: boolean;
 }
+
+const isNoneOption = (text: string) => {
+  const lower = text.toLowerCase();
+  return lower === 'none' || 
+         lower === 'none of the above' || 
+         lower === 'none of these' || 
+         lower === 'none of these apply';
+};
 
 const parseRedFlags = (text: string): { id: string, label: string }[] => {
   // 1. Try to find a list after a colon
@@ -98,7 +106,7 @@ const parseRedFlags = (text: string): { id: string, label: string }[] => {
 
 const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[]) => {
   // 1. Handle "None"
-  const labels = selections.filter(i => i.toLowerCase() !== 'none');
+  const labels = selections.filter(i => !isNoneOption(i));
   if (labels.length === 0) {
      return "No, I don't have any of those.";
   }
@@ -785,6 +793,26 @@ const SymptomAssessmentScreen = () => {
 
   const readinessVisuals = getReadinessVisuals(readiness);
 
+  // Determine if current question has a "None" option and if it's mandatory
+  const currentOptions = currentQuestion?.options || (currentQuestion ? parseRedFlags(currentQuestion.text) : []);
+  const hasNoneOptionInCurrent = currentOptions.some((opt: any) => {
+    if (typeof opt === 'string') return isNoneOption(opt);
+    if (opt && typeof opt === 'object' && 'label' in opt) return isNoneOption((opt as any).label);
+    if (opt && typeof opt === 'object' && 'items' in opt) {
+        return (opt as any).items.some((i: any) => isNoneOption(typeof i === 'string' ? i : (i.id || i.label || '')));
+    }
+    return false;
+  });
+
+  const isMandatory = currentQuestion ? (
+    currentQuestion.text.toLowerCase().includes('drink') || 
+    currentQuestion.text.toLowerCase().includes('frequently') ||
+    currentQuestion.text.toLowerCase().includes('how often') ||
+    currentQuestion.text.toLowerCase().includes('how many')
+  ) : false;
+
+  const showNoneButton = hasNoneOptionInCurrent && !isMandatory && selectedRedFlags.length === 0;
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
@@ -856,15 +884,32 @@ const SymptomAssessmentScreen = () => {
                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
                  <MultiSelectChecklist
                    options={
-                     (currentQuestion.options
-                       ? currentQuestion.options.map(opt => {
-                           if (typeof opt === 'string') return { id: opt, label: opt };
+                     (() => {
+                       const mapped = (currentQuestion.options
+                         ? currentQuestion.options.map(opt => {
+                             if (typeof opt === 'string') return { id: opt, label: opt };
+                             return {
+                               category: (opt as GroupedOption).category,
+                               items: (opt as GroupedOption).items.map(i => ({ id: i, label: i }))
+                             };
+                           })
+                         : parseRedFlags(currentQuestion.text)) as any;
+
+                       if (hasNoneOptionInCurrent && !isMandatory) {
+                         return mapped.map((opt: any) => {
+                           if ('id' in opt) return isNoneOption(opt.id) ? null : opt;
                            return {
-                             category: opt.category,
-                             items: opt.items.map(i => ({ id: i, label: i }))
+                             ...opt,
+                             items: opt.items.filter((i: any) => !isNoneOption(i.id))
                            };
-                         })
-                       : parseRedFlags(currentQuestion.text)) as any
+                         }).filter((opt: any) => {
+                           if (!opt) return false;
+                           if ('items' in opt) return opt.items.length > 0;
+                           return true;
+                         });
+                       }
+                       return mapped;
+                     })()
                    }
                    selectedIds={selectedRedFlags}
                    singleSelection={currentQuestion.type !== 'multi-select'}
@@ -872,10 +917,10 @@ const SymptomAssessmentScreen = () => {
                      // Mutual exclusivity for "None" in Multi-Select
                      if (currentQuestion.type === 'multi-select') {
                          const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
-                         if (lastAdded?.toLowerCase() === 'none') {
+                         if (lastAdded && isNoneOption(lastAdded)) {
                             setSelectedRedFlags([lastAdded]);
-                         } else if (ids.length > 1 && ids.some(id => id.toLowerCase() === 'none')) {
-                            setSelectedRedFlags(ids.filter(id => id.toLowerCase() !== 'none'));
+                         } else if (ids.length > 1 && ids.some(id => isNoneOption(id))) {
+                            setSelectedRedFlags(ids.filter(id => !isNoneOption(id)));
                          } else {
                             setSelectedRedFlags(ids);
                          }
@@ -888,18 +933,33 @@ const SymptomAssessmentScreen = () => {
                </ScrollView>
              </View>
              <View style={{ marginTop: 8, gap: 8 }}>
-                <Button 
-                  testID="button-confirm"
-                  variant="primary"
-                  onPress={() => {
-                    handleNext(formatSelectionAnswer(currentQuestion, selectedRedFlags));
-                  }}
-                  title="Confirm"
-                  style={{ width: '100%' }}
-                  disabled={processing || (currentQuestion.type !== 'multi-select' && selectedRedFlags.length === 0)}
-                  accessibilityLabel="Confirm selection"
-                  accessibilityRole="button"
-                />
+                {showNoneButton ? (
+                   <Button 
+                     testID="button-none"
+                     variant="outline"
+                     onPress={() => {
+                       handleNext(formatSelectionAnswer(currentQuestion, []));
+                     }}
+                     title="None of the above"
+                     style={{ width: '100%' }}
+                     disabled={processing}
+                     accessibilityLabel="None of the above"
+                     accessibilityRole="button"
+                   />
+                ) : (
+                   <Button 
+                     testID="button-confirm"
+                     variant="primary"
+                     onPress={() => {
+                       handleNext(formatSelectionAnswer(currentQuestion, selectedRedFlags));
+                     }}
+                     title="Confirm"
+                     style={{ width: '100%' }}
+                     disabled={processing || selectedRedFlags.length === 0}
+                     accessibilityLabel="Confirm selection"
+                     accessibilityRole="button"
+                   />
+                )}
              </View>
            </View>
          ) : (
