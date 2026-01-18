@@ -865,7 +865,7 @@ const SymptomAssessmentScreen = () => {
         }
       ]}>
          {/* Checklist / Radio UI */}
-         {!isOfflineMode && currentQuestion && (currentQuestion.type === 'multi-select' || (currentQuestion.options && currentQuestion.options.length > 0)) ? (
+         {!isOfflineMode && currentQuestion && currentQuestion.type === 'multi-select' ? (
            <View style={{ paddingBottom: 8 }}>
              <Text 
                variant="titleSmall" 
@@ -878,7 +878,7 @@ const SymptomAssessmentScreen = () => {
                  color: theme.colors.onSurfaceVariant 
                }}
              >
-               {currentQuestion.type === 'multi-select' ? 'SELECT ALL THAT APPLY' : 'SELECT ONE'}
+               SELECT ALL THAT APPLY
              </Text>
              <View style={{ maxHeight: SCREEN_HEIGHT / 3 }}>
                <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
@@ -912,21 +912,16 @@ const SymptomAssessmentScreen = () => {
                      })()
                    }
                    selectedIds={selectedRedFlags}
-                   singleSelection={currentQuestion.type !== 'multi-select'}
+                   singleSelection={false}
                    onSelectionChange={(ids) => {
                      // Mutual exclusivity for "None" in Multi-Select
-                     if (currentQuestion.type === 'multi-select') {
-                         const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
-                         if (lastAdded && isNoneOption(lastAdded)) {
-                            setSelectedRedFlags([lastAdded]);
-                         } else if (ids.length > 1 && ids.some(id => isNoneOption(id))) {
-                            setSelectedRedFlags(ids.filter(id => !isNoneOption(id)));
-                         } else {
-                            setSelectedRedFlags(ids);
-                         }
+                     const lastAdded = ids.find(id => !selectedRedFlags.includes(id));
+                     if (lastAdded && isNoneOption(lastAdded)) {
+                        setSelectedRedFlags([lastAdded]);
+                     } else if (ids.length > 1 && ids.some(id => isNoneOption(id))) {
+                        setSelectedRedFlags(ids.filter(id => !isNoneOption(id)));
                      } else {
-                         // Single select (Radio) logic is handled by the component returning [id]
-                         setSelectedRedFlags(ids);
+                        setSelectedRedFlags(ids);
                      }
                    }}
                  />
@@ -964,12 +959,20 @@ const SymptomAssessmentScreen = () => {
            </View>
          ) : (
            <>
-             {/* Offline Chips */}
-             {offlineOptions && (
+             {/* Suggestions / Offline Chips */}
+             {(offlineOptions || (!isOfflineMode && currentQuestion?.options && currentQuestion.options.length > 0)) && (
                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 8 }}>
-                     {offlineOptions.map(opt => (
-                         <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
-                     ))}
+                     {offlineOptions 
+                        ? offlineOptions.map(opt => (
+                             <Chip key={opt.label} onPress={() => handleNext(opt.label)} disabled={processing}>{opt.label}</Chip>
+                          ))
+                        : currentQuestion!.options!.map((opt, idx) => {
+                             if (typeof opt === 'string') {
+                               return <Chip key={idx} onPress={() => handleNext(opt)} disabled={processing} style={{ marginRight: 8 }}>{opt}</Chip>;
+                             }
+                             return null;
+                        })
+                     }
                  </ScrollView>
              )}
 
