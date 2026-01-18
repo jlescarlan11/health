@@ -14,12 +14,7 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini', () => ({
-  generateAssessmentPlan: jest.fn(),
-  extractClinicalProfile: jest.fn(),
-  getGeminiResponse: jest.fn(),
-  streamGeminiResponse: jest.fn(),
-}));
+jest.mock('../src/services/gemini');
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),

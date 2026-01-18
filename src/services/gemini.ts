@@ -133,7 +133,6 @@ export const extractClinicalProfile = async (
       progression: null,
       red_flag_denials: null,
       summary: conversationText,
-      triage_readiness_score: 0.0, // Default to 0 on failure
     };
   }
 };
