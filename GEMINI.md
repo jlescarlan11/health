@@ -213,6 +213,12 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Fallback Logic:** Restored the "I'm not sure" Chip for open-text questions to ensure users can still skip if needed.
   - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/components/common/MultiSelectChecklist.tsx`.
 
+- **Gemini Streaming Fix (Jan 19, 2026):**
+  - **Streaming Compatibility:** Resolved a runtime error ("Cannot read property 'pipeThrough' of undefined") caused by `generateContentStream` usage in React Native (Hermes).
+  - **Implementation:** Refactored `streamGeminiResponse` in `src/services/gemini.ts` to bypass the incompatible streaming method. It now uses `generateContentWithRetry` (unary) and simulates streaming by yielding chunks of the text response. This maintains the `AsyncGenerator` interface and preserves the typing effect in the UI without crashing the app.
+  - **Verification:** Validated the fix with `src/services/__tests__/gemini.test.ts` and confirmed all frontend tests pass.
+  - **Files Modified:** `src/services/gemini.ts`.
+
 - **Comprehensive Dead Code Cleanup (Jan 17, 2026):**
   - **File Deletion:** Removed 8 dead files including legacy Auth components (`OTPInput`, `PhoneInput`), unused shared components (`Alert`, `Input`, `CustomHeader`), legacy storage services (`storageService`, `storageLoader`), and the obsolete `slotExtractor.ts`.
   - **Active Code Refinement:** Eliminated unused imports, variables, and state in 10+ active files (`ClinicalNoteScreen`, `SymptomAssessmentScreen`, `NavigatorHomeScreen`, `StandardHeader`, etc.) as identified by static analysis.
