@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import {
   GENERATE_ASSESSMENT_QUESTIONS_PROMPT,
   FINAL_SLOT_EXTRACTION_PROMPT,
+  REFINE_QUESTION_PROMPT,
 } from '../constants/prompts';
 import { AssessmentProfile, AssessmentQuestion } from '../types/triage';
 import {
@@ -132,8 +133,31 @@ export const extractClinicalProfile = async (
       severity: null,
       progression: null,
       red_flag_denials: null,
+      uncertainty_accepted: false,
       summary: conversationText,
     };
+  }
+};
+
+/**
+ * Refines a question to naturally follow the user's last answer (Call #3)
+ */
+export const refineQuestion = async (
+  questionText: string,
+  userAnswer: string,
+): Promise<string> => {
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const prompt = REFINE_QUESTION_PROMPT.replace('{{questionText}}', questionText).replace(
+      '{{userAnswer}}',
+      userAnswer,
+    );
+
+    const responseText = await generateContentWithRetry(model, prompt);
+    return responseText.trim() || questionText;
+  } catch (error) {
+    console.error('[Gemini] Failed to refine question:', error);
+    return questionText;
   }
 };
 
@@ -157,33 +181,18 @@ export const streamGeminiResponse = async function* (
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   try {
-    // Attempt to stream
-    const result = await model.generateContentStream(prompt);
-
-    for await (const chunk of result.stream) {
-      const chunkText = chunk.text();
-      if (chunkText) {
-        yield chunkText;
-      }
+    // Direct fallback to non-streaming request with chunked delivery
+    // (React Native environment lacks full ReadableStream support for generateContentStream)
+    const result = await generateContentWithRetry(model, prompt);
+    // Split into smaller chunks to simulate streaming and maintain UX
+    const chunkSize = 20; // Characters per chunk (smaller for smoother simulated feel)
+    for (let i = 0; i < result.length; i += chunkSize) {
+      yield result.slice(i, i + chunkSize);
+      // specific small delay to make it feel like typing
+      await new Promise((resolve) => setTimeout(resolve, 10));
     }
-  } catch (error: unknown) {
-    const err = error as { message?: string };
-    console.warn(
-      '[Gemini Service] Streaming failed, attempting fallback to unary generation. Error:',
-      err.message || error,
-    );
-
-    // Fallback to non-streaming request with chunked delivery
-    try {
-      const result = await generateContentWithRetry(model, prompt);
-      // Split into smaller chunks to simulate streaming and maintain UX
-      const chunkSize = 50; // Characters per chunk
-      for (let i = 0; i < result.length; i += chunkSize) {
-        yield result.slice(i, i + chunkSize);
-      }
-    } catch (fallbackError) {
-      console.error('[Gemini Service] Fallback generation also failed:', fallbackError);
-      throw fallbackError;
-    }
+  } catch (error) {
+    console.error('[Gemini Service] Generation failed:', error);
+    throw error;
   }
 };
