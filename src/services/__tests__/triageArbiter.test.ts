@@ -13,6 +13,7 @@ describe('TriageArbiter Coherence & Completeness', () => {
     severity: 'moderate',
     progression: 'worsening',
     red_flag_denials: 'none',
+    uncertainty_accepted: false,
     summary: 'Testing',
     triage_readiness_score: 0.95,
     ambiguity_detected: false,
@@ -38,10 +39,16 @@ describe('TriageArbiter Coherence & Completeness', () => {
 
   describe('Clinical Coherence (Stage B)', () => {
     it('should return RESOLVE_AMBIGUITY if ambiguity_detected is true regardless of readiness', () => {
-      const profile = { ...baseProfile, ambiguity_detected: true, triage_readiness_score: 1.0 };
+      const profile = { ...baseProfile, ambiguity_detected: true, triage_readiness_score: 1.0, uncertainty_accepted: false };
       const result = TriageArbiter.evaluateAssessmentState(mockHistory, profile, 4, 5, []);
       expect(result.signal).toBe('RESOLVE_AMBIGUITY');
       expect(result.reason).toContain('COHERENCE FAIL: Unresolved clinical ambiguity');
+    });
+
+    it('should allow TERMINATE if ambiguity_detected is true but uncertainty_accepted is true', () => {
+      const profile = { ...baseProfile, ambiguity_detected: true, uncertainty_accepted: true };
+      const result = TriageArbiter.evaluateAssessmentState(mockHistory, profile, 4, 4, []);
+      expect(result.signal).toBe('TERMINATE');
     });
 
     it('should block termination if symptom progression is missing', () => {

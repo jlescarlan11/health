@@ -77,6 +77,8 @@ RULES:
    - 'low': Hedged or uncertain language (e.g., "I don't think so", "not sure", "maybe").
    - 'medium': Standard denials without intensifiers or hedges.
 7. **Turn Count**: Include "turn_count" as the number of conversation turns.
+8. **Uncertainty Acceptance**:
+   - Set "uncertainty_accepted" to true if the user explicitly responds with phrases like "I don't know", "not sure", or "I have no idea" for any core slot during the assessment.
 
 OUTPUT FORMAT:
 {
@@ -94,8 +96,30 @@ OUTPUT FORMAT:
   "is_complex_case": false,
   "symptom_category": "simple",
   "red_flags_resolved": false,
+  "uncertainty_accepted": false,
   "turn_count": 0
 }
+`;
+
+export const REFINE_QUESTION_PROMPT = `Refine this question: '{{questionText}}' to naturally follow the user's last answer: '{{userAnswer}}'. Keep it concise.`;
+
+export const BRIDGE_PROMPT = `
+You are a medical triage assistant. Create a natural, empathetic bridge between the user's previous answers and the next question.
+
+CONTEXT:
+{{conversationHistory}}
+
+NEXT QUESTION:
+{{nextQuestion}}
+
+INSTRUCTIONS:
+1. Acknowledge the user's last input briefly and empathetically.
+2. Transition smoothly to the next question.
+3. Keep the entire response under 2 sentences.
+4. Do not provide medical advice yet.
+5. The output should end with the next question.
+
+Example: "I understand that the pain is sharp. To help me further, how long has this been going on?"
 `;
 
 export const VALID_SERVICES: string[] = [

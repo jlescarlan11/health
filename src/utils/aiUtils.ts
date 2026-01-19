@@ -12,6 +12,7 @@ export function calculateTriageScore(slots: {
   severity?: string | null;
   progression?: string | null;
   red_flags_resolved?: boolean;
+  uncertainty_accepted?: boolean;
   clinical_friction_detected?: boolean;
   ambiguity_detected?: boolean;
   internal_inconsistency_detected?: boolean;
@@ -25,8 +26,13 @@ export function calculateTriageScore(slots: {
   const coreSlots: Array<'age' | 'duration' | 'severity' | 'progression'> = ['age', 'duration', 'severity', 'progression'];
   const nullCount = coreSlots.filter(s => !slots[s] || (typeof slots[s] === 'string' && slots[s]!.toLowerCase() === 'null')).length;
   if (nullCount > 0) {
-    score = 0.80;
-    score -= (nullCount * 0.10);
+    if (slots.uncertainty_accepted) {
+      score -= 0.05;
+      score -= (nullCount * 0.05);
+    } else {
+      score = 0.80;
+      score -= (nullCount * 0.10);
+    }
   }
 
   // Safety floor (non-negotiable)

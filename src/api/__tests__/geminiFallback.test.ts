@@ -4,11 +4,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 // Mocks
 jest.mock('@google/generative-ai');
 jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  getAllKeys: jest.fn(),
-  multiRemove: jest.fn(),
+  getItem: jest.fn(() => Promise.resolve(null)),
+  setItem: jest.fn(() => Promise.resolve()),
+  removeItem: jest.fn(() => Promise.resolve()),
+  getAllKeys: jest.fn(() => Promise.resolve([])),
+  multiRemove: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('expo-constants', () => ({
   expoConfig: { extra: { geminiApiKey: 'test-key' } },

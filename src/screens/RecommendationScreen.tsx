@@ -16,6 +16,7 @@ import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
 import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient } from '../api/geminiClient';
+import { detectEmergency } from '../services/emergencyDetector';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
@@ -45,16 +46,15 @@ const formatClinicalSummary = (profile?: AssessmentProfile) => {
     return profile.summary; // Return raw history for direct analysis
   }
 
-  return [
-    profile.age && `Age: ${profile.age}`,
-    profile.duration && `Duration: ${profile.duration}`,
-    profile.severity && `Severity: ${profile.severity}`,
-    profile.progression && `Progression: ${profile.progression}`,
-    profile.red_flag_denials && `Red Flag Status: ${profile.red_flag_denials}`,
-    profile.summary && `Summary: ${profile.summary}`,
-  ]
-    .filter(Boolean)
-    .join('. ');
+  const parts = [];
+  if (profile.age) parts.push(`Age: ${profile.age}`);
+  if (profile.duration) parts.push(`Duration: ${profile.duration}`);
+  if (profile.severity) parts.push(`Severity: ${profile.severity}`);
+  if (profile.progression) parts.push(`Progression: ${profile.progression}`);
+  if (profile.red_flag_denials) parts.push(`Red Flag Status: ${profile.red_flag_denials}`);
+  if (profile.summary) parts.push(`Summary: ${profile.summary}`);
+
+  return parts.join('. ');
 };
 
 const RecommendationScreen = () => {
@@ -77,9 +77,19 @@ const RecommendationScreen = () => {
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+  const [analysisCompleted, setAnalysisCompleted] = useState(false);
 
-  // Keep useRef for synchronous guard against duplicate LLM calls
-  const analysisStarted = useRef(false);
+  // Refs for stabilizing analyzeSymptoms dependencies
+  const symptomsRef = useRef(assessmentData.symptoms);
+  const answersRef = useRef(assessmentData.answers);
+  const profileRef = useRef(assessmentData.extractedProfile);
+
+  // Update refs when data changes
+  useEffect(() => {
+    symptomsRef.current = assessmentData.symptoms;
+    answersRef.current = assessmentData.answers;
+    profileRef.current = assessmentData.extractedProfile;
+  }, [assessmentData]);
 
   const handleBack = useCallback(() => {
     Alert.alert(
@@ -131,23 +141,26 @@ const RecommendationScreen = () => {
     });
   }, [navigation, handleBack]);
 
+  // Ensure all facilities have distances calculated once
+  const facilitiesWithDistance = useMemo(() => {
+    if (!userLocation) return facilities;
+
+    return facilities.map((f) => ({
+      ...f,
+      distance:
+        f.distance ??
+        calculateDistance(userLocation.latitude, userLocation.longitude, f.latitude, f.longitude),
+    }));
+  }, [facilities, userLocation]);
+
   // Memoize nearest distances calculation
   const nearestDistances = useMemo(() => {
     let nearestHealthCenterDist = Infinity;
     let nearestHospitalDist = Infinity;
 
-    facilities.forEach((f) => {
+    facilitiesWithDistance.forEach((f) => {
       const type = f.type?.toLowerCase() || '';
-      const dist =
-        f.distance ??
-        (userLocation
-          ? calculateDistance(
-              userLocation.latitude,
-              userLocation.longitude,
-              f.latitude,
-              f.longitude,
-            )
-          : Infinity);
+      const dist = f.distance ?? Infinity;
 
       if (dist === Infinity) return;
 
@@ -161,7 +174,7 @@ const RecommendationScreen = () => {
     });
 
     return { nearestHealthCenterDist, nearestHospitalDist };
-  }, [facilities, userLocation]);
+  }, [facilitiesWithDistance]);
 
   const analyzeSymptoms = useCallback(async () => {
     try {
@@ -177,22 +190,12 @@ const RecommendationScreen = () => {
           : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
-      const profile = assessmentData.extractedProfile;
+      const profile = profileRef.current;
+      const isFallback = isFallbackProfile(profile);
       const profileSummary = formatClinicalSummary(profile);
 
-      // Clinical Context for LLM - Optimized to use summary as primary source
-      let triageContext = `Initial Symptom: ${assessmentData.symptoms}.\nClinical Profile Summary: ${profileSummary}.\n\nContext: ${distanceContext}`;
-
-      // Only include full answers if profile is fallback or readiness is low
-      if (
-        isFallbackProfile(profile) ||
-        (profile?.triage_readiness_score && profile.triage_readiness_score < 0.7)
-      ) {
-        triageContext += `\nRaw History for analysis: ${JSON.stringify(assessmentData.answers)}`;
-      }
-
-      // **NEW: Safety Context for local scan (User-only content)**
-      const userAnswersOnly = assessmentData.answers
+      // Extract user answers once for reuse
+      const userAnswersOnly = answersRef.current
         .map((a) => a.answer)
         .filter(
           (a) =>
@@ -200,7 +203,26 @@ const RecommendationScreen = () => {
         )
         .join('. ');
 
-      const safetyContext = `Initial Symptom: ${assessmentData.symptoms}. Answers: ${userAnswersOnly}.`;
+      // Clinical Context for LLM - Optimized to use summary as primary source
+      const triageContextParts = [
+        `Initial Symptom: ${symptomsRef.current}.`,
+        `Clinical Profile Summary: ${profileSummary}.`,
+        `\nContext: ${distanceContext}`,
+      ];
+
+      // Only include full answers if profile is missing, fallback, or readiness is low
+      if (
+        !profile ||
+        isFallback ||
+        (profile?.triage_readiness_score !== undefined && profile.triage_readiness_score < 0.7)
+      ) {
+        triageContextParts.push(`\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`);
+      }
+
+      const triageContext = triageContextParts.join('\n');
+
+      // **Safety Context for local scan (User-only content)**
+      const safetyContext = `Initial Symptom: ${symptomsRef.current}. Answers: ${userAnswersOnly}.`;
 
       const response = await geminiClient.assessSymptoms(triageContext, [], safetyContext, profile);
       setRecommendation(response);
@@ -229,26 +251,59 @@ const RecommendationScreen = () => {
       }
     } catch (error) {
       console.error('Analysis Error:', error);
-      // Fallback
-      setRecommendation({
-        recommended_level: 'health_center',
-        user_advice:
-          'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening.',
-        clinical_soap:
-          'S: Symptoms reported. O: N/A. A: Fallback triage. P: Refer to Health Center.',
-        key_concerns: ['Need for professional evaluation'],
+
+      // Context-aware Fallback using local emergencyDetector
+      const userAnswersOnly = answersRef.current
+        .map((a) => a.answer)
+        .filter(
+          (a) =>
+            a && !['denied', 'none', 'wala', 'hindi', 'not answered'].includes(a.toLowerCase()),
+        )
+        .join('. ');
+
+      const localAnalysisContext = `Initial Symptom: ${symptomsRef.current}. Answers: ${userAnswersOnly}.`;
+      const localResult = detectEmergency(localAnalysisContext, {
+        isUserInput: true,
+        profile: profileRef.current,
+      });
+
+      const isHighRiskFallback = localResult.score >= 5;
+      const fallbackLevel = isHighRiskFallback ? 'hospital' : 'health_center';
+      const fallbackAdvice = isHighRiskFallback
+        ? 'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).'
+        : 'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
+
+      const fallbackResponse: AssessmentResponse = {
+        recommended_level: fallbackLevel,
+        user_advice: fallbackAdvice,
+        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}). P: Refer to ${fallbackLevel === 'hospital' ? 'Hospital' : 'Health Center'}.`,
+        key_concerns: [
+          'Need for professional evaluation',
+          ...localResult.matchedKeywords.map((k) => `Monitored: ${k}`),
+        ],
         critical_warnings: [
           'Go to the Emergency Room IMMEDIATELY if you develop a stiff neck, confusion, or difficulty breathing.',
         ],
-        relevant_services: ['Consultation'],
-        red_flags: [],
+        relevant_services: isHighRiskFallback ? ['Laboratory', 'Consultation'] : ['Consultation'],
+        red_flags: localResult.matchedKeywords,
         follow_up_questions: [],
         triage_readiness_score: 0.5,
-      });
+      };
+
+      setRecommendation(fallbackResponse);
+
+      // Save fallback to Redux
+      dispatch(
+        setReduxRecommendation({
+          level: fallbackResponse.recommended_level,
+          user_advice: fallbackResponse.user_advice,
+          clinical_soap: fallbackResponse.clinical_soap,
+        }),
+      );
     } finally {
       setLoading(false);
     }
-  }, [assessmentData, nearestDistances, dispatch]);
+  }, [nearestDistances, dispatch]);
 
   useEffect(() => {
     // Load facilities if they aren't in the store
@@ -259,12 +314,11 @@ const RecommendationScreen = () => {
 
   useEffect(() => {
     // Start analysis once facilities are loaded (or if they were already available)
-    // Use ref for synchronous guard to prevent duplicate expensive LLM calls
-    if (!analysisStarted.current && (!isFacilitiesLoading || facilities.length > 0)) {
-      analysisStarted.current = true;
+    if (!analysisCompleted && (!isFacilitiesLoading || facilities.length > 0)) {
+      setAnalysisCompleted(true);
       analyzeSymptoms();
     }
-  }, [facilities.length, isFacilitiesLoading, analyzeSymptoms]);
+  }, [facilities.length, isFacilitiesLoading, analysisCompleted, analyzeSymptoms]);
 
   const filterFacilities = useCallback(() => {
     if (!recommendation) return;
@@ -272,37 +326,41 @@ const RecommendationScreen = () => {
     const targetLevel = recommendation.recommended_level;
     const requiredServices = recommendation.relevant_services || [];
 
-    // Get precision matches first
-    const precisionMatches = filterFacilitiesByServices(facilities, requiredServices);
-    const precisionIds = new Set(precisionMatches.map((f) => f.id));
+    // Single pass: score all facilities and separate precision matches
+    const precisionMatches: { facility: Facility; score: number }[] = [];
+    const otherFacilities: { facility: Facility; score: number }[] = [];
 
-    // Only process non-precision facilities if we need more
+    facilitiesWithDistance.forEach((facility) => {
+      const score = scoreFacility(facility, targetLevel, requiredServices);
+      const isPrecision =
+        requiredServices.length > 0 &&
+        requiredServices.every((s) => facility.services?.includes(s));
+
+      if (isPrecision) {
+        precisionMatches.push({ facility, score });
+      } else {
+        otherFacilities.push({ facility, score });
+      }
+    });
+
+    // Sort precision matches by score
+    precisionMatches.sort((a, b) => b.score - a.score);
+
     const needed = Math.max(0, 3 - precisionMatches.length);
+    const topOthers =
+      needed > 0 ? otherFacilities.sort((a, b) => b.score - a.score).slice(0, needed) : [];
 
-    if (needed === 0) {
-      setRecommendedFacilities(precisionMatches.slice(0, 3));
-      return;
-    }
-
-    // Score and find top N from remaining facilities
-    const topScored = facilities
-      .filter((f) => !precisionIds.has(f.id))
-      .map((facility) => ({
-        facility,
-        score: scoreFacility(facility, targetLevel, requiredServices),
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, needed)
-      .map((s) => s.facility);
-
-    setRecommendedFacilities([...precisionMatches, ...topScored]);
-  }, [recommendation, facilities]);
+    setRecommendedFacilities([
+      ...precisionMatches.slice(0, 3).map((s) => s.facility),
+      ...topOthers.map((s) => s.facility),
+    ]);
+  }, [recommendation, facilitiesWithDistance]);
 
   useEffect(() => {
-    if (recommendation && (facilities.length > 0 || !isFacilitiesLoading)) {
+    if (recommendation && (facilitiesWithDistance.length > 0 || !isFacilitiesLoading)) {
       filterFacilities();
     }
-  }, [recommendation, facilities, isFacilitiesLoading, filterFacilities]);
+  }, [recommendation, facilitiesWithDistance, isFacilitiesLoading, filterFacilities]);
 
   const handleViewDetails = (facilityId: string) => {
     navigation.navigate('FacilityDetails', { facilityId });

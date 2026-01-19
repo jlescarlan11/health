@@ -164,7 +164,8 @@ export class TriageArbiter {
     remainingQuestions: { tier?: number }[]
   ): ArbiterResult {
     // 1. NON-NEGOTIABLE: Ambiguity Safeguard
-    if (profile.ambiguity_detected) {
+    // Allow termination if ambiguity is detected but the user has explicitly accepted uncertainty.
+    if (profile.ambiguity_detected && !profile.uncertainty_accepted) {
       return {
         signal: 'RESOLVE_AMBIGUITY',
         reason: 'COHERENCE FAIL: Unresolved clinical ambiguity detected. Termination blocked.',
