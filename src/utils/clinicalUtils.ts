@@ -73,10 +73,12 @@ export const formatClinicalShareText = (
 export interface ClinicalSlots {
   age?: string;
   duration?: string;
+  severity?: string;
+  temperature?: string;
 }
 
 /**
- * Deterministically extracts clinical slots (age, duration) from text.
+ * Deterministically extracts clinical slots (age, duration, severity, temperature) from text.
  * Used for dynamic question pruning in the symptom assessment flow.
  */
 export const extractClinicalSlots = (text: string): ClinicalSlots => {
@@ -100,10 +102,10 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
   // 2. Extract Duration
   // Matches: "3 days", "2 hours", "since yesterday", "for a week", "started 2 hours ago"
   const durationPatterns = [
-    /(\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)\s*(?:ago|now)?/i,
+    /started\s+(?:yesterday|\d+\s*\w+\s*ago)/i,
     /since\s+(?:yesterday|last\s+\w+|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+)/i,
     /for\s+(?:a|an|\d+)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)/i,
-    /started\s+(?:yesterday|\d+\s*\w+\s*ago)/i
+    /(\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)\s*(?:ago|now)?/i
   ];
 
   for (const pattern of durationPatterns) {
@@ -112,6 +114,33 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
       slots.duration = match[0].trim();
       break;
     }
+  }
+
+  // 3. Extract Severity
+  // Priority: Numeric scales > Qualitative descriptors
+
+  // Numeric: "7/10", "8 out of 10"
+  const numericSeverityRegex = /\b([0-9]|10)\s*(\/|out of)\s*10\b/i;
+  const numericSeverityMatch = lowerText.match(numericSeverityRegex);
+
+  if (numericSeverityMatch) {
+    slots.severity = numericSeverityMatch[0].trim();
+  } else {
+    // Qualitative: "mild", "moderate", "severe", "excruciating"
+    const qualSeverityRegex = /\b(mild|moderate|severe|excruciating|unbearable)\b/i;
+    const qualSeverityMatch = lowerText.match(qualSeverityRegex);
+    if (qualSeverityMatch) {
+      slots.severity = qualSeverityMatch[0].trim();
+    }
+  }
+
+  // 4. Extract Temperature
+  // Matches: "39C", "102F", "38.5 degrees celsius", "100.4 F"
+  const tempRegex = /\b(\d{2,3}(?:\.\d)?)\s*(?:°|deg|degrees)?\s*(c|f|celsius|fahrenheit)\b/i;
+  const tempMatch = lowerText.match(tempRegex);
+
+  if (tempMatch) {
+    slots.temperature = tempMatch[0].trim();
   }
 
   return slots;

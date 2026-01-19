@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  Alert,
-  Platform,
-  Keyboard,
-  ScrollView,
-  Animated,
-} from 'react-native';
+import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
-import { InputCard, SafetyRecheckModal, EmergencyActions } from '../../components/common';
+import { InputCard, EmergencyActions } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk } from '../../store/navigationSlice';
@@ -23,6 +15,15 @@ type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
 
 const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 'Prenatal Care'];
 
+const SYMPTOM_ICONS: Record<string, string> = {
+  Fever: 'thermometer',
+  Cough: 'bacteria',
+  Headache: 'head-alert',
+  'Stomach Pain': 'stomach',
+  Injury: 'bandage',
+  'Prenatal Care': 'medical-bag',
+};
+
 const NavigatorHomeScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
@@ -30,12 +31,13 @@ const NavigatorHomeScreen = () => {
 
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
+  const keyboardHeightRef = useRef(new Animated.Value(0));
+  const keyboardHeight = keyboardHeightRef.current;
 
   const [symptom, setSymptom] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
-  const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -63,14 +65,9 @@ const NavigatorHomeScreen = () => {
     return () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
+      speechService.stopListening();
     };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      speechService.destroy();
-    };
-  }, []);
+  }, [keyboardHeight]);
 
   const startRecording = async () => {
     if (!speechService.isAvailable) {
@@ -121,30 +118,49 @@ const NavigatorHomeScreen = () => {
   };
 
   const handleSubmit = () => {
-    if (!symptom.trim()) return;
+    if (!symptom.trim() || isProcessing) return;
 
-    // 1. Check for immediate Emergency
-    const emergencyCheck = detectEmergency(symptom, { 
-      isUserInput: true,
-      historyContext: `Initial report: ${symptom}`
-    });
-    if (emergencyCheck.isEmergency) {
-      dispatch(setHighRisk(true));
-      navigation.navigate('Recommendation', {
-        assessmentData: { symptoms: symptom, answers: [] },
+    setIsProcessing(true);
+    try {
+      // 1. Check for immediate Emergency
+      const emergencyCheck = detectEmergency(symptom, {
+        isUserInput: true,
+        historyContext: `Initial report: ${symptom}`,
+        questionId: 'initial_symptom',
       });
-      return;
-    }
+      if (emergencyCheck.isEmergency) {
+        dispatch(setHighRisk(true));
+        navigation.navigate('Recommendation', {
+          assessmentData: {
+            symptoms: symptom,
+            answers: [],
+            extractedProfile: {
+              age: null,
+              duration: null,
+              severity: 'Critical',
+              progression: 'Sudden',
+              red_flag_denials: null,
+              summary: `Immediate emergency detected: ${symptom}. Matched keywords: ${emergencyCheck.matchedKeywords.join(', ')}`,
+              red_flags_resolved: false,
+              triage_readiness_score: 1.0,
+            },
+          },
+        });
+        return;
+      }
 
-    // 2. Check for mental health crisis
-    const crisisCheck = detectMentalHealthCrisis(symptom);
-    if (crisisCheck.isCrisis) {
-      dispatch(setHighRisk(true));
-      navigation.navigate('CrisisSupport');
-      return;
-    }
+      // 2. Check for mental health crisis
+      const crisisCheck = detectMentalHealthCrisis(symptom);
+      if (crisisCheck.isCrisis) {
+        dispatch(setHighRisk(true));
+        navigation.navigate('CrisisSupport');
+        return;
+      }
 
-    navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
+      navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -222,17 +238,7 @@ const NavigatorHomeScreen = () => {
 
             <View style={styles.chipContainer}>
               {QUICK_SYMPTOMS.map((s) => {
-                let icon = 'medical-bag';
-
-                if (s === 'Fever') icon = 'thermometer';
-
-                if (s === 'Cough') icon = 'bacteria';
-
-                if (s === 'Headache') icon = 'head-alert';
-
-                if (s === 'Stomach Pain') icon = 'stomach';
-
-                if (s === 'Injury') icon = 'bandage';
+                const icon = SYMPTOM_ICONS[s] || 'medical-bag';
 
                 return (
                   <Chip
@@ -240,9 +246,9 @@ const NavigatorHomeScreen = () => {
                     icon={icon}
                     onPress={() =>
                       setSymptom((prev) => {
-                        const newText = prev ? `${prev}, ${s}` : s;
-
-                        return newText.length > 500 ? prev : newText;
+                        const addition = prev ? `, ${s}` : s;
+                        if (prev.length + addition.length > 500) return prev;
+                        return prev + addition;
                       })
                     }
                     style={styles.chip}
@@ -282,11 +288,6 @@ const NavigatorHomeScreen = () => {
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>
-
-      <SafetyRecheckModal
-        visible={safetyModalVisible}
-        onDismiss={() => setSafetyModalVisible(false)}
-      />
     </View>
   );
 };

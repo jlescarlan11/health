@@ -13,6 +13,7 @@ describe('TriageArbiter Coherence & Safety Safeguards', () => {
     severity: 'moderate',
     progression: 'worsening',
     red_flag_denials: 'none',
+    uncertainty_accepted: false,
     summary: 'Testing',
     triage_readiness_score: 0.95,
     ambiguity_detected: false,

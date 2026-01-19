@@ -200,6 +200,36 @@ const COMBINATION_RISKS = [
   }
 ];
 
+// **NEW: Contextual Exclusions**
+const CONTEXTUAL_EXCLUSIONS = [
+  'worried about',
+  'history of',
+  'father had',
+  'mother had',
+  'brother had',
+  'sister had',
+  'family history',
+  'past history',
+  'asking for',
+  'just asking',
+  'preventing',
+  'preventative',
+  'risk of',
+  'concerned about',
+  'thought about',
+  'fear of',
+  'worried regarding',
+  'background of',
+];
+
+export interface EmergencyDetectionOptions {
+  isUserInput?: boolean;
+  historyContext?: string;
+  profile?: AssessmentProfile;
+  questionId?: string;
+  enableExclusions?: boolean;
+}
+
 export interface EmergencyDetectionResult {
   isEmergency: boolean;
   score: number;
@@ -207,6 +237,8 @@ export interface EmergencyDetectionResult {
   affectedSystems: string[];
   overrideResponse?: AssessmentResponse;
   debugLog: EmergencyDebugLog;
+  hasExclusions?: boolean;
+  excludedKeywords?: string[];
 }
 
 export interface EmergencyDebugLog {
@@ -219,6 +251,7 @@ export interface EmergencyDebugLog {
   triggeredEmergency: boolean;
   affectedSystems: string[];
   reasoning: string;
+  contextualExclusions?: string[];
 }
 
 class EmergencyDetector extends KeywordDetector {
@@ -259,22 +292,56 @@ class EmergencyDetector extends KeywordDetector {
     return Array.from(systems);
   }
 
+  private hasExclusionContext(contextWindow: string): boolean {
+    const lowerWindow = contextWindow.toLowerCase();
+    return CONTEXTUAL_EXCLUSIONS.some(pattern => lowerWindow.includes(pattern));
+  }
+
   public evaluate(
     text: string,
-    options: { 
-        isUserInput?: boolean; 
-        historyContext?: string;
-        profile?: AssessmentProfile;
-    } = {},
+    options: EmergencyDetectionOptions = {},
   ): EmergencyDetectionResult {
     console.log(`\n=== EMERGENCY DETECTION START ===`);
     console.log(`Input: "${text.substring(0, 100)}..."`);
     console.log(`Input Type: ${options.isUserInput === false ? 'SYSTEM/METADATA' : 'USER INPUT'}`);
 
-    const { profile } = options;
+    const { profile, questionId } = options;
 
     // Use base class detection
-    const { sanitized, rejected, segments: segmentAnalyses, score, matchedKeywords } = this.detect(text, options.isUserInput);
+    const detection = this.detect(text, options.isUserInput);
+    const { sanitized, rejected, segments: segmentAnalyses } = detection;
+    let { score, matchedKeywords } = detection;
+
+    // --- APPLY CONTEXTUAL EXCLUSIONS ---
+    const excludedKeywords: string[] = [];
+    if (options.enableExclusions !== false && options.isUserInput !== false) {
+      for (const segment of segmentAnalyses) {
+        const originalCount = segment.activeMatches.length;
+        segment.activeMatches = segment.activeMatches.filter(match => {
+          if (this.hasExclusionContext(match.contextWindow)) {
+            excludedKeywords.push(match.keyword);
+            segment.suppressedMatches.push(match);
+            return false;
+          }
+          return true;
+        });
+
+        if (segment.activeMatches.length !== originalCount) {
+          segment.maxScore = segment.activeMatches.length > 0 
+            ? Math.max(...segment.activeMatches.map(m => m.severity)) 
+            : 0;
+        }
+      }
+      
+      // Recalculate global score and matched keywords based on filtered segments
+      matchedKeywords = Array.from(new Set(segmentAnalyses.flatMap(s => s.activeMatches.map(m => m.keyword))));
+      score = segmentAnalyses.length > 0 ? Math.max(...segmentAnalyses.map(s => s.maxScore)) : 0;
+      
+      if (excludedKeywords.length > 0) {
+        console.log(`  [Exclusions] Removed keywords due to context: ${excludedKeywords.join(', ')}`);
+      }
+    }
+
     const affectedSystems = this.identifySystems(matchedKeywords);
 
     console.log(`\nSanitization:`);
@@ -337,7 +404,9 @@ class EmergencyDetector extends KeywordDetector {
         // 2. Viral Indicators (De-escalation)
         // Only de-escalate if the primary symptoms are "Serious" but not "Absolute"
         const hasViralSymptoms = VIRAL_INDICATORS.some(vk => sanitized.toLowerCase().includes(vk));
-        if (hasViralSymptoms && finalScore <= 7) {
+        const isRedFlagQuestion = questionId === 'red_flags' || questionId === 'q_emergency_signs';
+
+        if (hasViralSymptoms && finalScore <= 7 && !isRedFlagQuestion) {
             scoreModifier -= 2;
             reasoningParts.push('Viral indicators detected (-2): cough/runny nose/cold symptoms.');
         }
@@ -392,13 +461,23 @@ class EmergencyDetector extends KeywordDetector {
     // unless there is an absolute (10/10) emergency keyword detected in user input.
     if (profile?.red_flags_resolved === true) {
         const denials = (profile.red_flag_denials || '').toLowerCase();
-        const hasDenials = denials.includes('none') || denials.includes('no critical') || denials.includes('wala');
         
-        if (hasDenials && isEmergency && !hasAbsoluteEmergency) {
+        // 1. Check for explicit denial prefixes (safeguards)
+        const explicitDenialPrefixes = ['no', 'none', 'wala', 'hindi', 'dae', 'dai', 'wara', 'nothing', 'bako'];
+        const isExplicitDenial = explicitDenialPrefixes.some(prefix => 
+            denials === prefix || denials.startsWith(`${prefix} `) || denials.startsWith(`${prefix},`) || denials.startsWith(`${prefix}.`)
+        );
+
+        // 2. Strengthened validation using isNegated for any matched keywords
+        const areKeywordsNegated = matchedKeywords.length > 0 && matchedKeywords.every(k => this.isNegated(denials, k).negated);
+
+        const hasValidatedDenial = isExplicitDenial || areKeywordsNegated;
+        
+        if (hasValidatedDenial && isEmergency && !hasAbsoluteEmergency) {
             console.log('  [Authority] Emergency blocked: Red flags were explicitly denied in structured profile.');
             isEmergency = false;
             finalScore = 7; // Cap at maximum non-emergency score
-            reasoningParts.push('Authority block: Red flags denied in profile. Capping at non-emergency.');
+            reasoningParts.push(`Authority block: Red flags denied in profile (Explicit: ${isExplicitDenial}, Negated: ${areKeywordsNegated}). Capping at non-emergency.`);
         }
     }
 
@@ -434,6 +513,7 @@ class EmergencyDetector extends KeywordDetector {
       triggeredEmergency: isEmergency,
       affectedSystems,
       reasoning,
+      contextualExclusions: excludedKeywords,
     };
 
     let overrideResponse: AssessmentResponse | undefined;
@@ -462,6 +542,8 @@ class EmergencyDetector extends KeywordDetector {
       affectedSystems,
       overrideResponse,
       debugLog,
+      hasExclusions: excludedKeywords.length > 0,
+      excludedKeywords,
     };
   }
 }
@@ -472,11 +554,7 @@ const detector = new EmergencyDetector();
 // Export wrapper function to maintain API compatibility
 export const detectEmergency = (
   text: string,
-  options: { 
-      isUserInput?: boolean; 
-      historyContext?: string;
-      profile?: AssessmentProfile;
-  } = {},
+  options: EmergencyDetectionOptions = {},
 ): EmergencyDetectionResult => {
   return detector.evaluate(text, options);
 };

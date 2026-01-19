@@ -126,6 +126,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
         {showSend ? (
           <IconButton
             icon="send"
+            testID="send-button"
             size={24}
             iconColor={theme.colors.primary}
             onPress={onSubmit}
@@ -138,6 +139,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
               {isRecording ? <VoiceVisualizer volume={volume} isRecording={isRecording} /> : null}
               <IconButton
                 icon={isRecording ? 'stop' : 'microphone'}
+                testID="voice-button"
                 size={24}
                 iconColor={isRecording ? theme.colors.error : theme.colors.onSurfaceVariant}
                 onPress={onVoicePress}

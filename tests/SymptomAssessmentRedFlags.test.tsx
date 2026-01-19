@@ -198,6 +198,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
       ambiguity_detected: false,
       internal_inconsistency_detected: false,
       red_flags_resolved: true,
+      uncertainty_accepted: false,
       triage_readiness_score: 0.95
     });
 
