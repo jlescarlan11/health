@@ -2,7 +2,7 @@ import { GoogleGenerativeAI, GenerativeModel, Content } from '@google/generative
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
-import { detectEmergency } from '../services/emergencyDetector';
+import { detectEmergency, isNegated } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { FacilityService, AssessmentResponse } from '../types';
 import { AssessmentProfile } from '../types/triage';
@@ -11,6 +11,7 @@ import { AssessmentProfile } from '../types/triage';
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const MODEL_NAME = 'gemini-2.5-flash';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_VERSION = 2; // Increment when cache structure changes
 const MAX_RETRIES = 3;
 const RATE_LIMIT_RPM = 15;
 const RATE_LIMIT_DAILY = 1500;
@@ -18,6 +19,7 @@ const STORAGE_KEY_DAILY_COUNT = 'gemini_daily_usage_count';
 const STORAGE_KEY_DAILY_DATE = 'gemini_daily_usage_date';
 const STORAGE_KEY_CACHE_PREFIX = 'gemini_cache_';
 const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
+const STORAGE_KEY_RPM_TIMESTAMPS = 'gemini_rpm_timestamps';
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -27,12 +29,14 @@ export interface ChatMessage {
 interface CacheEntry {
   data: AssessmentResponse;
   timestamp: number;
+  version: number;
 }
 
 export class GeminiClient {
   private genAI: GoogleGenerativeAI;
   private model: GenerativeModel;
   private requestTimestamps: number[]; // For RPM tracking
+  private cacheQueue: Promise<void>; // For non-blocking cache operations
 
   constructor() {
     if (!API_KEY) {
@@ -44,29 +48,63 @@ export class GeminiClient {
       generationConfig: { responseMimeType: 'application/json' },
     });
     this.requestTimestamps = [];
+    this.cacheQueue = Promise.resolve();
   }
 
   /**
-   * Generates a cache key based on symptoms and history.
+   * Generates a cache key based on symptoms and history using hash-based approach.
    */
   private getCacheKey(symptoms: string, history: ChatMessage[] = []): string {
+    const symptomsKey = symptoms.toLowerCase().trim();
+
+    if (history.length === 0) {
+      return symptomsKey;
+    }
+
+    // Hash conversation for fixed-length keys
     const historyStr = history.map((m) => `${m.role}:${m.text}`).join('|');
-    return `${symptoms.toLowerCase().trim()}|${historyStr}`;
+    const historyHash = this.simpleHash(historyStr);
+
+    return `${symptomsKey}|h:${historyHash}`;
   }
 
   /**
-   * Enforces rate limiting (RPM and Daily).
+   * Simple hash function for generating fixed-length cache keys.
+   */
+  private simpleHash(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  /**
+   * Enforces rate limiting (RPM and Daily) with persistent RPM tracking.
    */
   private async checkRateLimits(): Promise<void> {
     const now = Date.now();
 
-    // 1. RPM Check (In-memory)
-    this.requestTimestamps = this.requestTimestamps.filter((t) => now - t < 60 * 1000);
-    if (this.requestTimestamps.length >= RATE_LIMIT_RPM) {
-      const oldest = this.requestTimestamps[0];
-      const waitTime = 60 * 1000 - (now - oldest) + 500;
-      console.warn(`[GeminiClient] RPM limit reached. Waiting ${waitTime}ms.`);
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+    // 1. RPM Check (Persistent)
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY_RPM_TIMESTAMPS);
+      const timestamps = stored ? JSON.parse(stored) : [];
+
+      // Filter and check
+      this.requestTimestamps = timestamps.filter((t: number) => now - t < 60 * 1000);
+
+      if (this.requestTimestamps.length >= RATE_LIMIT_RPM) {
+        const oldest = this.requestTimestamps[0];
+        const waitTime = 60 * 1000 - (now - oldest) + 500;
+        console.warn(`[GeminiClient] RPM limit reached. Waiting ${waitTime}ms.`);
+        await new Promise((resolve) => setTimeout(resolve, waitTime));
+      }
+    } catch (error) {
+      console.warn('Failed to check RPM limits:', error);
+      // Fallback to in-memory tracking
+      this.requestTimestamps = this.requestTimestamps.filter((t) => now - t < 60 * 1000);
     }
 
     // 2. Daily Limit Check (Persistent)
@@ -90,42 +128,54 @@ export class GeminiClient {
       // Increment and save
       await AsyncStorage.setItem(STORAGE_KEY_DAILY_COUNT, (count + 1).toString());
     } catch (error) {
-      // If AsyncStorage fails, we log but allow proceeding (or block if critical)
-      // Here we assume it's better to fail safe if we can't read limits?
-      // Actually, if storage fails, maybe we shouldn't block the user.
       console.warn('Failed to check daily limits:', error);
     }
 
-    this.requestTimestamps.push(Date.now());
+    // Record timestamp and persist (fire-and-forget)
+    this.requestTimestamps.push(now);
+    try {
+      await AsyncStorage.setItem(
+        STORAGE_KEY_RPM_TIMESTAMPS,
+        JSON.stringify(this.requestTimestamps),
+      );
+    } catch (e) {
+      console.warn('Failed to persist RPM state:', e);
+    }
   }
 
   /**
-   * Parses and validates the JSON response.
+   * Parses and validates the JSON response with explicit null checks.
    */
   private parseResponse(text: string): AssessmentResponse {
     try {
       const json = JSON.parse(text);
-      // Basic validation
+
       if (!json.recommended_level) {
         throw new Error('Missing recommended_level');
       }
+
+      // Explicit field mapping with fallbacks using nullish coalescing
+      const clinicalSoap =
+        json.clinical_soap ??
+        (json.soap_note ? JSON.stringify(json.soap_note) : null) ??
+        'No clinical summary available.';
+
+      const userAdvice =
+        json.user_advice ??
+        json.condition_summary ??
+        "Based on your symptoms, we've analyzed your condition. Please see the recommendations below.";
+
       return {
         recommended_level: json.recommended_level,
-        follow_up_questions: json.follow_up_questions || [],
-        user_advice:
-          json.user_advice ||
-          json.condition_summary || // Fallback for old cache or transitional responses
-          "Based on your symptoms, we've analyzed your condition. Please see the recommendations below.",
-        clinical_soap:
-          json.clinical_soap ||
-          (json.soap_note ? JSON.stringify(json.soap_note) : '') ||
-          'No clinical summary available.',
-        key_concerns: json.key_concerns || [],
-        critical_warnings: json.critical_warnings || [],
-        relevant_services: (json.relevant_services || []).filter((s: string) =>
+        follow_up_questions: json.follow_up_questions ?? [],
+        user_advice: userAdvice,
+        clinical_soap: clinicalSoap,
+        key_concerns: json.key_concerns ?? [],
+        critical_warnings: json.critical_warnings ?? [],
+        relevant_services: (json.relevant_services ?? []).filter((s: string) =>
           VALID_SERVICES.includes(s),
         ),
-        red_flags: json.red_flags || [],
+        red_flags: json.red_flags ?? [],
         triage_readiness_score: json.triage_readiness_score,
         ambiguity_detected: json.ambiguity_detected,
       };
@@ -147,7 +197,9 @@ export class GeminiClient {
 
       if (now - lastCleanupTime > 24 * 60 * 60 * 1000) {
         const allKeys = await AsyncStorage.getAllKeys();
-        const cacheKeys = allKeys.filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
+        const cacheKeys = (allKeys || []).filter((key) =>
+          key.startsWith(STORAGE_KEY_CACHE_PREFIX),
+        );
 
         if (cacheKeys.length > 0) {
           await AsyncStorage.multiRemove(cacheKeys);
@@ -170,7 +222,9 @@ export class GeminiClient {
   public async clearCache(): Promise<void> {
     try {
       const allKeys = await AsyncStorage.getAllKeys();
-      const cacheKeys = allKeys.filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
+      const cacheKeys = (allKeys || []).filter((key) =>
+        key.startsWith(STORAGE_KEY_CACHE_PREFIX),
+      );
 
       if (cacheKeys.length > 0) {
         await AsyncStorage.multiRemove(cacheKeys);
@@ -180,6 +234,15 @@ export class GeminiClient {
       console.error('[GeminiClient] Failed to clear assessment cache:', error);
       throw new Error('Failed to clear assessment cache.');
     }
+  }
+
+  /**
+   * Calculates retry delay with jitter to prevent thundering herd.
+   */
+  private getRetryDelay(attempt: number): number {
+    const baseDelay = Math.pow(2, attempt) * 1000;
+    const jitter = Math.random() * 1000; // 0-1000ms random jitter
+    return baseDelay + jitter;
   }
 
   /**
@@ -195,27 +258,27 @@ export class GeminiClient {
     safetyContext?: string,
     profile?: AssessmentProfile,
   ): Promise<AssessmentResponse> {
-    // 0. Periodic Cleanup
-    await this.performCacheCleanup();
+    // 0. Periodic Cleanup (non-blocking)
+    this.performCacheCleanup().catch((e) => console.warn('Cleanup failed:', e));
 
     // 1. Safety Overrides (Local Logic)
-    // Use safetyContext if provided (more accurate user-only content), 
-    // otherwise fallback to full symptoms string.
     const scanInput = safetyContext || symptoms;
-    const emergency = detectEmergency(scanInput, { 
+    const historyContext = history.length > 0 ? history.map((h) => h.text).join('\n') : undefined;
+
+    const emergency = detectEmergency(scanInput, {
       isUserInput: true,
-      historyContext: safetyContext || symptoms,
-      profile: profile 
+      historyContext: historyContext,
+      profile: profile,
+      questionId: 'final_safety_scan',
     });
-    
+
     if (emergency.isEmergency) {
       const response: AssessmentResponse = {
         recommended_level: 'emergency',
         follow_up_questions: [],
         user_advice:
           'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room or call emergency services (911) immediately.',
-        clinical_soap:
-          `S: Patient reports ${emergency.matchedKeywords.join(', ')}. O: AI detected critical emergency keywords. A: Potential life-threatening condition. P: Immediate ED referral.`,
+        clinical_soap: `S: Patient reports ${emergency.matchedKeywords.join(', ')}. O: AI detected critical emergency keywords. A: Potential life-threatening condition. P: Immediate ED referral.`,
         key_concerns: emergency.matchedKeywords.map((k) => `Urgent: ${k}`),
         critical_warnings: ['Life-threatening condition possible', 'Do not delay care'],
         relevant_services: ['Emergency'],
@@ -234,8 +297,7 @@ export class GeminiClient {
         follow_up_questions: [],
         user_advice:
           'Your symptoms indicate a mental health crisis. You are not alone. Please reach out to a crisis hotline or go to the nearest hospital immediately.',
-        clinical_soap:
-          `S: Patient reports ${mhCrisis.matchedKeywords.join(', ')}. O: AI detected crisis keywords. A: Mental health crisis. P: Immediate psychiatric evaluation/intervention.`,
+        clinical_soap: `S: Patient reports ${mhCrisis.matchedKeywords.join(', ')}. O: AI detected crisis keywords. A: Mental health crisis. P: Immediate psychiatric evaluation/intervention.`,
         key_concerns: ['Risk of self-harm or severe distress'],
         critical_warnings: ['You are not alone. Professional help is available now.'],
         relevant_services: ['Mental Health'],
@@ -247,37 +309,21 @@ export class GeminiClient {
       return response;
     }
 
-    // 2. Cache Check
+    // 2. Cache Check (non-blocking read)
     const cacheKey = this.getCacheKey(symptoms, history);
     const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
     try {
       const cachedJson = await AsyncStorage.getItem(fullCacheKey);
       if (cachedJson) {
         const cached = JSON.parse(cachedJson) as CacheEntry;
-        if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
-          console.log('[GeminiClient] Returning cached response from storage');
-          // Ensure cached data has new fields if we want to be safe, or just return it and let parseResponse fallback handle it?
-          // parseResponse handles structure, but here we return directly.
-          // If cached data is OLD structure, it might lack user_advice.
-          // Safe to re-parse or map it?
-          // Let's assume cache might be old. We should map it if needed.
-          // But 'cached.data' is already typed as AssessmentResponse.
-          // If strict runtime check, we might want to migrate it.
-          // For now, let's just return it. The parseResponse fallback handles "condition_summary" -> "user_advice" mapping if we used it,
-          // but here we are using the stored object directly.
-          // If the stored object has 'condition_summary' but no 'user_advice', and we type cast it, it will be missing at runtime.
-          // Let's do a quick migration here.
-          const data: any = cached.data;
-          if (!data.user_advice && data.condition_summary) {
-             data.user_advice = data.condition_summary + ' ' + (data.recommended_action || '');
-          }
-          if (!data.clinical_soap && data.soap_note) {
-             data.clinical_soap = JSON.stringify(data.soap_note);
-          }
 
-          this.logFinalResult(data as AssessmentResponse, symptoms);
-          return data as AssessmentResponse;
+        // Check version and TTL
+        if (cached.version === CACHE_VERSION && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+          console.log('[GeminiClient] Returning cached response from storage');
+          this.logFinalResult(cached.data, symptoms);
+          return cached.data;
         } else {
+          // Remove stale or outdated cache entry
           await AsyncStorage.removeItem(fullCacheKey);
         }
       }
@@ -292,9 +338,6 @@ export class GeminiClient {
         await this.checkRateLimits();
 
         // Construct Chat History for Gemini
-        // We use the 'system' instruction via generation config or just prepend it.
-        // GoogleGenerativeAI supports systemInstruction in model config, but let's be explicit in the chat start.
-
         const chat = this.model.startChat({
           history: [
             {
@@ -344,7 +387,7 @@ export class GeminiClient {
 
         // Upgrade if Low Readiness or Ambiguity Detected
         const isLowReadiness =
-          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < 0.80;
+          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < 0.8;
         const isAmbiguous = parsed.ambiguity_detected === true;
 
         if ((isLowReadiness || isAmbiguous) && currentLevelIdx < 3) {
@@ -357,55 +400,96 @@ export class GeminiClient {
           parsed.user_advice += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
         }
 
-        // --- NEW: AUTHORITY BLOCK ---
-        // If AI recommended Emergency but profile explicitly denies red flags, downgrade based on detector score
+        // --- AUTHORITY BLOCK ---
         if (parsed.recommended_level === 'emergency' && profile?.red_flags_resolved === true) {
-            const denials = (profile.red_flag_denials || '').toLowerCase();
-            const hasDenials = denials.includes('none') || denials.includes('no critical') || denials.includes('wala');
-            
-            if (hasDenials) {
-                // Only downgrade if confidence is HIGH
-                if (profile.denial_confidence === 'high') {
-                    // If local detector also confirmed it's not an absolute emergency (emergency.isEmergency was false)
-                    // We use the score from the earlier detection run (Line 245)
-                    const fallbackLevel = emergency.score <= 5 ? 'health_center' : 'hospital';
-                    
-                    console.log(`[GeminiClient] Authority Block: Downgrading AI Emergency recommendation to ${fallbackLevel} as red flags were denied with HIGH confidence.`);
-                    
-                    parsed.recommended_level = fallbackLevel;
-                    
-                    if (fallbackLevel === 'health_center') {
-                        parsed.user_advice = 'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present. (Note: Care level adjusted as no critical signs were reported).';
-                    } else {
-                        parsed.user_advice = 'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised. (Note: Care level adjusted as no critical signs were reported).';
-                    }
-                    
-                    // Add clear escalation instructions to warnings
-                    if (!parsed.critical_warnings.some(w => w.includes('stiff neck'))) {
-                        parsed.critical_warnings.unshift('Go to the Emergency Room IMMEDIATELY if you develop: stiff neck, confusion, or difficulty breathing.');
-                    }
-                } else {
-                    // If confidence is LOW or MEDIUM, RETAIN Emergency but add a warning
-                    console.log(`[GeminiClient] Authority Block: RETAINING Emergency despite denial (Confidence: ${profile.denial_confidence || 'unknown'}).`);
-                    parsed.user_advice += ' (Note: Critical symptoms were not definitively ruled out. Please verify immediately.)';
-                    parsed.critical_warnings.unshift('Please confirm you are NOT experiencing chest pain, difficulty breathing, or severe confusion.');
-                }
-            }
-        }
-        // -----------------------------------
+          const denials = (profile.red_flag_denials || '').toLowerCase();
 
-        // Update Cache
-        try {
-          await AsyncStorage.setItem(
-            fullCacheKey,
-            JSON.stringify({
-              data: parsed,
-              timestamp: Date.now(),
-            }),
+          // 1. Check for explicit denial prefixes (safeguards)
+          const explicitDenialPrefixes = [
+            'no',
+            'none',
+            'wala',
+            'hindi',
+            'dae',
+            'dai',
+            'wara',
+            'nothing',
+            'bako',
+          ];
+          const isExplicitDenial = explicitDenialPrefixes.some(
+            (prefix) =>
+              denials === prefix ||
+              denials.startsWith(`${prefix} `) ||
+              denials.startsWith(`${prefix},`) ||
+              denials.startsWith(`${prefix}.`),
           );
-        } catch (error) {
-          console.warn('[GeminiClient] Cache write failed:', error);
+
+          // 2. Strengthened validation using isNegated for any detected red flags
+          const aiRedFlags = parsed.red_flags || [];
+          const areRedFlagsNegated =
+            aiRedFlags.length > 0 && aiRedFlags.every((rf) => isNegated(denials, rf).negated);
+
+          const hasValidatedDenial = isExplicitDenial || areRedFlagsNegated;
+
+          if (hasValidatedDenial) {
+            console.log(
+              `[GeminiClient] Authority Block: Activated (Explicit: ${isExplicitDenial}, Negated: ${areRedFlagsNegated}). Validating confidence...`,
+            );
+            // Only downgrade if confidence is HIGH
+            if (profile.denial_confidence === 'high') {
+              const fallbackLevel = emergency.score <= 5 ? 'health_center' : 'hospital';
+
+              console.log(
+                `[GeminiClient] Authority Block: Downgrading AI Emergency recommendation to ${fallbackLevel} as red flags were denied with HIGH confidence.`,
+              );
+
+              parsed.recommended_level = fallbackLevel;
+
+              if (fallbackLevel === 'health_center') {
+                parsed.user_advice =
+                  'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present. (Note: Care level adjusted as no critical signs were reported).';
+              } else {
+                parsed.user_advice =
+                  'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised. (Note: Care level adjusted as no critical signs were reported).';
+              }
+
+              // Add clear escalation instructions to warnings
+              if (!parsed.critical_warnings.some((w) => w.includes('stiff neck'))) {
+                parsed.critical_warnings.unshift(
+                  'Go to the Emergency Room IMMEDIATELY if you develop: stiff neck, confusion, or difficulty breathing.',
+                );
+              }
+            } else {
+              // If confidence is LOW or MEDIUM, RETAIN Emergency but add a warning
+              console.log(
+                `[GeminiClient] Authority Block: RETAINING Emergency despite denial (Confidence: ${profile.denial_confidence || 'unknown'}).`,
+              );
+              parsed.user_advice +=
+                ' (Note: Critical symptoms were not definitively ruled out. Please verify immediately.)';
+              parsed.critical_warnings.unshift(
+                'Please confirm you are NOT experiencing chest pain, difficulty breathing, or severe confusion.',
+              );
+            }
+          } else {
+            console.log(
+              `[GeminiClient] Authority Block: Bypassed. Red flag denials ("${denials}") did not pass strengthened validation.`,
+            );
+          }
         }
+
+        // Update Cache (fire-and-forget with versioning)
+        this.cacheQueue = this.cacheQueue
+          .then(() =>
+            AsyncStorage.setItem(
+              fullCacheKey,
+              JSON.stringify({
+                data: parsed,
+                timestamp: Date.now(),
+                version: CACHE_VERSION,
+              } as CacheEntry),
+            ),
+          )
+          .catch((error) => console.warn('[GeminiClient] Cache write failed:', error));
 
         this.logFinalResult(parsed, symptoms);
         return parsed;
@@ -418,8 +502,8 @@ export class GeminiClient {
           throw new Error('Unable to connect to Health Assistant. Please check your connection.');
         }
 
-        // Exponential backoff
-        const delay = Math.pow(2, attempt) * 1000;
+        // Exponential backoff with jitter
+        const delay = this.getRetryDelay(attempt);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -433,44 +517,49 @@ export class GeminiClient {
   private logFinalResult(recommendation: AssessmentResponse, assessmentText: string) {
     const BOX_WIDTH = 60;
     const divider = '─'.repeat(BOX_WIDTH);
-    
+
     console.log(`\n╔${'═'.repeat(BOX_WIDTH)}╗`);
     console.log(`║${'FINAL ASSESSMENT & RECOMMENDATION'.padStart(47).padEnd(BOX_WIDTH)}║`);
     console.log(`╠${'═'.repeat(BOX_WIDTH)}╣`);
-    
+
     // Assessment Context (Shortened)
     const context = assessmentText.replace(/\n/g, ' ').substring(0, BOX_WIDTH - 12);
-    console.log(`║ CONTEXT: ${(`${context}${assessmentText.length > BOX_WIDTH - 12 ? '...' : ''}`).padEnd(BOX_WIDTH - 10)} ║`);
+    console.log(
+      `║ CONTEXT: ${`${context}${assessmentText.length > BOX_WIDTH - 12 ? '...' : ''}`.padEnd(BOX_WIDTH - 10)} ║`,
+    );
     console.log(`╟${divider}╢`);
-    
+
     // Care Level
     const levelLabel = recommendation.recommended_level.replace(/_/g, ' ').toUpperCase();
     console.log(`║ RECOMMENDED LEVEL: ${levelLabel.padEnd(BOX_WIDTH - 20)} ║`);
-    
+
     // Readiness & Ambiguity
-    const readiness = recommendation.triage_readiness_score !== undefined 
-      ? `${(recommendation.triage_readiness_score * 100).toFixed(0)}%` 
-      : 'N/A';
+    const readiness =
+      recommendation.triage_readiness_score !== undefined
+        ? `${(recommendation.triage_readiness_score * 100).toFixed(0)}%`
+        : 'N/A';
     const ambig = recommendation.ambiguity_detected ? 'YES' : 'NO';
     const stats = `READINESS: ${readiness.padEnd(10)} | AMBIGUITY: ${ambig.padEnd(8)}`;
     console.log(`║ ${stats.padEnd(BOX_WIDTH - 2)} ║`);
-    
+
     console.log(`╟${divider}╢`);
-    
+
     // Advice (Simple wrapping for 2 lines)
     const advice = recommendation.user_advice.replace(/\n/g, ' ');
     const line1 = advice.substring(0, BOX_WIDTH - 10);
     console.log(`║ ADVICE: ${line1.padEnd(BOX_WIDTH - 10)} ║`);
     if (advice.length > BOX_WIDTH - 10) {
-        const line2 = advice.substring(BOX_WIDTH - 10, (BOX_WIDTH - 10) * 2);
-        console.log(`║         ${line2.padEnd(BOX_WIDTH - 10)} ║`);
+      const line2 = advice.substring(BOX_WIDTH - 10, (BOX_WIDTH - 10) * 2);
+      console.log(`║         ${line2.padEnd(BOX_WIDTH - 10)} ║`);
     }
 
     // Red Flags
     if (recommendation.red_flags && recommendation.red_flags.length > 0) {
       console.log(`╟${divider}╢`);
       const redFlagsStr = recommendation.red_flags.join(', ');
-      console.log(`║ RED FLAGS: ${redFlagsStr.substring(0, BOX_WIDTH - 13).padEnd(BOX_WIDTH - 13)} ║`);
+      console.log(
+        `║ RED FLAGS: ${redFlagsStr.substring(0, BOX_WIDTH - 13).padEnd(BOX_WIDTH - 13)} ║`,
+      );
     }
 
     // SOAP Summary

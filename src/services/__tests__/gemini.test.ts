@@ -84,4 +84,27 @@ describe('Gemini Service Retry Logic', () => {
 
     expect(mockGenerateContent).toHaveBeenCalledTimes(3);
   }, 15000);
+
+  it('should successfully refine a question', async () => {
+    const refineQuestion = require('../gemini').refineQuestion;
+    mockGenerateContent.mockResolvedValue({
+      response: {
+        text: () => 'Refined question?',
+      },
+    });
+
+    const result = await refineQuestion('Original question?', 'User answer');
+    expect(result).toBe('Refined question?');
+    expect(mockGenerateContent).toHaveBeenCalledWith(
+      expect.stringContaining("Refine this question: 'Original question?'"),
+    );
+  });
+
+  it('should fallback to original question on failure during refinement', async () => {
+    const refineQuestion = require('../gemini').refineQuestion;
+    mockGenerateContent.mockRejectedValue(new Error('API Error'));
+
+    const result = await refineQuestion('Original question?', 'User answer');
+    expect(result).toBe('Original question?');
+  });
 });

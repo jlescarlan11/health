@@ -39,6 +39,7 @@ export interface AssessmentProfile {
   internal_inconsistency_detected?: boolean;
   internal_consistency_score?: number;
   red_flags_resolved?: boolean;
+  uncertainty_accepted?: boolean; // True if user explicitly says "I don't know" for a core slot
   clinical_friction_detected?: boolean;
   clinical_friction_details?: string;
   is_complex_case?: boolean;
