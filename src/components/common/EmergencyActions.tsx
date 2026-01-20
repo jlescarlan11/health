@@ -48,10 +48,16 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <View style={[styles.line, { backgroundColor: dividerLineColor }]} />
       </View>
 
-      <Surface style={[styles.contactCard, { backgroundColor: cardBgColor }]} elevation={0}>
+      <Surface
+        style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
+        elevation={1}
+      >
+        <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
-          <Text style={[styles.contactName, { color: textColor }]}>NCGH Emergency</Text>
-          <Text style={[styles.contactPhone, { color: subtextColor }]}>(054) 473-3111</Text>
+          <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>NCGH Emergency</Text>
+          <Text style={[styles.contactPhone, { color: theme.colors.onSurfaceVariant }]}>
+            (054) 473-3111
+          </Text>
         </View>
         <IconButton
           icon="phone"
@@ -62,10 +68,16 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         />
       </Surface>
 
-      <Surface style={[styles.contactCard, { backgroundColor: cardBgColor }]} elevation={0}>
+      <Surface
+        style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
+        elevation={1}
+      >
+        <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
-          <Text style={[styles.contactName, { color: textColor }]}>Mental Health Crisis</Text>
-          <Text style={[styles.contactPhone, { color: subtextColor }]}>1553</Text>
+          <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>
+            Mental Health Crisis
+          </Text>
+          <Text style={[styles.contactPhone, { color: theme.colors.onSurfaceVariant }]}>1553</Text>
         </View>
         <IconButton
           icon="phone"
@@ -105,9 +117,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    paddingLeft: 16,
+    paddingLeft: 0, 
     borderRadius: 12,
     marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E0E2E3',
+    justifyContent: 'center',
+  },
+  accentBar: {
+    width: 4,
+    height: '60%',
+    borderRadius: 2,
+    marginHorizontal: 8,
   },
   contactInfo: {
     flex: 1,
