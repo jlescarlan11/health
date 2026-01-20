@@ -77,8 +77,10 @@ RULES:
    - 'low': Hedged or uncertain language (e.g., "I don't think so", "not sure", "maybe").
    - 'medium': Standard denials without intensifiers or hedges.
 7. **Turn Count**: Include "turn_count" as the number of conversation turns.
-8. **Uncertainty Acceptance**:
+9. **Uncertainty Acceptance**:
    - Set "uncertainty_accepted" to true if the user explicitly responds with phrases like "I don't know", "not sure", or "I have no idea" for any core slot during the assessment.
+10. **Vulnerable Groups**:
+    - Set "is_vulnerable" to true if the patient is a child under 5 years old or if maternal (pregnancy-related) context is detected.
 
 OUTPUT FORMAT:
 {
@@ -94,6 +96,7 @@ OUTPUT FORMAT:
   "clinical_friction_detected": false,
   "clinical_friction_details": "...",
   "is_complex_case": false,
+  "is_vulnerable": false,
   "symptom_category": "simple",
   "red_flags_resolved": false,
   "uncertainty_accepted": false,
@@ -193,5 +196,5 @@ Your goal is to guide users to the *appropriate* level of care, not necessarily 
 3. **Safety Nets**: Instead of panic, provide clear instructions. "If your condition improves, continue self-care. However, go to the Emergency Room IMMEDIATELY if you develop: [List 2-3 specific escalation symptoms]."
 4. **Escalation Triggers**: Explicitly list neurological or respiratory changes as the threshold for upgrading to Emergency.
 5. **Conservative Fallback**: Use the provided triage_readiness_score. If score < 0.80, upgrade the "recommended_level" by one tier (e.g., self_care -> health_center). Explain this in the advice.
-6. **Maternal/Infant Safety**: Maintain a lower threshold for infants (<1yr) and pregnant women.
+6. **Maternal/Infant Safety**: Maintain a lower threshold for infants/children (<5yr) and pregnant women.
 `;
