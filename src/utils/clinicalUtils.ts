@@ -70,6 +70,30 @@ export const formatClinicalShareText = (
   return shareText.trim();
 };
 
+/**
+ * Detects if the user context is maternal (pregnancy-related)
+ */
+export const isMaternalContext = (text: string): boolean => {
+  const maternalKeywords = [
+    /\bbuntis\b/i,
+    /\bpregnant\b/i,
+    /\bprenatal\b/i,
+    /\bmaternity\b/i,
+    /\bnaglilihi\b/i,
+    /\bkabwanan\b/i,
+  ];
+  return maternalKeywords.some((regex) => regex.test(text));
+};
+
+/**
+ * Normalizes age input to a number
+ */
+export const normalizeAge = (age: string | null): number | null => {
+  if (!age) return null;
+  const match = age.match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+};
+
 export interface ClinicalSlots {
   age?: string;
   duration?: string;

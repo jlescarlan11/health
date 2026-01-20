@@ -13,6 +13,8 @@ interface Recommendation {
   facilityType?: string;
   user_advice: string;
   clinical_soap: string;
+  isFallbackApplied?: boolean;
+  clinicalFrictionDetails?: Record<string, unknown>;
 }
 
 interface NavigationState {

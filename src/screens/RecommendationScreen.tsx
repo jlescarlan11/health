@@ -26,6 +26,7 @@ import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
 import { AssessmentProfile } from '../types/triage';
+import { ConfidenceSignal } from '../components/features/navigation/ConfidenceSignal';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -233,6 +234,8 @@ const RecommendationScreen = () => {
           level: response.recommended_level,
           user_advice: response.user_advice,
           clinical_soap: response.clinical_soap,
+          isFallbackApplied: response.is_conservative_fallback,
+          clinicalFrictionDetails: response.clinical_friction_details,
         }),
       );
 
@@ -288,6 +291,7 @@ const RecommendationScreen = () => {
         red_flags: localResult.matchedKeywords,
         follow_up_questions: [],
         triage_readiness_score: 0.5,
+        is_conservative_fallback: true,
       };
 
       setRecommendation(fallbackResponse);
@@ -298,6 +302,7 @@ const RecommendationScreen = () => {
           level: fallbackResponse.recommended_level,
           user_advice: fallbackResponse.user_advice,
           clinical_soap: fallbackResponse.clinical_soap,
+          isFallbackApplied: fallbackResponse.is_conservative_fallback,
         }),
       );
     } finally {
@@ -467,6 +472,9 @@ const RecommendationScreen = () => {
             {careInfo.label}
           </Text>
         </Surface>
+
+        {/* Safety Note for Conservative Triage */}
+        {recommendation.is_conservative_fallback && <ConfidenceSignal />}
 
         {/* Assessment & Advice - Integrated Layout */}
         <View style={styles.adviceSection}>

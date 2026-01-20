@@ -166,7 +166,10 @@ const SymptomAssessmentScreen = () => {
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
     null,
   );
+  const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(undefined);
+  const [saturationCount, setSaturationCount] = useState(0);
   const [showRedFlagsChecklist, setShowRedFlagsChecklist] = useState(false);
+  const [isClarifyingDenial, setIsClarifyingDenial] = useState(false);
   const MAX_EXPANSIONS = 2;
 
   // Emergency Verification State
@@ -360,6 +363,8 @@ const SymptomAssessmentScreen = () => {
     const answer = answerOverride || inputText;
     if (!answer.trim() || processing) return;
 
+    if (isClarifyingDenial) setIsClarifyingDenial(false);
+
     const currentQ = questions[currentQuestionIndex];
     if (!currentQ && !isOfflineMode) return;
 
@@ -489,23 +494,51 @@ const SymptomAssessmentScreen = () => {
             nextIdx,
             questions.length,
             questions.slice(nextIdx),
+            previousProfile,
+            saturationCount
           );
+
+          // Update saturation state for next turn
+          if (arbiterResult.saturation_count !== undefined) {
+            setSaturationCount(arbiterResult.saturation_count);
+          }
+          setPreviousProfile(profile);
 
           setArbiterSignal(arbiterResult.signal);
           console.log(
             `[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`,
           );
           console.log(
-            `[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor})`,
+            `[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor}, Saturation: ${arbiterResult.saturation_count})`,
           );
 
+          // Handle Clarification Signal (Ambiguous Denial)
+          if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' && !arbiterResult.needs_reset) {
+            console.log('[Assessment] Arbiter requesting clarification for ambiguous denial.');
+            setIsClarifyingDenial(true);
+            setIsTyping(false);
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `system-clarify-${Date.now()}`,
+                text: 'I want to be 100% sure. You’re definitely not experiencing these symptoms?',
+                sender: 'assistant',
+              },
+            ]);
+            setProcessing(false);
+            return;
+          }
+
           // HARD STOP: Contradiction Lock and Turn Floor Lock prevent termination regardless of readiness.
+          // EXCEPTION: Clinical Saturation overrides the turn floor if stability is proven.
+          const isSaturationTermination = arbiterResult.reason?.includes('CLINICAL SATURATION');
+          
           const canTerminate =
             arbiterResult.signal === 'TERMINATE' &&
             !isAmbiguous &&
             !hasFriction &&
             !hasUnattemptedTier3 &&
-            !isBelowFloor &&
+            (!isBelowFloor || isSaturationTermination) &&
             effectiveReadiness >= TERMINATION_THRESHOLD;
 
           // --- CLARIFICATION FEEDBACK (User Guidance) ---
@@ -1208,7 +1241,8 @@ const SymptomAssessmentScreen = () => {
         ) : !isOfflineMode &&
           currentQuestion?.id === 'red_flags' &&
           symptomCategory === 'simple' &&
-          !showRedFlagsChecklist ? (
+          !showRedFlagsChecklist &&
+          !isClarifyingDenial ? (
           <View style={{ paddingBottom: 8, gap: 8 }}>
             <Text
               variant="titleSmall"

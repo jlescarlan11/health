@@ -1,4 +1,5 @@
 import { AssessmentProfile } from '../types/triage';
+import { isMaternalContext, normalizeAge } from '../utils/clinicalUtils';
 
 export type TriageSignal = 'TERMINATE' | 'CONTINUE' | 'RESOLVE_AMBIGUITY' | 'PRIORITIZE_RED_FLAGS' | 'REQUIRE_CLARIFICATION' | 'RESOLVE_FRICTION';
 
@@ -7,6 +8,7 @@ export interface ArbiterResult {
   reason?: string;
   nextSteps?: string[];
   needs_reset?: boolean;
+  saturation_count?: number;
 }
 
 export interface ChatHistoryItem {
@@ -27,8 +29,19 @@ export class TriageArbiter {
     profile: AssessmentProfile,
     currentTurn: number,
     totalPlannedQuestions: number,
-    remainingQuestions: { tier?: number; is_red_flag?: boolean }[] = []
+    remainingQuestions: { tier?: number; is_red_flag?: boolean }[] = [],
+    previousProfile?: AssessmentProfile,
+    currentSaturationCount: number = 0
   ): ArbiterResult {
+    // Calculate new saturation state
+    const newSaturationCount = this.calculateSaturation(profile, previousProfile, currentSaturationCount);
+
+    // --- 0. VULNERABLE GROUP DETECTION ---
+    const isVulnerable = this.isVulnerableGroup(history, profile);
+    if (isVulnerable && !profile.is_vulnerable) {
+        profile.is_vulnerable = true;
+    }
+
     // --- 1. MANDATORY SAFETY GATE: RED FLAGS ---
     if (profile.red_flags_resolved === false) {
       const hasUnattemptedRedFlags = remainingQuestions.some(q => q.is_red_flag);
@@ -36,14 +49,27 @@ export class TriageArbiter {
         return {
           signal: 'PRIORITIZE_RED_FLAGS',
           reason: 'MANDATORY SAFETY GATE: Unresolved red flags detected.',
-          nextSteps: ['Complete all red-flag verification questions immediately']
+          nextSteps: ['Complete all red-flag verification questions immediately'],
+          saturation_count: newSaturationCount
         };
       }
       return {
         signal: 'CONTINUE',
         reason: 'MANDATORY SAFETY GATE: Red flags remain unresolved',
-        nextSteps: ['Confirm denial or presence of critical red flags']
+        nextSteps: ['Confirm denial or presence of critical red flags'],
+        saturation_count: newSaturationCount
       };
+    }
+
+    // --- 1b. AMBIGUOUS DENIAL SAFEGUARD ---
+    // If the user issued a denial but the confidence is low (ambiguous phrasing), force verification.
+    if (profile.denial_confidence === 'low') {
+        return {
+            signal: 'REQUIRE_CLARIFICATION',
+            reason: 'SAFETY GUARD: Low confidence denial detected. Verification required.',
+            nextSteps: ['Execute mandatory re-verification protocol'],
+            saturation_count: newSaturationCount
+        };
     }
 
     // --- 2. CLINICAL SANITY & FRICTION OVERRIDE (Early Intervention) ---
@@ -53,18 +79,30 @@ export class TriageArbiter {
     if (sanityResult.signal === 'RESOLVE_AMBIGUITY' || 
         sanityResult.signal === 'RESOLVE_FRICTION' || 
         sanityResult.signal === 'REQUIRE_CLARIFICATION') {
-      return sanityResult;
+      return { ...sanityResult, saturation_count: newSaturationCount };
+    }
+
+    // --- 2b. CLINICAL SATURATION (Explicit Early Termination) ---
+    // If we have reached full readiness (1.0) and the profile has been stable (no new info) 
+    // for 2 consecutive turns, we can safely terminate even if below the turn floor.
+    if (profile.triage_readiness_score === 1.0 && newSaturationCount >= 2) {
+        return {
+            signal: 'TERMINATE',
+            reason: 'CLINICAL SATURATION: Readiness 1.0 and stability maintained for 2+ turns.',
+            saturation_count: newSaturationCount
+        };
     }
 
     // --- 3. DETERMINISTIC TURN FLOORS (Non-Overridable for Termination) ---
-    const isComplexCategory = profile.symptom_category === 'complex' || profile.symptom_category === 'critical' || profile.is_complex_case;
+    const isComplexCategory = profile.symptom_category === 'complex' || profile.symptom_category === 'critical' || profile.is_complex_case || profile.is_vulnerable;
     const minTurnsRequired = isComplexCategory ? this.MIN_TURNS_COMPLEX : this.MIN_TURNS_SIMPLE;
 
     if (currentTurn < minTurnsRequired) {
         return {
             signal: 'CONTINUE',
-            reason: `GUARDRAIL: Turn floor not reached for ${isComplexCategory ? 'complex' : 'simple'} category. (Current: ${currentTurn}, Required: ${minTurnsRequired})`,
-            nextSteps: ['Continue gathering clinical context']
+            reason: `GUARDRAIL: Turn floor not reached for ${isComplexCategory ? (profile.is_vulnerable ? 'vulnerable' : 'complex') : 'simple'} category. (Current: ${currentTurn}, Required: ${minTurnsRequired})`,
+            nextSteps: ['Continue gathering clinical context'],
+            saturation_count: newSaturationCount
         };
     }
 
@@ -72,7 +110,7 @@ export class TriageArbiter {
     // If we are above the floor, we must now respect "soft" continue signals (e.g., missing progression)
     // that were held back to allow the floor check to take precedence if needed.
     if (sanityResult.signal !== 'TERMINATE') {
-      return sanityResult;
+      return { ...sanityResult, saturation_count: newSaturationCount };
     }
 
     // --- 5. TIER 3 EXHAUSTION FOR COMPLEX/FRICTION CASES ---
@@ -82,7 +120,8 @@ export class TriageArbiter {
             return {
                 signal: 'CONTINUE',
                 reason: `DEPTH FAIL: Tier 3 exhaustion required for ${isComplexCategory ? 'complex case' : 'clinical friction'}.`,
-                nextSteps: ['Complete all remaining Tier 3 ambiguity resolution questions']
+                nextSteps: ['Complete all remaining Tier 3 ambiguity resolution questions'],
+                saturation_count: newSaturationCount
             };
         }
     }
@@ -97,12 +136,13 @@ export class TriageArbiter {
             signal: 'REQUIRE_CLARIFICATION',
             reason: 'RESTRICTION: High readiness with contradictory history detected (False Positive Completeness)',
             needs_reset: true,
-            nextSteps: ['Perform system-led reset of progress', 'Re-verify symptom timeline']
+            nextSteps: ['Perform system-led reset of progress', 'Re-verify symptom timeline'],
+            saturation_count: newSaturationCount
         };
     }
 
     if (completenessResult.signal !== 'TERMINATE') {
-      return completenessResult;
+      return { ...completenessResult, saturation_count: newSaturationCount };
     }
 
     // --- 7. TERMINATION EXECUTION ---
@@ -111,14 +151,51 @@ export class TriageArbiter {
     if (isExhausted || currentTurn >= 10) { // Safety ceiling increased to allow for Turn 7 floor
       return {
         signal: 'TERMINATE',
-        reason: 'CLINICAL CLOSURE: Case is complete, coherent, and safety-verified.'
+        reason: 'CLINICAL CLOSURE: Case is complete, coherent, and safety-verified.',
+        saturation_count: newSaturationCount
       };
     }
 
     return {
       signal: 'CONTINUE',
-      reason: 'Continuing planned path to maximize clinical data density'
+      reason: 'Continuing planned path to maximize clinical data density',
+      saturation_count: newSaturationCount
     };
+  }
+
+  private static calculateSaturation(
+    current: AssessmentProfile, 
+    previous: AssessmentProfile | undefined, 
+    count: number
+  ): number {
+    if (!previous) return 0;
+    
+    // If slots are identical, increment counter. Otherwise reset to 0.
+    if (this.areClinicalSlotsIdentical(current, previous)) {
+        return count + 1;
+    }
+    return 0;
+  }
+
+  private static areClinicalSlotsIdentical(a: AssessmentProfile, b: AssessmentProfile): boolean {
+    const normalize = (val: string | null | undefined) => (val === 'null' || !val) ? null : val.toLowerCase().trim();
+    
+    // Critical clinical slots
+    if (normalize(a.age) !== normalize(b.age)) return false;
+    if (normalize(a.duration) !== normalize(b.duration)) return false;
+    if (normalize(a.severity) !== normalize(b.severity)) return false;
+    if (normalize(a.progression) !== normalize(b.progression)) return false;
+    
+    // Safety & Category slots
+    if (normalize(a.red_flag_denials) !== normalize(b.red_flag_denials)) return false;
+    if (a.red_flags_resolved !== b.red_flags_resolved) return false;
+    if (a.symptom_category !== b.symptom_category) return false;
+    
+    // Complexity flags
+    if (a.is_complex_case !== b.is_complex_case) return false;
+    if (a.is_vulnerable !== b.is_vulnerable) return false;
+    
+    return true;
   }
 
   /**
@@ -214,5 +291,15 @@ export class TriageArbiter {
     }
 
     return { signal: 'TERMINATE' };
+  }
+
+  private static isVulnerableGroup(history: ChatHistoryItem[], profile: AssessmentProfile): boolean {
+    const numericAge = normalizeAge(profile.age);
+    const isPediatric = numericAge !== null && numericAge < 5;
+    
+    const fullText = history.map(h => h.text).join(' ');
+    const isMaternal = isMaternalContext(fullText);
+
+    return isPediatric || isMaternal || profile.is_vulnerable === true;
   }
 }

@@ -78,4 +78,6 @@ export interface AssessmentResponse {
   red_flags: string[];
   triage_readiness_score?: number;
   ambiguity_detected?: boolean;
+  is_conservative_fallback?: boolean;
+  clinical_friction_details?: Record<string, unknown>;
 }
