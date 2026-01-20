@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated } from 'react-native';
+import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Chip, useTheme, Card } from 'react-native-paper';
+import { Text, Chip, useTheme, Card, Surface } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch } from 'react-redux';
@@ -22,6 +23,60 @@ const SYMPTOM_ICONS: Record<string, string> = {
   'Stomach Pain': 'stomach',
   Injury: 'bandage',
   'Prenatal Care': 'medical-bag',
+};
+
+const SymptomItem = ({
+  label,
+  icon,
+  isSelected,
+  onPress,
+}: {
+  label: string;
+  icon: string;
+  isSelected: boolean;
+  onPress: () => void;
+}) => {
+  const theme = useTheme();
+  const [isPressed, setIsPressed] = useState(false);
+
+  return (
+    <Surface
+      style={[
+        styles.symptomCard,
+        {
+          backgroundColor: isSelected
+            ? theme.colors.primary
+            : isPressed
+            ? theme.colors.surface
+            : theme.colors.secondaryContainer,
+          elevation: isPressed ? 2 : 0,
+        },
+      ]}
+    >
+      <Pressable
+        style={styles.symptomPressable}
+        onPress={onPress}
+        onPressIn={() => setIsPressed(true)}
+        onPressOut={() => setIsPressed(false)}
+        android_ripple={{ color: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)' }}
+      >
+        <MaterialCommunityIcons
+          name={(isSelected ? 'check' : icon) as any}
+          size={24}
+          color={isSelected ? theme.colors.onPrimary : theme.colors.primary}
+        />
+        <Text
+          variant="bodyMedium"
+          style={[
+            styles.symptomLabel,
+            { color: isSelected ? theme.colors.onPrimary : theme.colors.onSurface },
+          ]}
+        >
+          {label}
+        </Text>
+      </Pressable>
+    </Surface>
+  );
 };
 
 const NavigatorHomeScreen = () => {
@@ -68,6 +123,30 @@ const NavigatorHomeScreen = () => {
       speechService.stopListening();
     };
   }, [keyboardHeight]);
+
+  const toggleSymptom = (currentSymptom: string) => {
+    setSymptom((prev) => {
+      // Normalize string: split by comma, trim whitespace, filter empty
+      const symptoms = prev
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+
+      const index = symptoms.indexOf(currentSymptom);
+
+      if (index > -1) {
+        // Remove symptom
+        symptoms.splice(index, 1);
+      } else {
+        // Add symptom
+        symptoms.push(currentSymptom);
+      }
+
+      const newSymptom = symptoms.join(', ');
+      if (newSymptom.length > 500) return prev; // Length check
+      return newSymptom;
+    });
+  };
 
   const startRecording = async () => {
     if (!speechService.isAvailable) {
@@ -239,24 +318,19 @@ const NavigatorHomeScreen = () => {
             <View style={styles.chipContainer}>
               {QUICK_SYMPTOMS.map((s) => {
                 const icon = SYMPTOM_ICONS[s] || 'medical-bag';
+                const isSelected = symptom
+                  .split(',')
+                  .map((item) => item.trim())
+                  .includes(s);
 
                 return (
-                  <Chip
+                  <SymptomItem
                     key={s}
+                    label={s}
                     icon={icon}
-                    onPress={() =>
-                      setSymptom((prev) => {
-                        const addition = prev ? `, ${s}` : s;
-                        if (prev.length + addition.length > 500) return prev;
-                        return prev + addition;
-                      })
-                    }
-                    style={styles.chip}
-                    mode="flat"
-                    showSelectedOverlay
-                  >
-                    {s}
-                  </Chip>
+                    isSelected={isSelected}
+                    onPress={() => toggleSymptom(s)}
+                  />
                 );
               })}
             </View>
@@ -280,7 +354,7 @@ const NavigatorHomeScreen = () => {
           value={symptom}
           onChangeText={setSymptom}
           onSubmit={handleSubmit}
-          label="Symptom Details"
+          label="Type your symptoms here"
           placeholder=""
           maxLength={500}
           isRecording={isRecording}
@@ -313,8 +387,23 @@ const styles = StyleSheet.create({
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },
-  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { marginBottom: 4 },
+  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  symptomCard: {
+    width: '48%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 0,
+  },
+  symptomPressable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    gap: 8,
+  },
+  symptomLabel: {
+    fontWeight: '500',
+    flex: 1,
+  },
 });
 
 export default NavigatorHomeScreen;
