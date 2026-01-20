@@ -196,8 +196,8 @@ const SymptomAssessmentScreen = () => {
 
   // --- READINESS VISUALIZATION ---
   const getReadinessVisuals = (score: number) => {
-    if (score <= 0.4) return { label: 'Gathering initial symptoms…', color: theme.colors.error }; // Red/Orange
-    if (score <= 0.7) return { label: 'Checking risk factors…', color: theme.colors.secondary }; // Yellow
+    if (score <= 0.4) return { label: 'Gathering initial symptoms…', color: theme.colors.primary }; // Green
+    if (score <= 0.7) return { label: 'Checking risk factors…', color: theme.colors.primary }; // Green
     if (score <= 0.9) return { label: 'Analyzing specifics…', color: theme.colors.primary }; // Green
     return { label: 'Finalizing recommendation…', color: '#2196F3' }; // Blue
   };
@@ -1026,16 +1026,14 @@ const SymptomAssessmentScreen = () => {
             style={[
               styles.avatar,
               {
-                backgroundColor: msg.isOffline
-                  ? theme.colors.secondaryContainer
-                  : theme.colors.primaryContainer,
+                backgroundColor: theme.colors.primaryContainer,
               },
             ]}
           >
             <MaterialCommunityIcons
               name={msg.isOffline ? 'shield-check' : 'robot'}
               size={18}
-              color={msg.isOffline ? theme.colors.secondary : theme.colors.primary}
+              color={theme.colors.primary}
             />
           </View>
         )}
