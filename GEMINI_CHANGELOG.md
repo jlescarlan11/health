@@ -43,5 +43,28 @@
     - Updated `YakapStackParamList` in `src/types/navigation.ts`.
     - Registered `EnrollmentCompletion` in `YakapNavigator.tsx`.
 3.  **Conventions**:
-    - Integrated `SafeAreaView` with top, left, and right edges.
     - Added 120px bottom padding to ScrollView to clear the bottom tab bar.
+
+# Clinical Saturation Logic
+
+## Features Implemented
+
+1.  **Triage Arbiter Enhancement (`src/services/triageArbiter.ts`)**:
+    - **State Tracking:** Introduced `previousProfile` and `currentSaturationCount` parameters to `evaluateAssessmentState`.
+    - **Stability Logic:** Implemented `calculateSaturation` and `areClinicalSlotsIdentical` to deterministically compare core clinical slots (Age, Duration, Severity, Progression, Red Flags) between turns.
+    - **Termination Override:** Added a condition to return a `TERMINATE` signal with reason `CLINICAL SATURATION` if readiness is 1.0 and the profile has been stable for 2+ consecutive turns, bypassing the standard turn floors.
+
+2.  **Symptom Assessment Screen Integration (`src/screens/SymptomAssessmentScreen.tsx`)**:
+    - **Local State:** Added `previousProfile` and `saturationCount` state variables.
+    - **Arbiter Interaction:** Updated the arbiter call loop to pass and update these state variables.
+    - **Guardrail Update:** Modified `canTerminate` to respect the `CLINICAL SATURATION` signal as a valid exception to the turn floor rule.
+
+## Verification
+
+- **Tests**: Created and ran `tests/TriageArbiterSaturation.test.ts` verifying:
+  - Saturation count increments on identical slots.
+  - Saturation count resets on slot changes.
+  - Termination triggers correctly when readiness is 1.0 and count >= 2.
+  - Termination is blocked if readiness < 1.0 even if saturated.
+  - Non-clinical field changes (like turn count) do not reset saturation.
+

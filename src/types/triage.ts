@@ -43,6 +43,7 @@ export interface AssessmentProfile {
   clinical_friction_detected?: boolean;
   clinical_friction_details?: string;
   is_complex_case?: boolean;
+  is_vulnerable?: boolean;
   symptom_category?: 'simple' | 'complex' | 'critical';
   denial_confidence?: 'high' | 'medium' | 'low';
   turn_count?: number;
@@ -56,7 +57,7 @@ export interface GroupedOption {
 export interface AssessmentQuestion {
   id: string;
   text: string;
-  type?: 'text' | 'multi-select';
+  type?: 'text' | 'multi-select' | 'single-select' | 'number';
   options?: string[] | GroupedOption[];
   tier?: number;
   is_red_flag?: boolean;

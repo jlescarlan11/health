@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, StyleSheet, Animated, StyleProp, ViewStyle } from 'react-native';
+import { View, StyleSheet, Animated, StyleProp, ViewStyle, KeyboardTypeOptions } from 'react-native';
 import { TextInput, IconButton, useTheme } from 'react-native-paper';
 import { VoiceVisualizer } from './VoiceVisualizer';
 
@@ -12,6 +12,8 @@ interface InputCardProps {
   onFocus?: () => void;
   onBlur?: () => void;
   maxLength?: number;
+  keyboardType?: KeyboardTypeOptions;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   isRecording?: boolean;
   volume?: number;
   onVoicePress?: () => void;
@@ -35,6 +37,8 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
     onFocus,
     onBlur,
     maxLength,
+    keyboardType,
+    autoCapitalize,
     isRecording = false,
     volume = 0,
     onVoicePress,
@@ -108,6 +112,8 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
           placeholder={placeholder}
           multiline
           maxLength={maxLength}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
           value={value}
           onChangeText={onChangeText}
           onFocus={onFocus}

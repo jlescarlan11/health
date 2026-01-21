@@ -213,6 +213,12 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Fallback Logic:** Restored the "I'm not sure" Chip for open-text questions to ensure users can still skip if needed.
   - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/components/common/MultiSelectChecklist.tsx`.
 
+- **Gemini Streaming Fix (Jan 19, 2026):**
+  - **Streaming Compatibility:** Resolved a runtime error ("Cannot read property 'pipeThrough' of undefined") caused by `generateContentStream` usage in React Native (Hermes).
+  - **Implementation:** Refactored `streamGeminiResponse` in `src/services/gemini.ts` to bypass the incompatible streaming method. It now uses `generateContentWithRetry` (unary) and simulates streaming by yielding chunks of the text response. This maintains the `AsyncGenerator` interface and preserves the typing effect in the UI without crashing the app.
+  - **Verification:** Validated the fix with `src/services/__tests__/gemini.test.ts` and confirmed all frontend tests pass.
+  - **Files Modified:** `src/services/gemini.ts`.
+
 - **Comprehensive Dead Code Cleanup (Jan 17, 2026):**
   - **File Deletion:** Removed 8 dead files including legacy Auth components (`OTPInput`, `PhoneInput`), unused shared components (`Alert`, `Input`, `CustomHeader`), legacy storage services (`storageService`, `storageLoader`), and the obsolete `slotExtractor.ts`.
   - **Active Code Refinement:** Eliminated unused imports, variables, and state in 10+ active files (`ClinicalNoteScreen`, `SymptomAssessmentScreen`, `NavigatorHomeScreen`, `StandardHeader`, etc.) as identified by static analysis.
@@ -220,3 +226,19 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Navigation Fix:** Corrected a bug in `StandardHeader.tsx` where `handleBackPress` used the wrong reference for `backRoute` navigation.
   - **Migration Cleanup:** Refactored Redux Persist migrations in `src/store/index.ts` to use a cleaner `delete` strategy for legacy state purging.
   - **Linting Compliance:** Achieved a significant reduction in ESLint warnings (from 42 down to 22), focusing on reachable production code.
+
+- **Clinical Saturation Logic (Jan 20, 2026):**
+  - **Early Termination:** Implemented logic to allow the assessment to close early if the clinical picture is "saturated" (complete and stable), even if the minimum turn floor hasn't been met.
+  - **Stability Tracking:** Updated `TriageArbiter` to track `saturation_count` by comparing clinical slots (Age, Duration, Severity, etc.) across consecutive turns.
+  - **Termination Condition:** A `TERMINATE` signal is now issued if `triage_readiness_score` is 1.0 AND the profile has been stable for at least 2 turns.
+  - **UI Integration:** Modified `SymptomAssessmentScreen` to maintain `previousProfile` and `saturationCount` state and pass them to the arbiter, respecting the new override condition.
+  - **Verification:** Validated with a dedicated test suite `tests/TriageArbiterSaturation.test.ts`.
+  - **Files Modified:** `src/services/triageArbiter.ts`, `src/screens/SymptomAssessmentScreen.tsx`.
+
+- **Confidence Signaling & Conservative Triage Transparency (Jan 21, 2026):**
+  - **New Component:** Created `ConfidenceSignal.tsx` to transparently communicate when a conservative triage fallback is applied. Uses a subtle `Surface` layout with `MaterialCommunityIcons`.
+  - **UI Integration:** Integrated the signal into `RecommendationScreen.tsx`, appearing only when `is_conservative_fallback` is true in the assessment response.
+  - **Messaging:** Displays a reassuring "Safety Note" explaining that a slightly higher level of care was recommended due to symptom complexity or vagueness.
+  - **Accessibility:** Implemented proper accessibility roles and labels for the signal component.
+  - **Verification:** Added unit tests for the component and integration tests for the conditional rendering logic.
+  - **Files Created/Modified:** `src/components/features/navigation/ConfidenceSignal.tsx`, `src/screens/RecommendationScreen.tsx`, `tests/ConfidenceSignalIntegration.test.tsx`.

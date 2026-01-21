@@ -37,13 +37,6 @@ jest.mock('../src/api/geminiClient', () => ({
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ score: 0, matchedKeywords: [] })),
-  COMBINATION_RISKS: [
-    {
-      symptoms: ['headache', 'blurred vision'],
-      severity: 10,
-      reason: 'Neurological or hypertensive crisis',
-    },
-  ],
 }));
 
 // Mock MaterialCommunityIcons
@@ -52,19 +45,16 @@ jest.mock('@expo/vector-icons', () => ({
 }));
 
 const mockAssessmentData = {
-  symptoms: 'Fever and cough',
-  answers: [
-    { question: 'How long?', answer: '2 days' },
-    { question: 'Any chest pain?', answer: 'No' },
-  ],
+  symptoms: 'Vague malaise',
+  answers: [],
   extractedProfile: {
-    age: '25',
-    duration: '2 days',
-    severity: 'moderate',
+    age: '30',
+    duration: '1 week',
+    severity: 'mild',
     progression: 'stable',
     red_flag_denials: 'none',
-    summary: 'Patient has fever and cough for 2 days.',
-    triage_readiness_score: 0.9,
+    summary: 'Patient feels vaguely unwell.',
+    triage_readiness_score: 0.5, // Low readiness likely triggering conservative logic if implemented in mock
   },
 };
 
@@ -79,7 +69,7 @@ const mockFacilities = [
   },
 ];
 
-describe('RecommendationScreen', () => {
+describe('ConfidenceSignal Integration', () => {
   let store: any;
 
   beforeEach(() => {
@@ -117,33 +107,22 @@ describe('RecommendationScreen', () => {
     });
   });
 
-  it('renders loading state initially', () => {
-    (geminiClient.assessSymptoms as jest.Mock).mockReturnValue(new Promise(() => {}));
-    const { getByText } = render(
-      <ReduxProvider store={store}>
-        <PaperProvider theme={theme}>
-          <RecommendationScreen />
-        </PaperProvider>
-      </ReduxProvider>
-    );
-    expect(getByText('Analyzing symptoms...')).toBeTruthy();
-  });
-
-  it('renders recommendation after analysis', async () => {
+  it('displays ConfidenceSignal when is_conservative_fallback is true', async () => {
     const mockResponse = {
-      recommended_level: 'health_center',
-      user_advice: 'Go to health center',
+      recommended_level: 'hospital',
+      user_advice: 'Go to hospital just in case.',
       clinical_soap: 'SOAP note',
-      key_concerns: ['Concern 1'],
-      critical_warnings: ['Warning 1'],
+      key_concerns: [],
+      critical_warnings: [],
       relevant_services: ['Consultation'],
       red_flags: [],
-      triage_readiness_score: 0.9,
+      triage_readiness_score: 0.6,
+      is_conservative_fallback: true, // TRIGGER
     };
 
     (geminiClient.assessSymptoms as jest.Mock).mockResolvedValue(mockResponse);
 
-    const { getByText } = render(
+    const { getByText, getByLabelText } = render(
       <ReduxProvider store={store}>
         <PaperProvider theme={theme}>
           <RecommendationScreen />
@@ -152,15 +131,27 @@ describe('RecommendationScreen', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
-      expect(getByText('Go to health center')).toBeTruthy();
+      expect(getByText('Safety Note')).toBeTruthy();
+      expect(getByText(/We’ve recommended a slightly higher level of care/)).toBeTruthy();
     });
   });
 
-  it('handles analysis error with fallback', async () => {
-    (geminiClient.assessSymptoms as jest.Mock).mockRejectedValue(new Error('API Error'));
+  it('does NOT display ConfidenceSignal when is_conservative_fallback is false', async () => {
+    const mockResponse = {
+      recommended_level: 'self_care',
+      user_advice: 'Rest at home.',
+      clinical_soap: 'SOAP note',
+      key_concerns: [],
+      critical_warnings: [],
+      relevant_services: [],
+      red_flags: [],
+      triage_readiness_score: 0.9,
+      is_conservative_fallback: false, // NO TRIGGER
+    };
 
-    const { getByText } = render(
+    (geminiClient.assessSymptoms as jest.Mock).mockResolvedValue(mockResponse);
+
+    const { queryByText } = render(
       <ReduxProvider store={store}>
         <PaperProvider theme={theme}>
           <RecommendationScreen />
@@ -169,9 +160,7 @@ describe('RecommendationScreen', () => {
     );
 
     await waitFor(() => {
-      // Fallback level for low risk is health_center
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
-      expect(getByText(/suggest a professional evaluation at your local Health Center/)).toBeTruthy();
+      expect(queryByText('Safety Note')).toBeNull();
     });
   });
 });

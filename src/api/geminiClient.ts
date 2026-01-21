@@ -178,6 +178,7 @@ export class GeminiClient {
         red_flags: json.red_flags ?? [],
         triage_readiness_score: json.triage_readiness_score,
         ambiguity_detected: json.ambiguity_detected,
+        medical_justification: json.medical_justification,
       };
     } catch (error) {
       console.error('JSON Parse Error:', error);
@@ -284,6 +285,7 @@ export class GeminiClient {
         relevant_services: ['Emergency'],
         red_flags: emergency.matchedKeywords,
         triage_readiness_score: 1.0,
+        medical_justification: emergency.medical_justification,
       };
 
       this.logFinalResult(response, scanInput);
@@ -303,6 +305,7 @@ export class GeminiClient {
         relevant_services: ['Mental Health'],
         red_flags: mhCrisis.matchedKeywords,
         triage_readiness_score: 1.0,
+        medical_justification: mhCrisis.medical_justification,
       };
 
       this.logFinalResult(response, scanInput);
@@ -371,6 +374,15 @@ export class GeminiClient {
         const levels = ['self_care', 'health_center', 'hospital', 'emergency'];
         let currentLevelIdx = levels.indexOf(parsed.recommended_level);
 
+        // Initialize flags
+        parsed.is_conservative_fallback = false;
+        if (profile?.clinical_friction_detected) {
+          parsed.clinical_friction_details = {
+            detected: true,
+            reason: profile.clinical_friction_details,
+          };
+        }
+
         // Force Emergency if Red Flags exist (AI might have missed setting the level)
         if (
           parsed.red_flags &&
@@ -382,22 +394,25 @@ export class GeminiClient {
           );
           parsed.recommended_level = 'emergency';
           parsed.user_advice += ' (Upgraded to Emergency due to detected red flags).';
+          parsed.is_conservative_fallback = true;
           currentLevelIdx = 3;
         }
 
         // Upgrade if Low Readiness or Ambiguity Detected
+        const readinessThreshold = profile?.is_vulnerable ? 0.9 : 0.8;
         const isLowReadiness =
-          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < 0.8;
+          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < readinessThreshold;
         const isAmbiguous = parsed.ambiguity_detected === true;
 
         if ((isLowReadiness || isAmbiguous) && currentLevelIdx < 3) {
           const nextLevel = levels[currentLevelIdx + 1] as AssessmentResponse['recommended_level'];
           console.log(
-            `[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Readiness: ${isLowReadiness}, Ambiguous: ${isAmbiguous}`,
+            `[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Readiness: ${isLowReadiness} (Threshold: ${readinessThreshold}), Ambiguous: ${isAmbiguous}`,
           );
 
           parsed.recommended_level = nextLevel;
           parsed.user_advice += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
+          parsed.is_conservative_fallback = true;
         }
 
         // --- AUTHORITY BLOCK ---

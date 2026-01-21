@@ -167,7 +167,7 @@ const DANGER_INDICATORS: Record<string, number> = {
  * Critical symptom combinations that indicate high risk when occurring together.
  * These are used to upgrade severity when multiple symptoms are present simultaneously.
  */
-const COMBINATION_RISKS = [
+export const COMBINATION_RISKS = [
   {
     symptoms: ['headache', 'blurred vision'],
     severity: 10,
@@ -239,6 +239,7 @@ export interface EmergencyDetectionResult {
   debugLog: EmergencyDebugLog;
   hasExclusions?: boolean;
   excludedKeywords?: string[];
+  medical_justification?: string;
 }
 
 export interface EmergencyDebugLog {
@@ -442,6 +443,16 @@ class EmergencyDetector extends KeywordDetector {
 
     // 5. Combination Risks (Fallback/Secondary check)
     let combinationReason = '';
+    
+    for (const risk of COMBINATION_RISKS) {
+        const hasAllSymptoms = risk.symptoms.every(s => matchedKeywords.includes(s));
+        if (hasAllSymptoms) {
+            finalScore = Math.max(finalScore, risk.severity);
+            combinationReason = risk.reason;
+            reasoningParts.push(`Risk combination detected: ${risk.symptoms.join(' + ')} (${risk.reason}).`);
+            break; // Prioritize the first high-risk combination found
+        }
+    }
 
     // 6. Safety Check: If AI marked case as complex/critical, we slightly weight the score up,
     // but if red flags are RESOLVED/DENIED, we never force an emergency just based on serious keywords.
@@ -497,10 +508,31 @@ class EmergencyDetector extends KeywordDetector {
         reasoning += ` [Context: ${reasoningParts.join(' ')}]`;
     }
 
+    // Build medical justification
+    const justificationParts = matchedKeywords.map(keyword => {
+        const severity = ALL_EMERGENCY_KEYWORDS[keyword] || 0;
+        let system = 'General';
+        if (keyword in CARDIAC_KEYWORDS) system = 'Cardiac';
+        else if (keyword in RESPIRATORY_KEYWORDS) system = 'Respiratory';
+        else if (keyword in NEURO_KEYWORDS) system = 'Neurological';
+        else if (keyword in TRAUMA_KEYWORDS) system = 'Trauma';
+        else if (keyword in OTHER_EMERGENCY_KEYWORDS) system = 'Other';
+        return `${keyword} (Severity: ${severity}/10 - ${system})`;
+    });
+
+    if (reasoningParts.length > 0) {
+        justificationParts.push(`Context: ${reasoningParts.join('; ')}`);
+    }
+
+    const medical_justification = justificationParts.length > 0
+        ? justificationParts.join('; ')
+        : 'No emergency keywords detected.';
+
     console.log(`\n--- FINAL RESULT ---`);
     console.log(`Score: ${finalScore}/10 | Emergency: ${isEmergency ? 'YES' : 'NO'}`);
     console.log(`Systems: ${affectedSystems.join(', ')}`);
     console.log(`Reasoning: ${reasoning}`);
+    console.log(`Medical Justification: ${medical_justification}`);
     console.log(`=== EMERGENCY DETECTION END ===\n`);
 
     const debugLog: EmergencyDebugLog = {
@@ -544,6 +576,7 @@ class EmergencyDetector extends KeywordDetector {
       debugLog,
       hasExclusions: excludedKeywords.length > 0,
       excludedKeywords,
+      medical_justification,
     };
   }
 }

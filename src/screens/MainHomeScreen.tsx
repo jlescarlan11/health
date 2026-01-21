@@ -93,8 +93,8 @@ export const MainHomeScreen = () => {
               title="Clinical Handover"
               subtitle={`Show note from ${new Date(lastNote.timestamp).toLocaleDateString()}`}
               icon="doctor"
-              color="#000000"
-              iconColor="#FFFFFF"
+              color={theme.colors.primary}
+              iconColor={theme.colors.onPrimary}
               onPress={() => {
                 navigation.navigate('ClinicalNote');
               }}
@@ -104,8 +104,8 @@ export const MainHomeScreen = () => {
             title="Check Symptoms"
             subtitle="AI-powered health assessment"
             icon="stethoscope"
-            color={theme.colors.primary}
-            iconColor={theme.colors.onPrimary}
+            color={theme.colors.secondary}
+            iconColor={theme.colors.onSecondary}
             onPress={() => {
               navigation.navigate('Check', { screen: 'NavigatorHome' });
             }}
@@ -114,8 +114,8 @@ export const MainHomeScreen = () => {
             title="Find Facilities"
             subtitle="Locate nearby health centers"
             icon="hospital-marker"
-            color={theme.colors.secondary}
-            iconColor={theme.colors.onSecondary}
+            color={theme.colors.primary}
+            iconColor={theme.colors.onPrimary}
             onPress={() => {
               navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} });
             }}
@@ -124,8 +124,8 @@ export const MainHomeScreen = () => {
             title="YAKAP Enrollment"
             subtitle="Register for healthcare benefits"
             icon="card-account-details"
-            color={theme.colors.primary}
-            iconColor={theme.colors.onPrimary}
+            color={theme.colors.secondary}
+            iconColor={theme.colors.onSecondary}
             onPress={() => {
               navigation.navigate('YAKAP', { screen: 'YakapHome' });
             }}

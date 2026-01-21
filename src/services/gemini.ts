@@ -58,7 +58,7 @@ const generateContentWithRetry = async (
  */
 export const generateAssessmentPlan = async (
   initialSymptom: string,
-): Promise<AssessmentQuestion[]> => {
+): Promise<{ questions: AssessmentQuestion[]; intro?: string }> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace(
@@ -68,27 +68,31 @@ export const generateAssessmentPlan = async (
 
     const responseText = await generateContentWithRetry(model, prompt);
 
-    const parsed = parseAndValidateLLMResponse<{ questions: AssessmentQuestion[] }>(responseText);
+    const parsed = parseAndValidateLLMResponse<{ questions: AssessmentQuestion[]; intro?: string }>(
+      responseText,
+    );
     const questions = parsed.questions || [];
 
-    return prioritizeQuestions(questions);
+    return { questions: prioritizeQuestions(questions), intro: parsed.intro };
   } catch (error) {
     console.error('[Gemini] Failed to generate assessment plan:', error);
     // Fallback questions if AI fails
-    return [
-      {
-        id: 'basics',
-        text: 'Could you please tell me your age and how long you have had these symptoms?',
-      },
-      {
-        id: 'severity',
-        text: 'On a scale of 1 to 10, how severe is it, and is it getting better or worse?',
-      },
-      {
-        id: 'red_flags',
-        text: 'To be safe, are you experiencing any difficulty breathing, chest pain, or severe bleeding?',
-      },
-    ];
+    return {
+      questions: [
+        {
+          id: 'basics',
+          text: 'Could you please tell me your age and how long you have had these symptoms?',
+        },
+        {
+          id: 'severity',
+          text: 'On a scale of 1 to 10, how severe is it, and is it getting better or worse?',
+        },
+        {
+          id: 'red_flags',
+          text: 'To be safe, are you experiencing any difficulty breathing, chest pain, or severe bleeding?',
+        },
+      ],
+    };
   }
 };
 

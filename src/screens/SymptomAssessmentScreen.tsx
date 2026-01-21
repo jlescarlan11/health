@@ -166,7 +166,10 @@ const SymptomAssessmentScreen = () => {
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
     null,
   );
+  const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(undefined);
+  const [saturationCount, setSaturationCount] = useState(0);
   const [showRedFlagsChecklist, setShowRedFlagsChecklist] = useState(false);
+  const [isClarifyingDenial, setIsClarifyingDenial] = useState(false);
   const MAX_EXPANSIONS = 2;
 
   // Emergency Verification State
@@ -196,8 +199,8 @@ const SymptomAssessmentScreen = () => {
 
   // --- READINESS VISUALIZATION ---
   const getReadinessVisuals = (score: number) => {
-    if (score <= 0.4) return { label: 'Gathering initial symptoms…', color: theme.colors.error }; // Red/Orange
-    if (score <= 0.7) return { label: 'Checking risk factors…', color: theme.colors.secondary }; // Yellow
+    if (score <= 0.4) return { label: 'Gathering initial symptoms…', color: theme.colors.primary }; // Green
+    if (score <= 0.7) return { label: 'Checking risk factors…', color: theme.colors.primary }; // Green
     if (score <= 0.9) return { label: 'Analyzing specifics…', color: theme.colors.primary }; // Green
     return { label: 'Finalizing recommendation…', color: '#2196F3' }; // Blue
   };
@@ -290,7 +293,7 @@ const SymptomAssessmentScreen = () => {
       const netInfo = await NetInfo.fetch();
       if (!netInfo.isConnected) throw new Error('NETWORK_ERROR');
 
-      const plan = await generateAssessmentPlan(initialSymptom || '');
+      const { questions: plan, intro } = await generateAssessmentPlan(initialSymptom || '');
       setFullPlan(plan);
 
       // --- NEW: Dynamic Question Pruning ---
@@ -339,7 +342,9 @@ const SymptomAssessmentScreen = () => {
 
       // Add Intro & First Question
       const firstQ = prunedPlan[0];
-      const introText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
+      const introText = intro
+        ? `${intro}\n\n${firstQ.text}`
+        : `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
 
       setMessages([{ id: 'intro', text: introText, sender: 'assistant' }]);
 
@@ -359,6 +364,8 @@ const SymptomAssessmentScreen = () => {
   const handleNext = async (answerOverride?: string, skipEmergencyCheck = false) => {
     const answer = answerOverride || inputText;
     if (!answer.trim() || processing) return;
+
+    if (isClarifyingDenial) setIsClarifyingDenial(false);
 
     const currentQ = questions[currentQuestionIndex];
     if (!currentQ && !isOfflineMode) return;
@@ -489,23 +496,51 @@ const SymptomAssessmentScreen = () => {
             nextIdx,
             questions.length,
             questions.slice(nextIdx),
+            previousProfile,
+            saturationCount
           );
+
+          // Update saturation state for next turn
+          if (arbiterResult.saturation_count !== undefined) {
+            setSaturationCount(arbiterResult.saturation_count);
+          }
+          setPreviousProfile(profile);
 
           setArbiterSignal(arbiterResult.signal);
           console.log(
             `[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`,
           );
           console.log(
-            `[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor})`,
+            `[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor}, Saturation: ${arbiterResult.saturation_count})`,
           );
 
+          // Handle Clarification Signal (Ambiguous Denial)
+          if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' && !arbiterResult.needs_reset) {
+            console.log('[Assessment] Arbiter requesting clarification for ambiguous denial.');
+            setIsClarifyingDenial(true);
+            setIsTyping(false);
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `system-clarify-${Date.now()}`,
+                text: 'I want to be 100% sure. You’re definitely not experiencing these symptoms?',
+                sender: 'assistant',
+              },
+            ]);
+            setProcessing(false);
+            return;
+          }
+
           // HARD STOP: Contradiction Lock and Turn Floor Lock prevent termination regardless of readiness.
+          // EXCEPTION: Clinical Saturation overrides the turn floor if stability is proven.
+          const isSaturationTermination = arbiterResult.reason?.includes('CLINICAL SATURATION');
+          
           const canTerminate =
             arbiterResult.signal === 'TERMINATE' &&
             !isAmbiguous &&
             !hasFriction &&
             !hasUnattemptedTier3 &&
-            !isBelowFloor &&
+            (!isBelowFloor || isSaturationTermination) &&
             effectiveReadiness >= TERMINATION_THRESHOLD;
 
           // --- CLARIFICATION FEEDBACK (User Guidance) ---
@@ -1026,16 +1061,14 @@ const SymptomAssessmentScreen = () => {
             style={[
               styles.avatar,
               {
-                backgroundColor: msg.isOffline
-                  ? theme.colors.secondaryContainer
-                  : theme.colors.primaryContainer,
+                backgroundColor: theme.colors.primaryContainer,
               },
             ]}
           >
             <MaterialCommunityIcons
               name={msg.isOffline ? 'shield-check' : 'robot'}
               size={18}
-              color={msg.isOffline ? theme.colors.secondary : theme.colors.primary}
+              color={theme.colors.primary}
             />
           </View>
         )}
@@ -1210,7 +1243,8 @@ const SymptomAssessmentScreen = () => {
         ) : !isOfflineMode &&
           currentQuestion?.id === 'red_flags' &&
           symptomCategory === 'simple' &&
-          !showRedFlagsChecklist ? (
+          !showRedFlagsChecklist &&
+          !isClarifyingDenial ? (
           <View style={{ paddingBottom: 8, gap: 8 }}>
             <Text
               variant="titleSmall"
@@ -1345,42 +1379,51 @@ const SymptomAssessmentScreen = () => {
         ) : (
           <>
             {/* Suggestions / Offline Chips */}
-            {(offlineOptions ||
-              (!isOfflineMode &&
-                currentQuestion?.options &&
-                currentQuestion.options.length > 0)) && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
-              >
-                {offlineOptions
-                  ? offlineOptions.map((opt) => (
-                      <Chip
-                        key={opt.label}
-                        onPress={() => handleNext(opt.label)}
-                        disabled={processing}
-                      >
-                        {opt.label}
-                      </Chip>
-                    ))
-                  : currentQuestion!.options!.map((opt, idx) => {
-                      if (typeof opt === 'string') {
-                        return (
-                          <Chip
-                            key={idx}
-                            onPress={() => handleNext(opt)}
-                            disabled={processing}
-                            style={{ marginRight: 8 }}
-                          >
-                            {opt}
-                          </Chip>
-                        );
-                      }
-                      return null;
-                    })}
-              </ScrollView>
-            )}
+            {(() => {
+              const shouldShowChips =
+                offlineOptions ||
+                (!isOfflineMode &&
+                  currentQuestion?.options &&
+                  currentQuestion.options.length > 0 &&
+                  currentQuestion.type !== 'text' &&
+                  currentQuestion.type !== 'number');
+
+              if (!shouldShowChips) return null;
+
+              return (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
+                >
+                  {offlineOptions
+                    ? offlineOptions.map((opt) => (
+                        <Chip
+                          key={opt.label}
+                          onPress={() => handleNext(opt.label)}
+                          disabled={processing}
+                        >
+                          {opt.label}
+                        </Chip>
+                      ))
+                    : currentQuestion!.options!.map((opt, idx) => {
+                        if (typeof opt === 'string') {
+                          return (
+                            <Chip
+                              key={idx}
+                              onPress={() => handleNext(opt)}
+                              disabled={processing}
+                              style={{ marginRight: 8 }}
+                            >
+                              {opt}
+                            </Chip>
+                          );
+                        }
+                        return null;
+                      })}
+                </ScrollView>
+              );
+            })()}
 
             <InputCard
               ref={inputCardRef}
@@ -1388,6 +1431,7 @@ const SymptomAssessmentScreen = () => {
               onChangeText={setInputText}
               onSubmit={() => handleNext()}
               label={isOfflineMode ? 'Select an option above' : 'Type your answer...'}
+              keyboardType={currentQuestion?.type === 'number' ? 'numeric' : 'default'}
               isRecording={isRecording}
               volume={volume}
               onVoicePress={isRecording ? stopRecording : startRecording}

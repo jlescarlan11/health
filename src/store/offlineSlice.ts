@@ -3,6 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 interface LatestAssessment {
   clinical_soap: string;
   recommendationLevel: string;
+  medical_justification?: string;
   timestamp: number;
 }
 
