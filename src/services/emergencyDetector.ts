@@ -46,8 +46,10 @@ const NEURO_KEYWORDS: Record<string, number> = {
   'seizure': 10,
   'stroke': 10,
   'slurred speech': 10,
+  'slurred': 10,
   'sudden weakness': 10,
   'facial drooping': 10,
+  'drooping': 10,
   'arm weakness': 10,
   'cannot speak': 10,
   'confusion': 8,
@@ -57,6 +59,7 @@ const NEURO_KEYWORDS: Record<string, number> = {
   'headache': 5,
   'blurred vision': 6,
   'dizziness': 5,
+  'dizzy': 5,
   
   // Bicolano / Local
   'nagkukumbulsion': 10, // actively seizing
@@ -159,7 +162,7 @@ const DANGER_INDICATORS: Record<string, number> = {
     'difficulty breathing': 5,
     'chest pain': 5,
     'unconscious': 5,
-    'persistent': 2,
+    'persistent': 1,
     'worsening': 1,
 };
 
@@ -189,7 +192,7 @@ export const COMBINATION_RISKS = [
     reason: 'Potential sepsis or severe infection',
   },
   {
-    symptoms: ['abdominal pain', 'dizziness'],
+    symptoms: ['severe abdominal pain', 'dizziness'],
     severity: 10,
     reason: 'Potential internal bleeding or shock',
   },
@@ -508,25 +511,16 @@ class EmergencyDetector extends KeywordDetector {
         reasoning += ` [Context: ${reasoningParts.join(' ')}]`;
     }
 
-    // Build medical justification
-    const justificationParts = matchedKeywords.map(keyword => {
-        const severity = ALL_EMERGENCY_KEYWORDS[keyword] || 0;
-        let system = 'General';
-        if (keyword in CARDIAC_KEYWORDS) system = 'Cardiac';
-        else if (keyword in RESPIRATORY_KEYWORDS) system = 'Respiratory';
-        else if (keyword in NEURO_KEYWORDS) system = 'Neurological';
-        else if (keyword in TRAUMA_KEYWORDS) system = 'Trauma';
-        else if (keyword in OTHER_EMERGENCY_KEYWORDS) system = 'Other';
-        return `${keyword} (Severity: ${severity}/10 - ${system})`;
-    });
+    // Build medical justification (User-facing, simplified)
+    const symptomsList = matchedKeywords.join(', ');
+    const contextList = reasoningParts
+        .map(part => part.replace(/Danger indicator \(\+\d+\): |Viral indicators detected \(-\d+\): |Risk combination detected: |Chronic duration \(\+\d+\)\.?/g, '').trim())
+        .filter(part => part.length > 0)
+        .join('; ');
 
-    if (reasoningParts.length > 0) {
-        justificationParts.push(`Context: ${reasoningParts.join('; ')}`);
-    }
-
-    const medical_justification = justificationParts.length > 0
-        ? justificationParts.join('; ')
-        : 'No emergency keywords detected.';
+    const medical_justification = matchedKeywords.length > 0
+        ? `Potential concerns: ${symptomsList}.${contextList ? ` Context: ${contextList}` : ''}`
+        : 'No specific emergency signs detected.';
 
     console.log(`\n--- FINAL RESULT ---`);
     console.log(`Score: ${finalScore}/10 | Emergency: ${isEmergency ? 'YES' : 'NO'}`);

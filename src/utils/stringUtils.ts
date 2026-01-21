@@ -135,7 +135,7 @@ const getNgrams = (textData: NormalizedText, n: number): string[] => {
 const getThreshold = (length: number): number => {
   if (length <= 4) return 0; // Exact match only for very short words
   if (length <= 7) return 1; // 1 edit for medium words
-  return Math.floor(length * 0.15); // 15% error rate for longer words
+  return Math.floor(length * 0.2); // 20% error rate for longer words
 };
 
 /**

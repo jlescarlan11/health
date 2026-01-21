@@ -6,6 +6,20 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Linking, Share } from 'react-native';
 
 // Mocks
+jest.mock('../src/hooks', () => ({
+  useUserLocation: jest.fn(() => ({
+    location: {
+      coords: { latitude: 13.6218, longitude: 123.1875 },
+      timestamp: Date.now(),
+    },
+    errorMsg: null,
+    permissionStatus: 'granted',
+    requestPermission: jest.fn(() => Promise.resolve(true)),
+  })),
+  useAppDispatch: jest.fn(() => jest.fn()),
+  useAppSelector: jest.fn(),
+}));
+
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
   useDispatch: jest.fn(() => jest.fn()),

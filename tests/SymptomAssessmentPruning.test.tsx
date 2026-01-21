@@ -97,7 +97,7 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
       { id: 'location', text: 'Where does it hurt?', tier: 2 } // Should remain
     ];
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue(plan);
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
     (extractClinicalSlots as jest.Mock).mockReturnValue({
       severity: 'High'
     });
@@ -127,7 +127,7 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
       { id: 'location', text: 'Where does it hurt?', tier: 2 }
     ];
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue(plan);
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
     (extractClinicalSlots as jest.Mock).mockReturnValue({
       severity: undefined
     });
