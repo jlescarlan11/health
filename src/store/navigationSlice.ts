@@ -15,6 +15,7 @@ interface Recommendation {
   clinical_soap: string;
   isFallbackApplied?: boolean;
   clinicalFrictionDetails?: Record<string, unknown>;
+  medical_justification?: string;
 }
 
 interface NavigationState {

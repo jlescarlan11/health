@@ -68,6 +68,7 @@ interface MentalHealthDetectionResult {
   message?: string;
   resources?: MentalHealthResource[];
   score: number;
+  medical_justification?: string;
 }
 
 class MentalHealthDetector extends KeywordDetector {
@@ -83,13 +84,16 @@ class MentalHealthDetector extends KeywordDetector {
 
     if (isCrisis) {
       console.log(`[MentalHealthDetector] Crisis keywords detected: ${matchedKeywords.join(', ')} (Score: ${score})`);
+      const medical_justification = matchedKeywords.map(k => `${k} (Severity: ${CRISIS_KEYWORDS_SCORED[k]}/10)`).join('; ');
+      
       return {
         isCrisis: true,
         matchedKeywords,
         score,
         message:
-          'You are not alone. Help is available. If you are in immediate danger, please go to the nearest hospital or call emergency services immediately.',
+          'Your symptoms indicate a mental health crisis. You are not alone. Please reach out to a crisis hotline or go to the nearest hospital immediately.',
         resources: MENTAL_HEALTH_RESOURCES,
+        medical_justification,
       };
     }
 

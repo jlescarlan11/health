@@ -293,7 +293,7 @@ const SymptomAssessmentScreen = () => {
       const netInfo = await NetInfo.fetch();
       if (!netInfo.isConnected) throw new Error('NETWORK_ERROR');
 
-      const plan = await generateAssessmentPlan(initialSymptom || '');
+      const { questions: plan, intro } = await generateAssessmentPlan(initialSymptom || '');
       setFullPlan(plan);
 
       // --- NEW: Dynamic Question Pruning ---
@@ -342,7 +342,9 @@ const SymptomAssessmentScreen = () => {
 
       // Add Intro & First Question
       const firstQ = prunedPlan[0];
-      const introText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
+      const introText = intro
+        ? `${intro}\n\n${firstQ.text}`
+        : `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
 
       setMessages([{ id: 'intro', text: introText, sender: 'assistant' }]);
 
@@ -1377,42 +1379,51 @@ const SymptomAssessmentScreen = () => {
         ) : (
           <>
             {/* Suggestions / Offline Chips */}
-            {(offlineOptions ||
-              (!isOfflineMode &&
-                currentQuestion?.options &&
-                currentQuestion.options.length > 0)) && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
-              >
-                {offlineOptions
-                  ? offlineOptions.map((opt) => (
-                      <Chip
-                        key={opt.label}
-                        onPress={() => handleNext(opt.label)}
-                        disabled={processing}
-                      >
-                        {opt.label}
-                      </Chip>
-                    ))
-                  : currentQuestion!.options!.map((opt, idx) => {
-                      if (typeof opt === 'string') {
-                        return (
-                          <Chip
-                            key={idx}
-                            onPress={() => handleNext(opt)}
-                            disabled={processing}
-                            style={{ marginRight: 8 }}
-                          >
-                            {opt}
-                          </Chip>
-                        );
-                      }
-                      return null;
-                    })}
-              </ScrollView>
-            )}
+            {(() => {
+              const shouldShowChips =
+                offlineOptions ||
+                (!isOfflineMode &&
+                  currentQuestion?.options &&
+                  currentQuestion.options.length > 0 &&
+                  currentQuestion.type !== 'text' &&
+                  currentQuestion.type !== 'number');
+
+              if (!shouldShowChips) return null;
+
+              return (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
+                >
+                  {offlineOptions
+                    ? offlineOptions.map((opt) => (
+                        <Chip
+                          key={opt.label}
+                          onPress={() => handleNext(opt.label)}
+                          disabled={processing}
+                        >
+                          {opt.label}
+                        </Chip>
+                      ))
+                    : currentQuestion!.options!.map((opt, idx) => {
+                        if (typeof opt === 'string') {
+                          return (
+                            <Chip
+                              key={idx}
+                              onPress={() => handleNext(opt)}
+                              disabled={processing}
+                              style={{ marginRight: 8 }}
+                            >
+                              {opt}
+                            </Chip>
+                          );
+                        }
+                        return null;
+                      })}
+                </ScrollView>
+              );
+            })()}
 
             <InputCard
               ref={inputCardRef}
@@ -1420,6 +1431,7 @@ const SymptomAssessmentScreen = () => {
               onChangeText={setInputText}
               onSubmit={() => handleNext()}
               label={isOfflineMode ? 'Select an option above' : 'Type your answer...'}
+              keyboardType={currentQuestion?.type === 'number' ? 'numeric' : 'default'}
               isRecording={isRecording}
               volume={volume}
               onVoicePress={isRecording ? stopRecording : startRecording}

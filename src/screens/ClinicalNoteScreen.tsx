@@ -40,7 +40,8 @@ export const ClinicalNoteScreen = () => {
   const handleShare = async () => {
     const text = formatClinicalShareText(
       latestAssessment.clinical_soap,
-      latestAssessment.timestamp
+      latestAssessment.timestamp,
+      latestAssessment.medical_justification
     );
     await Clipboard.setStringAsync(text);
     setCopied(true);
@@ -88,7 +89,12 @@ export const ClinicalNoteScreen = () => {
           <>
             <Section title="SUBJECTIVE (History)" content={sections.s} />
             <Section title="OBJECTIVE (Signs)" content={sections.o} />
-            <Section title="ASSESSMENT (Triage)" content={sections.a} />
+            <Section 
+              title="ASSESSMENT (Triage)" 
+              content={latestAssessment.medical_justification 
+                ? `${sections.a}\n\nEmergency Justification: ${latestAssessment.medical_justification}`
+                : sections.a} 
+            />
             <Section title="PLAN (Next Steps)" content={sections.p} />
           </>
         ) : (

@@ -16,7 +16,7 @@ import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
 import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
 import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient } from '../api/geminiClient';
-import { detectEmergency } from '../services/emergencyDetector';
+import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
 import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
@@ -236,6 +236,7 @@ const RecommendationScreen = () => {
           clinical_soap: response.clinical_soap,
           isFallbackApplied: response.is_conservative_fallback,
           clinicalFrictionDetails: response.clinical_friction_details,
+          medical_justification: response.medical_justification,
         }),
       );
 
@@ -244,6 +245,7 @@ const RecommendationScreen = () => {
           saveClinicalNote({
             clinical_soap: response.clinical_soap,
             recommendationLevel: response.recommended_level,
+            medical_justification: response.medical_justification,
           }),
         );
       }
@@ -270,16 +272,39 @@ const RecommendationScreen = () => {
         profile: profileRef.current,
       });
 
-      const isHighRiskFallback = localResult.score >= 5;
-      const fallbackLevel = isHighRiskFallback ? 'hospital' : 'health_center';
-      const fallbackAdvice = isHighRiskFallback
-        ? 'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).'
-        : 'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
+      // Strengthened Fallback: Check for specific high-risk combinations
+      let specificRiskMatch = null;
+      for (const risk of COMBINATION_RISKS) {
+        if (risk.symptoms.every((s) => localResult.matchedKeywords.includes(s))) {
+          specificRiskMatch = risk;
+          break;
+        }
+      }
+
+      const isHighRiskFallback = localResult.score >= 5 || !!specificRiskMatch;
+      // If a specific risk combination is found, force 'emergency', otherwise fallback to hospital/health_center based on score
+      const fallbackLevel = specificRiskMatch
+        ? 'emergency'
+        : isHighRiskFallback
+          ? 'hospital'
+          : 'health_center';
+
+      let fallbackAdvice = '';
+
+      if (specificRiskMatch) {
+        fallbackAdvice = `CRITICAL: ${specificRiskMatch.reason} suspected based on symptoms (${specificRiskMatch.symptoms.join(' + ')}). Proceed to the nearest hospital emergency room immediately. (Note: Fallback care level determined by local safety analysis).`;
+      } else if (isHighRiskFallback) {
+        fallbackAdvice =
+          'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).';
+      } else {
+        fallbackAdvice =
+          'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
+      }
 
       const fallbackResponse: AssessmentResponse = {
         recommended_level: fallbackLevel,
         user_advice: fallbackAdvice,
-        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}). P: Refer to ${fallbackLevel === 'hospital' ? 'Hospital' : 'Health Center'}.`,
+        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : 'Health Center'}.`,
         key_concerns: [
           'Need for professional evaluation',
           ...localResult.matchedKeywords.map((k) => `Monitored: ${k}`),
@@ -287,7 +312,12 @@ const RecommendationScreen = () => {
         critical_warnings: [
           'Go to the Emergency Room IMMEDIATELY if you develop a stiff neck, confusion, or difficulty breathing.',
         ],
-        relevant_services: isHighRiskFallback ? ['Laboratory', 'Consultation'] : ['Consultation'],
+        relevant_services:
+          fallbackLevel === 'emergency'
+            ? ['Emergency', 'Laboratory']
+            : isHighRiskFallback
+              ? ['Laboratory', 'Consultation']
+              : ['Consultation'],
         red_flags: localResult.matchedKeywords,
         follow_up_questions: [],
         triage_readiness_score: 0.5,
@@ -476,6 +506,26 @@ const RecommendationScreen = () => {
         {/* Safety Note for Conservative Triage */}
         {recommendation.is_conservative_fallback && <ConfidenceSignal />}
 
+        {/* Clinical Friction Alert */}
+        {assessmentData.extractedProfile?.clinical_friction_detected && (
+          <Surface
+            style={[
+              styles.frictionContainer,
+              { backgroundColor: '#FFF8E1', borderColor: '#FFC107' }, // Amber/Warning context
+            ]}
+            elevation={0}
+          >
+            <View style={styles.frictionHeader}>
+              <MaterialCommunityIcons name="alert-outline" size={20} color="#B07B01" />
+              <Text style={[styles.frictionTitle, { color: '#B07B01' }]}>CLINICAL CONTEXT</Text>
+            </View>
+            <Text style={[styles.frictionText, { color: '#4E342E' }]}>
+              {assessmentData.extractedProfile.clinical_friction_details ||
+                'Contradictory symptoms detected.'}
+            </Text>
+          </Surface>
+        )}
+
         {/* Assessment & Advice - Integrated Layout */}
         <View style={styles.adviceSection}>
           <View style={styles.adviceHeader}>
@@ -487,8 +537,33 @@ const RecommendationScreen = () => {
               ASSESSMENT & GUIDANCE
             </Text>
           </View>
+          {isEmergency && recommendation.medical_justification && (
+            <Surface
+              style={[
+                styles.justificationContainer,
+                { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' },
+              ]}
+              elevation={0}
+            >
+              <View style={styles.justificationHeader}>
+                <MaterialCommunityIcons name="shield-alert-outline" size={20} color="#B91C1C" />
+                <Text style={[styles.justificationTitle, { color: '#B91C1C' }]}>
+                  EMERGENCY JUSTIFICATION
+                </Text>
+              </View>
+              <Text style={[styles.justificationText, { color: '#7F1D1D' }]}>
+                {recommendation.medical_justification}
+              </Text>
+            </Surface>
+          )}
           <Text variant="bodyLarge" style={styles.adviceText}>
-            {recommendation.user_advice}
+            {isEmergency && recommendation.medical_justification
+              ? recommendation.user_advice
+                  .replace(/CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./, '')
+                  .replace(/CRITICAL: High risk combination detected \(.*?\)\./, '')
+                  .replace('Your symptoms indicate a mental health crisis.', '')
+                  .trim() || 'Seek medical help immediately.'
+              : recommendation.user_advice}
           </Text>
         </View>
 
@@ -710,6 +785,30 @@ const styles = StyleSheet.create({
   },
   careLabel: { marginLeft: 8, fontWeight: '900', letterSpacing: 1, fontSize: 12 },
 
+  frictionContainer: {
+    marginVertical: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  frictionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  frictionTitle: {
+    marginLeft: 8,
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  frictionText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+
   adviceSection: {
     paddingVertical: 16,
     paddingHorizontal: 4,
@@ -729,6 +828,30 @@ const styles = StyleSheet.create({
     color: '#2C3333',
     fontWeight: '500',
     fontSize: 17,
+  },
+
+  justificationContainer: {
+    marginVertical: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  justificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  justificationTitle: {
+    marginLeft: 8,
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  justificationText: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '600',
   },
 
   criticalWarningsSection: {

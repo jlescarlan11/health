@@ -167,7 +167,7 @@ const DANGER_INDICATORS: Record<string, number> = {
  * Critical symptom combinations that indicate high risk when occurring together.
  * These are used to upgrade severity when multiple symptoms are present simultaneously.
  */
-const COMBINATION_RISKS = [
+export const COMBINATION_RISKS = [
   {
     symptoms: ['headache', 'blurred vision'],
     severity: 10,
@@ -443,6 +443,16 @@ class EmergencyDetector extends KeywordDetector {
 
     // 5. Combination Risks (Fallback/Secondary check)
     let combinationReason = '';
+    
+    for (const risk of COMBINATION_RISKS) {
+        const hasAllSymptoms = risk.symptoms.every(s => matchedKeywords.includes(s));
+        if (hasAllSymptoms) {
+            finalScore = Math.max(finalScore, risk.severity);
+            combinationReason = risk.reason;
+            reasoningParts.push(`Risk combination detected: ${risk.symptoms.join(' + ')} (${risk.reason}).`);
+            break; // Prioritize the first high-risk combination found
+        }
+    }
 
     // 6. Safety Check: If AI marked case as complex/critical, we slightly weight the score up,
     // but if red flags are RESOLVED/DENIED, we never force an emergency just based on serious keywords.

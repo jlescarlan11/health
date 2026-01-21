@@ -57,7 +57,7 @@ export interface GroupedOption {
 export interface AssessmentQuestion {
   id: string;
   text: string;
-  type?: 'text' | 'multi-select';
+  type?: 'text' | 'multi-select' | 'single-select' | 'number';
   options?: string[] | GroupedOption[];
   tier?: number;
   is_red_flag?: boolean;
