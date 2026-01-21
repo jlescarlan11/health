@@ -65,12 +65,14 @@ export const FacilityDirectoryScreen = () => {
   };
 
   const handleFilterPress = (filterId: string) => {
-    setActiveFilter(filterId);
+    // If clicking already selected filter (and it's not 'all'), toggle back to 'all'
+    const newFilter = activeFilter === filterId && filterId !== 'all' ? 'all' : filterId;
+    setActiveFilter(newFilter);
 
     // Default reset
     const baseFilter = { type: undefined, yakapAccredited: undefined, openNow: undefined };
 
-    switch (filterId) {
+    switch (newFilter) {
       case 'health_center':
         dispatch(setFilters({ ...baseFilter, type: 'health_center' }));
         break;
@@ -121,24 +123,34 @@ export const FacilityDirectoryScreen = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filterScroll}
             >
-              {FILTERS.map((filter) => (
-                <Chip
-                  key={filter.id}
-                  selected={activeFilter === filter.id}
-                  onPress={() => handleFilterPress(filter.id)}
-                  style={[
-                    styles.chip,
-                    {
-                      backgroundColor: theme.colors.surface,
-                      borderColor: theme.colors.outline,
-                    },
-                  ]}
-                  showSelectedOverlay
-                  mode="outlined"
-                >
-                  {filter.label}
-                </Chip>
-              ))}
+              {FILTERS.map((filter) => {
+                const isSelected = activeFilter === filter.id;
+                return (
+                  <Chip
+                    key={filter.id}
+                    selected={isSelected}
+                    onPress={() => handleFilterPress(filter.id)}
+                    style={[
+                      styles.chip,
+                      {
+                        backgroundColor: isSelected
+                          ? theme.colors.primaryContainer
+                          : theme.colors.surface,
+                        borderColor: isSelected ? theme.colors.primary : theme.colors.outline,
+                      },
+                    ]}
+                    textStyle={{
+                      color: isSelected ? theme.colors.onPrimaryContainer : theme.colors.onSurface,
+                      fontWeight: isSelected ? '700' : '400',
+                    }}
+                    showSelectedOverlay
+                    mode="outlined"
+                    selectedColor={theme.colors.primary}
+                  >
+                    {filter.label}
+                  </Chip>
+                );
+              })}
             </ScrollView>
           </View>
 
