@@ -17,15 +17,20 @@ const HomeHero: React.FC = () => {
   const greeting = 'Kumusta!';
 
   return (
-    <HeroSection colors={[theme.colors.primaryContainer, theme.colors.background]} height={220}>
+    <HeroSection 
+      colors={[theme.colors.secondaryContainer, theme.colors.background]} 
+      height={280}
+    >
       <View style={styles.container}>
-        <Text style={[styles.date, { color: theme.colors.onPrimaryContainer }]}>
-          {formattedDate}
-        </Text>
-        <Text style={[styles.greeting, { color: theme.colors.primary }]}>{greeting}</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.onSurfaceVariant }]}>
-          How can we help you today?
-        </Text>
+        <View style={styles.contentContainer}>
+          <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>
+            {formattedDate}
+          </Text>
+          <Text style={[styles.greeting, { color: theme.colors.primary }]}>{greeting}</Text>
+          <Text style={[styles.subtitle, { color: theme.colors.onSurface }]}>
+            How can we help you today?
+          </Text>
+        </View>
       </View>
     </HeroSection>
   );
@@ -34,22 +39,32 @@ const HomeHero: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20, // Internal padding for text content
-    paddingBottom: 20,
+    justifyContent: 'flex-end', // Push content to the bottom of the hero area
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  contentContainer: {
+    gap: 8,
   },
   date: {
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    opacity: 0.8,
   },
   greeting: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginTop: 4,
+    fontSize: 42,
+    fontWeight: '900',
+    letterSpacing: -1.5,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 18,
-    marginTop: 8,
+    fontSize: 22,
+    fontWeight: '600',
+    letterSpacing: -0.5,
+    lineHeight: 30,
+    opacity: 0.9,
   },
 });
 
