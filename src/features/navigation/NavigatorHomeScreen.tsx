@@ -221,6 +221,7 @@ const NavigatorHomeScreen = () => {
         navigation.navigate('Recommendation', {
           assessmentData: {
             symptoms: symptom,
+            affectedSystems: emergencyCheck.affectedSystems,
             answers: [],
             extractedProfile: {
               age: null,

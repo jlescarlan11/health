@@ -880,6 +880,7 @@ const SymptomAssessmentScreen = () => {
       navigation.replace('Recommendation', {
         assessmentData: {
           symptoms: initialSymptom || '',
+          affectedSystems: safetyCheck.affectedSystems,
           answers: [
             ...Object.entries(answers).map(([k, v]) => ({ question: k, answer: v })),
             { question: currentQ.text, answer },
