@@ -293,7 +293,7 @@ const SymptomAssessmentScreen = () => {
       const netInfo = await NetInfo.fetch();
       if (!netInfo.isConnected) throw new Error('NETWORK_ERROR');
 
-      const plan = await generateAssessmentPlan(initialSymptom || '');
+      const { questions: plan, intro } = await generateAssessmentPlan(initialSymptom || '');
       setFullPlan(plan);
 
       // --- NEW: Dynamic Question Pruning ---
@@ -342,7 +342,9 @@ const SymptomAssessmentScreen = () => {
 
       // Add Intro & First Question
       const firstQ = prunedPlan[0];
-      const introText = `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
+      const introText = intro
+        ? `${intro}\n\n${firstQ.text}`
+        : `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
 
       setMessages([{ id: 'intro', text: introText, sender: 'assistant' }]);
 

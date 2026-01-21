@@ -37,6 +37,13 @@ jest.mock('../src/api/geminiClient', () => ({
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ score: 0, matchedKeywords: [] })),
+  COMBINATION_RISKS: [
+    {
+      symptoms: ['headache', 'blurred vision'],
+      severity: 10,
+      reason: 'Neurological or hypertensive crisis',
+    },
+  ],
 }));
 
 // Mock MaterialCommunityIcons

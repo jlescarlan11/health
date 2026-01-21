@@ -1,9 +1,7 @@
 /**
  * Utility functions for string manipulation and fuzzy matching.
- * Optimized version with performance improvements.
+ * Stricter version with performance improvements.
  */
-
-export const FUZZY_THRESHOLD = 2;
 
 const FALSE_POSITIVES: Record<string, string[]> = {
   doing: ['dying'],
@@ -12,7 +10,7 @@ const FALSE_POSITIVES: Record<string, string[]> = {
   trying: ['dying'],
   drying: ['dying'],
   'want to give': ['want to die'],
-  
+
   // False positives for short Bicolano keywords
   bar: ['bari'], // 'bari' (broken)
   bare: ['bari'],
@@ -22,6 +20,15 @@ const FALSE_POSITIVES: Record<string, string[]> = {
   hopes: ['hapos'], // 'hapos' (asthma)
   hop: ['hapos'],
   pods: ['pudos'], // 'pudos' (shortness of breath)
+
+  // Choking collisions (common -ing words)
+  coming: ['choking'],
+  cooking: ['choking'],
+  joking: ['choking'],
+  checking: ['choking'],
+  shocking: ['choking'],
+  clocking: ['choking'],
+  booking: ['choking'],
 };
 
 /**
@@ -120,8 +127,18 @@ const getNgrams = (textData: NormalizedText, n: number): string[] => {
 };
 
 /**
+ * Calculate threshold based on string length using percentage-based approach.
+ * Stricter thresholds for better precision.
+ */
+const getThreshold = (length: number): number => {
+  if (length <= 4) return 0; // Exact match only for very short words
+  if (length <= 7) return 1; // 1 edit for medium words
+  return Math.floor(length * 0.15); // 15% error rate for longer words
+};
+
+/**
  * Scans a text for ALL fuzzy matches against a list of keywords.
- * Optimized with early exits, caching, and threshold-aware distance calculation.
+ * Stricter matching with performance optimizations.
  */
 export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] => {
   if (!text || !keywords || keywords.length === 0) return [];
@@ -142,41 +159,40 @@ export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] 
   for (const { original, normalized, wordCount } of normalizedKeywords) {
     if (found.has(original)) continue;
 
-    if (normalized.length >= 5 && textData.normalized.includes(normalized)) {
-      found.add(original);
-      continue;
-    }
-
     const len = normalized.length;
-    let threshold = FUZZY_THRESHOLD;
+    const threshold = getThreshold(len);
 
-    if (len <= 3) threshold = 0;
-    else if (len <= 6) threshold = 1;
-    else threshold = 2;
+    // Calculate valid length range for potential matches
+    const minLen = Math.max(1, len - threshold);
+    const maxLen = len + threshold;
 
-    const maxNgram = Math.max(wordCount, 3);
+    // Only generate n-grams for the actual word count needed
+    const ngrams = getNgrams(textData, wordCount);
     let matched = false;
 
-    for (let n = 1; n <= maxNgram && !matched; n++) {
-      const ngrams = getNgrams(textData, n);
+    for (const ngram of ngrams) {
+      // Early exit: length filter
+      if (ngram.length < minLen || ngram.length > maxLen) {
+        continue;
+      }
 
-      for (const ngram of ngrams) {
-        const lengthDiff = Math.abs(ngram.length - normalized.length);
-        if (lengthDiff > (wordCount > 1 ? threshold + 1 : threshold)) {
-          continue;
-        }
+      // Early exit: first character must match (stricter matching)
+      if (ngram[0] !== normalized[0]) {
+        continue;
+      }
 
-        if (FALSE_POSITIVES[ngram]?.includes(original)) {
-          continue;
-        }
+      // Early exit: check false positives
+      if (FALSE_POSITIVES[ngram]?.includes(original)) {
+        continue;
+      }
 
-        const distance = getLevenshteinDistance(ngram, normalized, threshold);
+      // Calculate distance with threshold limit
+      const distance = getLevenshteinDistance(ngram, normalized, threshold);
 
-        if (distance <= threshold) {
-          found.add(original);
-          matched = true;
-          break;
-        }
+      if (distance <= threshold) {
+        found.add(original);
+        matched = true;
+        break;
       }
     }
   }

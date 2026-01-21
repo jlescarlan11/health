@@ -46,7 +46,8 @@ export const parseSoap = (text: string): SoapSections => {
  */
 export const formatClinicalShareText = (
   clinicalSoap: string,
-  timestamp: number
+  timestamp: number,
+  medicalJustification?: string
 ): string => {
   const formattedDate = new Date(timestamp).toLocaleString('en-US', {
     dateStyle: 'medium',
@@ -61,10 +62,19 @@ export const formatClinicalShareText = (
   if (hasSections) {
     if (sections.s) shareText += `SUBJECTIVE (History):\n${sections.s}\n\n`;
     if (sections.o) shareText += `OBJECTIVE (Signs):\n${sections.o}\n\n`;
-    if (sections.a) shareText += `ASSESSMENT (Triage):\n${sections.a}\n\n`;
+    
+    let assessment = sections.a || '';
+    if (medicalJustification) {
+      assessment += (assessment ? '\n\n' : '') + `Emergency Justification: ${medicalJustification}`;
+    }
+    if (assessment) shareText += `ASSESSMENT (Triage):\n${assessment}\n\n`;
+    
     if (sections.p) shareText += `PLAN (Next Steps):\n${sections.p}\n`;
   } else {
     shareText += clinicalSoap;
+    if (medicalJustification) {
+      shareText += `\n\nEmergency Justification: ${medicalJustification}`;
+    }
   }
 
   return shareText.trim();

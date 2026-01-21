@@ -178,6 +178,7 @@ export class GeminiClient {
         red_flags: json.red_flags ?? [],
         triage_readiness_score: json.triage_readiness_score,
         ambiguity_detected: json.ambiguity_detected,
+        medical_justification: json.medical_justification,
       };
     } catch (error) {
       console.error('JSON Parse Error:', error);
@@ -284,6 +285,7 @@ export class GeminiClient {
         relevant_services: ['Emergency'],
         red_flags: emergency.matchedKeywords,
         triage_readiness_score: 1.0,
+        medical_justification: emergency.medical_justification,
       };
 
       this.logFinalResult(response, scanInput);
@@ -303,6 +305,7 @@ export class GeminiClient {
         relevant_services: ['Mental Health'],
         red_flags: mhCrisis.matchedKeywords,
         triage_readiness_score: 1.0,
+        medical_justification: mhCrisis.medical_justification,
       };
 
       this.logFinalResult(response, scanInput);
