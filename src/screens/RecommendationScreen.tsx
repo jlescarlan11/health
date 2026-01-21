@@ -30,6 +30,14 @@ import { ConfidenceSignal } from '../components/features/navigation/ConfidenceSi
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
+const SYSTEM_INSTRUCTIONS: Record<string, string> = {
+  Cardiac: 'Keep patient calm and seated. Loosen tight clothing.',
+  Respiratory: 'Help patient sit upright. Keep them calm.',
+  Trauma: 'Apply firm pressure to bleeding. Do not move if neck injury suspected.',
+  Neurological: 'Check breathing. Place in recovery position if unconscious.',
+  Other: 'Keep patient comfortable. Monitor breathing.',
+};
+
 const isFallbackProfile = (profile?: AssessmentProfile) => {
   if (!profile || !profile.summary) return false;
   // If age/duration etc are all null and summary contains dialogue tags, it's a fallback
@@ -462,6 +470,15 @@ const RecommendationScreen = () => {
   const isEmergency = recommendation.recommended_level === 'emergency';
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
 
+  const emergencyInstruction = useMemo(() => {
+    if (!assessmentData.affectedSystems || assessmentData.affectedSystems.length === 0) {
+      return 'Seek medical help immediately';
+    }
+    // Prioritize specific systems if multiple exist
+    const system = assessmentData.affectedSystems[0];
+    return SYSTEM_INSTRUCTIONS[system] || 'Seek medical help immediately';
+  }, [assessmentData.affectedSystems]);
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -478,7 +495,7 @@ const RecommendationScreen = () => {
               <MaterialCommunityIcons name="alert-octagon" size={40} color="white" />
               <View style={styles.emergencyTextContainer}>
                 <Text style={styles.emergencyTitle}>URGENT CARE REQUIRED</Text>
-                <Text style={styles.emergencySubtitle}>Seek medical help immediately</Text>
+                <Text style={styles.emergencySubtitle}>{emergencyInstruction}</Text>
               </View>
             </View>
             <EmergencyButton
