@@ -8,8 +8,21 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { geminiClient } from '../src/api/geminiClient';
 import { PaperProvider } from 'react-native-paper';
 import { theme } from '../src/theme';
+import * as locationHook from '../src/hooks/useUserLocation';
 
 // Mock dependencies
+jest.mock('../src/hooks/useUserLocation', () => ({
+  useUserLocation: jest.fn(() => ({
+    location: {
+      coords: { latitude: 13.6218, longitude: 123.1875 },
+      timestamp: Date.now(),
+    },
+    errorMsg: null,
+    permissionStatus: 'granted',
+    requestPermission: jest.fn(() => Promise.resolve(true)),
+  })),
+}));
+
 jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
   useNavigation: jest.fn(),

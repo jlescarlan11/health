@@ -96,10 +96,13 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
 
   test('Triggers re-verification when denial confidence is low', async () => {
     // 1. Plan: Red Flag Question
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue([
-      { id: 'red_flags', text: 'Do you have vision loss?' },
-      { id: 'duration', text: 'How long?' }
-    ]);
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+      questions: [
+        { id: 'red_flags', text: 'Do you have vision loss?' },
+        { id: 'duration', text: 'How long?' }
+      ],
+      intro: 'Intro'
+    });
 
     // Mock streamGeminiResponse for the bridge
     (streamGeminiResponse as jest.Mock).mockImplementation(async function* () {

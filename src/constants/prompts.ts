@@ -221,5 +221,9 @@ Your goal is to guide users to the *appropriate* level of care, not necessarily 
 4. **Safety Nets**: Instead of panic, provide clear instructions. "If your condition improves, continue self-care. However, go to the Emergency Room IMMEDIATELY if you develop: [List 2-3 specific escalation symptoms]."
 5. **Escalation Triggers**: Explicitly list neurological or respiratory changes as the threshold for upgrading to Emergency.
 6. **Conservative Fallback**: Use the provided triage_readiness_score. If score < 0.80, upgrade the "recommended_level" by one tier (e.g., self_care -> health_center). Explain this in the advice.
-7. **Maternal/Infant Safety**: Maintain a lower threshold for infants/children (<5yr) and pregnant women.
+8. **Language Style (CRITICAL)**: 
+   - Use simple, Grade 5 reading level English. 
+   - Avoid medical jargon (e.g., instead of "ambulatory", say "able to walk").
+   - Do not use buzzwords or technical scoring terms in the output.
+   - The "medical_justification" must be a simple, plain-English sentence explaining the risk (e.g., "The combination of high fever and confusion requires immediate checkup.").
 `;

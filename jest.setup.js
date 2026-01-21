@@ -23,6 +23,16 @@ jest.mock('@react-native-voice/voice', () => ({
   removeAllListeners: jest.fn(),
 }));
 
+// Mock NativeModules.Voice for SpeechService
+const { NativeModules } = require('react-native');
+NativeModules.Voice = {
+  startSpeech: jest.fn(),
+  stopSpeech: jest.fn(),
+  cancelSpeech: jest.fn(),
+  destroySpeech: jest.fn(),
+  removeAllListeners: jest.fn(),
+};
+
 // Mock Expo Constants
 jest.mock('expo-constants', () => ({
   manifest: {
@@ -36,6 +46,33 @@ jest.mock('expo-constants', () => ({
     },
   },
 }));
+
+// Mock expo-modules-core
+jest.mock('expo-modules-core', () => ({
+  NativeModulesProxy: {},
+  requireNativeModule: jest.fn(),
+  Platform: {
+    OS: 'ios',
+    select: (objs) => objs.ios || objs.default,
+  },
+}));
+
+// Set global process.env.EXPO_OS
+process.env.EXPO_OS = 'ios';
+
+// Silence react-native-paper icon warnings
+const originalWarn = console.warn;
+console.warn = (...args) => {
+  if (
+    args[0] &&
+    typeof args[0] === 'string' &&
+    (args[0].includes('Tried to use the icon') || 
+     args[0].includes('none of the required icon libraries are installed'))
+  ) {
+    return;
+  }
+  originalWarn(...args);
+};
 
 // Mock expo-linear-gradient
 jest.mock('expo-linear-gradient', () => {
@@ -120,11 +157,49 @@ jest.mock('react-native-safe-area-context', () => {
 // Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
+  const Icon = ({ name, size, color, ...props }) => React.createElement('Icon', { name, size, color, ...props });
   return {
-    MaterialCommunityIcons: ({ name, size, color, ...props }) =>
-      React.createElement('Icon', { name, size, color, ...props }),
+    MaterialCommunityIcons: Icon,
+    MaterialIcons: Icon,
+    Ionicons: Icon,
+    Feather: Icon,
+    FontAwesome: Icon,
   };
 });
+
+jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => {
+  const React = require('react');
+  return ({ name, size, color, ...props }) => React.createElement('Icon', { name, size, color, ...props });
+});
+
+// Mock react-native-paper MaterialCommunityIcon to prevent loading modules
+jest.mock('react-native-paper', () => {
+  const actual = jest.requireActual('react-native-paper');
+  const React = require('react');
+  const { View } = require('react-native');
+
+  // Helper to render a mock icon
+  const MockIcon = ({ name, color, size, style }) => 
+    React.createElement('Icon', { name, color, size, style });
+
+  return {
+    ...actual,
+    // Override components that use icons internally if needed, 
+    // but usually mocking the internal MaterialCommunityIcon is enough if we get the path right.
+    // Let's try mocking the internal one again with a more reliable path or just mock the ones we use.
+  };
+});
+
+// A more reliable way to mock the internal icon component of react-native-paper
+jest.mock('react-native-paper/src/components/MaterialCommunityIcon', () => {
+  const React = require('react');
+  return (props) => React.createElement('Icon', props);
+}, { virtual: true });
+
+jest.mock('react-native-paper/lib/commonjs/components/MaterialCommunityIcon', () => {
+  const React = require('react');
+  return (props) => React.createElement('Icon', props);
+}, { virtual: true });
 
 // Mock react-native-vector-icons - return a proper component
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {

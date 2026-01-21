@@ -131,7 +131,10 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
       text: 'Do you have any of the following: Chest pain, Difficulty breathing, or Dizziness?',
     };
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ 
+      questions: [redFlagQuestion],
+      intro: 'Intro'
+    });
 
     render(
       <ReduxProvider store={store}>
@@ -159,7 +162,10 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
   test('Confirm button is disabled until at least one selection is made', async () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+      questions: [redFlagQuestion],
+      intro: 'Intro'
+    });
 
     render(
       <ReduxProvider store={store}>
@@ -188,7 +194,10 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
   test('Confirm button sends selected symptoms', async () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue([redFlagQuestion]);
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+      questions: [redFlagQuestion],
+      intro: 'Intro'
+    });
     (extractClinicalProfile as jest.Mock).mockResolvedValue({ 
       summary: 'Summary',
       age: '30',

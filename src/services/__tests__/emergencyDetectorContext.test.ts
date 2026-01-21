@@ -126,23 +126,17 @@ describe('detectEmergency - Context Aware', () => {
   });
 
   it('should block emergency level even if high score is reached, if red flags are explicitly denied', () => {
-    const profile: AssessmentProfile = {
-      age: '21 years old',
-      duration: '1 week',
-      severity: 'High',
-      progression: 'Worsening',
-      red_flag_denials: 'None reported', // Explicit denial
-      summary: 'Patient has fever.',
-      red_flags_resolved: true, // AUTHORITY ENABLED
-    };
+    const result = detectEmergency('I have a deep wound', {
+      isUserInput: true,
+      profile: {
+        red_flags_resolved: true,
+        red_flag_denials: 'No, I do not have any other symptoms', // Explicit denial
+        symptom_category: 'complex'
+      }
+    });
 
-    // Text that might otherwise trigger high scores (chronic + persistent + worsening)
-    const text = 'My high fever is persistent and getting worse for a week.';
-    const result = detectEmergency(text, { profile });
-    
-    // It should NOT be an emergency because of the authority block
     expect(result.isEmergency).toBe(false);
-    expect(result.score).toBe(7);
+    expect(result.score).toBe(7); // Capped
     expect(result.debugLog.reasoning).toContain('Authority block');
   });
 });
