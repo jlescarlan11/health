@@ -30,14 +30,6 @@ const getServiceIcon = (service: string): string => {
   return 'medical-bag';
 };
 
-const formatFacilityType = (type: string): string => {
-  if (!type) return '';
-  return type
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-};
-
 export const FacilityCard: React.FC<FacilityCardProps> = ({
   facility,
   onPress,
@@ -64,20 +56,21 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       const relevant = allServices.filter((s) =>
         relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
       );
-      if (relevant.length > 0) return relevant.slice(0, 3);
+      // Combine relevant with others, then slice
+      const others = allServices.filter(s => !relevant.includes(s));
+      return [...relevant, ...others].slice(0, 3);
     }
 
-    return simplified ? allServices.slice(0, 3) : allServices.slice(0, 4);
+    return allServices.slice(0, 3);
   }, [
     facility.services,
     facility.specialized_services,
     relevantServices,
-    simplified,
     showAllServices,
   ]);
 
   const totalServicesCount = facility.services.length + (facility.specialized_services?.length || 0);
-  const hasMoreServices = totalServicesCount > displayServices.length;
+  const hasMoreServices = totalServicesCount > 3; // Fixed threshold of 3
 
   const hasMatches = React.useMemo(() => {
     if (!relevantServices || relevantServices.length === 0) return false;
@@ -110,13 +103,15 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       <View style={styles.cardInner}>
         <View style={styles.headerRow}>
           <View style={styles.titleContainer}>
-            <Text variant="titleMedium" style={styles.title}>
-              {facility.name}
-            </Text>
-            <View style={styles.typeRow}>
-              <View style={[styles.typeIndicator, { backgroundColor: theme.colors.primary }]} />
-              <Text variant="labelSmall" style={[styles.typeText, { color: theme.colors.primary }]}>
-                {formatFacilityType(facility.type)}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              <MaterialCommunityIcons 
+                name={facility.type === 'hospital' ? 'hospital-building' : 'home-plus'} 
+                size={20} 
+                color={theme.colors.primary} 
+                style={{ marginRight: 8 }}
+              />
+              <Text variant="titleMedium" style={styles.title}>
+                {facility.name}
               </Text>
             </View>
           </View>
@@ -163,23 +158,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         <View style={styles.content}>
           <View style={styles.statusRow}>
+            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text
               variant="labelMedium"
-              style={{ color: statusColor, fontWeight: '800', letterSpacing: 0.5 }}
+              style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
             >
-              {statusText.toUpperCase()}
+              {statusText}
             </Text>
-            {!!facility.hours &&
-              !facility.hours.includes('24/7') &&
-              !facility.hours.toLowerCase().includes('24 hours') &&
-              !facility.is_24_7 && (
-                <Text
-                  variant="labelSmall"
-                  style={{ marginLeft: 12, color: 'rgba(0,0,0,0.4)', fontWeight: '600' }}
-                >
-                  {facility.hours}
-                </Text>
-              )}
           </View>
 
           <Text variant="bodySmall" numberOfLines={1} style={styles.address}>
@@ -251,30 +236,14 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   title: {
-    fontWeight: '800',
-    color: 'rgba(0,0,0,0.85)',
-    marginBottom: 4,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2937',
+    lineHeight: 26,
     letterSpacing: -0.2,
-    fontSize: 17,
+    flex: 1, // allow title to take available space
   },
-  typeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  typeIndicator: {
-    width: 3,
-    height: 10,
-    borderRadius: 1.5,
-    marginRight: 6,
-    opacity: 0.6,
-  },
-  typeText: {
-    fontWeight: '800',
-    letterSpacing: 0.8,
-    fontSize: 10,
-    textTransform: 'uppercase',
-    opacity: 0.7,
-  },
+
   rightHeader: {
     alignItems: 'flex-end',
   },
@@ -323,6 +292,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
   },
   address: {
     color: 'rgba(0,0,0,0.5)',
