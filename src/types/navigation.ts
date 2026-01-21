@@ -24,9 +24,7 @@ export type RootStackParamList = {
   YAKAP: NavigatorScreenParams<YakapStackParamList>;
   SymptomAssessment: { initialSymptom?: string };
   Recommendation: {
-    assessmentData: AssessmentData & {
-      affectedSystems?: string[];
-    };
+    assessmentData: AssessmentData;
   };
   ClinicalNote: undefined;
   FacilityDetails: { facilityId: string };

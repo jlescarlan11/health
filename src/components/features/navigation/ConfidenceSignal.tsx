@@ -3,8 +3,24 @@ import { View, StyleSheet } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export const ConfidenceSignal = () => {
+interface ConfidenceSignalProps {
+  missingFields?: string[];
+}
+
+export const ConfidenceSignal = ({ missingFields = [] }: ConfidenceSignalProps) => {
   const theme = useTheme();
+
+  const getMessage = () => {
+    if (missingFields.length > 0) {
+      const list =
+        missingFields.length === 1
+          ? missingFields[0]
+          : `${missingFields.slice(0, -1).join(', ')} and ${missingFields[missingFields.length - 1]}`;
+      const verb = missingFields.length > 1 ? 'were' : 'was';
+      return `Recommended higher care level because ${list} ${verb} unclear.`;
+    }
+    return 'Recommended higher care level because your symptoms are complex or vague.';
+  };
 
   return (
     <Surface
@@ -17,7 +33,7 @@ export const ConfidenceSignal = () => {
       ]}
       elevation={0}
       accessibilityRole="alert"
-      accessibilityLabel="Safety Note: We’ve recommended a slightly higher level of care because your symptoms are complex or vague. Better safe than sorry."
+      accessibilityLabel={`Safety Note: ${getMessage()}`}
     >
       <View style={styles.iconContainer}>
         <MaterialCommunityIcons
@@ -34,8 +50,7 @@ export const ConfidenceSignal = () => {
           variant="bodySmall"
           style={[styles.message, { color: theme.colors.onSurfaceVariant }]}
         >
-          We’ve recommended a slightly higher level of care because your symptoms are complex or
-          vague. Better safe than sorry.
+          {getMessage()}
         </Text>
       </View>
     </Surface>

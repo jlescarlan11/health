@@ -88,6 +88,28 @@ const RecommendationScreen = () => {
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
 
+  const missingFields = useMemo(() => {
+    if (!recommendation?.is_conservative_fallback) return [];
+
+    const profile = assessmentData.extractedProfile;
+    const missing: string[] = [];
+
+    if (!profile?.age) missing.push('Age');
+    if (!profile?.duration) missing.push('Duration');
+    if (!profile?.severity) missing.push('Severity');
+
+    return missing;
+  }, [recommendation?.is_conservative_fallback, assessmentData.extractedProfile]);
+
+  const emergencyInstruction = useMemo(() => {
+    if (!assessmentData.affectedSystems || assessmentData.affectedSystems.length === 0) {
+      return 'Seek medical help immediately';
+    }
+    // Prioritize specific systems if multiple exist
+    const system = assessmentData.affectedSystems[0];
+    return SYSTEM_INSTRUCTIONS[system] || 'Seek medical help immediately';
+  }, [assessmentData.affectedSystems]);
+
   // Refs for stabilizing analyzeSymptoms dependencies
   const symptomsRef = useRef(assessmentData.symptoms);
   const answersRef = useRef(assessmentData.answers);
@@ -470,15 +492,6 @@ const RecommendationScreen = () => {
   const isEmergency = recommendation.recommended_level === 'emergency';
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
 
-  const emergencyInstruction = useMemo(() => {
-    if (!assessmentData.affectedSystems || assessmentData.affectedSystems.length === 0) {
-      return 'Seek medical help immediately';
-    }
-    // Prioritize specific systems if multiple exist
-    const system = assessmentData.affectedSystems[0];
-    return SYSTEM_INSTRUCTIONS[system] || 'Seek medical help immediately';
-  }, [assessmentData.affectedSystems]);
-
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -523,7 +536,9 @@ const RecommendationScreen = () => {
         </Surface>
 
         {/* Safety Note for Conservative Triage */}
-        {recommendation.is_conservative_fallback && <ConfidenceSignal />}
+        {recommendation.is_conservative_fallback && (
+          <ConfidenceSignal missingFields={missingFields} />
+        )}
 
         {/* Clinical Friction Alert */}
         {assessmentData.extractedProfile?.clinical_friction_detected && (

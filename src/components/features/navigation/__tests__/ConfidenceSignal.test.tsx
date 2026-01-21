@@ -13,9 +13,31 @@ describe('ConfidenceSignal', () => {
     );
 
     expect(getByText('Safety Note')).toBeTruthy();
-    expect(getByText(/We’ve recommended a slightly higher level of care/)).toBeTruthy();
+    expect(getByText(/Recommended higher care level because your symptoms/)).toBeTruthy();
     expect(
-      getByLabelText(/Safety Note: We’ve recommended a slightly higher level of care/),
+      getByLabelText(/Safety Note: Recommended higher care level because your symptoms/),
     ).toBeTruthy();
+  });
+
+  it('renders correctly with specific missing fields', () => {
+    const missingFields = ['Age', 'Severity'];
+    const { getByText } = render(
+      <PaperProvider theme={theme}>
+        <ConfidenceSignal missingFields={missingFields} />
+      </PaperProvider>,
+    );
+
+    expect(getByText(/Recommended higher care level because Age and Severity were unclear/)).toBeTruthy();
+  });
+
+  it('renders correctly with a single missing field', () => {
+    const missingFields = ['Duration'];
+    const { getByText } = render(
+      <PaperProvider theme={theme}>
+        <ConfidenceSignal missingFields={missingFields} />
+      </PaperProvider>,
+    );
+
+    expect(getByText(/Recommended higher care level because Duration was unclear/)).toBeTruthy();
   });
 });

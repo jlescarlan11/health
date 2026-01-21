@@ -68,4 +68,5 @@ export interface AssessmentData {
   answers: { question: string; answer: string }[];
   offlineRecommendation?: TriageRecommendation;
   extractedProfile?: AssessmentProfile;
+  affectedSystems?: string[];
 }

@@ -30,6 +30,7 @@ import {
   generateAssessmentPlan,
   extractClinicalProfile,
   streamGeminiResponse,
+  getGeminiResponse,
 } from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
@@ -454,6 +455,38 @@ const SymptomAssessmentScreen = () => {
           }));
           const profile = await extractClinicalProfile(historyItems);
 
+          // --- DYNAMIC PLAN PRUNING ---
+          // Filter out future questions if their slots (Age, Duration, Severity, Progression)
+          // have been populated by the latest AI extraction.
+          let activeQuestions = questions;
+          const slotsToCheck = ['age', 'duration', 'severity', 'progression'];
+          const populatedSlots = slotsToCheck.filter(
+            (slot) => profile[slot as keyof AssessmentProfile],
+          );
+
+          if (populatedSlots.length > 0) {
+            const historyPart = questions.slice(0, nextIdx);
+            const futurePart = questions.slice(nextIdx);
+
+            const prunedFuture = futurePart.filter((q) => {
+              if (populatedSlots.includes(q.id)) {
+                console.log(
+                  `[Assessment] Pruning redundant question '${q.id}' - Slot populated via extraction`,
+                );
+                return false;
+              }
+              return true;
+            });
+
+            if (prunedFuture.length !== futurePart.length) {
+              const newQuestionList = [...historyPart, ...prunedFuture];
+              setQuestions(newQuestionList);
+              activeQuestions = newQuestionList;
+            }
+          }
+
+          let effectiveIsAtEnd = nextIdx >= activeQuestions.length;
+
           // Update Readiness Visualization
           if (profile.triage_readiness_score !== undefined) {
             setReadiness(profile.triage_readiness_score);
@@ -468,7 +501,7 @@ const SymptomAssessmentScreen = () => {
           const hasFriction = profile.clinical_friction_detected === true;
 
           // Explicitly check for remaining Tier 3 questions in the active plan
-          const remainingTier3 = questions.slice(nextIdx).filter((q) => q.tier === 3);
+          const remainingTier3 = activeQuestions.slice(nextIdx).filter((q) => q.tier === 3);
           const hasUnattemptedTier3 = remainingTier3.length > 0;
 
           if (isAmbiguous || hasFriction || hasUnattemptedTier3) {
@@ -499,8 +532,8 @@ const SymptomAssessmentScreen = () => {
             historyItems,
             profile,
             nextIdx,
-            questions.length,
-            questions.slice(nextIdx),
+            activeQuestions.length,
+            activeQuestions.slice(nextIdx),
             previousProfile,
             saturationCount,
           );
@@ -576,35 +609,75 @@ const SymptomAssessmentScreen = () => {
           // Handle Priority Signals
           if (
             arbiterResult.signal === 'PRIORITIZE_RED_FLAGS' ||
-            arbiterResult.signal === 'RESOLVE_AMBIGUITY' ||
-            arbiterResult.signal === 'RESOLVE_FRICTION'
+            arbiterResult.signal === 'RESOLVE_AMBIGUITY'
           ) {
             console.log(
               `[Assessment] Reordering queue based on Arbiter signal: ${arbiterResult.signal}`,
             );
-            const remaining = questions.slice(nextIdx);
+            const remaining = activeQuestions.slice(nextIdx);
             const priority = remaining.filter((q) => {
               if (arbiterResult.signal === 'PRIORITIZE_RED_FLAGS') return q.is_red_flag;
-              if (
-                arbiterResult.signal === 'RESOLVE_AMBIGUITY' ||
-                arbiterResult.signal === 'RESOLVE_FRICTION'
-              )
-                return q.tier === 3;
+              if (arbiterResult.signal === 'RESOLVE_AMBIGUITY') return q.tier === 3;
               return false;
             });
             const nonPriority = remaining.filter((q) => {
               if (arbiterResult.signal === 'PRIORITIZE_RED_FLAGS') return !q.is_red_flag;
-              if (
-                arbiterResult.signal === 'RESOLVE_AMBIGUITY' ||
-                arbiterResult.signal === 'RESOLVE_FRICTION'
-              )
-                return q.tier !== 3;
+              if (arbiterResult.signal === 'RESOLVE_AMBIGUITY') return q.tier !== 3;
               return true;
             });
 
-            const reordered = [...questions.slice(0, nextIdx), ...priority, ...nonPriority];
+            const reordered = [...activeQuestions.slice(0, nextIdx), ...priority, ...nonPriority];
             setQuestions(reordered);
+            activeQuestions = reordered;
+          } else if (arbiterResult.signal === 'RESOLVE_FRICTION') {
+            console.log('[Assessment] RESOLVE_FRICTION signal received. Generating clarification.');
+            const frictionContext = `SYSTEM: Contradiction detected: ${profile.clinical_friction_details}. Ask a question to clarify this.`;
+
+            setIsTyping(true);
+            try {
+              const generatedText = await getGeminiResponse(frictionContext);
+              const frictionQuestion: AssessmentQuestion = {
+                id: `friction-${Date.now()}`,
+                text: generatedText.trim(),
+                type: 'text',
+                tier: 3,
+              };
+
+              const updatedQuestions = [
+                ...activeQuestions.slice(0, nextIdx),
+                frictionQuestion,
+                ...activeQuestions.slice(nextIdx),
+              ];
+              setQuestions(updatedQuestions);
+
+              // Proactive resolution: Inject message immediately and return
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `friction-msg-${Date.now()}`,
+                  text: clarificationHeader + frictionQuestion.text,
+                  sender: 'assistant',
+                },
+              ]);
+
+              setCurrentQuestionIndex(nextIdx);
+              setIsTyping(false);
+              setProcessing(false);
+              return;
+            } catch (err) {
+              console.error('[Assessment] Failed to generate friction resolution question:', err);
+              // Fallback to reordering if generation fails
+              const remaining = activeQuestions.slice(nextIdx);
+              const priority = remaining.filter((q) => q.tier === 3);
+              const nonPriority = remaining.filter((q) => q.tier !== 3);
+              const reordered = [...activeQuestions.slice(0, nextIdx), ...priority, ...nonPriority];
+              setQuestions(reordered);
+              activeQuestions = reordered;
+            }
           }
+
+          // Recalculate end state as questions list may have changed
+          effectiveIsAtEnd = nextIdx >= activeQuestions.length;
 
           // Handle Progress Reset / False Positive Safeguard
           if (arbiterResult.needs_reset) {
@@ -624,7 +697,7 @@ const SymptomAssessmentScreen = () => {
           // SAFETY GATE: If plan is exhausted but we are NOT ready to terminate (due to ambiguity or score)
           // we MUST generate additional resolution questions instead of terminating.
           const currentExpansion = expansionCount;
-          if (isAtEnd && !canTerminate && currentExpansion < MAX_EXPANSIONS) {
+          if (effectiveIsAtEnd && !canTerminate && currentExpansion < MAX_EXPANSIONS) {
             console.log(
               `[Assessment] Plan exhausted but safety criteria not met. Expansion ${currentExpansion + 1}/${MAX_EXPANSIONS}. Fetching more questions.`,
             );
@@ -676,7 +749,7 @@ const SymptomAssessmentScreen = () => {
                   }));
 
                   if (newQuestions.length > 0) {
-                    const updatedQuestions = [...questions, ...newQuestions];
+                    const updatedQuestions = [...activeQuestions, ...newQuestions];
                     const nextQ = updatedQuestions[nextIdx];
 
                     // Commit finalized message
@@ -710,7 +783,7 @@ const SymptomAssessmentScreen = () => {
           }
 
           // If we reached here and it'sAtEnd and we can't terminate, we might have hit MAX_EXPANSIONS or expansion failed
-          if (isAtEnd && !canTerminate) {
+          if (effectiveIsAtEnd && !canTerminate) {
             console.log(
               `[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`,
             );
@@ -728,8 +801,8 @@ const SymptomAssessmentScreen = () => {
           }
 
           // If we are continuing within the planned questions after Turn 4 check
-          if (!isAtEnd) {
-            const nextQ = questions[nextIdx];
+          if (!effectiveIsAtEnd) {
+            const nextQ = activeQuestions[nextIdx];
             const readinessScore = profile.triage_readiness_score || 0;
 
             // --- STREAMING BRIDGE FEATURE ---
