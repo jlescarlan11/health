@@ -31,6 +31,8 @@ const FALSE_POSITIVES: Record<string, string[]> = {
   booking: ['choking'],
 };
 
+export const FUZZY_THRESHOLD = 2;
+
 /**
  * Calculates the Levenshtein distance between two strings.
  * Early termination when distance exceeds threshold.

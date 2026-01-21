@@ -15,22 +15,39 @@ STRUCTURE YOUR PLAN IN THREE TIERS:
 
 INSTRUCTIONS:
 1. **Safety First**: Include a "red_flags" question. Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option. Use the exact wording: "Do you have any of the following serious symptoms?"
-2. **Standardized Grouping**: For ALL "type": "multi-select" questions (including "red_flags" and Tier 2/3), structure the "options" as a list of category objects: \`[{"category": "Category Name", "items": ["Option A", "Option B"]}]\`. Do not use flat string arrays.
-3. **Options**: Provide suggested answers in the "options" array for ALL questions.
-4. **Language & Tone (CRITICAL)**:
-   - **Plain Language**: Use simple, Grade 5 reading level language. Avoid medical jargon (e.g., use "hurt" instead of "pain severity", "come and go" instead of "intermittent", "belly" instead of "abdomen").
-   - **Warm Tone**: Be empathetic, human, and supportive. Avoid robotic or overly clinical phrasing.
-   - **Intelligent Paraphrasing**: Generate an "intro" field. This should be a warm 1-sentence opening that acknowledges and paraphrases the user's symptom naturally (e.g., "I'm sorry to hear that you're feeling dizzy..." or "It sounds like that cough is really bothering you."). **DO NOT** repeat the user's input verbatim.
+2. **Question Types**:
+   - **"type": "number"**: For Age or numeric values. Set "options" to \`[]\`.
+   - **"type": "text"**: For open-ended descriptions (Duration, Progression). Set "options" to \`[]\`. DO NOT provide examples as options.
+   - **"type": "multi-select"**: For lists of symptoms. Structure "options" as grouped categories: \`[{"category": "Name", "items": ["A", "B"]}]\`.
+   - **"type": "single-select"**: For mutually exclusive choices (e.g., Yes/No). Structure "options" as a simple string array: \`["Yes", "No"]\`.
+3. **Language & Tone (CRITICAL - PLAIN ENGLISH ONLY)**:
+   - **No Medical Jargon**: Use simple, Grade 5 reading level language.
+     - BAD: "Radiating pain", "Intermittent", "Acute", "Edema", "Dyspnea"
+     - GOOD: "Pain that spreads", "Comes and goes", "Sudden and severe", "Swelling", "Hard to breathe"
+   - **Warm Tone**: Be empathetic, human, and supportive.
+   - **Intelligent Paraphrasing**: Generate an "intro" field. This should be a warm 1-sentence opening that acknowledges and paraphrases the user's symptom naturally.
 
 OUTPUT FORMAT:
 {
   "intro": "I'm sorry to hear you're not feeling well. Let's figure this out together.",
   "questions": [
     {
-      "id": "basics",
+      "id": "age",
+      "type": "number",
+      "text": "How old are you?",
+      "options": []
+    },
+    {
+      "id": "duration",
       "type": "text",
-      "text": "How old are you, and how long has this been going on?",
-      "options": ["Just now", "A few hours ago", "Yesterday"]
+      "text": "How long have you been feeling this way?",
+      "options": []
+    },
+    {
+      "id": "character",
+      "type": "single-select",
+      "text": "How would you describe the feeling?",
+      "options": ["Sharp", "Dull", "Throbbing", "Burning"]
     },
     {
       "id": "associated_symptoms",
