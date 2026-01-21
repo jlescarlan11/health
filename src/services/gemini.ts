@@ -146,10 +146,7 @@ export const extractClinicalProfile = async (
 /**
  * Refines a question to naturally follow the user's last answer (Call #3)
  */
-export const refineQuestion = async (
-  questionText: string,
-  userAnswer: string,
-): Promise<string> => {
+export const refineQuestion = async (questionText: string, userAnswer: string): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const prompt = REFINE_QUESTION_PROMPT.replace('{{questionText}}', questionText).replace(

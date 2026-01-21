@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Platform, Keyboard, ScrollView, Animated, Pressable } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Alert,
+  Platform,
+  Keyboard,
+  ScrollView,
+  Animated,
+  Pressable,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, Chip, useTheme, Card, Surface } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -47,8 +56,8 @@ const SymptomItem = ({
           backgroundColor: isSelected
             ? theme.colors.primary
             : isPressed
-            ? theme.colors.surface
-            : theme.colors.secondaryContainer,
+              ? theme.colors.surface
+              : theme.colors.secondaryContainer,
           elevation: isPressed ? 2 : 0,
         },
       ]}

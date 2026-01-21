@@ -21,7 +21,7 @@ describe('Safety Regression Golden Set', () => {
     it(`${testCase.detector.toUpperCase()}: ${testCase.description} ("${testCase.input}")`, () => {
       if (testCase.detector === 'emergency') {
         const result = detectEmergency(testCase.input, { isUserInput: true });
-        
+
         if (testCase.expected.isEmergency !== undefined) {
           expect(result.isEmergency).toBe(testCase.expected.isEmergency);
         }

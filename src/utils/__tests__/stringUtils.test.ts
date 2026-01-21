@@ -41,81 +41,56 @@ describe('stringUtils', () => {
   });
 
   describe('findAllFuzzyMatches', () => {
+    const keywords = ['suicide', 'heart attack', 'chest pain', 'unconscious'];
 
-        const keywords = ['suicide', 'heart attack', 'chest pain', 'unconscious'];
+    it('should return empty array for empty input', () => {
+      expect(findAllFuzzyMatches('', keywords)).toEqual([]);
 
-    
-
-        it('should return empty array for empty input', () => {
-
-          expect(findAllFuzzyMatches('', keywords)).toEqual([]);
-
-          expect(findAllFuzzyMatches('hello', [])).toEqual([]);
-
-        });
-
-    
-
-        it('should find multiple exact matches', () => {
-
-          const text = 'I have chest pain and I feel like suicide';
-
-          const matches = findAllFuzzyMatches(text, keywords);
-
-          expect(matches).toContain('chest pain');
-
-          expect(matches).toContain('suicide');
-
-          expect(matches.length).toBe(2);
-
-        });
-
-    
-
-        it('should find both exact and fuzzy matches', () => {
-
-          const text = 'I have chest pain and heart attak'; // typo in heart attack
-
-          const matches = findAllFuzzyMatches(text, keywords);
-
-          expect(matches).toContain('chest pain');
-
-          expect(matches).toContain('heart attack');
-
-          expect(matches.length).toBe(2);
-
-        });
-
-    
-
-        it('should prioritize exact matches (optimization check)', () => {
-
-          // If exact match exists, it should be found.
-
-          // This test implicitly checks logic by ensuring correct output.
-
-          const text = 'unconscious';
-
-          const matches = findAllFuzzyMatches(text, keywords);
-
-          expect(matches).toEqual(['unconscious']);
-
-        });
-
-    
-
-        it('should handle fuzzy matches alone', () => {
-
-          const text = 'unconsious'; // typo
-
-          const matches = findAllFuzzyMatches(text, keywords);
-
-          expect(matches).toEqual(['unconscious']);
-
-        });
-
-      });
-
+      expect(findAllFuzzyMatches('hello', [])).toEqual([]);
     });
 
-    
+    it('should find multiple exact matches', () => {
+      const text = 'I have chest pain and I feel like suicide';
+
+      const matches = findAllFuzzyMatches(text, keywords);
+
+      expect(matches).toContain('chest pain');
+
+      expect(matches).toContain('suicide');
+
+      expect(matches.length).toBe(2);
+    });
+
+    it('should find both exact and fuzzy matches', () => {
+      const text = 'I have chest pain and heart attak'; // typo in heart attack
+
+      const matches = findAllFuzzyMatches(text, keywords);
+
+      expect(matches).toContain('chest pain');
+
+      expect(matches).toContain('heart attack');
+
+      expect(matches.length).toBe(2);
+    });
+
+    it('should prioritize exact matches (optimization check)', () => {
+      // If exact match exists, it should be found.
+
+      // This test implicitly checks logic by ensuring correct output.
+
+      const text = 'unconscious';
+
+      const matches = findAllFuzzyMatches(text, keywords);
+
+      expect(matches).toEqual(['unconscious']);
+    });
+
+    it('should handle fuzzy matches alone', () => {
+      const text = 'unconsious'; // typo
+
+      const matches = findAllFuzzyMatches(text, keywords);
+
+      expect(matches).toEqual(['unconscious']);
+    });
+  });
+});

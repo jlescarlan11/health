@@ -9,11 +9,13 @@ describe('ConfidenceSignal', () => {
     const { getByText, getByLabelText } = render(
       <PaperProvider theme={theme}>
         <ConfidenceSignal />
-      </PaperProvider>
+      </PaperProvider>,
     );
 
     expect(getByText('Safety Note')).toBeTruthy();
     expect(getByText(/We’ve recommended a slightly higher level of care/)).toBeTruthy();
-    expect(getByLabelText(/Safety Note: We’ve recommended a slightly higher level of care/)).toBeTruthy();
+    expect(
+      getByLabelText(/Safety Note: We’ve recommended a slightly higher level of care/),
+    ).toBeTruthy();
   });
 });

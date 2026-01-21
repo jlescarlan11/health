@@ -30,26 +30,28 @@ jest.mock('../src/components/common', () => {
   const { View, Text, TouchableOpacity, TextInput } = require('react-native');
 
   return {
-    InputCard: React.forwardRef(({ value, onChangeText, onSubmit, disabled }: any, ref: React.Ref<unknown>) => {
-      React.useImperativeHandle(ref, () => ({
-        focus: jest.fn(),
-        blur: jest.fn(),
-        isFocused: jest.fn(() => false),
-      }));
-      return (
-        <View testID="input-card">
-          <TextInput
-            testID="input-text"
-            value={value}
-            onChangeText={onChangeText}
-            editable={!disabled}
-          />
-          <TouchableOpacity testID="submit-button" onPress={() => onSubmit()} disabled={disabled}>
-            <Text>Send</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }),
+    InputCard: React.forwardRef(
+      ({ value, onChangeText, onSubmit, disabled }: any, ref: React.Ref<unknown>) => {
+        React.useImperativeHandle(ref, () => ({
+          focus: jest.fn(),
+          blur: jest.fn(),
+          isFocused: jest.fn(() => false),
+        }));
+        return (
+          <View testID="input-card">
+            <TextInput
+              testID="input-text"
+              value={value}
+              onChangeText={onChangeText}
+              editable={!disabled}
+            />
+            <TouchableOpacity testID="submit-button" onPress={() => onSubmit()} disabled={disabled}>
+              <Text>Send</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      },
+    ),
     TypingIndicator: () => <View testID="typing-indicator" />,
     SafetyRecheckModal: () => <View testID="safety-modal" />,
     ProgressBar: () => <View testID="progress-bar" />,
@@ -57,14 +59,16 @@ jest.mock('../src/components/common', () => {
       <View testID="multi-select-checklist">
         <Text>{title}</Text>
         {options.map((opt: any) => (
-          <TouchableOpacity 
-            key={opt.id} 
-            testID={`option-${opt.id}`} 
-            onPress={() => onSelectionChange(
-              selectedIds.includes(opt.id) 
-                ? selectedIds.filter((id: string) => id !== opt.id) 
-                : [...selectedIds, opt.id]
-            )}
+          <TouchableOpacity
+            key={opt.id}
+            testID={`option-${opt.id}`}
+            onPress={() =>
+              onSelectionChange(
+                selectedIds.includes(opt.id)
+                  ? selectedIds.filter((id: string) => id !== opt.id)
+                  : [...selectedIds, opt.id],
+              )
+            }
           >
             <Text>{opt.label}</Text>
           </TouchableOpacity>
@@ -77,9 +81,17 @@ jest.mock('../src/components/common', () => {
 jest.mock('../src/components/common/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
-    Button: ({ title, onPress, disabled }: { title: string; onPress: () => void; disabled?: boolean }) => (
-      <TouchableOpacity 
-        onPress={disabled ? undefined : onPress} 
+    Button: ({
+      title,
+      onPress,
+      disabled,
+    }: {
+      title: string;
+      onPress: () => void;
+      disabled?: boolean;
+    }) => (
+      <TouchableOpacity
+        onPress={disabled ? undefined : onPress}
         testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}
         disabled={disabled}
       >
@@ -131,15 +143,15 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
       text: 'Do you have any of the following: Chest pain, Difficulty breathing, or Dizziness?',
     };
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ 
+    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
       questions: [redFlagQuestion],
-      intro: 'Intro'
+      intro: 'Intro',
     });
 
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     // Wait for the question to appear
@@ -164,13 +176,13 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
     (generateAssessmentPlan as jest.Mock).mockResolvedValue({
       questions: [redFlagQuestion],
-      intro: 'Intro'
+      intro: 'Intro',
     });
 
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => expect(screen.getByTestId('multi-select-checklist')).toBeTruthy());
@@ -184,10 +196,10 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     // Verify button is now enabled
     expect(confirmButton).not.toBeDisabled();
-    
+
     // Deselect the option
     fireEvent.press(screen.getByTestId('option-Fever'));
-    
+
     // Verify button is disabled again
     expect(confirmButton).toBeDisabled();
   });
@@ -196,9 +208,9 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
     (generateAssessmentPlan as jest.Mock).mockResolvedValue({
       questions: [redFlagQuestion],
-      intro: 'Intro'
+      intro: 'Intro',
     });
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({ 
+    (extractClinicalProfile as jest.Mock).mockResolvedValue({
       summary: 'Summary',
       age: '30',
       duration: '1 day',
@@ -208,13 +220,13 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
       internal_inconsistency_detected: false,
       red_flags_resolved: true,
       uncertainty_accepted: false,
-      triage_readiness_score: 0.95
+      triage_readiness_score: 0.95,
     });
 
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => expect(screen.getByTestId('multi-select-checklist')).toBeTruthy());
@@ -223,10 +235,17 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     fireEvent.press(screen.getByTestId('option-Cough'));
     fireEvent.press(screen.getByTestId('button-confirm'));
 
-    await waitFor(() => {
-      expect(extractClinicalProfile).toHaveBeenCalledWith(expect.arrayContaining([
-        expect.objectContaining({ text: expect.stringContaining("I'm experiencing Fever, Cough") })
-      ]));
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(extractClinicalProfile).toHaveBeenCalledWith(
+          expect.arrayContaining([
+            expect.objectContaining({
+              text: expect.stringContaining("I'm experiencing Fever, Cough"),
+            }),
+          ]),
+        );
+      },
+      { timeout: 3000 },
+    );
   });
 });

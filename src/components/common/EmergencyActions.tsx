@@ -54,7 +54,9 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
       >
         <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
-          <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>NCGH Emergency</Text>
+          <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>
+            NCGH Emergency
+          </Text>
           <Text style={[styles.contactPhone, { color: theme.colors.onSurfaceVariant }]}>
             (054) 473-3111
           </Text>
@@ -117,7 +119,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    paddingLeft: 0, 
+    paddingLeft: 0,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,

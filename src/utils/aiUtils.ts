@@ -23,31 +23,53 @@ export function calculateTriageScore(slots: {
   let score = 1.0;
 
   // Core slots penalty
-  const coreSlots: Array<'age' | 'duration' | 'severity' | 'progression'> = ['age', 'duration', 'severity', 'progression'];
-  const nullCount = coreSlots.filter(s => !slots[s] || (typeof slots[s] === 'string' && slots[s]!.toLowerCase() === 'null')).length;
+  let coreSlots: Array<'age' | 'duration' | 'severity' | 'progression'> = [
+    'age',
+    'duration',
+    'severity',
+    'progression',
+  ];
+
+  // Adaptive Strategy: Waive penalties for simple, low-risk cases
+  if (slots.symptom_category === 'simple') {
+    const severityVal = slots.severity?.toLowerCase() || '';
+    // Low risk definition: Explicit 'mild' or numeric 1-3/10
+    const isLowRisk =
+      severityVal.includes('mild') || /\b[1-3]\s*(\/|out of)\s*10\b/.test(severityVal);
+
+    if (isLowRisk) {
+      // For simple, low-risk cases, we don't strictly require Age or Progression
+      // if we already have Duration and Severity (implied by isLowRisk check)
+      coreSlots = ['duration', 'severity'];
+    }
+  }
+
+  const nullCount = coreSlots.filter(
+    (s) => !slots[s] || (typeof slots[s] === 'string' && slots[s]!.toLowerCase() === 'null'),
+  ).length;
   if (nullCount > 0) {
     if (slots.uncertainty_accepted) {
       score -= 0.05;
-      score -= (nullCount * 0.05);
+      score -= nullCount * 0.05;
     } else {
-      score = 0.80;
-      score -= (nullCount * 0.10);
+      score = 0.8;
+      score -= nullCount * 0.1;
     }
   }
 
   // Safety floor (non-negotiable)
   if (!slots.red_flags_resolved) {
-    score = Math.min(score, 0.40);
+    score = Math.min(score, 0.4);
   }
 
   // Friction hard cap (non-overridable)
   if (slots.clinical_friction_detected) {
-    score = Math.min(score, 0.60);
+    score = Math.min(score, 0.6);
   }
 
   // Ambiguity cap
   if (slots.ambiguity_detected) {
-    score = Math.min(score, 0.70);
+    score = Math.min(score, 0.7);
   }
 
   // Complex category penalty
@@ -57,12 +79,12 @@ export function calculateTriageScore(slots: {
 
   // Internal inconsistency penalty
   if (slots.internal_inconsistency_detected) {
-    score -= 0.40;
+    score -= 0.4;
   }
 
   // Red flag ambiguity penalty
   if (slots.denial_confidence === 'low') {
-    score -= 0.20;
+    score -= 0.2;
   }
 
   return Math.max(0, Math.min(1.0, score));
@@ -73,7 +95,7 @@ export function calculateTriageScore(slots: {
  * Moves it to position 1 if found later in the array.
  */
 export function prioritizeQuestions<T extends { id: string }>(questions: T[]): T[] {
-  const redFlagIndex = questions.findIndex(q => q.id === 'red_flags');
+  const redFlagIndex = questions.findIndex((q) => q.id === 'red_flags');
 
   if (redFlagIndex === -1) {
     // If missing, we can't prioritize it. In strict mode this might be an error,
@@ -113,6 +135,8 @@ export function parseAndValidateLLMResponse<T = any>(rawResponse: string): T {
         throw new Error('Failed to parse extracted JSON from LLM response');
       }
     }
-    throw new Error(`Failed to parse LLM response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to parse LLM response: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
   }
 }

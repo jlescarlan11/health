@@ -217,7 +217,9 @@ const RecommendationScreen = () => {
         isFallback ||
         (profile?.triage_readiness_score !== undefined && profile.triage_readiness_score < 0.7)
       ) {
-        triageContextParts.push(`\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`);
+        triageContextParts.push(
+          `\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`,
+        );
       }
 
       const triageContext = triageContextParts.join('\n');
@@ -559,7 +561,10 @@ const RecommendationScreen = () => {
           <Text variant="bodyLarge" style={styles.adviceText}>
             {isEmergency && recommendation.medical_justification
               ? recommendation.user_advice
-                  .replace(/CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./, '')
+                  .replace(
+                    /CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./,
+                    '',
+                  )
                   .replace(/CRITICAL: High risk combination detected \(.*?\)\./, '')
                   .replace('Your symptoms indicate a mental health crisis.', '')
                   .trim() || 'Seek medical help immediately.'

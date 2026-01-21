@@ -7,7 +7,7 @@ describe('calculateTriageScore', () => {
       duration: '1 day',
       severity: 'mild',
       progression: 'stable',
-      red_flags_resolved: true
+      red_flags_resolved: true,
     });
     expect(score).toBe(1.0);
   });
@@ -19,10 +19,10 @@ describe('calculateTriageScore', () => {
       severity: 'mild',
       progression: 'stable',
       red_flags_resolved: true,
-      uncertainty_accepted: false
+      uncertainty_accepted: false,
     });
     // score = 0.80 - (1 * 0.10) = 0.70
-    expect(score).toBeCloseTo(0.70);
+    expect(score).toBeCloseTo(0.7);
   });
 
   test('should apply minor penalty when uncertainty IS accepted (new behavior)', () => {
@@ -32,10 +32,10 @@ describe('calculateTriageScore', () => {
       severity: 'mild',
       progression: 'stable',
       red_flags_resolved: true,
-      uncertainty_accepted: true
+      uncertainty_accepted: true,
     });
     // score = 1.0 - 0.05 (penalty) - (1 * 0.05) = 0.90
-    expect(score).toBeCloseTo(0.90);
+    expect(score).toBeCloseTo(0.9);
   });
 
   test('should handle multiple missing slots with uncertainty accepted', () => {
@@ -45,7 +45,7 @@ describe('calculateTriageScore', () => {
       severity: 'mild',
       progression: 'stable',
       red_flags_resolved: true,
-      uncertainty_accepted: true
+      uncertainty_accepted: true,
     });
     // score = 1.0 - 0.05 (penalty) - (2 * 0.05) = 0.85
     expect(score).toBeCloseTo(0.85);
@@ -57,8 +57,8 @@ describe('calculateTriageScore', () => {
       duration: '1 day',
       severity: 'mild',
       progression: 'stable',
-      red_flags_resolved: false
+      red_flags_resolved: false,
     });
-    expect(score).toBeLessThanOrEqual(0.40);
+    expect(score).toBeLessThanOrEqual(0.4);
   });
 });

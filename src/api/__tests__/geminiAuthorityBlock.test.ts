@@ -65,11 +65,11 @@ describe('GeminiClient Authority Block', () => {
     const profile: any = {
       red_flags_resolved: true,
       red_flag_denials: 'none',
-      denial_confidence: 'high'
+      denial_confidence: 'high',
     };
 
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
-    
+
     expect(result.recommended_level).toBe('health_center');
     expect(result.user_advice).toContain('Note: Care level adjusted');
   });
@@ -88,11 +88,11 @@ describe('GeminiClient Authority Block', () => {
     const profile: any = {
       red_flags_resolved: true,
       red_flag_denials: 'I do not have chest pain',
-      denial_confidence: 'high'
+      denial_confidence: 'high',
     };
 
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
-    
+
     expect(isNegated).toHaveBeenCalledWith('i do not have chest pain', 'chest pain');
     expect(result.recommended_level).toBe('health_center');
     expect(result.user_advice).toContain('Note: Care level adjusted');
@@ -112,11 +112,11 @@ describe('GeminiClient Authority Block', () => {
     const profile: any = {
       red_flags_resolved: true,
       red_flag_denials: 'Maybe I have it',
-      denial_confidence: 'high'
+      denial_confidence: 'high',
     };
 
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
-    
+
     expect(result.recommended_level).toBe('emergency');
     expect(result.user_advice).not.toContain('Note: Care level adjusted');
   });
@@ -133,11 +133,11 @@ describe('GeminiClient Authority Block', () => {
     const profile: any = {
       red_flags_resolved: true,
       red_flag_denials: 'none',
-      denial_confidence: 'low'
+      denial_confidence: 'low',
     };
 
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
-    
+
     expect(result.recommended_level).toBe('emergency');
     expect(result.user_advice).toContain('Note: Critical symptoms were not definitively ruled out');
   });
@@ -157,11 +157,11 @@ describe('GeminiClient Authority Block', () => {
     const profile: any = {
       red_flags_resolved: true,
       red_flag_denials: 'I am not sure if it is chest pain', // doesn't start with prefix, and isNegated mocked false
-      denial_confidence: 'high'
+      denial_confidence: 'high',
     };
 
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
-    
+
     expect(result.recommended_level).toBe('emergency');
     expect(result.user_advice).not.toContain('Note: Care level adjusted');
   });

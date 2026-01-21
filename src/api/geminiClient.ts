@@ -198,9 +198,7 @@ export class GeminiClient {
 
       if (now - lastCleanupTime > 24 * 60 * 60 * 1000) {
         const allKeys = await AsyncStorage.getAllKeys();
-        const cacheKeys = (allKeys || []).filter((key) =>
-          key.startsWith(STORAGE_KEY_CACHE_PREFIX),
-        );
+        const cacheKeys = (allKeys || []).filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
 
         if (cacheKeys.length > 0) {
           await AsyncStorage.multiRemove(cacheKeys);
@@ -223,9 +221,7 @@ export class GeminiClient {
   public async clearCache(): Promise<void> {
     try {
       const allKeys = await AsyncStorage.getAllKeys();
-      const cacheKeys = (allKeys || []).filter((key) =>
-        key.startsWith(STORAGE_KEY_CACHE_PREFIX),
-      );
+      const cacheKeys = (allKeys || []).filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
 
       if (cacheKeys.length > 0) {
         await AsyncStorage.multiRemove(cacheKeys);
@@ -401,7 +397,8 @@ export class GeminiClient {
         // Upgrade if Low Readiness or Ambiguity Detected
         const readinessThreshold = profile?.is_vulnerable ? 0.9 : 0.8;
         const isLowReadiness =
-          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < readinessThreshold;
+          parsed.triage_readiness_score !== undefined &&
+          parsed.triage_readiness_score < readinessThreshold;
         const isAmbiguous = parsed.ambiguity_detected === true;
 
         if ((isLowReadiness || isAmbiguous) && currentLevelIdx < 3) {

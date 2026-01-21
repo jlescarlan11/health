@@ -32,7 +32,9 @@ describe('EmergencyDetector - System Logic', () => {
     // dizziness (5) + broken bone (8)
     // Base max score: 8.
     // Multiplier: Force 10.
-    const result = detectEmergency('I felt dizziness then got a broken bone', { isUserInput: true });
+    const result = detectEmergency('I felt dizziness then got a broken bone', {
+      isUserInput: true,
+    });
     expect(result.affectedSystems).toContain('Neurological');
     expect(result.affectedSystems).toContain('Trauma');
     expect(result.score).toBe(10);

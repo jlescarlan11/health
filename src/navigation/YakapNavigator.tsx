@@ -7,7 +7,7 @@ const Stack = createStackNavigator<YakapStackParamList>();
 
 const YakapNavigator = () => {
   return (
-    <Stack.Navigator 
+    <Stack.Navigator
       initialRouteName="YakapHome"
       screenOptions={{
         headerShown: false,

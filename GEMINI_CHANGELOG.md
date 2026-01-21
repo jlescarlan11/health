@@ -67,4 +67,3 @@
   - Termination triggers correctly when readiness is 1.0 and count >= 2.
   - Termination is blocked if readiness < 1.0 even if saturated.
   - Non-clinical field changes (like turn count) do not reset saturation.
-

@@ -3,7 +3,12 @@ import { render, waitFor } from '@testing-library/react-native';
 import RecommendationScreen from '../src/screens/RecommendationScreen';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { navigationReducer, facilitiesReducer, offlineReducer, settingsReducer } from '../src/store';
+import {
+  navigationReducer,
+  facilitiesReducer,
+  offlineReducer,
+  settingsReducer,
+} from '../src/store';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { geminiClient } from '../src/api/geminiClient';
 import { PaperProvider } from 'react-native-paper';
@@ -127,7 +132,7 @@ describe('ConfidenceSignal Integration', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => {
@@ -156,7 +161,7 @@ describe('ConfidenceSignal Integration', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => {

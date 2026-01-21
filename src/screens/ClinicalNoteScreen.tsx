@@ -21,10 +21,10 @@ export const ClinicalNoteScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <Text variant="bodyLarge">Clinical note not found.</Text>
-        <IconButton 
-          icon="home" 
+        <IconButton
+          icon="home"
           mode="contained"
-          onPress={() => navigation.navigate('Home' as never)} 
+          onPress={() => navigation.navigate('Home' as never)}
           style={styles.homeButton}
         />
       </View>
@@ -41,7 +41,7 @@ export const ClinicalNoteScreen = () => {
     const text = formatClinicalShareText(
       latestAssessment.clinical_soap,
       latestAssessment.timestamp,
-      latestAssessment.medical_justification
+      latestAssessment.medical_justification,
     );
     await Clipboard.setStringAsync(text);
     setCopied(true);
@@ -64,14 +64,14 @@ export const ClinicalNoteScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <StandardHeader 
-        title="Clinical Handover" 
-        showBackButton 
-        onBackPress={() => navigation.goBack()} 
+      <StandardHeader
+        title="Clinical Handover"
+        showBackButton
+        onBackPress={() => navigation.goBack()}
       />
 
-      <ScrollView 
-        style={styles.scroll} 
+      <ScrollView
+        style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -89,11 +89,13 @@ export const ClinicalNoteScreen = () => {
           <>
             <Section title="SUBJECTIVE (History)" content={sections.s} />
             <Section title="OBJECTIVE (Signs)" content={sections.o} />
-            <Section 
-              title="ASSESSMENT (Triage)" 
-              content={latestAssessment.medical_justification 
-                ? `${sections.a}\n\nEmergency Justification: ${latestAssessment.medical_justification}`
-                : sections.a} 
+            <Section
+              title="ASSESSMENT (Triage)"
+              content={
+                latestAssessment.medical_justification
+                  ? `${sections.a}\n\nEmergency Justification: ${latestAssessment.medical_justification}`
+                  : sections.a
+              }
             />
             <Section title="PLAN (Next Steps)" content={sections.p} />
           </>
@@ -105,12 +107,12 @@ export const ClinicalNoteScreen = () => {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button 
-          variant={copied ? "outline" : "primary"} 
+        <Button
+          variant={copied ? 'outline' : 'primary'}
           onPress={handleShare}
           style={styles.shareButton}
-          title={copied ? "Copied!" : "Copy for Handover"}
-          icon={copied ? "check" : "content-copy"}
+          title={copied ? 'Copied!' : 'Copy for Handover'}
+          icon={copied ? 'check' : 'content-copy'}
         />
       </View>
     </View>

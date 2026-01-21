@@ -174,6 +174,11 @@ const SymptomAssessmentScreen = () => {
 
   // Emergency Verification State
   const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(false);
+  const isVerifyingEmergencyRef = useRef(isVerifyingEmergency);
+  useEffect(() => {
+    isVerifyingEmergencyRef.current = isVerifyingEmergency;
+  }, [isVerifyingEmergency]);
+
   const [emergencyVerificationData, setEmergencyVerificationData] = useState<{
     keyword: string;
     answer: string;
@@ -497,7 +502,7 @@ const SymptomAssessmentScreen = () => {
             questions.length,
             questions.slice(nextIdx),
             previousProfile,
-            saturationCount
+            saturationCount,
           );
 
           // Update saturation state for next turn
@@ -534,7 +539,7 @@ const SymptomAssessmentScreen = () => {
           // HARD STOP: Contradiction Lock and Turn Floor Lock prevent termination regardless of readiness.
           // EXCEPTION: Clinical Saturation overrides the turn floor if stability is proven.
           const isSaturationTermination = arbiterResult.reason?.includes('CLINICAL SATURATION');
-          
+
           const canTerminate =
             arbiterResult.signal === 'TERMINATE' &&
             !isAmbiguous &&
@@ -650,6 +655,17 @@ const SymptomAssessmentScreen = () => {
               }
 
               if (accumulatedResponse) {
+                // Safety Check: Abort if emergency verification started during stream
+                if (isVerifyingEmergencyRef.current) {
+                  console.warn(
+                    '[Assessment] Emergency verification triggered during expansion. Aborting question update.',
+                  );
+                  setStreamingText(null);
+                  setIsTyping(false);
+                  setProcessing(false);
+                  return;
+                }
+
                 const jsonMatch = accumulatedResponse.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                   const parsed = JSON.parse(jsonMatch[0]);
@@ -752,6 +768,14 @@ const SymptomAssessmentScreen = () => {
 
               try {
                 const finalBridge = (await Promise.race([bridgePromise, timeoutPromise])) as string;
+
+                // Safety Check: Abort if emergency verification started during bridge
+                if (isVerifyingEmergencyRef.current) {
+                  console.warn(
+                    '[Assessment] Emergency verification triggered during bridging. Aborting bridge update.',
+                  );
+                  return;
+                }
 
                 setMessages((prev) => [
                   ...prev,

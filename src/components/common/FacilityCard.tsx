@@ -76,7 +76,8 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     showAllServices,
   ]);
 
-  const totalServicesCount = facility.services.length + (facility.specialized_services?.length || 0);
+  const totalServicesCount =
+    facility.services.length + (facility.specialized_services?.length || 0);
   const hasMoreServices = totalServicesCount > displayServices.length;
 
   const hasMatches = React.useMemo(() => {
@@ -196,7 +197,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 ]}
               >
                 <MaterialCommunityIcons
-                  name={getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']}
+                  name={
+                    getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']
+                  }
                   size={12}
                   color={theme.colors.primary}
                 />
