@@ -10,7 +10,10 @@ import {
   calculateTriageScore,
   prioritizeQuestions,
   parseAndValidateLLMResponse,
+  normalizeSlot,
 } from '../utils/aiUtils';
+import { applyHedgingCorrections } from '../utils/hedgingDetector';
+import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
@@ -73,7 +76,29 @@ export const generateAssessmentPlan = async (
     );
     const questions = parsed.questions || [];
 
-    return { questions: prioritizeQuestions(questions), intro: parsed.intro };
+    let prioritizedQuestions: AssessmentQuestion[];
+    try {
+      prioritizedQuestions = prioritizeQuestions(questions);
+    } catch (prioritizationError) {
+      console.error('[Gemini] Prioritization failed:', prioritizationError);
+      console.log('[Gemini] Original Questions Data:', JSON.stringify(questions));
+      console.log('[Gemini] Fallback: Injecting default red flags into original list.');
+
+      // Fallback behavior:
+      // 1. Recover any valid questions from the original list (filter out potential duplicates of red_flags)
+      // 2. Inject the safe default red flag question
+      const safeQuestions = Array.isArray(questions)
+        ? questions.filter((q) => q && q.id !== 'red_flags')
+        : [];
+
+      // Inject default at index 1 (after basics) or 0 if empty
+      const insertIndex = safeQuestions.length > 0 ? 1 : 0;
+      safeQuestions.splice(insertIndex, 0, DEFAULT_RED_FLAG_QUESTION);
+
+      prioritizedQuestions = safeQuestions;
+    }
+
+    return { questions: prioritizedQuestions, intro: parsed.intro };
   } catch (error) {
     console.error('[Gemini] Failed to generate assessment plan:', error);
     // Fallback questions if AI fails
@@ -123,10 +148,26 @@ export const extractClinicalProfile = async (
     // Direct parse since responseMimeType is already "application/json"
     const profile = JSON.parse(responseText) as AssessmentProfile;
 
-    // Deterministically calculate the score
-    profile.triage_readiness_score = calculateTriageScore(profile);
+    // Normalize slots to prevent dirty nulls from polluting logic
+    profile.age = normalizeSlot(profile.age);
+    profile.duration = normalizeSlot(profile.duration);
+    profile.severity = normalizeSlot(profile.severity);
+    profile.progression = normalizeSlot(profile.progression);
+    profile.red_flag_denials = normalizeSlot(profile.red_flag_denials, { allowNone: true });
 
-    return profile;
+    /**
+     * DETERMINISTIC SAFETY FILTER:
+     * We run the profile through a regex-based hedging detector. 
+     * If the user said "maybe" or "not sure" about a red flag or critical slot, 
+     * we reject the definitive extraction and downgrade confidence. 
+     * This ensures the TriageArbiter sees the ambiguity and triggers a Force Clarification.
+     */
+    const correctedProfile = applyHedgingCorrections(profile);
+
+    // Deterministically calculate the score using the corrected profile
+    correctedProfile.triage_readiness_score = calculateTriageScore(correctedProfile);
+
+    return correctedProfile;
   } catch (error) {
     console.error('[Gemini] Failed to extract profile:', error);
 

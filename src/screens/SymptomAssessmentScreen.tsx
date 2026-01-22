@@ -169,9 +169,11 @@ const SymptomAssessmentScreen = () => {
   );
   const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(undefined);
   const [saturationCount, setSaturationCount] = useState(0);
+  const [clarificationCount, setClarificationCount] = useState(0);
   const [showRedFlagsChecklist, setShowRedFlagsChecklist] = useState(false);
   const [isClarifyingDenial, setIsClarifyingDenial] = useState(false);
   const MAX_EXPANSIONS = 2;
+  const MAX_CLARIFICATIONS = 2;
 
   // Emergency Verification State
   const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(false);
@@ -536,6 +538,7 @@ const SymptomAssessmentScreen = () => {
             activeQuestions.slice(nextIdx),
             previousProfile,
             saturationCount,
+            clarificationCount,
           );
 
           // Update saturation state for next turn
@@ -549,19 +552,31 @@ const SymptomAssessmentScreen = () => {
             `[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`,
           );
           console.log(
-            `[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor}, Saturation: ${arbiterResult.saturation_count})`,
+            `[Assessment] Effective Readiness: ${effectiveReadiness} (Ambiguity: ${isAmbiguous}, Friction: ${hasFriction}, BelowFloor: ${isBelowFloor}, Saturation: ${arbiterResult.saturation_count}, Clarifications: ${clarificationCount})`,
           );
 
-          // Handle Clarification Signal (Ambiguous Denial)
+          // Handle Clarification Signal (Force Clarification for Hedging/Ambiguous Denial)
           if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' && !arbiterResult.needs_reset) {
-            console.log('[Assessment] Arbiter requesting clarification for ambiguous denial.');
+            console.log(`[Assessment] Arbiter requesting clarification. Count: ${clarificationCount + 1}/${MAX_CLARIFICATIONS}`);
+            
+            // Extract the hedged symptom from friction details if possible
+            // Format: [System] Hedging detected in: fieldName ("detectedPhrase")
+            const hedgingMatch = profile.clinical_friction_details?.match(/Hedging detected in: ([^ ]+) \("(.*)"\)/);
+            const hedgedField = hedgingMatch ? hedgingMatch[1] : 'symptoms you mentioned';
+            
             setIsClarifyingDenial(true);
+            setClarificationCount((prev) => prev + 1);
             setIsTyping(false);
+            
+            const clarificationText = clarificationCount === 0 
+              ? `I want to be perfectly safe. You mentioned "${hedgedField}" might be present. To be certain, is this happening to you right now?`
+              : `I'm still a bit unsure about your safety regarding "${hedgedField}". It's important for me to know for sure: are you experiencing this right now?`;
+
             setMessages((prev) => [
               ...prev,
               {
                 id: `system-clarify-${Date.now()}`,
-                text: 'I want to be 100% sure. You’re definitely not experiencing these symptoms?',
+                text: clarificationText,
                 sender: 'assistant',
               },
             ]);
@@ -1335,6 +1350,21 @@ const SymptomAssessmentScreen = () => {
               variant="outline"
               onPress={() => handleEmergencyVerification(false)}
               title="No, it's a past event/not right now"
+              style={{ width: '100%' }}
+            />
+          </View>
+        ) : isClarifyingDenial ? (
+          <View style={{ gap: 8 }}>
+            <Button
+              variant="primary"
+              onPress={() => handleNext('Yes, I am sure')}
+              title="Yes, I am sure"
+              style={{ width: '100%' }}
+            />
+            <Button
+              variant="outline"
+              onPress={() => handleNext('No, let me re-check')}
+              title="No, let me re-check"
               style={{ width: '100%' }}
             />
           </View>

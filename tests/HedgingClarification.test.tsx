@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
 import {
   generateAssessmentPlan,
@@ -31,7 +31,7 @@ jest.mock('../src/services/mentalHealthDetector', () => ({
 // Mock components
 jest.mock('../src/components/common', () => {
   const React = require('react');
-  const { View, Text, TouchableOpacity, TextInput } = require('react-native');
+  const { View, TextInput, TouchableOpacity, Text } = require('react-native');
 
   return {
     InputCard: React.forwardRef(
@@ -52,7 +52,6 @@ jest.mock('../src/components/common', () => {
       },
     ),
     TypingIndicator: () => <View testID="typing-indicator" />,
-    SafetyRecheckModal: () => <View testID="safety-modal" />,
     ProgressBar: () => <View testID="progress-bar" />,
     MultiSelectChecklist: () => <View testID="multi-select-checklist" />,
   };
@@ -81,7 +80,7 @@ jest.mock('../src/components/common/StandardHeader', () => {
   };
 });
 
-describe('SymptomAssessmentScreen Ambiguous Denial', () => {
+describe('SymptomAssessmentScreen Hedging Clarification', () => {
   const mockNavigate = jest.fn();
   let store: any;
 
@@ -104,39 +103,42 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
     });
   });
 
-  test('Triggers re-verification when denial confidence is low', async () => {
-    // 1. Plan: Red Flag Question
+  test('Forces clarification with binary choices when hedging is detected in red flags', async () => {
+    // 1. Initial Plan
     (generateAssessmentPlan as jest.Mock).mockResolvedValue({
       questions: [
-        { id: 'red_flags', text: 'Do you have vision loss?' },
-        { id: 'duration', text: 'How long?' },
+        { id: 'red_flags', text: 'Do you have difficulty breathing?' },
+        { id: 'duration', text: 'How long has it been?' },
       ],
       intro: 'Intro',
     });
 
-    // Mock streamGeminiResponse for the bridge
+    // Mock streamGeminiResponse for the bridge logic
     (streamGeminiResponse as jest.Mock).mockImplementation(async function* () {
-      yield 'Okay. ';
-      yield 'How long?';
+      yield 'I understand. ';
+      yield 'How long has it been?';
     });
 
-    // 2. Profile Sequence
-    // Call 1: Low confidence denial
+    // 2. Mock hedging scenario
+    // Turn 1: User says "Maybe" -> applyHedgingCorrections (in gemini.ts) sets denial_confidence: 'low'
     (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
       denial_confidence: 'low',
-      red_flags_resolved: true,
-      triage_readiness_score: 0.5,
+      red_flags_resolved: false,
+      ambiguity_detected: true,
+      clinical_friction_detected: true,
+      clinical_friction_details: '[System] Hedging detected in: red_flag_denials ("maybe")',
+      triage_readiness_score: 0.4,
       symptom_category: 'simple',
-      red_flag_denials: 'Vision loss',
     });
 
-    // Call 2: High confidence
+    // Turn 2: User says "Yes, I am sure" (definitive)
     (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
       denial_confidence: 'high',
       red_flags_resolved: true,
-      triage_readiness_score: 0.6,
+      ambiguity_detected: false,
+      clinical_friction_detected: false,
+      triage_readiness_score: 0.8,
       symptom_category: 'simple',
-      red_flag_denials: 'Vision loss',
     });
 
     render(
@@ -146,27 +148,30 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
     );
 
     // Wait for first question
-    await waitFor(() => expect(screen.getByText(/Do you have vision loss?/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/difficulty breathing/)).toBeTruthy());
 
-    // User answers "No" - Handle both InputCard and SafetyCheck UI scenarios
-    const input = screen.queryByTestId('input-text');
-    if (input) {
-      fireEvent.changeText(input, 'No');
-      fireEvent.press(screen.getByTestId('submit-button'));
-    } else {
-      fireEvent.press(screen.getByTestId('button-No, just the Headache'));
-    }
+    // User types "maybe"
+    const input = screen.getByTestId('input-text');
+    fireEvent.changeText(input, 'maybe');
+    fireEvent.press(screen.getByTestId('submit-button'));
 
-    // Wait for system re-verification message
+    // Wait for targeted clarification question
+    // Use a regex that matches the improved component text
     await waitFor(() => expect(screen.getByText(/perfectly safe/)).toBeTruthy());
+    await waitFor(() => expect(screen.getByText(/"red_flag_denials" might be present/)).toBeTruthy());
 
     // Verify binary choice buttons are visible
     expect(screen.getByTestId('button-Yes, I am sure')).toBeTruthy();
+    expect(screen.getByTestId('button-No, let me re-check')).toBeTruthy();
 
-    // User confirms "Yes, I am sure"
+    // User presses "Yes, I am sure"
     fireEvent.press(screen.getByTestId('button-Yes, I am sure'));
 
-    // Should proceed to next question "How long?"
-    await waitFor(() => expect(screen.getByText(/How long?/)).toBeTruthy());
+    // 3. Verify it unblocks and moves to the next question
+    // Call 2 happens during the "Proceed" turn
+    await waitFor(() => expect(extractClinicalProfile).toHaveBeenCalledTimes(2));
+    
+    // Verify the next planned question is now displayed
+    await waitFor(() => expect(screen.getByText(/How long has it been?/)).toBeTruthy());
   });
 });

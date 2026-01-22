@@ -226,11 +226,19 @@ describe('Safety Regression Suite', () => {
       expect(prioritized[1].id).toBe('red_flags');
     });
 
-    it('should throw error if red_flags question is missing (Safety Violation)', () => {
+    it('should inject default red_flags question if missing (Safety Fallback)', () => {
       const { prioritizeQuestions } = require('../src/utils/aiUtils');
       const questions = [{ id: 'age', text: 'How old are you?' }];
 
-      expect(() => prioritizeQuestions(questions)).toThrow('Red flags question missing - safety violation');
+      const prioritized = prioritizeQuestions(questions);
+      
+      // Should have injected the question
+      expect(prioritized.length).toBe(2);
+      const redFlagQuestion = prioritized.find((q: any) => q.id === 'red_flags');
+      expect(redFlagQuestion).toBeDefined();
+      expect(redFlagQuestion.is_red_flag).toBe(true);
+      // Check that it's the default one
+      expect(redFlagQuestion.text).toContain('To ensure your safety');
     });
   });
 });

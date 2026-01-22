@@ -25,8 +25,9 @@ import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
-import { AssessmentProfile } from '../types/triage';
+import { AssessmentProfile, TriageLevel } from '../types/triage';
 import { ConfidenceSignal } from '../components/features/navigation/ConfidenceSignal';
+import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -314,12 +315,31 @@ const RecommendationScreen = () => {
       }
 
       const isHighRiskFallback = localResult.score >= 5 || !!specificRiskMatch;
-      // If a specific risk combination is found, force 'emergency', otherwise fallback to hospital/health_center based on score
-      const fallbackLevel = specificRiskMatch
-        ? 'emergency'
-        : isHighRiskFallback
-          ? 'hospital'
-          : 'health_center';
+      
+      // Safety Guards for Self-Care eligibility
+      const profile = profileRef.current;
+      const isVulnerable = profile?.is_vulnerable === true;
+      const hasMatchedKeywords = localResult.matchedKeywords.length > 0;
+      
+      // Determine fallback level based on score and safety constraints
+      let fallbackLevel: TriageLevel;
+      
+      if (specificRiskMatch) {
+        fallbackLevel = 'emergency';
+      } else if (isHighRiskFallback) {
+        fallbackLevel = 'hospital';
+      } else if (
+        localResult.score !== null && 
+        localResult.score <= OFFLINE_SELF_CARE_THRESHOLD && 
+        !isVulnerable && 
+        !hasMatchedKeywords
+      ) {
+        // Only allow self-care if score is low, not vulnerable, and NO keywords matched at all
+        fallbackLevel = 'self-care';
+      } else {
+        // Default to health center for ambiguous or mild cases that don't meet strict self-care criteria
+        fallbackLevel = 'health-center';
+      }
 
       let fallbackAdvice = '';
 
@@ -328,6 +348,9 @@ const RecommendationScreen = () => {
       } else if (isHighRiskFallback) {
         fallbackAdvice =
           'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).';
+      } else if (fallbackLevel === 'self-care') {
+        fallbackAdvice = 
+          'Based on your reported symptoms and current offline status, your condition appears manageable at home. Please monitor for any worsening signs and consult a doctor if symptoms persist. (Note: Fallback care level determined by local safety analysis).';
       } else {
         fallbackAdvice =
           'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
@@ -336,7 +359,7 @@ const RecommendationScreen = () => {
       const fallbackResponse: AssessmentResponse = {
         recommended_level: fallbackLevel,
         user_advice: fallbackAdvice,
-        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : 'Health Center'}.`,
+        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : fallbackLevel === 'health-center' ? 'Health Center' : 'Home Management'}.`,
         key_concerns: [
           'Need for professional evaluation',
           ...localResult.matchedKeywords.map((k) => `Monitored: ${k}`),
@@ -434,7 +457,10 @@ const RecommendationScreen = () => {
   };
 
   const getCareLevelInfo = (level: string) => {
-    switch (level) {
+    // Normalize level string to handle both hyphenated and underscored versions
+    const normalizedLevel = level.toLowerCase().replace('-', '_');
+
+    switch (normalizedLevel) {
       case 'emergency':
         return {
           label: 'EMERGENCY (LIFE-THREATENING)',
@@ -469,7 +495,7 @@ const RecommendationScreen = () => {
         };
       default:
         return {
-          label: level.toUpperCase(),
+          label: level.toUpperCase().replace('_', ' '),
           color: theme.colors.primary,
           icon: 'hospital-building',
           bgColor: '#F0F9F6',
@@ -679,7 +705,8 @@ const RecommendationScreen = () => {
         )}
 
         {/* Facilities Section */}
-        {recommendation.recommended_level !== 'self_care' && (
+        {recommendation.recommended_level !== 'self_care' &&
+          recommendation.recommended_level !== 'self-care' && (
           <View style={styles.facilitiesSection}>
             <View style={styles.sectionHeader}>
               <Text variant="titleLarge" style={styles.sectionHeading}>

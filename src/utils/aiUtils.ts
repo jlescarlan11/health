@@ -1,6 +1,49 @@
+import { AssessmentQuestion } from '../types/triage';
+import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
+
 /**
- * specific utility functions for AI processing
+ * Normalizes a slot value by converting "semantically null" strings into actual null values.
+ *
+ * @param value - The slot value to check (string, null, or undefined).
+ * @param options - Configuration options.
+ * @param options.allowNone - If true, 'none' is considered a valid value and NOT normalized to null.
+ * @returns The original string if valid, or null if it matches a null-equivalent indicator.
+ *
+ * Recognized null-equivalent strings (case-insensitive):
+ * - 'null'
+ * - 'n/a'
+ * - 'none' (unless allowNone is true)
+ * - 'unknown'
+ * - 'not mentioned'
+ * - 'unsure'
+ * - Empty string or whitespace only
  */
+export function normalizeSlot(
+  value: string | null | undefined,
+  options: { allowNone?: boolean } = {},
+): string | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed === '') {
+    return null;
+  }
+
+  const lower = trimmed.toLowerCase();
+  const nullIndicators = ['null', 'n/a', 'unknown', 'not mentioned', 'unsure'];
+  
+  if (!options.allowNone) {
+    nullIndicators.push('none');
+  }
+
+  if (nullIndicators.includes(lower)) {
+    return null;
+  }
+
+  return value;
+}
 
 /**
  * Calculates the triage readiness score based on extracted clinical data.
@@ -32,7 +75,7 @@ export function calculateTriageScore(slots: {
 
   // Adaptive Strategy: Waive penalties for simple, low-risk cases
   if (slots.symptom_category === 'simple') {
-    const severityVal = slots.severity?.toLowerCase() || '';
+    const severityVal = normalizeSlot(slots.severity)?.toLowerCase() || '';
     // Low risk definition: Explicit 'mild' or numeric 1-3/10
     const isLowRisk =
       severityVal.includes('mild') || /\b[1-3]\s*(\/|out of)\s*10\b/.test(severityVal);
@@ -44,9 +87,7 @@ export function calculateTriageScore(slots: {
     }
   }
 
-  const nullCount = coreSlots.filter(
-    (s) => !slots[s] || (typeof slots[s] === 'string' && slots[s]!.toLowerCase() === 'null'),
-  ).length;
+  const nullCount = coreSlots.filter((s) => !normalizeSlot(slots[s])).length;
   if (nullCount > 0) {
     if (slots.uncertainty_accepted) {
       score -= 0.05;
@@ -93,19 +134,21 @@ export function calculateTriageScore(slots: {
 /**
  * Ensures red flags question appears in the first 3 positions (0, 1, or 2).
  * Moves it to position 1 if found later in the array.
+ * Injects a default red flags question if missing to prevent safety violations.
  */
-export function prioritizeQuestions<T extends { id: string }>(questions: T[]): T[] {
+export function prioritizeQuestions(questions: AssessmentQuestion[]): AssessmentQuestion[] {
   const redFlagIndex = questions.findIndex((q) => q.id === 'red_flags');
-
-  if (redFlagIndex === -1) {
-    // If missing, we can't prioritize it. In strict mode this might be an error,
-    // but here we just return the list as is (or throw if required by safety rules).
-    // The proposal says: "throw new Error('Red flags question missing - safety violation');"
-    throw new Error('Red flags question missing - safety violation');
-  }
 
   // Create a shallow copy to avoid mutating the input array
   const sortedQuestions = [...questions];
+
+  if (redFlagIndex === -1) {
+    console.warn('[Safety Fallback] Red flags question missing from AI response. Injecting default.');
+    // Inject at index 1 (after basics) or 0 if empty/single
+    const insertIndex = sortedQuestions.length > 0 ? 1 : 0;
+    sortedQuestions.splice(insertIndex, 0, DEFAULT_RED_FLAG_QUESTION);
+    return sortedQuestions;
+  }
 
   if (redFlagIndex > 2) {
     // Move red flags to position 1 (after basics, before others)

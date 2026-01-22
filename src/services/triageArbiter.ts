@@ -1,5 +1,6 @@
 import { AssessmentProfile } from '../types/triage';
 import { isMaternalContext, normalizeAge } from '../utils/clinicalUtils';
+import { normalizeSlot } from '../utils/aiUtils';
 
 export type TriageSignal =
   | 'TERMINATE'
@@ -38,6 +39,7 @@ export class TriageArbiter {
     remainingQuestions: { tier?: number; is_red_flag?: boolean }[] = [],
     previousProfile?: AssessmentProfile,
     currentSaturationCount: number = 0,
+    clarificationAttempts: number = 0,
   ): ArbiterResult {
     // Calculate new saturation state
     const newSaturationCount = this.calculateSaturation(
@@ -52,7 +54,24 @@ export class TriageArbiter {
       profile.is_vulnerable = true;
     }
 
-    // --- 1. MANDATORY SAFETY GATE: RED FLAGS ---
+    // --- 1. AMBIGUOUS DENIAL SAFEGUARD (Force Clarification) ---
+    // If the user issued a denial but the confidence is low (ambiguous phrasing), force verification.
+    // Loop Protection: Max 2 clarification attempts.
+    if (profile.denial_confidence === 'low') {
+      if (clarificationAttempts < 2) {
+        return {
+          signal: 'REQUIRE_CLARIFICATION',
+          reason: 'SAFETY GUARD: Low confidence denial detected. Verification required.',
+          nextSteps: ['Execute mandatory re-verification protocol'],
+          saturation_count: newSaturationCount,
+        };
+      } else {
+        console.warn('[TriageArbiter] Clarification attempts exhausted. Treating ambiguity as potential risk.');
+        // Fallback: Proceed, but the low confidence score will likely force a conservative recommendation later.
+      }
+    }
+
+    // --- 2. MANDATORY SAFETY GATE: RED FLAGS ---
     if (profile.red_flags_resolved === false) {
       const hasUnattemptedRedFlags = remainingQuestions.some((q) => q.is_red_flag);
       if (hasUnattemptedRedFlags) {
@@ -71,18 +90,7 @@ export class TriageArbiter {
       };
     }
 
-    // --- 1b. AMBIGUOUS DENIAL SAFEGUARD ---
-    // If the user issued a denial but the confidence is low (ambiguous phrasing), force verification.
-    if (profile.denial_confidence === 'low') {
-      return {
-        signal: 'REQUIRE_CLARIFICATION',
-        reason: 'SAFETY GUARD: Low confidence denial detected. Verification required.',
-        nextSteps: ['Execute mandatory re-verification protocol'],
-        saturation_count: newSaturationCount,
-      };
-    }
-
-    // --- 2. CLINICAL SANITY & FRICTION OVERRIDE (Early Intervention) ---
+    // --- 3. CLINICAL SANITY & FRICTION OVERRIDE (Early Intervention) ---
     const sanityResult = this.evaluateClinicalSanity(profile, remainingQuestions);
 
     // IMMEDIATE INTERVENTION: These signals override the turn floor because they require specific active resolution.
@@ -198,17 +206,18 @@ export class TriageArbiter {
   }
 
   private static areClinicalSlotsIdentical(a: AssessmentProfile, b: AssessmentProfile): boolean {
-    const normalize = (val: string | null | undefined) =>
-      val === 'null' || !val ? null : val.toLowerCase().trim();
-
     // Critical clinical slots
-    if (normalize(a.age) !== normalize(b.age)) return false;
-    if (normalize(a.duration) !== normalize(b.duration)) return false;
-    if (normalize(a.severity) !== normalize(b.severity)) return false;
-    if (normalize(a.progression) !== normalize(b.progression)) return false;
+    if (normalizeSlot(a.age) !== normalizeSlot(b.age)) return false;
+    if (normalizeSlot(a.duration) !== normalizeSlot(b.duration)) return false;
+    if (normalizeSlot(a.severity) !== normalizeSlot(b.severity)) return false;
+    if (normalizeSlot(a.progression) !== normalizeSlot(b.progression)) return false;
 
     // Safety & Category slots
-    if (normalize(a.red_flag_denials) !== normalize(b.red_flag_denials)) return false;
+    if (
+      normalizeSlot(a.red_flag_denials, { allowNone: true }) !==
+      normalizeSlot(b.red_flag_denials, { allowNone: true })
+    )
+      return false;
     if (a.red_flags_resolved !== b.red_flags_resolved) return false;
     if (a.symptom_category !== b.symptom_category) return false;
 
@@ -225,12 +234,10 @@ export class TriageArbiter {
   private static evaluateDataCompleteness(profile: AssessmentProfile): ArbiterResult {
     const missingFields: string[] = [];
 
-    if (!profile.age || profile.age.toLowerCase() === 'null') missingFields.push('Age');
-    if (!profile.duration || profile.duration.toLowerCase() === 'null')
-      missingFields.push('Duration');
-    if (!profile.severity || profile.severity.toLowerCase() === 'null')
-      missingFields.push('Severity');
-    if (!profile.red_flag_denials || profile.red_flag_denials.toLowerCase() === 'null')
+    if (!normalizeSlot(profile.age)) missingFields.push('Age');
+    if (!normalizeSlot(profile.duration)) missingFields.push('Duration');
+    if (!normalizeSlot(profile.severity)) missingFields.push('Severity');
+    if (!normalizeSlot(profile.red_flag_denials, { allowNone: true }))
       missingFields.push('Red Flag Assessment');
 
     if (missingFields.length > 0) {
@@ -309,7 +316,7 @@ export class TriageArbiter {
     }
 
     // 4. CLINICAL CONTEXT: Progression Check
-    if (!profile.progression || profile.progression.toLowerCase() === 'null') {
+    if (!normalizeSlot(profile.progression)) {
       return {
         signal: 'CONTINUE',
         reason: 'COHERENCE FAIL: Symptom progression (worsening/improving) is missing.',
@@ -325,10 +332,11 @@ export class TriageArbiter {
   ): boolean {
     const numericAge = normalizeAge(profile.age);
     const isPediatric = numericAge !== null && numericAge < 5;
+    const isGeriatric = numericAge !== null && numericAge >= 65;
 
     const fullText = history.map((h) => h.text).join(' ');
     const isMaternal = isMaternalContext(fullText);
 
-    return isPediatric || isMaternal || profile.is_vulnerable === true;
+    return isPediatric || isMaternal || isGeriatric || profile.is_vulnerable === true;
   }
 }
