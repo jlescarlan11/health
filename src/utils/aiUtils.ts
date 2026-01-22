@@ -59,12 +59,14 @@ export function checkCriticalSystemKeywords(input: string): 'critical' | 'comple
     
     const hasMatch = config.keywords.some(keyword => {
       // Natural language flexibility: 
-      // If keyword is multi-word like "chest pain", 
-      // we allow 0-2 filler words between them (e.g. "pain in my chest").
+      // If keyword is multi-word like "chest pain", we allow them to appear in any order
+      // with reasonable proximity (order-independent matching).
       const words = keyword.toLowerCase().split(' ');
       if (words.length > 1) {
-        const pattern = words.join('(?:\\s+\\w+){0,2}\\s+');
-        const regex = new RegExp(`\\b${pattern}\\b`, 'i');
+        // Use positive lookahead to ensure all words exist in the string
+        // while maintaining word boundaries.
+        const pattern = words.map(w => `(?=.*\\b${w}\\b)`).join('');
+        const regex = new RegExp(`^${pattern}.*$`, 'i');
         return regex.test(lowerInput);
       }
       

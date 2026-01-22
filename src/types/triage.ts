@@ -73,7 +73,8 @@ export const SYSTEM_LOCK_KEYWORD_MAP: Record<SystemCategory, SystemLockConfig> =
       'numbness', 'tingling', 'weakness', 'facial drooping', 'slurred speech',
       'confusion', 'disorientation', 'seizure', 'convulsion', 'passed out',
       'fainted', 'loss of consciousness', 'vision loss', 'worst headache',
-      'thunderclap headache', 'stiff neck', 'paralysis',
+      'thunderclap headache', 'stiff neck', 'paralysis', 'unconscious',
+      'unconsious',
     ],
   },
   'Acute Abdomen': {
