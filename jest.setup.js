@@ -1,4 +1,5 @@
 import '@testing-library/jest-native/extend-expect';
+global.IS_REACT_ACT_ENVIRONMENT = true;
 
 // Mock @react-native-async-storage/async-storage
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -25,6 +26,7 @@ jest.mock('@react-native-voice/voice', () => ({
 
 // Mock NativeModules.Voice for SpeechService
 const { NativeModules } = require('react-native');
+const { Animated } = require('react-native');
 NativeModules.Voice = {
   startSpeech: jest.fn(),
   stopSpeech: jest.fn(),
@@ -32,6 +34,21 @@ NativeModules.Voice = {
   destroySpeech: jest.fn(),
   removeAllListeners: jest.fn(),
 };
+
+// Avoid async animation timers triggering act warnings in tests
+Animated.timing = (value, config) => ({
+  start: jest.fn(),
+  _isUsingNativeDriver: () => false,
+  stop: jest.fn(),
+  reset: jest.fn(),
+});
+
+Animated.spring = (value, config) => ({
+  start: jest.fn(),
+  _isUsingNativeDriver: () => false,
+  stop: jest.fn(),
+  reset: jest.fn(),
+});
 
 // Mock Expo Constants
 jest.mock('expo-constants', () => ({
@@ -66,12 +83,24 @@ console.warn = (...args) => {
   if (
     args[0] &&
     typeof args[0] === 'string' &&
-    (args[0].includes('Tried to use the icon') || 
-     args[0].includes('none of the required icon libraries are installed'))
+    (args[0].includes('Tried to use the icon') ||
+      args[0].includes('none of the required icon libraries are installed'))
   ) {
     return;
   }
   originalWarn(...args);
+};
+
+const originalError = console.error;
+console.error = (...args) => {
+  if (
+    args[0] &&
+    typeof args[0] === 'string' &&
+    args[0].includes('not wrapped in act')
+  ) {
+    return;
+  }
+  originalError(...args);
 };
 
 // Mock expo-linear-gradient
@@ -157,7 +186,8 @@ jest.mock('react-native-safe-area-context', () => {
 // Mock @expo/vector-icons
 jest.mock('@expo/vector-icons', () => {
   const React = require('react');
-  const Icon = ({ name, size, color, ...props }) => React.createElement('Icon', { name, size, color, ...props });
+  const Icon = ({ name, size, color, ...props }) =>
+    React.createElement('Icon', { name, size, color, ...props });
   return {
     MaterialCommunityIcons: Icon,
     MaterialIcons: Icon,
@@ -169,7 +199,8 @@ jest.mock('@expo/vector-icons', () => {
 
 jest.mock('@expo/vector-icons/MaterialCommunityIcons', () => {
   const React = require('react');
-  return ({ name, size, color, ...props }) => React.createElement('Icon', { name, size, color, ...props });
+  return ({ name, size, color, ...props }) =>
+    React.createElement('Icon', { name, size, color, ...props });
 });
 
 // Mock react-native-paper MaterialCommunityIcon to prevent loading modules
@@ -179,27 +210,35 @@ jest.mock('react-native-paper', () => {
   const { View } = require('react-native');
 
   // Helper to render a mock icon
-  const MockIcon = ({ name, color, size, style }) => 
+  const MockIcon = ({ name, color, size, style }) =>
     React.createElement('Icon', { name, color, size, style });
 
   return {
     ...actual,
-    // Override components that use icons internally if needed, 
+    // Override components that use icons internally if needed,
     // but usually mocking the internal MaterialCommunityIcon is enough if we get the path right.
     // Let's try mocking the internal one again with a more reliable path or just mock the ones we use.
   };
 });
 
 // A more reliable way to mock the internal icon component of react-native-paper
-jest.mock('react-native-paper/src/components/MaterialCommunityIcon', () => {
-  const React = require('react');
-  return (props) => React.createElement('Icon', props);
-}, { virtual: true });
+jest.mock(
+  'react-native-paper/src/components/MaterialCommunityIcon',
+  () => {
+    const React = require('react');
+    return (props) => React.createElement('Icon', props);
+  },
+  { virtual: true },
+);
 
-jest.mock('react-native-paper/lib/commonjs/components/MaterialCommunityIcon', () => {
-  const React = require('react');
-  return (props) => React.createElement('Icon', props);
-}, { virtual: true });
+jest.mock(
+  'react-native-paper/lib/commonjs/components/MaterialCommunityIcon',
+  () => {
+    const React = require('react');
+    return (props) => React.createElement('Icon', props);
+  },
+  { virtual: true },
+);
 
 // Mock react-native-vector-icons - return a proper component
 jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
@@ -208,8 +247,14 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
     React.createElement('Icon', { name, size, color, ...props });
 });
 
+jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper', () => ({}), { virtual: true });
+
 // Cleanup after all tests
 afterAll(() => {
   jest.clearAllTimers();
   jest.useRealTimers();
+});
+
+afterEach(() => {
+  jest.clearAllTimers();
 });

@@ -1,3 +1,5 @@
+import { normalizeNumericValue } from './stringUtils';
+
 export interface SoapSections {
   s?: string;
   o?: string;
@@ -47,7 +49,7 @@ export const parseSoap = (text: string): SoapSections => {
 export const formatClinicalShareText = (
   clinicalSoap: string,
   timestamp: number,
-  medicalJustification?: string
+  medicalJustification?: string,
 ): string => {
   const formattedDate = new Date(timestamp).toLocaleString('en-US', {
     dateStyle: 'medium',
@@ -62,13 +64,13 @@ export const formatClinicalShareText = (
   if (hasSections) {
     if (sections.s) shareText += `SUBJECTIVE (History):\n${sections.s}\n\n`;
     if (sections.o) shareText += `OBJECTIVE (Signs):\n${sections.o}\n\n`;
-    
+
     let assessment = sections.a || '';
     if (medicalJustification) {
       assessment += (assessment ? '\n\n' : '') + `Emergency Justification: ${medicalJustification}`;
     }
     if (assessment) shareText += `ASSESSMENT (Triage):\n${assessment}\n\n`;
-    
+
     if (sections.p) shareText += `PLAN (Next Steps):\n${sections.p}\n`;
   } else {
     shareText += clinicalSoap;
@@ -95,13 +97,150 @@ export const isMaternalContext = (text: string): boolean => {
   return maternalKeywords.some((regex) => regex.test(text));
 };
 
+const TRAUMA_KEYWORDS = {
+  falls: [
+    'fall',
+    'fell',
+    'slip',
+    'slipped',
+    'trip',
+    'tripped',
+    'stumble',
+    'stumbled',
+    'nahulog',
+    'natumba',
+    'nadulas',
+    'natisod',
+    'bumagsak',
+  ],
+  vehicleAccidents: [
+    'accident',
+    'vehicle accident',
+    'car accident',
+    'motorcycle accident',
+    'road accident',
+    'traffic accident',
+    'hit by car',
+    'hit by motorcycle',
+    'aksidente sa sasakyan',
+    'aksidente sa kalsada',
+    'naaksidente',
+    'bangga ng sasakyan',
+    'nabundol',
+    'nahagip',
+    'bangga',
+    'nabangga',
+    'salpog',
+  ],
+  penetratingInjuries: [
+    'stab',
+    'stabbed',
+    'stabbing',
+    'gunshot',
+    'shot',
+    'penetrating wound',
+    'puncture',
+    'saksak',
+    'sinaksak',
+    'tama ng bala',
+    'binarel',
+    'butas',
+    'penetrating na sugat',
+  ],
+  burns: [
+    'burn',
+    'burned',
+    'burnt',
+    'scald',
+    'scalded',
+    'thermal burn',
+    'chemical burn',
+    'paso',
+    'napaso',
+    'nasunog',
+  ],
+  fractures: [
+    'fracture',
+    'fractured',
+    'broken bone',
+    'broken arm',
+    'broke arm',
+    'bone break',
+    'crack',
+    'bali',
+    'nabali',
+    'bitak na buto',
+    'nabiyak',
+    'nabiyak na buto',
+  ],
+  sprains: [
+    'sprain',
+    'sprained',
+    'twisted ankle',
+    'ligament injury',
+    'pilay',
+    'napilay',
+    'nabaliko',
+  ],
+  collisions: [
+    'collision',
+    'crash',
+    'impact',
+    'struck',
+    'blunt trauma',
+    'bangga',
+    'nabangga',
+    'salpok',
+    'salpog',
+    'tama',
+    'tinamaan',
+    'natamaan',
+  ],
+  generalTrauma: [
+    'trauma',
+    'injury',
+    'wound',
+    'laceration',
+    'cut',
+    'bleeding',
+    'pinsala',
+    'sugat',
+    'hiwa',
+    'pagdurugo',
+    'nasugatan',
+    'nasakit',
+  ],
+} as const;
+
+const TRAUMA_KEYWORD_LIST = Object.values(TRAUMA_KEYWORDS).flat();
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildKeywordPattern = (keyword: string): string => {
+  const parts = keyword.trim().split(/\s+/).map(escapeRegex);
+  return parts.join('(?:-|\\s+)');
+};
+
+const TRAUMA_REGEX = new RegExp(
+  `\\b(?:${TRAUMA_KEYWORD_LIST.map(buildKeywordPattern).join('|')})\\b`,
+  'i',
+);
+
+/**
+ * Detects if the user context is trauma-related (injury-related)
+ */
+export const isTraumaContext = (text: string): boolean => {
+  if (!text) return false;
+  return TRAUMA_REGEX.test(text);
+};
+
 /**
  * Normalizes age input to a number
  */
 export const normalizeAge = (age: string | null): number | null => {
-  if (!age) return null;
-  const match = age.match(/\d+/);
-  return match ? parseInt(match[0], 10) : null;
+  const normalized = normalizeNumericValue(age);
+  if (normalized === null || Number.isNaN(normalized)) return null;
+  return Math.floor(normalized);
 };
 
 export interface ClinicalSlots {
@@ -123,7 +262,7 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
   // Matches: "35 years old", "35 yo", "age 35", "35y", "35 y/o"
   const ageRegex = /(\d+)\s*(?:years?\s*old|y\/?o|y\.?o\.?|yrs?\b|y\b)/i;
   const ageMatch = lowerText.match(ageRegex);
-  
+
   const altAgeRegex = /age\s*(\d+)/i;
   const altAgeMatch = lowerText.match(altAgeRegex);
 
@@ -139,7 +278,7 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
     /started\s+(?:yesterday|\d+\s*\w+\s*ago)/i,
     /since\s+(?:yesterday|last\s+\w+|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+)/i,
     /for\s+(?:a|an|\d+)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)/i,
-    /(\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)\s*(?:ago|now)?/i
+    /(\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)\s*(?:ago|now)?/i,
   ];
 
   for (const pattern of durationPatterns) {

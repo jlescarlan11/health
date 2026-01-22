@@ -25,10 +25,19 @@ import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
-import { AssessmentProfile } from '../types/triage';
+import { AssessmentProfile, TriageLevel } from '../types/triage';
 import { ConfidenceSignal } from '../components/features/navigation/ConfidenceSignal';
+import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
+
+const SYSTEM_INSTRUCTIONS: Record<string, string> = {
+  Cardiac: 'Keep patient calm and seated. Loosen tight clothing.',
+  Respiratory: 'Help patient sit upright. Keep them calm.',
+  Trauma: 'Apply firm pressure to bleeding. Do not move if neck injury suspected.',
+  Neurological: 'Check breathing. Place in recovery position if unconscious.',
+  Other: 'Keep patient comfortable. Monitor breathing.',
+};
 
 const isFallbackProfile = (profile?: AssessmentProfile) => {
   if (!profile || !profile.summary) return false;
@@ -79,6 +88,28 @@ const RecommendationScreen = () => {
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
+
+  const missingFields = useMemo(() => {
+    if (!recommendation?.is_conservative_fallback) return [];
+
+    const profile = assessmentData.extractedProfile;
+    const missing: string[] = [];
+
+    if (!profile?.age) missing.push('Age');
+    if (!profile?.duration) missing.push('Duration');
+    if (!profile?.severity) missing.push('Severity');
+
+    return missing;
+  }, [recommendation?.is_conservative_fallback, assessmentData.extractedProfile]);
+
+  const emergencyInstruction = useMemo(() => {
+    if (!assessmentData.affectedSystems || assessmentData.affectedSystems.length === 0) {
+      return 'Seek medical help immediately';
+    }
+    // Prioritize specific systems if multiple exist
+    const system = assessmentData.affectedSystems[0];
+    return SYSTEM_INSTRUCTIONS[system] || 'Seek medical help immediately';
+  }, [assessmentData.affectedSystems]);
 
   // Refs for stabilizing analyzeSymptoms dependencies
   const symptomsRef = useRef(assessmentData.symptoms);
@@ -195,6 +226,11 @@ const RecommendationScreen = () => {
       const isFallback = isFallbackProfile(profile);
       const profileSummary = formatClinicalSummary(profile);
 
+      // Add Recent Resolved tag if applicable
+      const resolvedTag = profile?.is_recent_resolved
+        ? `[RECENT_RESOLVED: ${profile.resolved_keyword || 'Unknown symptom'}]`
+        : '';
+
       // Extract user answers once for reuse
       const userAnswersOnly = answersRef.current
         .map((a) => a.answer)
@@ -206,10 +242,11 @@ const RecommendationScreen = () => {
 
       // Clinical Context for LLM - Optimized to use summary as primary source
       const triageContextParts = [
+        resolvedTag,
         `Initial Symptom: ${symptomsRef.current}.`,
         `Clinical Profile Summary: ${profileSummary}.`,
         `\nContext: ${distanceContext}`,
-      ];
+      ].filter(Boolean);
 
       // Only include full answers if profile is missing, fallback, or readiness is low
       if (
@@ -217,7 +254,9 @@ const RecommendationScreen = () => {
         isFallback ||
         (profile?.triage_readiness_score !== undefined && profile.triage_readiness_score < 0.7)
       ) {
-        triageContextParts.push(`\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`);
+        triageContextParts.push(
+          `\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`,
+        );
       }
 
       const triageContext = triageContextParts.join('\n');
@@ -282,12 +321,31 @@ const RecommendationScreen = () => {
       }
 
       const isHighRiskFallback = localResult.score >= 5 || !!specificRiskMatch;
-      // If a specific risk combination is found, force 'emergency', otherwise fallback to hospital/health_center based on score
-      const fallbackLevel = specificRiskMatch
-        ? 'emergency'
-        : isHighRiskFallback
-          ? 'hospital'
-          : 'health_center';
+      
+      // Safety Guards for Self-Care eligibility
+      const profile = profileRef.current;
+      const isVulnerable = profile?.is_vulnerable === true;
+      const hasMatchedKeywords = localResult.matchedKeywords.length > 0;
+      
+      // Determine fallback level based on score and safety constraints
+      let fallbackLevel: TriageLevel;
+      
+      if (specificRiskMatch) {
+        fallbackLevel = 'emergency';
+      } else if (isHighRiskFallback) {
+        fallbackLevel = 'hospital';
+      } else if (
+        localResult.score !== null && 
+        localResult.score <= OFFLINE_SELF_CARE_THRESHOLD && 
+        !isVulnerable && 
+        !hasMatchedKeywords
+      ) {
+        // Only allow self-care if score is low, not vulnerable, and NO keywords matched at all
+        fallbackLevel = 'self-care';
+      } else {
+        // Default to health center for ambiguous or mild cases that don't meet strict self-care criteria
+        fallbackLevel = 'health-center';
+      }
 
       let fallbackAdvice = '';
 
@@ -296,15 +354,20 @@ const RecommendationScreen = () => {
       } else if (isHighRiskFallback) {
         fallbackAdvice =
           'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).';
+      } else if (fallbackLevel === 'self-care') {
+        fallbackAdvice = 
+          'Based on your reported symptoms and current offline status, your condition appears manageable at home. Please monitor for any worsening signs and consult a doctor if symptoms persist. (Note: Fallback care level determined by local safety analysis).';
       } else {
         fallbackAdvice =
           'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
       }
 
+      const normalizedFallbackLevel = fallbackLevel.replace(/-/g, '_') as AssessmentResponse['recommended_level'];
+
       const fallbackResponse: AssessmentResponse = {
-        recommended_level: fallbackLevel,
+        recommended_level: normalizedFallbackLevel,
         user_advice: fallbackAdvice,
-        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : 'Health Center'}.`,
+        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : fallbackLevel === 'health-center' ? 'Health Center' : 'Home Management'}.`,
         key_concerns: [
           'Need for professional evaluation',
           ...localResult.matchedKeywords.map((k) => `Monitored: ${k}`),
@@ -322,6 +385,21 @@ const RecommendationScreen = () => {
         follow_up_questions: [],
         triage_readiness_score: 0.5,
         is_conservative_fallback: true,
+        triage_logic: {
+          original_level: normalizedFallbackLevel,
+          final_level: normalizedFallbackLevel,
+          adjustments: [
+            {
+              from: normalizedFallbackLevel,
+              to: normalizedFallbackLevel,
+              rule: 'OFFLINE_FALLBACK',
+              reason:
+                specificRiskMatch?.reason ||
+                'Offline emergency detector determined fallback level.',
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
       };
 
       setRecommendation(fallbackResponse);
@@ -402,7 +480,10 @@ const RecommendationScreen = () => {
   };
 
   const getCareLevelInfo = (level: string) => {
-    switch (level) {
+    // Normalize level string to handle both hyphenated and underscored versions
+    const normalizedLevel = level.toLowerCase().replace('-', '_');
+
+    switch (normalizedLevel) {
       case 'emergency':
         return {
           label: 'EMERGENCY (LIFE-THREATENING)',
@@ -437,7 +518,7 @@ const RecommendationScreen = () => {
         };
       default:
         return {
-          label: level.toUpperCase(),
+          label: level.toUpperCase().replace('_', ' '),
           color: theme.colors.primary,
           icon: 'hospital-building',
           bgColor: '#F0F9F6',
@@ -476,7 +557,7 @@ const RecommendationScreen = () => {
               <MaterialCommunityIcons name="alert-octagon" size={40} color="white" />
               <View style={styles.emergencyTextContainer}>
                 <Text style={styles.emergencyTitle}>URGENT CARE REQUIRED</Text>
-                <Text style={styles.emergencySubtitle}>Seek medical help immediately</Text>
+                <Text style={styles.emergencySubtitle}>{emergencyInstruction}</Text>
               </View>
             </View>
             <EmergencyButton
@@ -504,7 +585,13 @@ const RecommendationScreen = () => {
         </Surface>
 
         {/* Safety Note for Conservative Triage */}
-        {recommendation.is_conservative_fallback && <ConfidenceSignal />}
+        {recommendation.is_conservative_fallback && (
+          <ConfidenceSignal
+            missingFields={missingFields}
+            isRecentResolved={assessmentData.extractedProfile?.is_recent_resolved}
+            triage_logic={recommendation.triage_logic}
+          />
+        )}
 
         {/* Clinical Friction Alert */}
         {assessmentData.extractedProfile?.clinical_friction_detected && (
@@ -559,7 +646,10 @@ const RecommendationScreen = () => {
           <Text variant="bodyLarge" style={styles.adviceText}>
             {isEmergency && recommendation.medical_justification
               ? recommendation.user_advice
-                  .replace(/CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./, '')
+                  .replace(
+                    /CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./,
+                    '',
+                  )
                   .replace(/CRITICAL: High risk combination detected \(.*?\)\./, '')
                   .replace('Your symptoms indicate a mental health crisis.', '')
                   .trim() || 'Seek medical help immediately.'

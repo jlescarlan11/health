@@ -60,7 +60,7 @@ jest.mock('../src/services/speechService', () => ({
   speechService: {
     stopListening: jest.fn(),
     destroy: jest.fn(),
-  }
+  },
 }));
 
 // Mock NetInfo
@@ -94,29 +94,29 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
     const plan = [
       { id: 'basics', text: 'Age and duration?', tier: 1 },
       { id: 'severity', text: 'How severe is it?', tier: 1 }, // Should be pruned
-      { id: 'location', text: 'Where does it hurt?', tier: 2 } // Should remain
+      { id: 'location', text: 'Where does it hurt?', tier: 2 }, // Should remain
     ];
 
     (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
     (extractClinicalSlots as jest.Mock).mockReturnValue({
-      severity: 'High'
+      severity: 'High',
     });
 
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     // Wait for messages to load
-    // The first question should be 'location' because 'basics' (no slots) and 'severity' (slots) 
+    // The first question should be 'location' because 'basics' (no slots) and 'severity' (slots)
     // Wait, 'basics' won't be pruned because slots.age and slots.duration are undefined.
     // 'severity' will be pruned because slots.severity is 'High'.
     // So questions shown should be: 'basics' -> 'location'.
-    
+
     // We check the first message text. The intro message appends the first question text.
     await waitFor(() => expect(screen.getByText(/Age and duration\?/)).toBeTruthy());
-    
+
     // Check that severity question is NOT present in the messages (initial render only shows first question)
     expect(screen.queryByText(/How severe is it\?/)).toBeNull();
   });
@@ -124,18 +124,18 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
   test('Does NOT prune severity question when NOT extracted', async () => {
     const plan = [
       { id: 'severity', text: 'How severe is it?', tier: 1 },
-      { id: 'location', text: 'Where does it hurt?', tier: 2 }
+      { id: 'location', text: 'Where does it hurt?', tier: 2 },
     ];
 
     (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
     (extractClinicalSlots as jest.Mock).mockReturnValue({
-      severity: undefined
+      severity: undefined,
     });
 
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     // Should show severity question

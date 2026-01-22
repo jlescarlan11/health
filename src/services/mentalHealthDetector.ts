@@ -5,22 +5,22 @@ import { KeywordDetector } from './base/KeywordDetector';
 // High (8-9): Ideation or severe symptoms
 // Medium (5-7): Distress indicators
 const CRISIS_KEYWORDS_SCORED: Record<string, number> = {
-  'suicide': 10,
+  suicide: 10,
   'kill myself': 10,
   'hurt myself': 10,
   'want to die': 10,
   'end my life': 10,
   'hang myself': 10,
   'cut myself': 10,
-  'overdose': 10,
+  overdose: 10,
   'take all the pills': 10,
   'better off dead': 10,
-  'dying': 9,
+  dying: 9,
   'feel like dying': 9,
   'feeling like dying': 9,
   'self-harm': 9,
   'hearing voices': 9,
-  'hallucinations': 9,
+  hallucinations: 9,
   'no reason to live': 9,
   'severe depression': 7,
   'uncontrollable anger': 7,
@@ -29,7 +29,7 @@ const CRISIS_KEYWORDS_SCORED: Record<string, number> = {
   'give up': 6,
   'tired of living': 7,
   'make it stop': 6,
-  'hopelessness': 6,
+  hopelessness: 6,
   'want to end it': 8,
 };
 
@@ -78,14 +78,18 @@ class MentalHealthDetector extends KeywordDetector {
 
   public detectCrisis(text: string): MentalHealthDetectionResult {
     const { matchedKeywords, score } = this.detect(text, true);
-    
+
     // Threshold based decision
     const isCrisis = score >= 8;
 
     if (isCrisis) {
-      console.log(`[MentalHealthDetector] Crisis keywords detected: ${matchedKeywords.join(', ')} (Score: ${score})`);
-      const medical_justification = matchedKeywords.map(k => `${k} (Severity: ${CRISIS_KEYWORDS_SCORED[k]}/10)`).join('; ');
-      
+      console.log(
+        `[MentalHealthDetector] Crisis keywords detected: ${matchedKeywords.join(', ')} (Score: ${score})`,
+      );
+      const medical_justification = matchedKeywords
+        .map((k) => `${k} (Severity: ${CRISIS_KEYWORDS_SCORED[k]}/10)`)
+        .join('; ');
+
       return {
         isCrisis: true,
         matchedKeywords,
@@ -100,7 +104,7 @@ class MentalHealthDetector extends KeywordDetector {
     return {
       isCrisis: false,
       matchedKeywords,
-      score
+      score,
     };
   }
 }

@@ -232,7 +232,12 @@ export const FacilityMapView: React.FC = () => {
     }
   };
 
-  const onShapePress = (event: { features: Array<{ properties?: Record<string, unknown>; geometry: { coordinates: [number, number] } }> }) => {
+  const onShapePress = (event: {
+    features: Array<{
+      properties?: Record<string, unknown>;
+      geometry: { coordinates: [number, number] };
+    }>;
+  }) => {
     const feature = event.features[0];
     if (feature.properties?.cluster) {
       if (cameraRef.current) {

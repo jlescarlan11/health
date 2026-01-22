@@ -9,71 +9,71 @@ const CARDIAC_KEYWORDS: Record<string, number> = {
   'heart attack': 10,
   'chest tightness': 10,
   'blue lips': 10,
-  'palpitations': 6, // Added as requested
+  palpitations: 6, // Added as requested
   'irregular heartbeat': 6,
-  
+
   // Bicolano / Local
   'kulog sa daghan': 10, // chest pain
   'kulog sa dagan': 10, // chest pain (variant)
   'makulog na daghan': 10, // painful chest
   'malipot na ribok': 10, // cold sweat (often cardiac)
-  'pumitik': 6, // palpitations/throbbing
+  pumitik: 6, // palpitations/throbbing
 };
 
 const RESPIRATORY_KEYWORDS: Record<string, number> = {
   'difficulty breathing': 10,
   'shortness of breath': 10,
   'not breathing': 10,
-  'gasping': 10,
-  'choking': 10,
+  gasping: 10,
+  choking: 10,
   'coughing blood': 10,
-  
+
   // Bicolano / Local
-  'hingalo': 10, // gasping for breath / near death
-  'naghihingalo': 10, // actively dying / gasping
+  hingalo: 10, // gasping for breath / near death
+  naghihingalo: 10, // actively dying / gasping
   'dai makahinga': 10, // cannot breathe
   'masakit an hinangos': 10, // difficulty breathing
   'masakit maghinga': 10, // hard to breathe
-  'pudos': 10, // shortness of breath
-  'dugi': 10, // choking/foreign object in throat
-  'bakitog': 10, // difficulty breathing / wheezing
-  'hapos': 6, // asthma/difficulty breathing
+  pudos: 10, // shortness of breath
+  dugi: 10, // choking/foreign object in throat
+  bakitog: 10, // difficulty breathing / wheezing
+  hapos: 6, // asthma/difficulty breathing
 };
 
 const NEURO_KEYWORDS: Record<string, number> = {
-  'unconscious': 10,
-  'fainted': 10,
-  'seizure': 10,
-  'stroke': 10,
+  unconscious: 10,
+  fainted: 10,
+  seizure: 10,
+  stroke: 10,
   'slurred speech': 10,
-  'slurred': 10,
+  slurred: 10,
   'sudden weakness': 10,
   'facial drooping': 10,
-  'drooping': 10,
+  drooping: 10,
   'arm weakness': 10,
   'cannot speak': 10,
-  'confusion': 8,
+  confusion: 8,
   'vision loss': 9,
   'sudden blindness': 10,
   'stiff neck': 8,
-  'headache': 5,
+  headache: 5,
   'blurred vision': 6,
-  'dizziness': 5,
-  'dizzy': 5,
-  
+  dizziness: 5,
+  dizzy: 5,
+
   // Bicolano / Local
-  'nagkukumbulsion': 10, // actively seizing
-  'kumbulsion': 10, // seizure
-  'bontog': 10, // seizure/convulsion
-  'bontogon': 10, // epileptic/seizing
-  'nadismayo': 10, // fainted
+  nagkukumbulsion: 10, // actively seizing
+  kumbulsion: 10, // seizure
+  bontog: 10, // seizure/convulsion
+  bontogon: 10, // epileptic/seizing
+  nadismayo: 10, // fainted
   'nawaran malay': 10, // lost consciousness
   'nawara an malay': 10, // lost consciousness
   'dai makataram': 10, // cannot speak
-  'ngaut': 10, // slurred speech
-  'nalulula': 5, // dizzy/vertigo
-  'ribong': 6, // dizzy/confused
-  'nalilibog': 5, // confused/disoriented
+  ngaut: 10, // slurred speech
+  nalulula: 5, // dizzy/vertigo
+  ribong: 6, // dizzy/confused
+  nalilibog: 5, // confused/disoriented
 };
 
 const TRAUMA_KEYWORDS: Record<string, number> = {
@@ -83,26 +83,26 @@ const TRAUMA_KEYWORDS: Record<string, number> = {
   'broken bone': 8,
   'deep wound': 8,
   'electric shock': 10,
-  'drowning': 10,
+  drowning: 10,
 
   // Bicolano / Local
-  'nagdudugo': 10, // bleeding
+  nagdudugo: 10, // bleeding
   'dakulang dugo': 10, // heavy bleeding (lit. big blood)
-  'nalapnos': 8, // burned/scalded
-  'napaso': 8, // burned
-  'bari': 8, // broken/fracture
-  'naglulubog': 10, // drowning
+  nalapnos: 8, // burned/scalded
+  napaso: 8, // burned
+  bari: 8, // broken/fracture
+  naglulubog: 10, // drowning
 };
 
 const OTHER_EMERGENCY_KEYWORDS: Record<string, number> = {
   // Critical General
-  'poisoning': 10,
-  'overdose': 10,
-  'anaphylaxis': 10,
+  poisoning: 10,
+  overdose: 10,
+  anaphylaxis: 10,
   'severe allergic reaction': 10,
   'severe abdominal pain': 10,
   'suicide attempt': 10,
-  'dying': 10,
+  dying: 10,
   'feel like dying': 10,
   'feeling like dying': 10,
   'active labor': 10,
@@ -114,34 +114,34 @@ const OTHER_EMERGENCY_KEYWORDS: Record<string, number> = {
   'blood in stool': 8,
   'high fever': 5,
   'severe dehydration': 7,
-  'jaundice': 7,
+  jaundice: 7,
   'persistent vomiting': 7,
-  'fever': 4,
+  fever: 4,
   'abdominal pain': 6,
-  'nausea': 4,
+  nausea: 4,
 
   // Bicolano / Local
   'garo gadan': 10, // feels like dying
   'suka na dugo': 9, // vomiting blood
   'nagsusuka dugo': 9, // vomiting blood
   'nag-udo dugo': 8, // bloody stool
-  'mangaki': 10, // giving birth
-  'nagtutubig': 10, // water broke
-  'nangungulog': 6, // general pain
+  mangaki: 10, // giving birth
+  nagtutubig: 10, // water broke
+  nangungulog: 6, // general pain
   'grabeng lagnat': 5, // high fever
   'mainiton na marhay': 5, // very hot/feverish
-  'nagkakalyo': 6, // stiffening? (context dependent, keeping score)
+  nagkakalyo: 6, // stiffening? (context dependent, keeping score)
   'pusi-pusi': 6, // pale/anemic looking
-  'gadot': 5, // muscle pain/cramps
+  gadot: 5, // muscle pain/cramps
   'kulog sa tulak': 5, // stomach ache
   'makulog na tulak': 6, // painful stomach
   'nagpapanit an tulak': 7, // peeling stomach (severe pain)
-  'impacho': 4, // indigestion
-  'nagluluya': 6, // weak
-  'maluya': 6, // weak
-  'lupaypay': 7, // prostrate/very weak
-  'langkag': 5, // malaise
-  'kalentura': 5, // fever
+  impacho: 4, // indigestion
+  nagluluya: 6, // weak
+  maluya: 6, // weak
+  lupaypay: 7, // prostrate/very weak
+  langkag: 5, // malaise
+  kalentura: 5, // fever
 };
 
 // Consolidated map for the base detector
@@ -150,20 +150,20 @@ const ALL_EMERGENCY_KEYWORDS: Record<string, number> = {
   ...RESPIRATORY_KEYWORDS,
   ...NEURO_KEYWORDS,
   ...TRAUMA_KEYWORDS,
-  ...OTHER_EMERGENCY_KEYWORDS
+  ...OTHER_EMERGENCY_KEYWORDS,
 };
 
 // **NEW: Contextual Modifiers**
 const VIRAL_INDICATORS = ['cough', 'runny nose', 'nasal congestion', 'sore throat', 'sneezing'];
 const DANGER_INDICATORS: Record<string, number> = {
-    'stiff neck': 4,
-    'confusion': 4,
-    'seizure': 5,
-    'difficulty breathing': 5,
-    'chest pain': 5,
-    'unconscious': 5,
-    'persistent': 1,
-    'worsening': 1,
+  'stiff neck': 4,
+  confusion: 4,
+  seizure: 5,
+  'difficulty breathing': 5,
+  'chest pain': 5,
+  unconscious: 5,
+  persistent: 1,
+  worsening: 1,
 };
 
 /**
@@ -197,10 +197,10 @@ export const COMBINATION_RISKS = [
     reason: 'Potential internal bleeding or shock',
   },
   {
-      symptoms: ['fever', 'stiff neck'],
-      severity: 10,
-      reason: 'High risk of meningitis',
-  }
+    symptoms: ['fever', 'stiff neck'],
+    severity: 10,
+    reason: 'High risk of meningitis',
+  },
 ];
 
 // **NEW: Contextual Exclusions**
@@ -267,25 +267,33 @@ class EmergencyDetector extends KeywordDetector {
    * Helper to check if duration suggests chronic/non-acute or acute/urgent
    */
   private parseDurationUrgency(duration: string | null): 'acute' | 'chronic' | 'unknown' {
-      if (!duration) return 'unknown';
-      const d = duration.toLowerCase();
-      
-      // Urgent indicators
-      if (d.includes('today') || d.includes('hour') || d.includes('just') || d.includes('now') || d.includes('minute')) return 'acute';
-      
-      // Chronic indicators (less likely emergency on their own)
-      if (d.includes('week') || d.includes('month') || d.includes('year') || d.includes('long time')) return 'chronic';
-      
-      // 1-3 days is "acute" but usually not "emergency" unless symptoms are severe
-      if (d.includes('day') || d.includes('yesterday')) return 'acute';
-      
-      return 'unknown';
+    if (!duration) return 'unknown';
+    const d = duration.toLowerCase();
+
+    // Urgent indicators
+    if (
+      d.includes('today') ||
+      d.includes('hour') ||
+      d.includes('just') ||
+      d.includes('now') ||
+      d.includes('minute')
+    )
+      return 'acute';
+
+    // Chronic indicators (less likely emergency on their own)
+    if (d.includes('week') || d.includes('month') || d.includes('year') || d.includes('long time'))
+      return 'chronic';
+
+    // 1-3 days is "acute" but usually not "emergency" unless symptoms are severe
+    if (d.includes('day') || d.includes('yesterday')) return 'acute';
+
+    return 'unknown';
   }
 
   private identifySystems(matchedKeywords: string[]): string[] {
     const systems = new Set<string>();
-    
-    matchedKeywords.forEach(keyword => {
+
+    matchedKeywords.forEach((keyword) => {
       if (keyword in CARDIAC_KEYWORDS) systems.add('Cardiac');
       if (keyword in RESPIRATORY_KEYWORDS) systems.add('Respiratory');
       if (keyword in NEURO_KEYWORDS) systems.add('Neurological');
@@ -298,13 +306,10 @@ class EmergencyDetector extends KeywordDetector {
 
   private hasExclusionContext(contextWindow: string): boolean {
     const lowerWindow = contextWindow.toLowerCase();
-    return CONTEXTUAL_EXCLUSIONS.some(pattern => lowerWindow.includes(pattern));
+    return CONTEXTUAL_EXCLUSIONS.some((pattern) => lowerWindow.includes(pattern));
   }
 
-  public evaluate(
-    text: string,
-    options: EmergencyDetectionOptions = {},
-  ): EmergencyDetectionResult {
+  public evaluate(text: string, options: EmergencyDetectionOptions = {}): EmergencyDetectionResult {
     console.log(`\n=== EMERGENCY DETECTION START ===`);
     console.log(`Input: "${text.substring(0, 100)}..."`);
     console.log(`Input Type: ${options.isUserInput === false ? 'SYSTEM/METADATA' : 'USER INPUT'}`);
@@ -321,7 +326,7 @@ class EmergencyDetector extends KeywordDetector {
     if (options.enableExclusions !== false && options.isUserInput !== false) {
       for (const segment of segmentAnalyses) {
         const originalCount = segment.activeMatches.length;
-        segment.activeMatches = segment.activeMatches.filter(match => {
+        segment.activeMatches = segment.activeMatches.filter((match) => {
           if (this.hasExclusionContext(match.contextWindow)) {
             excludedKeywords.push(match.keyword);
             segment.suppressedMatches.push(match);
@@ -331,18 +336,23 @@ class EmergencyDetector extends KeywordDetector {
         });
 
         if (segment.activeMatches.length !== originalCount) {
-          segment.maxScore = segment.activeMatches.length > 0 
-            ? Math.max(...segment.activeMatches.map(m => m.severity)) 
-            : 0;
+          segment.maxScore =
+            segment.activeMatches.length > 0
+              ? Math.max(...segment.activeMatches.map((m) => m.severity))
+              : 0;
         }
       }
-      
+
       // Recalculate global score and matched keywords based on filtered segments
-      matchedKeywords = Array.from(new Set(segmentAnalyses.flatMap(s => s.activeMatches.map(m => m.keyword))));
-      score = segmentAnalyses.length > 0 ? Math.max(...segmentAnalyses.map(s => s.maxScore)) : 0;
-      
+      matchedKeywords = Array.from(
+        new Set(segmentAnalyses.flatMap((s) => s.activeMatches.map((m) => m.keyword))),
+      );
+      score = segmentAnalyses.length > 0 ? Math.max(...segmentAnalyses.map((s) => s.maxScore)) : 0;
+
       if (excludedKeywords.length > 0) {
-        console.log(`  [Exclusions] Removed keywords due to context: ${excludedKeywords.join(', ')}`);
+        console.log(
+          `  [Exclusions] Removed keywords due to context: ${excludedKeywords.join(', ')}`,
+        );
       }
     }
 
@@ -382,117 +392,143 @@ class EmergencyDetector extends KeywordDetector {
     let reasoningParts: string[] = [];
 
     // Check if we have an absolute emergency (10/10)
-    const hasAbsoluteEmergency = matchedKeywords.some(k => ALL_EMERGENCY_KEYWORDS[k] === 10);
-    
+    const hasAbsoluteEmergency = matchedKeywords.some((k) => ALL_EMERGENCY_KEYWORDS[k] === 10);
+
     if (!hasAbsoluteEmergency && finalScore > 0) {
-        let scoreModifier = 0;
-        
-        // 1. Danger Indicators (Multipliers/Adders)
-        const activeDanger = Object.keys(DANGER_INDICATORS).filter(dk => {
-          // Find segment containing this danger indicator
-          const segment = segmentAnalyses.find(s => s.text.toLowerCase().includes(dk));
-          if (!segment) return false;
-          
-          // If it's a keyword match in this segment, check if it was suppressed (negated)
-          const suppressed = segment.suppressedMatches.some(m => m.keyword.toLowerCase().includes(dk));
-          if (suppressed) return false;
-          
-          return true;
-        });
-        
-        activeDanger.forEach(dk => {
-            scoreModifier += DANGER_INDICATORS[dk];
-            reasoningParts.push(`Danger indicator (+${DANGER_INDICATORS[dk]}): ${dk}.`);
-        });
+      let scoreModifier = 0;
 
-        // 2. Viral Indicators (De-escalation)
-        // Only de-escalate if the primary symptoms are "Serious" but not "Absolute"
-        const hasViralSymptoms = VIRAL_INDICATORS.some(vk => sanitized.toLowerCase().includes(vk));
-        const isRedFlagQuestion = questionId === 'red_flags' || questionId === 'q_emergency_signs';
+      // 1. Danger Indicators (Multipliers/Adders)
+      const activeDanger = Object.keys(DANGER_INDICATORS).filter((dk) => {
+        // Find segment containing this danger indicator
+        const segment = segmentAnalyses.find((s) => s.text.toLowerCase().includes(dk));
+        if (!segment) return false;
 
-        if (hasViralSymptoms && finalScore <= 7 && !isRedFlagQuestion) {
-            scoreModifier -= 2;
-            reasoningParts.push('Viral indicators detected (-2): cough/runny nose/cold symptoms.');
-        }
+        // If it's a keyword match in this segment, check if it was suppressed (negated)
+        const suppressed = segment.suppressedMatches.some((m) =>
+          m.keyword.toLowerCase().includes(dk),
+        );
+        if (suppressed) return false;
 
-        // 3. Duration/Profile Adjustments
-        const urgency = this.parseDurationUrgency(profile?.duration || null);
-        if (urgency === 'chronic' && finalScore < 8) {
-            scoreModifier += 1; // Chronic is serious but often less acute
-            reasoningParts.push('Chronic duration (+1).');
-        }
+        return true;
+      });
 
-        const initialScore = finalScore;
-        finalScore = Math.max(0, Math.min(10, finalScore + scoreModifier));
-        
-        if (finalScore !== initialScore) {
-            console.log(`  [Scoring] Modified score from ${initialScore} to ${finalScore} based on context.`);
-        }
+      activeDanger.forEach((dk) => {
+        scoreModifier += DANGER_INDICATORS[dk];
+        reasoningParts.push(`Danger indicator (+${DANGER_INDICATORS[dk]}): ${dk}.`);
+      });
+
+      // 2. Viral Indicators (De-escalation)
+      // Only de-escalate if the primary symptoms are "Serious" but not "Absolute"
+      const hasViralSymptoms = VIRAL_INDICATORS.some((vk) => sanitized.toLowerCase().includes(vk));
+      const isRedFlagQuestion = questionId === 'red_flags' || questionId === 'q_emergency_signs';
+
+      if (hasViralSymptoms && finalScore <= 7 && !isRedFlagQuestion) {
+        scoreModifier -= 2;
+        reasoningParts.push('Viral indicators detected (-2): cough/runny nose/cold symptoms.');
+      }
+
+      // 3. Duration/Profile Adjustments
+      const urgency = this.parseDurationUrgency(profile?.duration || null);
+      if (urgency === 'chronic' && finalScore < 8) {
+        scoreModifier += 1; // Chronic is serious but often less acute
+        reasoningParts.push('Chronic duration (+1).');
+      }
+
+      const initialScore = finalScore;
+      finalScore = Math.max(0, Math.min(10, finalScore + scoreModifier));
+
+      if (finalScore !== initialScore) {
+        console.log(
+          `  [Scoring] Modified score from ${initialScore} to ${finalScore} based on context.`,
+        );
+      }
     } else if (hasAbsoluteEmergency) {
-        finalScore = 10;
-        reasoningParts.push('Absolute emergency detected.');
+      finalScore = 10;
+      reasoningParts.push('Absolute emergency detected.');
     }
 
     // 4. System Overlap Logic
     if (affectedSystems.includes('Cardiac') && affectedSystems.includes('Respiratory')) {
-        finalScore = Math.min(10, finalScore + 3);
-        reasoningParts.push('Multi-system risk (Cardiac + Respiratory).');
+      finalScore = Math.min(10, finalScore + 3);
+      reasoningParts.push('Multi-system risk (Cardiac + Respiratory).');
     }
-    
+
     if (affectedSystems.includes('Neurological') && affectedSystems.includes('Trauma')) {
-        finalScore = 10;
-        reasoningParts.push('Critical multi-system risk (Neuro + Trauma).');
+      finalScore = 10;
+      reasoningParts.push('Critical multi-system risk (Neuro + Trauma).');
     }
 
     // 5. Combination Risks (Fallback/Secondary check)
     let combinationReason = '';
-    
+
     for (const risk of COMBINATION_RISKS) {
-        const hasAllSymptoms = risk.symptoms.every(s => matchedKeywords.includes(s));
-        if (hasAllSymptoms) {
-            finalScore = Math.max(finalScore, risk.severity);
-            combinationReason = risk.reason;
-            reasoningParts.push(`Risk combination detected: ${risk.symptoms.join(' + ')} (${risk.reason}).`);
-            break; // Prioritize the first high-risk combination found
-        }
+      const hasAllSymptoms = risk.symptoms.every((s) => matchedKeywords.includes(s));
+      if (hasAllSymptoms) {
+        finalScore = Math.max(finalScore, risk.severity);
+        combinationReason = risk.reason;
+        reasoningParts.push(
+          `Risk combination detected: ${risk.symptoms.join(' + ')} (${risk.reason}).`,
+        );
+        break; // Prioritize the first high-risk combination found
+      }
     }
 
     // 6. Safety Check: If AI marked case as complex/critical, we slightly weight the score up,
     // but if red flags are RESOLVED/DENIED, we never force an emergency just based on serious keywords.
     if (profile?.symptom_category === 'critical' && finalScore < 8 && !hasAbsoluteEmergency) {
-        // AI thinks it's critical, but detector didn't find absolute keywords.
-        // We might upgrade to 8 if there are serious keywords.
-        if (finalScore >= 6) {
-            finalScore = 8;
-            reasoningParts.push('Upgraded based on AI category assessment.');
-        }
+      // AI thinks it's critical, but detector didn't find absolute keywords.
+      // We might upgrade to 8 if there are serious keywords.
+      if (finalScore >= 6) {
+        finalScore = 8;
+        reasoningParts.push('Upgraded based on AI category assessment.');
+      }
     }
 
     let isEmergency = finalScore > 7;
 
     // --- AUTHORITY ENFORCEMENT: Profile Constraints ---
-    // If red flags are explicitly resolved and DENIED, block Emergency escalation 
+    // If red flags are explicitly resolved and DENIED, block Emergency escalation
     // unless there is an absolute (10/10) emergency keyword detected in user input.
     if (profile?.red_flags_resolved === true) {
-        const denials = (profile.red_flag_denials || '').toLowerCase();
-        
-        // 1. Check for explicit denial prefixes (safeguards)
-        const explicitDenialPrefixes = ['no', 'none', 'wala', 'hindi', 'dae', 'dai', 'wara', 'nothing', 'bako'];
-        const isExplicitDenial = explicitDenialPrefixes.some(prefix => 
-            denials === prefix || denials.startsWith(`${prefix} `) || denials.startsWith(`${prefix},`) || denials.startsWith(`${prefix}.`)
+      const denials = (profile.red_flag_denials || '').toLowerCase();
+
+      // 1. Check for explicit denial prefixes (safeguards)
+      const explicitDenialPrefixes = [
+        'no',
+        'none',
+        'wala',
+        'hindi',
+        'dae',
+        'dai',
+        'wara',
+        'nothing',
+        'bako',
+      ];
+      const isExplicitDenial = explicitDenialPrefixes.some(
+        (prefix) =>
+          denials === prefix ||
+          denials.startsWith(`${prefix} `) ||
+          denials.startsWith(`${prefix},`) ||
+          denials.startsWith(`${prefix}.`),
+      );
+
+      // 2. Strengthened validation using isNegated for any matched keywords
+      const areKeywordsNegated =
+        matchedKeywords.length > 0 &&
+        matchedKeywords.every((k) => this.isNegated(denials, k).negated);
+
+      const hasValidatedDenial = isExplicitDenial || areKeywordsNegated;
+
+      if (hasValidatedDenial && isEmergency && !hasAbsoluteEmergency) {
+        console.log(
+          '  [Authority] Emergency blocked: Red flags were explicitly denied in structured profile.',
         );
-
-        // 2. Strengthened validation using isNegated for any matched keywords
-        const areKeywordsNegated = matchedKeywords.length > 0 && matchedKeywords.every(k => this.isNegated(denials, k).negated);
-
-        const hasValidatedDenial = isExplicitDenial || areKeywordsNegated;
-        
-        if (hasValidatedDenial && isEmergency && !hasAbsoluteEmergency) {
-            console.log('  [Authority] Emergency blocked: Red flags were explicitly denied in structured profile.');
-            isEmergency = false;
-            finalScore = 7; // Cap at maximum non-emergency score
-            reasoningParts.push(`Authority block: Red flags denied in profile (Explicit: ${isExplicitDenial}, Negated: ${areKeywordsNegated}). Capping at non-emergency.`);
-        }
+        isEmergency = false;
+        finalScore = 7; // Cap at maximum non-emergency score
+        reasoningParts.push(
+          `Authority block: Red flags denied in profile (Explicit: ${isExplicitDenial}, Negated: ${areKeywordsNegated}). Capping at non-emergency.`,
+        );
+      }
     }
 
     // Build reasoning
@@ -502,23 +538,32 @@ class EmergencyDetector extends KeywordDetector {
       if (affectedSystems.length > 0) reasoning += ` Systems: ${affectedSystems.join(', ')}.`;
       if (combinationReason) reasoning += ` RISK: ${combinationReason}.`;
     } else {
-      reasoning = matchedKeywords.length > 0 
-        ? `Non-emergency (score ${finalScore}/10). Symptoms: ${matchedKeywords.join(', ')}.`
-        : `No emergency symptoms detected.`;
+      reasoning =
+        matchedKeywords.length > 0
+          ? `Non-emergency (score ${finalScore}/10). Symptoms: ${matchedKeywords.join(', ')}.`
+          : `No emergency symptoms detected.`;
     }
-    
+
     if (reasoningParts.length > 0) {
-        reasoning += ` [Context: ${reasoningParts.join(' ')}]`;
+      reasoning += ` [Context: ${reasoningParts.join(' ')}]`;
     }
 
     // Build medical justification (User-facing, simplified)
     const symptomsList = matchedKeywords.join(', ');
     const contextList = reasoningParts
-        .map(part => part.replace(/Danger indicator \(\+\d+\): |Viral indicators detected \(-\d+\): |Risk combination detected: |Chronic duration \(\+\d+\)\.?/g, '').trim())
-        .filter(part => part.length > 0)
-        .join('; ');
+      .map((part) =>
+        part
+          .replace(
+            /Danger indicator \(\+\d+\): |Viral indicators detected \(-\d+\): |Risk combination detected: |Chronic duration \(\+\d+\)\.?/g,
+            '',
+          )
+          .trim(),
+      )
+      .filter((part) => part.length > 0)
+      .join('; ');
 
-    const medical_justification = matchedKeywords.length > 0
+    const medical_justification =
+      matchedKeywords.length > 0
         ? `Potential concerns: ${symptomsList}.${contextList ? ` Context: ${contextList}` : ''}`
         : 'No specific emergency signs detected.';
 
@@ -558,6 +603,23 @@ class EmergencyDetector extends KeywordDetector {
         relevant_services: ['Emergency'],
         red_flags: matchedKeywords,
         follow_up_questions: [],
+        triage_logic: {
+          original_level: 'emergency',
+          final_level: 'emergency',
+          adjustments: [
+            {
+              from: 'emergency',
+              to: 'emergency',
+              rule: affectedSystems.includes('Cardiac')
+                ? 'SYSTEM_BASED_LOCK_CARDIAC'
+                : 'RED_FLAG_UPGRADE',
+              reason:
+                combinationReason ||
+                `Emergency keyword match: ${matchedKeywords.join(', ') || 'unknown reason'}`,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
       };
     }
 
@@ -592,8 +654,8 @@ export const tokenizeSentences = (text: string): string[] => {
 };
 
 export const isNegated = (
-    segment: string,
-    keyword: string,
+  segment: string,
+  keyword: string,
 ): { negated: boolean; hasAffirmation: boolean; contextWindow: string } => {
-    return detector.isNegated(segment, keyword);
+  return detector.isNegated(segment, keyword);
 };

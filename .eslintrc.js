@@ -4,7 +4,7 @@ module.exports = {
     node: true,
     jest: true,
     es2021: true,
-    'browser': true,
+    browser: true,
   },
   globals: {
     __DEV__: 'readonly',

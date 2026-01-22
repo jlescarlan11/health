@@ -96,7 +96,9 @@ export const FacilityDetailsScreen = () => {
 
   const handleCall = () => {
     if (facility.phone) {
-      Linking.openURL(`tel:${facility.phone}`).catch(() => Alert.alert('Error', 'Failed to open dialer.'));
+      Linking.openURL(`tel:${facility.phone}`).catch(() =>
+        Alert.alert('Error', 'Failed to open dialer.'),
+      );
     } else {
       Alert.alert('Not Available', 'Phone number is not available.');
     }

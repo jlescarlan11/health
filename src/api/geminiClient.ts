@@ -5,7 +5,12 @@ import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/p
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { FacilityService, AssessmentResponse } from '../types';
-import { AssessmentProfile } from '../types/triage';
+import {
+  AssessmentProfile,
+  TriageAdjustmentRule,
+  TriageLogic,
+  TriageCareLevel,
+} from '../types/triage';
 
 // Configuration
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
@@ -20,6 +25,69 @@ const STORAGE_KEY_DAILY_DATE = 'gemini_daily_usage_date';
 const STORAGE_KEY_CACHE_PREFIX = 'gemini_cache_';
 const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
 const STORAGE_KEY_RPM_TIMESTAMPS = 'gemini_rpm_timestamps';
+
+// Canonical triage adjustment metadata for auditing and analytics.
+const TRIAGE_ADJUSTMENT_RULES: Record<
+  TriageAdjustmentRule,
+  { condition: string; location: string }
+> = {
+  SYSTEM_BASED_LOCK_CARDIAC: {
+    condition: 'System keyword detected in cardiac domain',
+    location: 'src/services/emergencyDetector.ts',
+  },
+  SYSTEM_BASED_LOCK_RESPIRATORY: {
+    condition: 'System keyword detected in respiratory domain',
+    location: 'src/services/emergencyDetector.ts',
+  },
+  SYSTEM_BASED_LOCK_NEUROLOGICAL: {
+    condition: 'System keyword detected in neurological domain',
+    location: 'src/services/emergencyDetector.ts',
+  },
+  SYSTEM_BASED_LOCK_TRAUMA: {
+    condition: 'System keyword detected in trauma domain',
+    location: 'src/services/emergencyDetector.ts',
+  },
+  SYSTEM_BASED_LOCK_ABDOMEN: {
+    condition: 'System keyword detected in acute abdomen domain',
+    location: 'src/services/emergencyDetector.ts',
+  },
+  CONSENSUS_CHECK: {
+    condition: 'Cross-model or rule consensus required',
+    location: 'src/api/geminiClient.ts',
+  },
+  AGE_ESCALATION: {
+    condition: 'Age-related escalation applied',
+    location: 'src/api/geminiClient.ts',
+  },
+  READINESS_UPGRADE: {
+    condition: 'Low readiness score or ambiguity detected',
+    location: 'src/api/geminiClient.ts (Conservative Fallback)',
+  },
+  RED_FLAG_UPGRADE: {
+    condition: 'Red flags present without emergency level',
+    location: 'src/api/geminiClient.ts (Conservative Fallback)',
+  },
+  RECENT_RESOLVED_FLOOR: {
+    condition: 'High-risk symptom recently resolved',
+    location: 'src/api/geminiClient.ts (Recent Resolved Floor)',
+  },
+  AUTHORITY_DOWNGRADE: {
+    condition: 'High-confidence denial of red flags',
+    location: 'src/api/geminiClient.ts (Authority Block)',
+  },
+  MENTAL_HEALTH_OVERRIDE: {
+    condition: 'Mental health crisis keywords detected',
+    location: 'src/api/geminiClient.ts (Safety Overrides)',
+  },
+  OFFLINE_FALLBACK: {
+    condition: 'Offline or local fallback used',
+    location: 'src/api/geminiClient.ts',
+  },
+  MANUAL_OVERRIDE: {
+    condition: 'Manual override applied',
+    location: 'src/api/geminiClient.ts',
+  },
+};
 
 export interface ChatMessage {
   role: 'user' | 'model';
@@ -154,6 +222,9 @@ export class GeminiClient {
         throw new Error('Missing recommended_level');
       }
 
+      const normalizeLevel = (level: string): TriageCareLevel =>
+        (level as string).replace('-', '_') as TriageCareLevel;
+
       // Explicit field mapping with fallbacks using nullish coalescing
       const clinicalSoap =
         json.clinical_soap ??
@@ -165,8 +236,10 @@ export class GeminiClient {
         json.condition_summary ??
         "Based on your symptoms, we've analyzed your condition. Please see the recommendations below.";
 
+      const normalizedLevel = normalizeLevel(json.recommended_level);
+
       return {
-        recommended_level: json.recommended_level,
+        recommended_level: normalizedLevel,
         follow_up_questions: json.follow_up_questions ?? [],
         user_advice: userAdvice,
         clinical_soap: clinicalSoap,
@@ -179,6 +252,11 @@ export class GeminiClient {
         triage_readiness_score: json.triage_readiness_score,
         ambiguity_detected: json.ambiguity_detected,
         medical_justification: json.medical_justification,
+        triage_logic: {
+          original_level: normalizedLevel,
+          final_level: normalizedLevel,
+          adjustments: [],
+        },
       };
     } catch (error) {
       console.error('JSON Parse Error:', error);
@@ -198,9 +276,7 @@ export class GeminiClient {
 
       if (now - lastCleanupTime > 24 * 60 * 60 * 1000) {
         const allKeys = await AsyncStorage.getAllKeys();
-        const cacheKeys = (allKeys || []).filter((key) =>
-          key.startsWith(STORAGE_KEY_CACHE_PREFIX),
-        );
+        const cacheKeys = (allKeys || []).filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
 
         if (cacheKeys.length > 0) {
           await AsyncStorage.multiRemove(cacheKeys);
@@ -223,9 +299,7 @@ export class GeminiClient {
   public async clearCache(): Promise<void> {
     try {
       const allKeys = await AsyncStorage.getAllKeys();
-      const cacheKeys = (allKeys || []).filter((key) =>
-        key.startsWith(STORAGE_KEY_CACHE_PREFIX),
-      );
+      const cacheKeys = (allKeys || []).filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
 
       if (cacheKeys.length > 0) {
         await AsyncStorage.multiRemove(cacheKeys);
@@ -247,6 +321,47 @@ export class GeminiClient {
   }
 
   /**
+   * Initializes triage logic metadata with a stable original level.
+   */
+  private createTriageLogic(original: TriageCareLevel): TriageLogic {
+    return {
+      original_level: original,
+      final_level: original,
+      adjustments: [],
+    };
+  }
+
+  /**
+   * Appends a triage adjustment entry and updates the final level.
+   */
+  private appendTriageAdjustment(
+    logic: TriageLogic,
+    from: TriageCareLevel,
+    to: TriageCareLevel,
+    rule: TriageAdjustmentRule,
+    reason: string,
+  ): TriageLogic {
+    // Keep a single catalog of rules for auditing and troubleshooting.
+    if (!TRIAGE_ADJUSTMENT_RULES[rule]) {
+      console.warn(`[GeminiClient] Unknown triage rule used: ${rule}`);
+    }
+    return {
+      original_level: logic.original_level,
+      final_level: to,
+      adjustments: [
+        ...logic.adjustments,
+        {
+          from,
+          to,
+          rule,
+          reason,
+          timestamp: new Date().toISOString(),
+        },
+      ],
+    };
+  }
+
+  /**
    * Main assessment function.
    * @param symptoms The clinical context for the LLM (may include history/questions)
    * @param history Optional conversation history
@@ -262,6 +377,9 @@ export class GeminiClient {
     // 0. Periodic Cleanup (non-blocking)
     this.performCacheCleanup().catch((e) => console.warn('Cleanup failed:', e));
 
+    const normalizeLevel = (level: string): TriageCareLevel =>
+      (level as string).replace('-', '_') as TriageCareLevel;
+
     // 1. Safety Overrides (Local Logic)
     const scanInput = safetyContext || symptoms;
     const historyContext = history.length > 0 ? history.map((h) => h.text).join('\n') : undefined;
@@ -273,7 +391,7 @@ export class GeminiClient {
       questionId: 'final_safety_scan',
     });
 
-    if (emergency.isEmergency) {
+    if (emergency.isEmergency && !profile?.is_recent_resolved) {
       const response: AssessmentResponse = {
         recommended_level: 'emergency',
         follow_up_questions: [],
@@ -286,6 +404,15 @@ export class GeminiClient {
         red_flags: emergency.matchedKeywords,
         triage_readiness_score: 1.0,
         medical_justification: emergency.medical_justification,
+        triage_logic: this.appendTriageAdjustment(
+          this.createTriageLogic('emergency'),
+          'emergency',
+          'emergency',
+          emergency.affectedSystems.includes('Cardiac')
+            ? 'SYSTEM_BASED_LOCK_CARDIAC'
+            : 'RED_FLAG_UPGRADE',
+          emergency.medical_justification || 'Emergency override triggered by keyword detector.',
+        ),
       };
 
       this.logFinalResult(response, scanInput);
@@ -306,6 +433,13 @@ export class GeminiClient {
         red_flags: mhCrisis.matchedKeywords,
         triage_readiness_score: 1.0,
         medical_justification: mhCrisis.medical_justification,
+        triage_logic: this.appendTriageAdjustment(
+          this.createTriageLogic('emergency'),
+          'emergency',
+          'emergency',
+          'MENTAL_HEALTH_OVERRIDE',
+          mhCrisis.medical_justification || 'Mental health crisis detected',
+        ),
       };
 
       this.logFinalResult(response, scanInput);
@@ -371,8 +505,10 @@ export class GeminiClient {
         const parsed = this.parseResponse(responseText);
 
         // --- Conservative Fallback Logic ---
-        const levels = ['self_care', 'health_center', 'hospital', 'emergency'];
-        let currentLevelIdx = levels.indexOf(parsed.recommended_level);
+        const levels: TriageCareLevel[] = ['self_care', 'health_center', 'hospital', 'emergency'];
+        let currentLevelIdx = levels.indexOf(parsed.recommended_level as TriageCareLevel);
+        const originalLevel = parsed.recommended_level as TriageCareLevel;
+        parsed.triage_logic = this.createTriageLogic(originalLevel);
 
         // Initialize flags
         parsed.is_conservative_fallback = false;
@@ -383,7 +519,8 @@ export class GeminiClient {
           };
         }
 
-        // Force Emergency if Red Flags exist (AI might have missed setting the level)
+        // Safety rationale: red flags require emergency escalation if the AI under-triaged.
+        // The upgrade is tracked in triage_logic metadata instead of user-facing notes.
         if (
           parsed.red_flags &&
           parsed.red_flags.length > 0 &&
@@ -392,16 +529,25 @@ export class GeminiClient {
           console.log(
             '[GeminiClient] Red flags detected but not Emergency. Upgrading to Emergency.',
           );
+          const fromLevel = parsed.recommended_level as TriageCareLevel;
           parsed.recommended_level = 'emergency';
-          parsed.user_advice += ' (Upgraded to Emergency due to detected red flags).';
           parsed.is_conservative_fallback = true;
           currentLevelIdx = 3;
+          parsed.triage_logic = this.appendTriageAdjustment(
+            parsed.triage_logic,
+            fromLevel,
+            'emergency',
+            'RED_FLAG_UPGRADE',
+            'Detected red flags without emergency level; upgraded to emergency.',
+          );
         }
 
-        // Upgrade if Low Readiness or Ambiguity Detected
+        // Safety rationale: low readiness/ambiguity increases uncertainty, so we step up care.
+        // The rationale and thresholds are tracked in triage_logic metadata only.
         const readinessThreshold = profile?.is_vulnerable ? 0.9 : 0.8;
         const isLowReadiness =
-          parsed.triage_readiness_score !== undefined && parsed.triage_readiness_score < readinessThreshold;
+          parsed.triage_readiness_score !== undefined &&
+          parsed.triage_readiness_score < readinessThreshold;
         const isAmbiguous = parsed.ambiguity_detected === true;
 
         if ((isLowReadiness || isAmbiguous) && currentLevelIdx < 3) {
@@ -410,12 +556,66 @@ export class GeminiClient {
             `[GeminiClient] Fallback Triggered. Upgrading ${parsed.recommended_level} to ${nextLevel}. Low Readiness: ${isLowReadiness} (Threshold: ${readinessThreshold}), Ambiguous: ${isAmbiguous}`,
           );
 
+          const fromLevel = parsed.recommended_level as TriageCareLevel;
           parsed.recommended_level = nextLevel;
-          parsed.user_advice += ` (Note: Recommendation upgraded to ${nextLevel.replace('_', ' ')} due to uncertainty. Better safe than sorry.)`;
           parsed.is_conservative_fallback = true;
+          parsed.triage_logic = this.appendTriageAdjustment(
+            parsed.triage_logic,
+            fromLevel,
+            nextLevel as TriageCareLevel,
+            'READINESS_UPGRADE',
+            `triage_readiness_score ${parsed.triage_readiness_score ?? 'N/A'} or ambiguity triggered conservative upgrade.`,
+          );
+          currentLevelIdx = levels.indexOf(parsed.recommended_level as TriageCareLevel);
+        }
+
+        // --- CONSERVATIVE TRIAGE: TRANSIENT SYMPTOM LOGIC (RECENTLY RESOLVED) ---
+        /**
+         * CLINICAL RATIONALE:
+         * For symptoms involving high-risk keywords (Chest Pain, Slurred Speech, etc.) that have 
+         * since resolved, we apply a "Hospital Floor" safety protocol.
+         * 
+         * 1. Downgrade from Emergency (911): If symptoms are currently gone, an ambulance 
+         *    is likely not required for transport, but the patient STILL needs immediate 
+         *    ER evaluation to rule out TIA, unstable angina, or other intermittent crises.
+         * 2. Upgrade from Primary Care: Even if the AI suggests "Self-Care" because symptoms 
+         *    are absent now, the history of a high-risk event mandates professional diagnostics.
+         */
+        if (profile?.is_recent_resolved) {
+          console.log(
+            `[GeminiClient] RECENT_RESOLVED logic applied. Previous level: ${parsed.recommended_level}`,
+          );
+
+          // Force level to 'hospital' regardless of AI's suggestion for resolved high-risk symptoms.
+          // This maps to "Seek emergency care within 1-2 hours" or "Visit urgent care today".
+          const fromLevel = parsed.recommended_level as TriageCareLevel;
+          parsed.recommended_level = 'hospital';
+          parsed.is_conservative_fallback = true;
+          currentLevelIdx = 2; // Index for 'hospital'
+          // Track the safety adjustment in metadata instead of user-facing advice.
+          parsed.triage_logic = this.appendTriageAdjustment(
+            parsed.triage_logic,
+            fromLevel,
+            'hospital',
+            'RECENT_RESOLVED_FLOOR',
+            `Recent resolved symptom (${profile.resolved_keyword || 'unknown'}) requires hospital evaluation.`,
+          );
+
+          const temporalNote =
+            '\n\nWhile your symptoms have eased, the type of event you described still needs prompt evaluation to rule out time-sensitive conditions.';
+
+          if (!parsed.user_advice.includes(temporalNote)) {
+            // Keep patient-facing wording calm and clear without internal labels.
+            parsed.user_advice =
+              parsed.user_advice
+                .replace(/call 911 immediately/gi, 'visit the emergency room immediately')
+                .replace(/ambulance/gi, 'transport') + temporalNote;
+          }
         }
 
         // --- AUTHORITY BLOCK ---
+        // Safety rationale: if a user explicitly and confidently denies red flags, we can step down.
+        // Any downgrade remains fully audit-traced in triage_logic metadata, not in user-facing text.
         if (parsed.recommended_level === 'emergency' && profile?.red_flags_resolved === true) {
           const denials = (profile.red_flag_denials || '').toLowerCase();
 
@@ -459,13 +659,21 @@ export class GeminiClient {
               );
 
               parsed.recommended_level = fallbackLevel;
+              // Safety rationale: validated denial allows step-down, tracked as metadata.
+              parsed.triage_logic = this.appendTriageAdjustment(
+                parsed.triage_logic,
+                'emergency',
+                fallbackLevel as TriageCareLevel,
+                'AUTHORITY_DOWNGRADE',
+                'Red flags denied with high confidence; authority block applied.',
+              );
 
               if (fallbackLevel === 'health_center') {
                 parsed.user_advice =
-                  'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present. (Note: Care level adjusted as no critical signs were reported).';
+                  'Based on your symptoms, we recommend a professional evaluation at your local Health Center. This is appropriate for routine viral screening (like flu or dengue) when no life-threatening signs are present.';
               } else {
                 parsed.user_advice =
-                  'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised. (Note: Care level adjusted as no critical signs were reported).';
+                  'Based on the complexity or duration of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were reported, professional diagnostics are advised.';
               }
 
               // Add clear escalation instructions to warnings
@@ -479,8 +687,7 @@ export class GeminiClient {
               console.log(
                 `[GeminiClient] Authority Block: RETAINING Emergency despite denial (Confidence: ${profile.denial_confidence || 'unknown'}).`,
               );
-              parsed.user_advice +=
-                ' (Note: Critical symptoms were not definitively ruled out. Please verify immediately.)';
+              // Safety rationale: uncertainty requires keeping emergency level; keep messaging patient-facing.
               parsed.critical_warnings.unshift(
                 'Please confirm you are NOT experiencing chest pain, difficulty breathing, or severe confusion.',
               );
@@ -490,6 +697,13 @@ export class GeminiClient {
               `[GeminiClient] Authority Block: Bypassed. Red flag denials ("${denials}") did not pass strengthened validation.`,
             );
           }
+        }
+
+        if (parsed.triage_logic) {
+          parsed.triage_logic = {
+            ...parsed.triage_logic,
+            final_level: parsed.recommended_level as TriageCareLevel,
+          };
         }
 
         // Update Cache (fire-and-forget with versioning)

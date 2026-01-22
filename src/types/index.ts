@@ -81,4 +81,46 @@ export interface AssessmentResponse {
   is_conservative_fallback?: boolean;
   clinical_friction_details?: Record<string, unknown>;
   medical_justification?: string;
+  /**
+   * Captures the full audit trail of how the care level was chosen, including the model's raw
+   * recommendation, any safety upgrades/downgrades, and the final level persisted to state. This
+   * enables clinical transparency, debugging, and post-hoc review of safety overrides.
+   *
+   * Population: Populate whenever we compute or alter a recommendation (LLM response parsing,
+   * safety overrides, recent-resolved floors, authority downgrades, offline fallbacks). If no
+   * adjustments occur, set adjustments to an empty array and keep original/final equal.
+   *
+   * Responsible components: geminiClient safety pipeline, emergencyDetector overrides, and
+   * offline fallback logic in RecommendationScreen (or any future manual override points).
+   *
+   * Examples:
+   * const noShift = {
+   *   triage_logic: {
+   *     original_level: 'health_center',
+   *     final_level: 'health_center',
+   *     adjustments: [],
+   *   },
+   * };
+   *
+   * const safetyUpgrade = {
+   *   triage_logic: {
+   *     original_level: 'self_care',
+   *     final_level: 'health_center',
+   *     adjustments: [
+   *       {
+   *         from: 'self_care',
+   *         to: 'health_center',
+   *         rule: 'READINESS_UPGRADE',
+   *         reason: 'triage_readiness_score 0.60 < 0.80 threshold',
+   *         timestamp: new Date().toISOString(),
+   *       },
+   *     ],
+   *   },
+   * };
+   *
+   * Clinical transparency: callers can display the adjustment chain to explain why the user was
+   * upgraded/downgraded and retain an auditable record of safety decisions.
+   */
+  triage_logic?: TriageLogic;
 }
+import type { TriageLogic } from './triage';

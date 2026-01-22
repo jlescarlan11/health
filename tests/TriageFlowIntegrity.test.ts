@@ -49,7 +49,7 @@ describe('Triage Flow Integrity', () => {
     expect(result.node.id).toBe('o_dengue_warning');
     expect(result.isOutcome).toBe(true);
   });
-  
+
   test('should handle No for tropical check correctly', () => {
     // Tropical check (No) -> moderate symptoms
     const result = TriageEngine.processStep(triageFlow, 'q_tropical_check', 'No');

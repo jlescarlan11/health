@@ -1,25 +1,91 @@
-import { getLevenshteinDistance, findAllFuzzyMatches, FUZZY_THRESHOLD } from '../../utils/stringUtils';
+import {
+  getLevenshteinDistance,
+  findAllFuzzyMatches,
+  FUZZY_THRESHOLD,
+} from '../../utils/stringUtils';
 
 // Constants shared across detectors
 export const NEGATION_KEYWORDS = [
-  'no', 'not', 'never', 'none', "don't", "doesn't", "didn't", "isn't", "aren't",
-  'don-t', 'doesn-t', 'didn-t', 'isn-t', 'aren-t', 'dont', 'doesnt', 'didnt', 'isnt', 'arent',
-  'without', 'denies', 'denied', 'negative', 'absent', 'ruled out', 'free from',
-  'wala', 'hindi', 'nope', 'nah', 'nothing', 'not experiencing', 'none of these',
-  'not present', 'bako', 'dae', 'dai', 'wara',
+  'no',
+  'not',
+  'never',
+  'none',
+  "don't",
+  "doesn't",
+  "didn't",
+  "isn't",
+  "aren't",
+  'don-t',
+  'doesn-t',
+  'didn-t',
+  'isn-t',
+  'aren-t',
+  'dont',
+  'doesnt',
+  'didnt',
+  'isnt',
+  'arent',
+  'without',
+  'denies',
+  'denied',
+  'negative',
+  'absent',
+  'ruled out',
+  'free from',
+  'wala',
+  'hindi',
+  'nope',
+  'nah',
+  'nothing',
+  'not experiencing',
+  'none of these',
+  'not present',
+  'bako',
+  'dae',
+  'dai',
+  'wara',
 ];
 
 export const AFFIRMATIVE_KEYWORDS = [
-  'yes', 'got', 'currently', 'ongoing', 'nag', 'may', 'i am', "i'm", 'iam', 'im',
-  'present', 'experiencing', 'meron', 'iyo', 'igwa',
+  'yes',
+  'got',
+  'currently',
+  'ongoing',
+  'nag',
+  'may',
+  'i am',
+  "i'm",
+  'iam',
+  'im',
+  'present',
+  'experiencing',
+  'meron',
+  'iyo',
+  'igwa',
 ];
 
 export const SYSTEM_INDICATORS = [
-  'are you experiencing', 'do you have', 'have you had', 'please tell me',
-  'could you', 'can you', 'to confirm', 'also,', 'question:', 'slot_ids',
-  'initial symptom:', 'context:', 'nearest', '{"question"', 'answers:',
-  'clinical profile:', 'duration:', 'severity:', 'progression:',
-  'red flag status:', 'summary:'
+  'are you experiencing',
+  'do you have',
+  'have you had',
+  'please tell me',
+  'could you',
+  'can you',
+  'to confirm',
+  'also,',
+  'question:',
+  'slot_ids',
+  'initial symptom:',
+  'context:',
+  'nearest',
+  '{"question"',
+  'answers:',
+  'clinical profile:',
+  'duration:',
+  'severity:',
+  'progression:',
+  'red flag status:',
+  'summary:',
 ];
 
 export interface KeywordMatch {
@@ -45,11 +111,12 @@ export abstract class KeywordDetector {
   /**
    * Enhanced sanitization to remove system labels and identifiers
    */
-  public sanitizeInput(
-    text: string,
-  ): { sanitized: string; rejected: Array<{ text: string; reason: string }> } {
+  public sanitizeInput(text: string): {
+    sanitized: string;
+    rejected: Array<{ text: string; reason: string }>;
+  } {
     const rejected: Array<{ text: string; reason: string }> = [];
-    
+
     // 1. Remove JSON structures and technical metadata while preserving content
     let cleaned = text
       .replace(/{"question":".*?","answer":"(.*?)"}/g, '$1') // Extract answer from JSON pairs
@@ -60,31 +127,31 @@ export abstract class KeywordDetector {
 
     // 2. Remove system labels specifically (preserve content)
     for (const indicator of SYSTEM_INDICATORS) {
-        if (indicator === 'summary:' || indicator === 'clinical profile:') {
-            const regex = new RegExp(`\\b${indicator}\\s*[^.?!\\n]*`, 'gi');
-            cleaned = cleaned.replace(regex, ' ');
-            continue;
-        }
-        
-        const regex = new RegExp(`\\b${indicator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+      if (indicator === 'summary:' || indicator === 'clinical profile:') {
+        const regex = new RegExp(`\\b${indicator}\\s*[^.?!\\n]*`, 'gi');
         cleaned = cleaned.replace(regex, ' ');
+        continue;
+      }
+
+      const regex = new RegExp(`\\b${indicator.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'gi');
+      cleaned = cleaned.replace(regex, ' ');
     }
-    
+
     // 3. Tokenize into clean segments
     const segments = cleaned
       .split(/[.,?!;:\n]+/)
       .map((s) => s.trim())
       .filter((s) => s.length > 1);
-      
+
     // 4. Filter out purely numeric or short noise segments
-    const validSegments = segments.filter(segment => {
+    const validSegments = segments.filter((segment) => {
       if (/^\d+$/.test(segment)) return false;
       if (segment.length < 2) return false;
-      
+
       const lower = segment.toLowerCase();
       const systemWords = ['unknown', 'none', 'denied', 'none reported', 'not applicable', 'n/a'];
       if (systemWords.includes(lower)) return false;
-      
+
       return true;
     });
 
@@ -115,7 +182,10 @@ export abstract class KeywordDetector {
   ): { negated: boolean; hasAffirmation: boolean; contextWindow: string } {
     const PROXIMITY_WINDOW = 5;
 
-    const normalizedSegment = segment.toLowerCase().replace(/'/g, '-').replace(/[^a-z0-9-\s]/g, ' ');
+    const normalizedSegment = segment
+      .toLowerCase()
+      .replace(/'/g, '-')
+      .replace(/[^a-z0-9-\s]/g, ' ');
     const words = normalizedSegment.split(/\s+/).filter((w) => w.length > 0);
     const keywordWords = keyword.toLowerCase().split(/\s+/);
 
@@ -156,26 +226,28 @@ export abstract class KeywordDetector {
       }
 
       const currentWord = contextWords[k];
-      
-      if (NEGATION_KEYWORDS.some(neg => currentWord === neg)) {
-         const distance = absolutePos - keywordStart;
-         
-         if (distance < 0 && Math.abs(distance) <= PROXIMITY_WINDOW) {
-           hasNegation = true;
-         } else if (distance > 0 && distance <= 4) {
-           const intermediateWords = words.slice(keywordStart + keywordWords.length, absolutePos);
-           const hasConjunction = intermediateWords.some(w => ['but', 'and', 'or', 'though'].includes(w));
-           
-           if (!hasConjunction) {
-             hasNegation = true;
-           }
-         }
+
+      if (NEGATION_KEYWORDS.some((neg) => currentWord === neg)) {
+        const distance = absolutePos - keywordStart;
+
+        if (distance < 0 && Math.abs(distance) <= PROXIMITY_WINDOW) {
+          hasNegation = true;
+        } else if (distance > 0 && distance <= 4) {
+          const intermediateWords = words.slice(keywordStart + keywordWords.length, absolutePos);
+          const hasConjunction = intermediateWords.some((w) =>
+            ['but', 'and', 'or', 'though'].includes(w),
+          );
+
+          if (!hasConjunction) {
+            hasNegation = true;
+          }
+        }
       }
 
-      if (AFFIRMATIVE_KEYWORDS.some(aff => currentWord === aff)) {
-         if (Math.abs(absolutePos - keywordStart) <= 2) {
-           hasAffirmation = true;
-         }
+      if (AFFIRMATIVE_KEYWORDS.some((aff) => currentWord === aff)) {
+        if (Math.abs(absolutePos - keywordStart) <= 2) {
+          hasAffirmation = true;
+        }
       }
     }
 
@@ -191,10 +263,7 @@ export abstract class KeywordDetector {
   /**
    * Analyze a single segment for keywords
    */
-  protected analyzeSegment(
-    segment: string,
-    isUserInput: boolean,
-  ): SegmentAnalysis {
+  protected analyzeSegment(segment: string, isUserInput: boolean): SegmentAnalysis {
     const potentialMatches: KeywordMatch[] = [];
     const activeMatches: KeywordMatch[] = [];
     const suppressedMatches: KeywordMatch[] = [];
@@ -212,7 +281,7 @@ export abstract class KeywordDetector {
 
     const keywordMap = this.getKeywords();
     const keywordList = Object.keys(keywordMap);
-    
+
     const matches = findAllFuzzyMatches(segment, keywordList);
 
     for (const keyword of matches) {
@@ -236,7 +305,8 @@ export abstract class KeywordDetector {
       }
     }
 
-    const maxScore = activeMatches.length > 0 ? Math.max(...activeMatches.map((m) => m.severity)) : 0;
+    const maxScore =
+      activeMatches.length > 0 ? Math.max(...activeMatches.map((m) => m.severity)) : 0;
 
     return {
       text: segment,
@@ -253,15 +323,15 @@ export abstract class KeywordDetector {
    */
   public detect(text: string, isUserInput: boolean = true) {
     const { sanitized, rejected } = this.sanitizeInput(text);
-    
+
     if (!isUserInput) {
-       return {
-         sanitized,
-         rejected,
-         segments: [],
-         score: 0,
-         matchedKeywords: [] as string[]
-       };
+      return {
+        sanitized,
+        rejected,
+        segments: [],
+        score: 0,
+        matchedKeywords: [] as string[],
+      };
     }
 
     const segments = this.tokenizeSentences(sanitized.toLowerCase());
@@ -278,14 +348,15 @@ export abstract class KeywordDetector {
     }
 
     const matchedKeywords = Array.from(allActiveKeywords);
-    const score = segmentAnalyses.length > 0 ? Math.max(...segmentAnalyses.map((s) => s.maxScore)) : 0;
+    const score =
+      segmentAnalyses.length > 0 ? Math.max(...segmentAnalyses.map((s) => s.maxScore)) : 0;
 
     return {
       sanitized,
       rejected,
       segments: segmentAnalyses,
       score,
-      matchedKeywords
+      matchedKeywords,
     };
   }
 }

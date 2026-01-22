@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  Keyboard,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, StyleSheet, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { Searchbar, Chip, useTheme } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';

@@ -57,20 +57,16 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
         relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
       );
       // Combine relevant with others, then slice
-      const others = allServices.filter(s => !relevant.includes(s));
+      const others = allServices.filter((s) => !relevant.includes(s));
       return [...relevant, ...others].slice(0, 3);
     }
 
     return allServices.slice(0, 3);
-  }, [
-    facility.services,
-    facility.specialized_services,
-    relevantServices,
-    showAllServices,
-  ]);
+  }, [facility.services, facility.specialized_services, relevantServices, showAllServices]);
 
-  const totalServicesCount = facility.services.length + (facility.specialized_services?.length || 0);
-  const hasMoreServices = totalServicesCount > 3; // Fixed threshold of 3
+  const totalServicesCount =
+    facility.services.length + (facility.specialized_services?.length || 0);
+  const hasMoreServices = totalServicesCount > displayServices.length;
 
   const hasMatches = React.useMemo(() => {
     if (!relevantServices || relevantServices.length === 0) return false;
@@ -104,10 +100,10 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
         <View style={styles.headerRow}>
           <View style={styles.titleContainer}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-              <MaterialCommunityIcons 
-                name={facility.type === 'hospital' ? 'hospital-building' : 'home-plus'} 
-                size={20} 
-                color={theme.colors.primary} 
+              <MaterialCommunityIcons
+                name={facility.type === 'hospital' ? 'hospital-building' : 'home-plus'}
+                size={20}
+                color={theme.colors.primary}
                 style={{ marginRight: 8 }}
               />
               <Text variant="titleMedium" style={styles.title}>
@@ -181,7 +177,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 ]}
               >
                 <MaterialCommunityIcons
-                  name={getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']}
+                  name={
+                    getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']
+                  }
                   size={12}
                   color={theme.colors.primary}
                 />

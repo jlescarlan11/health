@@ -25,6 +25,8 @@ export type RootStackParamList = {
   SymptomAssessment: { initialSymptom?: string };
   Recommendation: {
     assessmentData: AssessmentData;
+    isRecentResolved?: boolean;
+    resolvedKeyword?: string;
   };
   ClinicalNote: undefined;
   FacilityDetails: { facilityId: string };

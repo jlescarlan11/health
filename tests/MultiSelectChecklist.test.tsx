@@ -17,11 +17,7 @@ const options = [
 describe('MultiSelectChecklist', () => {
   it('renders correctly with given options', () => {
     const { getByLabelText } = renderWithTheme(
-      <MultiSelectChecklist
-        options={options}
-        selectedIds={[]}
-        onSelectionChange={() => {}}
-      />
+      <MultiSelectChecklist options={options} selectedIds={[]} onSelectionChange={() => {}} />,
     );
 
     expect(getByLabelText('Option 1')).toBeTruthy();
@@ -36,7 +32,7 @@ describe('MultiSelectChecklist', () => {
         selectedIds={[]}
         onSelectionChange={() => {}}
         title="Select options"
-      />
+      />,
     );
 
     expect(getByText('SELECT OPTIONS')).toBeTruthy();
@@ -49,7 +45,7 @@ describe('MultiSelectChecklist', () => {
         options={options}
         selectedIds={['2']}
         onSelectionChange={onSelectionChange}
-      />
+      />,
     );
 
     fireEvent.press(getByLabelText('Option 1'));
@@ -63,7 +59,7 @@ describe('MultiSelectChecklist', () => {
         options={options}
         selectedIds={['1', '2']}
         onSelectionChange={onSelectionChange}
-      />
+      />,
     );
 
     fireEvent.press(getByLabelText('Option 1'));
@@ -78,7 +74,7 @@ describe('MultiSelectChecklist', () => {
         selectedIds={['1']}
         onSelectionChange={onSelectionChange}
         singleSelection={true}
-      />
+      />,
     );
 
     fireEvent.press(getByLabelText('Option 2'));
@@ -105,7 +101,7 @@ describe('MultiSelectChecklist', () => {
         options={groupedOptions}
         selectedIds={[]}
         onSelectionChange={() => {}}
-      />
+      />,
     );
 
     expect(getByText('Group A')).toBeTruthy();
