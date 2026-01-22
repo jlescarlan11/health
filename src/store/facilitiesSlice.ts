@@ -54,6 +54,28 @@ export const fetchFacilities = createAsyncThunk(
   },
 );
 
+// Helper for consistent sorting
+const sortFacilities = (a: Facility, b: Facility) => {
+  const statusA = getOpenStatus(a);
+  const statusB = getOpenStatus(b);
+
+  const getRank = (color: string) => {
+    if (color === '#379777' || color === 'green') return 1;
+    if (color === '#F97316' || color === 'orange') return 2;
+    return 3;
+  };
+
+  const rankA = getRank(statusA.color);
+  const rankB = getRank(statusB.color);
+
+  if (rankA !== rankB) {
+    return rankA - rankB;
+  }
+
+  // Secondary sort: Distance
+  return (a.distance || Infinity) - (b.distance || Infinity);
+};
+
 const facilitiesSlice = createSlice({
   name: 'facilities',
   initialState,
@@ -77,10 +99,8 @@ const facilitiesSlice = createSlice({
         state.facilities.forEach(updateDistance);
         state.filteredFacilities.forEach(updateDistance);
 
-        // Sort filtered facilities by distance
-        state.filteredFacilities.sort(
-          (a, b) => (a.distance || Infinity) - (b.distance || Infinity),
-        );
+        // Sort filtered facilities using helper
+        state.filteredFacilities.sort(sortFacilities);
       }
     },
     setFilters: (state, action: PayloadAction<FacilityFilters>) => {
@@ -115,28 +135,14 @@ const facilitiesSlice = createSlice({
         return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
       });
 
-      // Re-sort if distances are available (check first item)
-      if (
-        state.filteredFacilities.length > 0 &&
-        state.filteredFacilities[0].distance !== undefined
-      ) {
-        state.filteredFacilities.sort(
-          (a, b) => (a.distance || Infinity) - (b.distance || Infinity),
-        );
-      }
+      // Always apply sorting
+      state.filteredFacilities.sort(sortFacilities);
     },
     clearFilters: (state) => {
       state.filters = {};
       state.filteredFacilities = state.facilities;
-      // Re-sort if distances are available
-      if (
-        state.filteredFacilities.length > 0 &&
-        state.filteredFacilities[0].distance !== undefined
-      ) {
-        state.filteredFacilities.sort(
-          (a, b) => (a.distance || Infinity) - (b.distance || Infinity),
-        );
-      }
+      // Always apply sorting
+      state.filteredFacilities.sort(sortFacilities);
     },
   },
   extraReducers: (builder) => {
@@ -203,10 +209,8 @@ const facilitiesSlice = createSlice({
           return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
         });
 
-        // Re-sort if distances are available.
-        // Note: New facilities won't have distance unless we recalc.
-        // Ideally updateDistances should be called after fetch if location is known.
-        // For now, we leave them undefined until next updateDistances call.
+        // Apply sorting to the freshly fetched/filtered list
+        state.filteredFacilities.sort(sortFacilities);
       })
       .addCase(fetchFacilities.rejected, (state, action) => {
         state.isLoading = false;

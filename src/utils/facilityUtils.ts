@@ -7,13 +7,13 @@ export const getOpenStatus = (
 
   // 0. Check explicit 24/7 flag first
   if (is_24_7) {
-    return { isOpen: true, text: 'Open 24/7', color: 'green' };
+    return { isOpen: true, text: 'Open 24/7', color: '#379777' };
   }
 
   // 1. Check structured data next
   if (operatingHours) {
     if (operatingHours.is24x7) {
-      return { isOpen: true, text: 'Open 24/7', color: 'green' };
+      return { isOpen: true, text: 'Open 24/7', color: '#379777' };
     }
 
     const now = new Date();
@@ -44,17 +44,28 @@ export const getOpenStatus = (
           currentTimeInMinutes >= openTimeInMinutes &&
           currentTimeInMinutes < closeTimeInMinutes
         ) {
+          // Check if closing within 30 minutes
+          if (closeTimeInMinutes - currentTimeInMinutes <= 30) {
+            const closeH12 = closeH % 12 || 12;
+            const closeAmPm = closeH >= 12 ? 'PM' : 'AM';
+            return {
+              isOpen: true,
+              text: `Closes at ${closeH12}:${closeM.toString().padStart(2, '0')} ${closeAmPm}`,
+              color: '#F97316', // Soft Warning Orange
+            };
+          }
+
           // Format close time to 12h for display
           const closeH12 = closeH % 12 || 12;
           const closeAmPm = closeH >= 12 ? 'PM' : 'AM';
           const closeTimeDisplay = `${closeH12}:${closeM.toString().padStart(2, '0')} ${closeAmPm}`;
-          return { isOpen: true, text: `Open until ${closeTimeDisplay}`, color: 'green' };
+          return { isOpen: true, text: `Open until ${closeTimeDisplay}`, color: '#379777' };
         } else {
-          return { isOpen: false, text: 'Closed', color: 'red' };
+          return { isOpen: false, text: 'Closed', color: '#6B7280' }; // Muted Gray
         }
       } else {
         // Null entry means closed today
-        return { isOpen: false, text: 'Closed Today', color: 'red' };
+        return { isOpen: false, text: 'Closed Today', color: '#6B7280' }; // Muted Gray
       }
     }
 
@@ -71,9 +82,9 @@ export const getOpenStatus = (
       const closeTimeInMinutes = closeH * 60 + closeM;
 
       if (currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes) {
-        return { isOpen: true, text: 'Open Now', color: 'green' };
+        return { isOpen: true, text: 'Open Now', color: '#379777' };
       } else {
-        return { isOpen: false, text: 'Closed', color: 'red' };
+        return { isOpen: false, text: 'Closed', color: '#6B7280' }; // Muted Gray
       }
     }
   }
@@ -82,7 +93,7 @@ export const getOpenStatus = (
   if (!hours) return { isOpen: false, text: 'Hours N/A', color: 'gray' };
 
   if (hours.toLowerCase().includes('24/7') || hours.toLowerCase().includes('24 hours')) {
-    return { isOpen: true, text: 'Open 24/7', color: 'green' };
+    return { isOpen: true, text: 'Open 24/7', color: '#379777' };
   }
 
   // Basic heuristic fallback
@@ -91,10 +102,10 @@ export const getOpenStatus = (
   const isBusinessHours = currentHour >= 8 && currentHour < 17;
 
   if (isBusinessHours) {
-    return { isOpen: true, text: 'Open Now', color: 'green' };
+    return { isOpen: true, text: 'Open Now', color: '#379777' };
   }
 
-  return { isOpen: false, text: 'Closed', color: 'red' };
+  return { isOpen: false, text: 'Closed', color: '#6B7280' }; // Muted Gray
 };
 
 /**

@@ -3,7 +3,7 @@ import { DefaultTheme as NavigationDefaultTheme } from '@react-navigation/native
 
 // User defined palette
 const palette = {
-  background: '#F5F7F8',
+  background: '#EDF2F4', // Deeper, cooler neutral for better contrast
   yellow: '#F7DB50',
   green: '#379777',
   dark: '#45474B',
