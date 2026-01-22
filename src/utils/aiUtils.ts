@@ -1,4 +1,5 @@
 import { AssessmentQuestion, SYSTEM_LOCK_KEYWORD_MAP } from '../types/triage';
+import { normalizeNumericValue } from './stringUtils';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 
 /**
@@ -128,7 +129,10 @@ export function calculateTriageScore(slots: {
     const numericRegex = /\b([1-4])\s*(\/|out of)\s*10\b/i;
 
     const hasDescriptor = descriptorRegex.test(severityVal);
-    const hasNumeric = numericRegex.test(severityVal);
+    const numericValue = normalizeNumericValue(severityVal);
+    const hasNumeric =
+      numericRegex.test(severityVal) ||
+      (numericValue !== null && numericValue >= 1 && numericValue <= 4);
 
     const isLowRisk = hasDescriptor && hasNumeric;
 

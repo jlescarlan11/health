@@ -129,9 +129,14 @@ describe('detectEmergency - Context Aware', () => {
     const result = detectEmergency('I have a deep wound', {
       isUserInput: true,
       profile: {
+        age: '30',
+        duration: 'today',
+        severity: 'Moderate',
+        progression: 'Stable',
         red_flags_resolved: true,
         red_flag_denials: 'No, I do not have any other symptoms', // Explicit denial
         symptom_category: 'complex',
+        summary: 'Deep wound with no other symptoms reported.',
       },
     });
 

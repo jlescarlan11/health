@@ -1,5 +1,6 @@
 import { AssessmentProfile } from '../types/triage';
 import { isMaternalContext, normalizeAge } from '../utils/clinicalUtils';
+import { normalizeNumericValue } from '../utils/stringUtils';
 import { normalizeSlot } from '../utils/aiUtils';
 
 export type TriageSignal =
@@ -26,6 +27,7 @@ export interface ChatHistoryItem {
 export class TriageArbiter {
   private static readonly MIN_TURNS_SIMPLE = 4;
   private static readonly MIN_TURNS_COMPLEX = 7;
+  private static stableTurnCount = 0;
 
   /**
    * Evaluates the current state of the assessment and returns a control signal.
@@ -38,15 +40,15 @@ export class TriageArbiter {
     totalPlannedQuestions: number,
     remainingQuestions: { tier?: number; is_red_flag?: boolean }[] = [],
     previousProfile?: AssessmentProfile,
-    currentSaturationCount: number = 0,
     clarificationAttempts: number = 0,
   ): ArbiterResult {
     // Calculate new saturation state
-    const newSaturationCount = this.calculateSaturation(
+    const isSaturated = this.calculateSaturation(
       profile,
       previousProfile,
-      currentSaturationCount,
+      profile.triage_readiness_score ?? 0,
     );
+    const newSaturationCount = this.stableTurnCount;
 
     // --- 0. VULNERABLE GROUP DETECTION ---
     const isVulnerable = this.isVulnerableGroup(history, profile);
@@ -105,7 +107,8 @@ export class TriageArbiter {
     // --- 2b. CLINICAL SATURATION (Explicit Early Termination) ---
     // If we have reached full readiness (1.0) and the profile has been stable (no new info)
     // for 2 consecutive turns, we can safely terminate even if below the turn floor.
-    if (profile.triage_readiness_score === 1.0 && newSaturationCount >= 2) {
+    // The caller treats TERMINATE as a hard stop and proceeds to final recommendation.
+    if (isSaturated) {
       return {
         signal: 'TERMINATE',
         reason: 'CLINICAL SATURATION: Readiness 1.0 and stability maintained for 2+ turns.',
@@ -194,28 +197,54 @@ export class TriageArbiter {
   private static calculateSaturation(
     current: AssessmentProfile,
     previous: AssessmentProfile | undefined,
-    count: number,
-  ): number {
-    if (!previous) return 0;
-
-    // If slots are identical, increment counter. Otherwise reset to 0.
-    if (this.areClinicalSlotsIdentical(current, previous)) {
-      return count + 1;
+    readinessScore: number,
+  ): boolean {
+    // Saturation logic:
+    // - Requires 2 consecutive stable turns (not 1) to confirm the profile has settled
+    //   and avoid terminating during mid-correction.
+    // - Requires readinessScore >= 1.0 to ensure completeness; stability alone is not enough.
+    // - Resets when the clinical data changes or when starting a new session.
+    if (!previous) {
+      this.stableTurnCount = 0;
+      return false;
     }
-    return 0;
+
+    // Semantic comparison reduces false negatives when numeric slots are expressed differently
+    // (e.g., "seven" vs "7/10"), keeping stability detection accurate across turns.
+    const slotsIdentical = this.areClinicalSlotsIdentical(current, previous);
+
+    // Require 2 consecutive stable turns to confirm the state is actually stable,
+    // avoiding premature exit if the user is mid-correction.
+    const stableCount = slotsIdentical ? this.stableTurnCount + 1 : 0;
+    this.stableTurnCount = stableCount;
+
+    // Saturation requires both completeness (readiness 1.0) and stability (>= 2 turns)
+    // so we do not exit early with missing data or while new info is still arriving.
+    const isSaturated = readinessScore >= 1.0 && stableCount >= 2;
+
+    if (isSaturated) {
+      console.log('Clinical saturation reached:', {
+        readinessScore,
+        stableTurns: stableCount,
+        profile: current,
+      });
+    }
+
+    return isSaturated;
   }
 
   private static areClinicalSlotsIdentical(a: AssessmentProfile, b: AssessmentProfile): boolean {
     // Critical clinical slots
-    if (normalizeSlot(a.age) !== normalizeSlot(b.age)) return false;
-    if (normalizeSlot(a.duration) !== normalizeSlot(b.duration)) return false;
-    if (normalizeSlot(a.severity) !== normalizeSlot(b.severity)) return false;
-    if (normalizeSlot(a.progression) !== normalizeSlot(b.progression)) return false;
+    if (!this.semanticNumericCompare('age', a.age, b.age)) return false;
+    if (!this.strictTextCompare('duration', a.duration, b.duration)) return false;
+    if (!this.semanticNumericCompare('severity', a.severity, b.severity)) return false;
+    if (!this.strictTextCompare('progression', a.progression, b.progression)) return false;
 
     // Safety & Category slots
     if (
-      normalizeSlot(a.red_flag_denials, { allowNone: true }) !==
-      normalizeSlot(b.red_flag_denials, { allowNone: true })
+      !this.strictTextCompare('red_flag_denials', a.red_flag_denials, b.red_flag_denials, {
+        allowNone: true,
+      })
     )
       return false;
     if (a.red_flags_resolved !== b.red_flags_resolved) return false;
@@ -226,6 +255,58 @@ export class TriageArbiter {
     if (a.is_vulnerable !== b.is_vulnerable) return false;
 
     return true;
+  }
+
+  private static semanticNumericCompare(
+    field: string,
+    valueA?: string | null,
+    valueB?: string | null,
+  ): boolean {
+    const left = normalizeSlot(valueA);
+    const right = normalizeSlot(valueB);
+
+    if (!left && !right) return true;
+    if (!left || !right) return false;
+
+    const normalizedLeft = normalizeNumericValue(left);
+    const normalizedRight = normalizeNumericValue(right);
+
+    if (normalizedLeft !== null && normalizedRight !== null) {
+      const match = normalizedLeft === normalizedRight;
+      console.debug('[TriageArbiter] Semantic compare', {
+        field,
+        normalizedLeft,
+        normalizedRight,
+        match,
+        mode: 'numeric',
+      });
+      return match;
+    }
+
+    const textMatch = left.trim().toLowerCase() === right.trim().toLowerCase();
+    console.debug('[TriageArbiter] Semantic compare', {
+      field,
+      left,
+      right,
+      match: textMatch,
+      mode: 'text_fallback',
+    });
+    return textMatch;
+  }
+
+  private static strictTextCompare(
+    field: string,
+    valueA?: string | null,
+    valueB?: string | null,
+    options: { allowNone?: boolean } = {},
+  ): boolean {
+    const left = normalizeSlot(valueA, options);
+    const right = normalizeSlot(valueB, options);
+    const match = left === right;
+    if (!match) {
+      console.debug('[TriageArbiter] Strict compare', { field, left, right, match });
+    }
+    return match;
   }
 
   /**

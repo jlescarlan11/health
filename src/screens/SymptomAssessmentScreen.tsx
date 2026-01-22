@@ -63,6 +63,8 @@ interface Message {
   isOffline?: boolean;
 }
 
+type AssessmentStage = 'intake' | 'follow_up' | 'review' | 'generating';
+
 const isNoneOption = (text: string) => {
   const lower = text.toLowerCase();
   return (
@@ -150,6 +152,7 @@ const SymptomAssessmentScreen = () => {
   const inputCardRef = useRef<InputCardRef>(null);
   const hasShownClarificationHeader = useRef(false);
   const keyboardHeight = useRef(new Animated.Value(0)).current;
+  const keyboardScrollRaf = useRef<number | null>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
 
   // Core State
@@ -163,17 +166,41 @@ const SymptomAssessmentScreen = () => {
   const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
   const [expansionCount, setExpansionCount] = useState(0);
   const [readiness, setReadiness] = useState(0.0); // 0.0 to 1.0
+  const [assessmentStage, setAssessmentStage] = useState<AssessmentStage>('intake');
+  const [hasAdvancedBeyondIntake, setHasAdvancedBeyondIntake] = useState(false);
   const [arbiterSignal, setArbiterSignal] = useState<TriageSignal | null>(null);
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
     null,
   );
   const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(undefined);
-  const [saturationCount, setSaturationCount] = useState(0);
   const [clarificationCount, setClarificationCount] = useState(0);
   const [showRedFlagsChecklist, setShowRedFlagsChecklist] = useState(false);
   const [isClarifyingDenial, setIsClarifyingDenial] = useState(false);
+  const [isRecentResolved, setIsRecentResolved] = useState(false);
+  const [resolvedKeyword, setResolvedKeyword] = useState<string | null>(null);
+
+  // Offline
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
+
+  // Ref sync to prevent closure staleness in setTimeout callbacks
+  const isRecentResolvedRef = useRef(isRecentResolved);
+  const resolvedKeywordRef = useRef(resolvedKeyword);
+  useEffect(() => {
+    isRecentResolvedRef.current = isRecentResolved;
+    resolvedKeywordRef.current = resolvedKeyword;
+  }, [isRecentResolved, resolvedKeyword]);
+
   const MAX_EXPANSIONS = 2;
   const MAX_CLARIFICATIONS = 2;
+
+  // Cleanup temporal state on unmount or restart
+  useEffect(() => {
+    return () => {
+      setIsRecentResolved(false);
+      setResolvedKeyword(null);
+    };
+  }, []);
 
   // Emergency Verification State
   const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(false);
@@ -205,17 +232,26 @@ const SymptomAssessmentScreen = () => {
     setShowRedFlagsChecklist(false);
   }, [currentQuestionIndex]);
 
-  // --- READINESS VISUALIZATION ---
-  const getReadinessVisuals = (score: number) => {
-    if (score <= 0.4) return { label: 'Gathering initial symptoms…', color: theme.colors.primary }; // Green
-    if (score <= 0.7) return { label: 'Checking risk factors…', color: theme.colors.primary }; // Green
-    if (score <= 0.9) return { label: 'Analyzing specifics…', color: theme.colors.primary }; // Green
-    return { label: 'Finalizing recommendation…', color: '#2196F3' }; // Blue
-  };
-
-  // Offline
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
-  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
+  useEffect(() => {
+    if (hasAdvancedBeyondIntake) return;
+    const hasUserProgress =
+      currentQuestionIndex > 0 ||
+      Object.keys(answers).length > 0 ||
+      messages.some((msg) => msg.sender === 'user');
+    if (hasUserProgress) {
+      setHasAdvancedBeyondIntake(true);
+      if (assessmentStage === 'intake' && !isOfflineMode) {
+        setAssessmentStage('follow_up');
+      }
+    }
+  }, [
+    answers,
+    assessmentStage,
+    currentQuestionIndex,
+    hasAdvancedBeyondIntake,
+    isOfflineMode,
+    messages,
+  ]);
 
   /**
    * Log conversation step for debugging
@@ -237,6 +273,15 @@ const SymptomAssessmentScreen = () => {
   };
 
   useEffect(() => {
+    const scheduleScrollToEnd = (animated: boolean) => {
+      if (keyboardScrollRaf.current !== null) {
+        cancelAnimationFrame(keyboardScrollRaf.current);
+      }
+      keyboardScrollRaf.current = requestAnimationFrame(() => {
+        scrollViewRef.current?.scrollToEnd({ animated });
+      });
+    };
+
     const keyboardWillShow = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       (e) => {
@@ -245,6 +290,7 @@ const SymptomAssessmentScreen = () => {
           duration: e.duration || 250,
           useNativeDriver: false,
         }).start();
+        scheduleScrollToEnd(true);
       },
     );
 
@@ -256,12 +302,28 @@ const SymptomAssessmentScreen = () => {
           duration: e.duration || 250,
           useNativeDriver: false,
         }).start();
+        scheduleScrollToEnd(true);
       },
     );
+
+    const keyboardWillChangeFrame =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillChangeFrame', (e) => {
+            const nextHeight = Math.max(0, SCREEN_HEIGHT - e.endCoordinates.screenY);
+            keyboardHeight.setValue(nextHeight);
+            scheduleScrollToEnd(false);
+          })
+        : null;
 
     return () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
+      if (keyboardWillChangeFrame) {
+        keyboardWillChangeFrame.remove();
+      }
+      if (keyboardScrollRaf.current !== null) {
+        cancelAnimationFrame(keyboardScrollRaf.current);
+      }
       speechService.stopListening();
     };
   }, []);
@@ -487,6 +549,7 @@ const SymptomAssessmentScreen = () => {
             }
           }
 
+          console.log(`[DEBUG_NEXT_LOGIC] nextIdx: ${nextIdx}, activeQuestions.length: ${activeQuestions.length}`);
           let effectiveIsAtEnd = nextIdx >= activeQuestions.length;
 
           // Update Readiness Visualization
@@ -537,14 +600,9 @@ const SymptomAssessmentScreen = () => {
             activeQuestions.length,
             activeQuestions.slice(nextIdx),
             previousProfile,
-            saturationCount,
             clarificationCount,
           );
 
-          // Update saturation state for next turn
-          if (arbiterResult.saturation_count !== undefined) {
-            setSaturationCount(arbiterResult.saturation_count);
-          }
           setPreviousProfile(profile);
 
           setArbiterSignal(arbiterResult.signal);
@@ -606,10 +664,11 @@ const SymptomAssessmentScreen = () => {
             hasShownClarificationHeader.current = true;
           }
 
-          if (canTerminate) {
-            console.log('[Assessment] Arbiter approved termination. Finalizing.');
-            setIsTyping(false);
-            setMessages((prev) => [
+            if (canTerminate) {
+              console.log('[Assessment] Arbiter approved termination. Finalizing.');
+              setIsTyping(false);
+              setAssessmentStage('review');
+              setMessages((prev) => [
               ...prev,
               {
                 id: 'early-exit',
@@ -731,7 +790,9 @@ const SymptomAssessmentScreen = () => {
 
             setIsTyping(true);
 
-            const followUpPrompt = `The assessment for "${initialSymptom}" is incomplete or ambiguous. History: ${historyItems.map((h) => h.text).join('. ')}. Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns. Return JSON format matching the original question schema.`;
+            const resolvedTag = isRecentResolvedRef.current ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]` : '';
+            console.log(`[DEBUG_EXPANSION] resolvedTag: "${resolvedTag}", Ref: ${isRecentResolvedRef.current}, Keyword: ${resolvedKeywordRef.current}`);
+            const followUpPrompt = `${resolvedTag} The assessment for "${initialSymptom}" is incomplete or ambiguous. History: ${historyItems.map((h) => h.text).join('. ')}. Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns. Return JSON format matching the original question schema.`;
             try {
               let accumulatedResponse = '';
               setStreamingText(''); // Initialize streaming bubble
@@ -798,12 +859,13 @@ const SymptomAssessmentScreen = () => {
           }
 
           // If we reached here and it'sAtEnd and we can't terminate, we might have hit MAX_EXPANSIONS or expansion failed
-          if (effectiveIsAtEnd && !canTerminate) {
-            console.log(
-              `[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`,
-            );
-            setIsTyping(false);
-            setMessages((prev) => [
+            if (effectiveIsAtEnd && !canTerminate) {
+              console.log(
+                `[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`,
+              );
+              setIsTyping(false);
+              setAssessmentStage('review');
+              setMessages((prev) => [
               ...prev,
               {
                 id: 'finalizing-safety-fallback',
@@ -936,10 +998,11 @@ const SymptomAssessmentScreen = () => {
           setIsTyping(false);
           setProcessing(false);
         }, 600);
-      } else {
-        // EXHAUSTED QUESTIONS -> Finalize
-        setIsTyping(false);
-        setMessages((prev) => [
+        } else {
+          // EXHAUSTED QUESTIONS -> Finalize
+          setIsTyping(false);
+          setAssessmentStage('review');
+          setMessages((prev) => [
           ...prev,
           {
             id: 'finalizing',
@@ -957,12 +1020,17 @@ const SymptomAssessmentScreen = () => {
     }
   };
 
-  const handleEmergencyVerification = (confirmed: boolean) => {
+  const handleEmergencyVerification = (status: 'emergency' | 'recent' | 'denied') => {
     if (!emergencyVerificationData) return;
 
     const { keyword, answer, currentQ, safetyCheck } = emergencyVerificationData;
 
-    if (confirmed) {
+    if (status === 'emergency') {
+      /**
+       * PATHWAY: CURRENT EMERGENCY
+       * User confirms a high-risk symptom (e.g. chest pain) is happening NOW.
+       * Action: Immediate escalation to 911/Emergency recommendation, bypassing assessment.
+       */
       console.log(`[Assessment] EMERGENCY CONFIRMED: ${keyword}. Escalating.`);
       dispatch(setHighRisk(true));
       navigation.replace('Recommendation', {
@@ -985,9 +1053,31 @@ const SymptomAssessmentScreen = () => {
         },
       });
     } else {
-      console.log(
-        `[Assessment] EMERGENCY DENIED: ${keyword}. Resuming flow and suppressing keyword.`,
-      );
+      if (status === 'recent') {
+        /**
+         * PATHWAY: RECENTLY RESOLVED (TRANSIENT)
+         * User reports a high-risk symptom occurred but has since stopped (e.g. TIA, Angina).
+         * Logic: We MUST NOT skip assessment. Instead, we flag the state for the final 
+         * recommendation engine to enforce a "Hospital Floor" safety protocol while 
+         * continuing to gather context about the episode's duration and progression.
+         */
+        console.log(`[Assessment] RECENTLY RESOLVED: ${keyword}. Flagging and continuing.`);
+        setIsRecentResolved(true);
+        setResolvedKeyword(keyword);
+        // Force Ref update for immediate closure access
+        isRecentResolvedRef.current = true;
+        resolvedKeywordRef.current = keyword;
+      } else {
+        /**
+         * PATHWAY: NON-EMERGENCY
+         * User denies the high-risk symptom entirely (e.g. "I have no chest pain").
+         * Logic: Suppress the keyword to prevent re-triggering and resume standard flow.
+         */
+        console.log(
+          `[Assessment] EMERGENCY DENIED: ${keyword}. Resuming flow and suppressing keyword.`,
+        );
+      }
+
       setSuppressedKeywords((prev) => [...prev, keyword]);
       setIsVerifyingEmergency(false);
       setEmergencyVerificationData(null);
@@ -1004,6 +1094,7 @@ const SymptomAssessmentScreen = () => {
     preExtractedProfile?: AssessmentProfile,
   ) => {
     console.log('[Assessment] Finalizing... Extracting Slots.');
+    setAssessmentStage('generating');
 
     try {
       const profile =
@@ -1035,13 +1126,22 @@ const SymptomAssessmentScreen = () => {
         },
       ]);
 
+      const resolvedFlag = isRecentResolved || profile.is_recent_resolved === true;
+      const resolvedKeywordFinal = resolvedKeyword || profile.resolved_keyword;
+
       setTimeout(() => {
         navigation.replace('Recommendation', {
           assessmentData: {
             symptoms: initialSymptom || '',
             answers: formattedAnswers,
-            extractedProfile: profile,
+            extractedProfile: {
+              ...profile,
+              is_recent_resolved: resolvedFlag,
+              resolved_keyword: resolvedKeywordFinal || undefined,
+            },
           },
+          isRecentResolved: resolvedFlag,
+          resolvedKeyword: resolvedKeywordFinal || undefined,
         });
       }, 1500);
     } catch (_) {
@@ -1219,7 +1319,47 @@ const SymptomAssessmentScreen = () => {
   const offlineOptions =
     isOfflineMode && currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId]?.options : null;
 
-  const readinessVisuals = getReadinessVisuals(readiness);
+  const totalQuestions = Math.max(questions.length, 1);
+  const answeredCount = Math.min(currentQuestionIndex, totalQuestions);
+  const questionProgress = totalQuestions > 0 ? answeredCount / totalQuestions : 0;
+
+  const assessmentProgress = (() => {
+    if (isOfflineMode) {
+      return {
+        value: 0.5,
+        label: 'Emergency Check',
+        color: theme.colors.primary,
+      };
+    }
+
+    switch (assessmentStage) {
+      case 'generating':
+        return {
+          value: 1,
+          label: 'Generating recommendation...',
+          color: '#2196F3',
+        };
+      case 'review':
+        return {
+          value: Math.max(questionProgress, 0.85),
+          label: 'Reviewing your responses...',
+          color: theme.colors.primary,
+        };
+      case 'follow_up':
+        return {
+          value: Math.max(questionProgress, 0.35),
+          label: 'Follow-up questions...',
+          color: theme.colors.primary,
+        };
+      case 'intake':
+      default:
+        return {
+          value: Math.max(questionProgress, 0.1),
+          label: 'Gathering initial symptoms...',
+          color: theme.colors.primary,
+        };
+    }
+  })();
 
   // Determine if current question has a "None" option and if it's mandatory
   const currentOptions =
@@ -1244,15 +1384,17 @@ const SymptomAssessmentScreen = () => {
 
   const showNoneButton = hasNoneOptionInCurrent && !isMandatory && selectedRedFlags.length === 0;
 
+  console.log(`[DEBUG_RENDER] isVerifyingEmergency: ${isVerifyingEmergency}`);
+
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
         <ProgressBar
-          progress={isOfflineMode ? 0.5 : readiness}
-          label={isOfflineMode ? 'Emergency Check' : readinessVisuals.label}
-          color={isOfflineMode ? theme.colors.primary : readinessVisuals.color}
+          progress={assessmentProgress.value}
+          label={assessmentProgress.label}
+          color={assessmentProgress.color}
         />
       </View>
 
@@ -1337,20 +1479,32 @@ const SymptomAssessmentScreen = () => {
         ]}
       >
         {isVerifyingEmergency ? (
-          <View style={{ gap: 8 }}>
+          <View testID="emergency-verification-buttons" style={{ gap: 8 }}>
             <Button
               variant="primary"
-              onPress={() => handleEmergencyVerification(true)}
-              title="Yes, it is happening right now"
+              onPress={() => handleEmergencyVerification('emergency')}
+              title="Yes, happening right now"
               buttonColor={theme.colors.error}
               textColor="white"
               style={{ width: '100%' }}
+              accessibilityLabel="Yes, happening right now"
+              accessibilityHint="Escalates to immediate emergency recommendation"
             />
             <Button
               variant="outline"
-              onPress={() => handleEmergencyVerification(false)}
-              title="No, it's a past event/not right now"
+              onPress={() => handleEmergencyVerification('recent')}
+              title="Happened recently but has stopped"
               style={{ width: '100%' }}
+              accessibilityLabel="Happened recently but has stopped"
+              accessibilityHint="Continues assessment but flags the symptom as high priority"
+            />
+            <Button
+              variant="outline"
+              onPress={() => handleEmergencyVerification('denied')}
+              title="No, not experiencing this"
+              style={{ width: '100%' }}
+              accessibilityLabel="No, not experiencing this"
+              accessibilityHint="Continues standard assessment"
             />
           </View>
         ) : isClarifyingDenial ? (

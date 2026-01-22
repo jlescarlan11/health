@@ -84,10 +84,10 @@ const facilitiesSlice = createSlice({
       }
     },
     setFilters: (state, action: PayloadAction<FacilityFilters>) => {
-      state.filters = { ...state.filters, ...action.payload };
+      state.filters = { ...(state.filters || {}), ...action.payload };
       // Apply filters logic here or in a selector/separate effect
       // For simple state management, we can re-filter here
-      const { type, services, yakapAccredited, searchQuery, openNow } = state.filters;
+      const { type, services, yakapAccredited, searchQuery, openNow } = state.filters || {};
 
       state.filteredFacilities = state.facilities.filter((facility) => {
         const matchesType = !type || facility.type === type;
@@ -178,7 +178,7 @@ const facilitiesSlice = createSlice({
         // If filters are active, we might want to trigger a server-side filtered fetch instead.
         // For now, we update the client-side filtered list with what we have.
         // Copy-pasting filter logic from setFilters to ensure consistency
-        const { type, services, yakapAccredited, searchQuery, openNow } = state.filters;
+        const { type, services, yakapAccredited, searchQuery, openNow } = state.filters || {};
         state.filteredFacilities = state.facilities.filter((facility) => {
           const matchesType = !type || facility.type === type;
           const matchesYakap =

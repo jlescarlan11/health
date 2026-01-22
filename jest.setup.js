@@ -1,4 +1,5 @@
 import '@testing-library/jest-native/extend-expect';
+global.IS_REACT_ACT_ENVIRONMENT = true;
 
 // Mock @react-native-async-storage/async-storage
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -25,6 +26,7 @@ jest.mock('@react-native-voice/voice', () => ({
 
 // Mock NativeModules.Voice for SpeechService
 const { NativeModules } = require('react-native');
+const { Animated } = require('react-native');
 NativeModules.Voice = {
   startSpeech: jest.fn(),
   stopSpeech: jest.fn(),
@@ -32,6 +34,21 @@ NativeModules.Voice = {
   destroySpeech: jest.fn(),
   removeAllListeners: jest.fn(),
 };
+
+// Avoid async animation timers triggering act warnings in tests
+Animated.timing = (value, config) => ({
+  start: jest.fn(),
+  _isUsingNativeDriver: () => false,
+  stop: jest.fn(),
+  reset: jest.fn(),
+});
+
+Animated.spring = (value, config) => ({
+  start: jest.fn(),
+  _isUsingNativeDriver: () => false,
+  stop: jest.fn(),
+  reset: jest.fn(),
+});
 
 // Mock Expo Constants
 jest.mock('expo-constants', () => ({
@@ -72,6 +89,18 @@ console.warn = (...args) => {
     return;
   }
   originalWarn(...args);
+};
+
+const originalError = console.error;
+console.error = (...args) => {
+  if (
+    args[0] &&
+    typeof args[0] === 'string' &&
+    args[0].includes('not wrapped in act')
+  ) {
+    return;
+  }
+  originalError(...args);
 };
 
 // Mock expo-linear-gradient
@@ -218,8 +247,14 @@ jest.mock('react-native-vector-icons/MaterialCommunityIcons', () => {
     React.createElement('Icon', { name, size, color, ...props });
 });
 
+jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper', () => ({}), { virtual: true });
+
 // Cleanup after all tests
 afterAll(() => {
   jest.clearAllTimers();
   jest.useRealTimers();
+});
+
+afterEach(() => {
+  jest.clearAllTimers();
 });

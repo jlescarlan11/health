@@ -226,6 +226,11 @@ const RecommendationScreen = () => {
       const isFallback = isFallbackProfile(profile);
       const profileSummary = formatClinicalSummary(profile);
 
+      // Add Recent Resolved tag if applicable
+      const resolvedTag = profile?.is_recent_resolved
+        ? `[RECENT_RESOLVED: ${profile.resolved_keyword || 'Unknown symptom'}]`
+        : '';
+
       // Extract user answers once for reuse
       const userAnswersOnly = answersRef.current
         .map((a) => a.answer)
@@ -237,10 +242,11 @@ const RecommendationScreen = () => {
 
       // Clinical Context for LLM - Optimized to use summary as primary source
       const triageContextParts = [
+        resolvedTag,
         `Initial Symptom: ${symptomsRef.current}.`,
         `Clinical Profile Summary: ${profileSummary}.`,
         `\nContext: ${distanceContext}`,
-      ];
+      ].filter(Boolean);
 
       // Only include full answers if profile is missing, fallback, or readiness is low
       if (
@@ -356,8 +362,10 @@ const RecommendationScreen = () => {
           'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
       }
 
+      const normalizedFallbackLevel = fallbackLevel.replace(/-/g, '_') as AssessmentResponse['recommended_level'];
+
       const fallbackResponse: AssessmentResponse = {
-        recommended_level: fallbackLevel,
+        recommended_level: normalizedFallbackLevel,
         user_advice: fallbackAdvice,
         clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : fallbackLevel === 'health-center' ? 'Health Center' : 'Home Management'}.`,
         key_concerns: [
@@ -377,6 +385,21 @@ const RecommendationScreen = () => {
         follow_up_questions: [],
         triage_readiness_score: 0.5,
         is_conservative_fallback: true,
+        triage_logic: {
+          original_level: normalizedFallbackLevel,
+          final_level: normalizedFallbackLevel,
+          adjustments: [
+            {
+              from: normalizedFallbackLevel,
+              to: normalizedFallbackLevel,
+              rule: 'OFFLINE_FALLBACK',
+              reason:
+                specificRiskMatch?.reason ||
+                'Offline emergency detector determined fallback level.',
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
       };
 
       setRecommendation(fallbackResponse);
@@ -563,7 +586,11 @@ const RecommendationScreen = () => {
 
         {/* Safety Note for Conservative Triage */}
         {recommendation.is_conservative_fallback && (
-          <ConfidenceSignal missingFields={missingFields} />
+          <ConfidenceSignal
+            missingFields={missingFields}
+            isRecentResolved={assessmentData.extractedProfile?.is_recent_resolved}
+            triage_logic={recommendation.triage_logic}
+          />
         )}
 
         {/* Clinical Friction Alert */}
@@ -705,8 +732,7 @@ const RecommendationScreen = () => {
         )}
 
         {/* Facilities Section */}
-        {recommendation.recommended_level !== 'self_care' &&
-          recommendation.recommended_level !== 'self-care' && (
+        {recommendation.recommended_level !== 'self_care' && (
           <View style={styles.facilitiesSection}>
             <View style={styles.sectionHeader}>
               <Text variant="titleLarge" style={styles.sectionHeading}>

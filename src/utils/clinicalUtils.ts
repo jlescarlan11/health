@@ -1,3 +1,5 @@
+import { normalizeNumericValue } from './stringUtils';
+
 export interface SoapSections {
   s?: string;
   o?: string;
@@ -95,13 +97,150 @@ export const isMaternalContext = (text: string): boolean => {
   return maternalKeywords.some((regex) => regex.test(text));
 };
 
+const TRAUMA_KEYWORDS = {
+  falls: [
+    'fall',
+    'fell',
+    'slip',
+    'slipped',
+    'trip',
+    'tripped',
+    'stumble',
+    'stumbled',
+    'nahulog',
+    'natumba',
+    'nadulas',
+    'natisod',
+    'bumagsak',
+  ],
+  vehicleAccidents: [
+    'accident',
+    'vehicle accident',
+    'car accident',
+    'motorcycle accident',
+    'road accident',
+    'traffic accident',
+    'hit by car',
+    'hit by motorcycle',
+    'aksidente sa sasakyan',
+    'aksidente sa kalsada',
+    'naaksidente',
+    'bangga ng sasakyan',
+    'nabundol',
+    'nahagip',
+    'bangga',
+    'nabangga',
+    'salpog',
+  ],
+  penetratingInjuries: [
+    'stab',
+    'stabbed',
+    'stabbing',
+    'gunshot',
+    'shot',
+    'penetrating wound',
+    'puncture',
+    'saksak',
+    'sinaksak',
+    'tama ng bala',
+    'binarel',
+    'butas',
+    'penetrating na sugat',
+  ],
+  burns: [
+    'burn',
+    'burned',
+    'burnt',
+    'scald',
+    'scalded',
+    'thermal burn',
+    'chemical burn',
+    'paso',
+    'napaso',
+    'nasunog',
+  ],
+  fractures: [
+    'fracture',
+    'fractured',
+    'broken bone',
+    'broken arm',
+    'broke arm',
+    'bone break',
+    'crack',
+    'bali',
+    'nabali',
+    'bitak na buto',
+    'nabiyak',
+    'nabiyak na buto',
+  ],
+  sprains: [
+    'sprain',
+    'sprained',
+    'twisted ankle',
+    'ligament injury',
+    'pilay',
+    'napilay',
+    'nabaliko',
+  ],
+  collisions: [
+    'collision',
+    'crash',
+    'impact',
+    'struck',
+    'blunt trauma',
+    'bangga',
+    'nabangga',
+    'salpok',
+    'salpog',
+    'tama',
+    'tinamaan',
+    'natamaan',
+  ],
+  generalTrauma: [
+    'trauma',
+    'injury',
+    'wound',
+    'laceration',
+    'cut',
+    'bleeding',
+    'pinsala',
+    'sugat',
+    'hiwa',
+    'pagdurugo',
+    'nasugatan',
+    'nasakit',
+  ],
+} as const;
+
+const TRAUMA_KEYWORD_LIST = Object.values(TRAUMA_KEYWORDS).flat();
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildKeywordPattern = (keyword: string): string => {
+  const parts = keyword.trim().split(/\s+/).map(escapeRegex);
+  return parts.join('(?:-|\\s+)');
+};
+
+const TRAUMA_REGEX = new RegExp(
+  `\\b(?:${TRAUMA_KEYWORD_LIST.map(buildKeywordPattern).join('|')})\\b`,
+  'i',
+);
+
+/**
+ * Detects if the user context is trauma-related (injury-related)
+ */
+export const isTraumaContext = (text: string): boolean => {
+  if (!text) return false;
+  return TRAUMA_REGEX.test(text);
+};
+
 /**
  * Normalizes age input to a number
  */
 export const normalizeAge = (age: string | null): number | null => {
-  if (!age) return null;
-  const match = age.match(/\d+/);
-  return match ? parseInt(match[0], 10) : null;
+  const normalized = normalizeNumericValue(age);
+  if (normalized === null || Number.isNaN(normalized)) return null;
+  return Math.floor(normalized);
 };
 
 export interface ClinicalSlots {

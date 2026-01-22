@@ -187,10 +187,10 @@ describe('RecommendationScreen', () => {
     );
 
     await waitFor(() => {
-      // Fallback level for low risk is health_center
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
+      // Fallback level for low risk is self-care
+      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
       expect(
-        getByText(/suggest a professional evaluation at your local Health Center/),
+        getByText(/condition appears manageable at home/i),
       ).toBeTruthy();
     });
   });

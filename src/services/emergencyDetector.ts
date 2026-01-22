@@ -603,6 +603,23 @@ class EmergencyDetector extends KeywordDetector {
         relevant_services: ['Emergency'],
         red_flags: matchedKeywords,
         follow_up_questions: [],
+        triage_logic: {
+          original_level: 'emergency',
+          final_level: 'emergency',
+          adjustments: [
+            {
+              from: 'emergency',
+              to: 'emergency',
+              rule: affectedSystems.includes('Cardiac')
+                ? 'SYSTEM_BASED_LOCK_CARDIAC'
+                : 'RED_FLAG_UPGRADE',
+              reason:
+                combinationReason ||
+                `Emergency keyword match: ${matchedKeywords.join(', ') || 'unknown reason'}`,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
       };
     }
 

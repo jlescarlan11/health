@@ -2,7 +2,7 @@ import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import RecommendationScreen from '../src/screens/RecommendationScreen';
 import { Provider as ReduxProvider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import {
   navigationReducer,
   facilitiesReducer,
@@ -92,12 +92,12 @@ describe('Offline Self-Care Logic (T-005)', () => {
     });
 
     store = configureStore({
-      reducer: {
+      reducer: combineReducers({
         navigation: navigationReducer,
         facilities: facilitiesReducer,
         offline: offlineReducer,
         settings: settingsReducer,
-      },
+      }),
       preloadedState: {
         facilities: {
           facilities: [],

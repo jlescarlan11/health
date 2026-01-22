@@ -1,5 +1,41 @@
 export type TriageLevel = 'self-care' | 'health-center' | 'hospital' | 'emergency';
 
+// Clinical acuity categories used for higher-level reasoning/auditing.
+export type TriageAcuityLevel = 'simple' | 'complex' | 'critical' | 'emergency';
+
+// Canonical care levels (underscore format) used in API contracts and triage_logic.
+export type TriageCareLevel = 'self_care' | 'health_center' | 'hospital' | 'emergency';
+
+export type TriageAdjustmentRule =
+  | 'SYSTEM_BASED_LOCK_CARDIAC'
+  | 'SYSTEM_BASED_LOCK_RESPIRATORY'
+  | 'SYSTEM_BASED_LOCK_NEUROLOGICAL'
+  | 'SYSTEM_BASED_LOCK_TRAUMA'
+  | 'SYSTEM_BASED_LOCK_ABDOMEN'
+  | 'CONSENSUS_CHECK'
+  | 'AGE_ESCALATION'
+  | 'READINESS_UPGRADE'
+  | 'RED_FLAG_UPGRADE'
+  | 'RECENT_RESOLVED_FLOOR'
+  | 'AUTHORITY_DOWNGRADE'
+  | 'MENTAL_HEALTH_OVERRIDE'
+  | 'OFFLINE_FALLBACK'
+  | 'MANUAL_OVERRIDE';
+
+export interface TriageAdjustment {
+  from: TriageCareLevel;
+  to: TriageCareLevel;
+  rule: TriageAdjustmentRule;
+  reason: string;
+  timestamp: string; // ISO 8601
+}
+
+export interface TriageLogic {
+  original_level: TriageCareLevel;
+  final_level: TriageCareLevel;
+  adjustments: TriageAdjustment[]; // Ordered audit trail; empty array when no shifts occurred
+}
+
 export interface TriageOption {
   label: string;
   next: string; // ID of the next node
@@ -27,7 +63,7 @@ export interface TriageFlow {
   nodes: Record<string, TriageNode>;
 }
 
-export type SystemCategory = 'Cardiac' | 'Respiratory' | 'Neurological' | 'Acute Abdomen';
+export type SystemCategory = 'Cardiac' | 'Respiratory' | 'Neurological' | 'Acute Abdomen' | 'Trauma';
 
 export interface SystemLockConfig {
   system: SystemCategory;
@@ -85,6 +121,16 @@ export const SYSTEM_LOCK_KEYWORD_MAP: Record<SystemCategory, SystemLockConfig> =
       'abdominal guarding', 'appendicitis', 'peritonitis', 'intense belly pain',
     ],
   },
+  Trauma: {
+    system: 'Trauma',
+    escalationCategory: 'critical',
+    keywords: [
+      'gunshot', 'shot', 'stab', 'stabbed', 'stabbing', 'penetrating wound', 'puncture',
+      'severe burn', 'burned', 'burnt', 'scald', 'fracture', 'broken bone', 'open fracture',
+      'vehicle accident', 'car accident', 'motorcycle accident', 'hit by car', 'hit by motorcycle',
+      'uncontrolled bleeding',
+    ],
+  },
 };
 
 export interface AssessmentProfile {
@@ -108,6 +154,8 @@ export interface AssessmentProfile {
   denial_confidence?: 'high' | 'medium' | 'low';
   turn_count?: number;
   affected_systems?: SystemCategory[];
+  is_recent_resolved?: boolean;
+  resolved_keyword?: string;
 }
 
 export interface GroupedOption {

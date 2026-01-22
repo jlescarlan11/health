@@ -201,3 +201,172 @@ export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] 
 
   return Array.from(found);
 };
+
+const NUMBER_WORDS = {
+  zero: 0,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  twenty: 20,
+  thirty: 30,
+  forty: 40,
+  fifty: 50,
+  sixty: 60,
+  seventy: 70,
+  eighty: 80,
+  ninety: 90,
+  hundred: 100,
+} as const;
+
+const NUMBER_WORD_SET = new Set(Object.keys(NUMBER_WORDS));
+
+const parseNumberWords = (text: string): number | null => {
+  const tokens = text
+    .toLowerCase()
+    .replace(/[^a-z\s-]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+
+  let current: string[] = [];
+
+  const flush = (): number | null => {
+    if (current.length === 0) return null;
+    let value = 0;
+    let working = 0;
+
+    for (const token of current) {
+      if (token === 'and') continue;
+      if (token === 'hundred') {
+        working = (working || 1) * 100;
+        continue;
+      }
+      const mapped = NUMBER_WORDS[token as keyof typeof NUMBER_WORDS];
+      if (mapped === undefined) {
+        return null;
+      }
+      working += mapped;
+    }
+
+    value += working;
+    return value;
+  };
+
+  for (const token of tokens) {
+    const parts = token.split('-').filter(Boolean);
+    const isNumberWord = parts.every((part) => NUMBER_WORD_SET.has(part) || part === 'and');
+
+    if (isNumberWord) {
+      current.push(...parts);
+      continue;
+    }
+
+    const parsed = flush();
+    if (parsed !== null) return parsed;
+    current = [];
+  }
+
+  const parsed = flush();
+  return parsed !== null ? parsed : null;
+};
+
+const getFirstNonNegativeNumber = (text: string): number | null => {
+  const matches = text.match(/-?\d+(?:\.\d+)?/g);
+  if (!matches) return null;
+
+  for (const match of matches) {
+    if (!match.startsWith('-')) {
+      return Number(match);
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Normalizes a numeric value from free-form text.
+ *
+ * Spec (examples):
+ * - "7/10" -> 7
+ * - "7 out of 10" -> 7
+ * - "7" or "it's a 7" -> 7
+ * - "seven" or "forty-five" -> 7 / 45
+ * - "5-7" or "between 5 and 7" -> 6 (midpoint)
+ * - "moderate" -> null
+ * - ""/null/undefined -> null
+ *
+ * Priority order when multiple numbers exist:
+ * 1) Slash fraction ("/10") patterns (most specific).
+ * 2) "out of 10" patterns.
+ * 3) Numeric ranges like "5-7" or "between 5 and 7" (midpoint).
+ * 4) Standalone numeric digits (first match).
+ * 5) Written number words (first match).
+ *
+ * Limitations/assumptions:
+ * - No clamping; callers decide range suitability.
+ * - Negative numbers are not normalized.
+ */
+export const normalizeNumericValue = (
+  text: string | null | undefined,
+): number | null => {
+  if (text === null || text === undefined) return null;
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+
+  const lowerText = trimmed.toLowerCase();
+
+  const fractionMatch = lowerText.match(/\b(\d+(?:\.\d+)?)\s*\/\s*10\b/i);
+  if (fractionMatch?.[1]) {
+    return Number(fractionMatch[1]);
+  }
+
+  const outOfMatch = lowerText.match(/\b(\d+(?:\.\d+)?)\s*out of\s*10\b/i);
+  if (outOfMatch?.[1]) {
+    return Number(outOfMatch[1]);
+  }
+
+  const betweenRangeMatch = lowerText.match(
+    /\bbetween\s+(\d+(?:\.\d+)?)\s+and\s+(\d+(?:\.\d+)?)\b/i,
+  );
+  if (betweenRangeMatch?.[1] && betweenRangeMatch?.[2]) {
+    const start = Number(betweenRangeMatch[1]);
+    const end = Number(betweenRangeMatch[2]);
+    if (!Number.isNaN(start) && !Number.isNaN(end)) {
+      return (start + end) / 2;
+    }
+  }
+
+  const dashRangeMatch = lowerText.match(
+    /\b(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\b/i,
+  );
+  if (dashRangeMatch?.[1] && dashRangeMatch?.[2]) {
+    const start = Number(dashRangeMatch[1]);
+    const end = Number(dashRangeMatch[2]);
+    if (!Number.isNaN(start) && !Number.isNaN(end)) {
+      return (start + end) / 2;
+    }
+  }
+
+  const numericMatch = getFirstNonNegativeNumber(lowerText);
+  if (numericMatch !== null) {
+    return numericMatch;
+  }
+
+  const wordNumber = parseNumberWords(lowerText);
+  return wordNumber !== null && !Number.isNaN(wordNumber) ? wordNumber : null;
+};

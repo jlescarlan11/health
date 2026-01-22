@@ -87,4 +87,17 @@ describe('calculateTriageScore', () => {
     });
     expect(escalated_category).toBe('complex');
   });
+
+  test('should escalate to critical for trauma keywords', () => {
+    const { escalated_category } = calculateTriageScore({
+      age: '30',
+      duration: '1 day',
+      severity: 'mild',
+      progression: 'stable',
+      red_flags_resolved: true,
+      symptom_category: 'simple',
+      symptom_text: 'Patient reports a gunshot wound to the leg',
+    });
+    expect(escalated_category).toBe('critical');
+  });
 });

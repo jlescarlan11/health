@@ -24,6 +24,12 @@ jest.mock('../../services/mentalHealthDetector', () => ({
   detectMentalHealthCrisis: () => ({ isCrisis: false }),
 }));
 
+const INTERNAL_TEXT_PATTERN = /\[INTERNAL|\bDEBUG\b|\btriage_readiness\b|\bthreshold\b/i;
+
+const expectCleanAdvice = (advice: string) => {
+  expect(advice).not.toMatch(INTERNAL_TEXT_PATTERN);
+};
+
 describe('GeminiClient Authority Block', () => {
   let client: GeminiClient;
   let mockSendMessage: jest.Mock;
@@ -71,7 +77,12 @@ describe('GeminiClient Authority Block', () => {
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
 
     expect(result.recommended_level).toBe('health_center');
-    expect(result.user_advice).toContain('Note: Care level adjusted');
+    expect(result.user_advice).toContain('professional evaluation');
+    expect(result.user_advice).not.toMatch(/\bNote: Care level adjusted\b/i);
+    expect(result.triage_logic?.adjustments[0].rule).toBe('AUTHORITY_DOWNGRADE');
+    expect(result.triage_logic?.original_level).toBe('emergency');
+    expect(result.triage_logic?.final_level).toBe('health_center');
+    expectCleanAdvice(result.user_advice);
   });
 
   test('should downgrade Emergency to Health Center if red flags are negated (isNegated)', async () => {
@@ -95,7 +106,11 @@ describe('GeminiClient Authority Block', () => {
 
     expect(isNegated).toHaveBeenCalledWith('i do not have chest pain', 'chest pain');
     expect(result.recommended_level).toBe('health_center');
-    expect(result.user_advice).toContain('Note: Care level adjusted');
+    expect(result.user_advice).not.toMatch(/\bNote: Care level adjusted\b/i);
+    expect(result.triage_logic?.adjustments[0].rule).toBe('AUTHORITY_DOWNGRADE');
+    expect(result.triage_logic?.original_level).toBe('emergency');
+    expect(result.triage_logic?.final_level).toBe('health_center');
+    expectCleanAdvice(result.user_advice);
   });
 
   test('should RETAIN Emergency if denials are not validated (isNegated returns false)', async () => {
@@ -118,7 +133,9 @@ describe('GeminiClient Authority Block', () => {
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
 
     expect(result.recommended_level).toBe('emergency');
-    expect(result.user_advice).not.toContain('Note: Care level adjusted');
+    expect(result.user_advice).toBe('ER now.');
+    expect(result.triage_logic?.adjustments.length).toBe(0);
+    expectCleanAdvice(result.user_advice);
   });
 
   test('should RETAIN Emergency if confidence is LOW even if denial is explicit', async () => {
@@ -139,7 +156,9 @@ describe('GeminiClient Authority Block', () => {
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
 
     expect(result.recommended_level).toBe('emergency');
-    expect(result.user_advice).toContain('Note: Critical symptoms were not definitively ruled out');
+    expect(result.user_advice).toBe('ER now.');
+    expect(result.triage_logic?.adjustments.length).toBe(0);
+    expectCleanAdvice(result.user_advice);
   });
 
   test('should bypass Authority Block if denials do not pass strengthened validation', async () => {
@@ -163,6 +182,8 @@ describe('GeminiClient Authority Block', () => {
     const result = await client.assessSymptoms('I have fever', [], undefined, profile);
 
     expect(result.recommended_level).toBe('emergency');
-    expect(result.user_advice).not.toContain('Note: Care level adjusted');
+    expect(result.user_advice).toBe('ER now.');
+    expect(result.triage_logic?.adjustments.length).toBe(0);
+    expectCleanAdvice(result.user_advice);
   });
 });
