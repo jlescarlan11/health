@@ -4,7 +4,7 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
   const baseSlots = {
     age: null,
     duration: '2 days',
-    severity: 'mild', // Low risk
+    severity: 'mild 2/10', // Low risk with consensus
     progression: null,
     red_flags_resolved: true,
     uncertainty_accepted: false,
@@ -23,7 +23,7 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
     // Check remaining slots: 'duration' (present), 'severity' (present).
     // nullCount should be 0.
     // Score should be 1.0.
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       ...baseSlots,
       symptom_category: 'simple',
     });
@@ -32,7 +32,7 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
   });
 
   it('should still penalize complex cases even with low risk severity', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       ...baseSlots,
       symptom_category: 'complex',
     });
@@ -47,7 +47,7 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
   });
 
   it('should still penalize simple cases if severity is NOT low risk', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       ...baseSlots,
       severity: 'severe', // High risk
       symptom_category: 'simple',
@@ -58,18 +58,18 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
     expect(score).toBeCloseTo(0.6);
   });
 
-  it('should handle numeric low risk severity (e.g., 2/10)', () => {
-    const score = calculateTriageScore({
+  it('should handle numeric low risk severity with consensus (e.g., mild 2/10)', () => {
+    const { score } = calculateTriageScore({
       ...baseSlots,
-      severity: '2/10',
+      severity: 'mild 2/10',
       symptom_category: 'simple',
     });
-    // 2/10 is low risk. Should waive penalties.
+    // Consensus: mild + 2/10. Should waive penalties.
     expect(score).toBeCloseTo(1.0);
   });
 
   it('should NOT waive penalties for moderate numeric severity (e.g., 5/10)', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       ...baseSlots,
       severity: '5/10',
       symptom_category: 'simple',
@@ -83,16 +83,16 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
        ...baseSlots,
        age: null,
        progression: null,
-       severity: 'mild', // Low risk, triggers adaptive logic for simple
+       severity: 'mild 2/10', // Low risk consensus
        turn_count: 5
     };
 
-    const simpleScore = calculateTriageScore({
+    const { score: simpleScore } = calculateTriageScore({
       ...commonSlots,
       symptom_category: 'simple',
     });
 
-    const complexScore = calculateTriageScore({
+    const { score: complexScore } = calculateTriageScore({
       ...commonSlots,
       symptom_category: 'complex',
     });

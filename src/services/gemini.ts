@@ -13,6 +13,7 @@ import {
   normalizeSlot,
 } from '../utils/aiUtils';
 import { applyHedgingCorrections } from '../utils/hedgingDetector';
+import { SystemLockDetector } from './base/SystemLockDetector';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
@@ -164,8 +165,23 @@ export const extractClinicalProfile = async (
      */
     const correctedProfile = applyHedgingCorrections(profile);
 
-    // Deterministically calculate the score using the corrected profile
-    correctedProfile.triage_readiness_score = calculateTriageScore(correctedProfile);
+    /**
+     * SYSTEM-BASED LOCK & SCORING:
+     * Deterministically calculate the score and apply anatomical system overrides.
+     * We pass the full conversation text to ensure the keyword detector in calculateTriageScore
+     * has complete context for safety overrides.
+     */
+    const { score, escalated_category } = calculateTriageScore({
+      ...correctedProfile,
+      symptom_text: conversationText,
+    });
+
+    correctedProfile.triage_readiness_score = score;
+    correctedProfile.symptom_category = escalated_category;
+
+    if (escalated_category === 'complex' || escalated_category === 'critical') {
+      correctedProfile.is_complex_case = true;
+    }
 
     return correctedProfile;
   } catch (error) {

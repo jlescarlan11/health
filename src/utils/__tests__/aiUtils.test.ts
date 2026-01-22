@@ -2,7 +2,7 @@ import { calculateTriageScore } from '../aiUtils';
 
 describe('calculateTriageScore', () => {
   test('should return 1.0 for complete slots', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: '30',
       duration: '1 day',
       severity: 'mild',
@@ -13,7 +13,7 @@ describe('calculateTriageScore', () => {
   });
 
   test('should apply major block when uncertainty is NOT accepted (current behavior)', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: null, // 1 null
       duration: '1 day',
       severity: 'mild',
@@ -26,7 +26,7 @@ describe('calculateTriageScore', () => {
   });
 
   test('should apply minor penalty when uncertainty IS accepted (new behavior)', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: null, // 1 null
       duration: '1 day',
       severity: 'mild',
@@ -39,7 +39,7 @@ describe('calculateTriageScore', () => {
   });
 
   test('should handle multiple missing slots with uncertainty accepted', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: null,
       duration: null,
       severity: 'mild',
@@ -52,7 +52,7 @@ describe('calculateTriageScore', () => {
   });
 
   test('should respect safety floor for red flags', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: '30',
       duration: '1 day',
       severity: 'mild',
@@ -60,5 +60,31 @@ describe('calculateTriageScore', () => {
       red_flags_resolved: false,
     });
     expect(score).toBeLessThanOrEqual(0.4);
+  });
+
+  test('should escalate category based on critical system keywords', () => {
+    const { escalated_category } = calculateTriageScore({
+      age: '30',
+      duration: '1 day',
+      severity: 'mild',
+      progression: 'stable',
+      red_flags_resolved: true,
+      symptom_category: 'simple',
+      symptom_text: 'I have some chest pain',
+    });
+    expect(escalated_category).toBe('critical');
+  });
+
+  test('should escalate to complex for acute abdomen keywords', () => {
+    const { escalated_category } = calculateTriageScore({
+      age: '30',
+      duration: '1 day',
+      severity: 'mild',
+      progression: 'stable',
+      red_flags_resolved: true,
+      symptom_category: 'simple',
+      symptom_text: 'I have severe stomach pain',
+    });
+    expect(escalated_category).toBe('complex');
   });
 });

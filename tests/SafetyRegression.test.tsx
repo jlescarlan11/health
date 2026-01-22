@@ -180,7 +180,7 @@ describe('Safety Regression Suite', () => {
         symptom_category: 'simple' as const,
       };
 
-      const score = calculateTriageScore(slots);
+      const { score } = calculateTriageScore(slots);
       expect(score).toBeLessThanOrEqual(0.9);
       expect(score).toBeLessThanOrEqual(0.4); // Specificity check for the current floor
     });
@@ -194,7 +194,7 @@ describe('Safety Regression Suite', () => {
         symptom_category: 'simple' as const,
       };
 
-      const score = calculateTriageScore(slots);
+      const { score } = calculateTriageScore(slots);
       expect(score).toBeLessThanOrEqual(0.9);
       expect(score).toBeLessThanOrEqual(0.4);
     });
@@ -207,7 +207,8 @@ describe('Safety Regression Suite', () => {
         progression: 'worsening',
         red_flags_resolved: false,
       };
-      expect(calculateTriageScore(slots)).toBeLessThanOrEqual(0.4);
+      const { score } = calculateTriageScore(slots);
+      expect(score).toBeLessThanOrEqual(0.4);
     });
   });
 

@@ -51,7 +51,7 @@ describe('normalizeSlot', () => {
 
 describe('calculateTriageScore with dirty slots', () => {
   test('treats "null" string as missing slot', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: 'null',
       duration: '1 day',
       severity: 'mild',
@@ -65,7 +65,7 @@ describe('calculateTriageScore with dirty slots', () => {
   });
 
   test('treats "Unknown" string as missing slot', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: '30',
       duration: 'Unknown',
       severity: 'mild',
@@ -79,7 +79,7 @@ describe('calculateTriageScore with dirty slots', () => {
   });
 
   test('treats "N/A" string as missing slot', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: '30',
       duration: '1 day',
       severity: 'N/A',
@@ -93,7 +93,7 @@ describe('calculateTriageScore with dirty slots', () => {
   });
 
   test('treats valid but similar strings as present', () => {
-    const score = calculateTriageScore({
+    const { score } = calculateTriageScore({
       age: '30',
       duration: 'unknown duration', // Not exactly "unknown", so it counts as present
       severity: 'mild',
