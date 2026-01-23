@@ -138,27 +138,24 @@ export const MainHomeScreen = () => {
                 onPress={() => navigation.navigate('Check', { screen: 'CheckSymptom' })}
               />
             </View>
-          </View>
-
-          <View style={styles.gridRow}>
-            <View style={styles.gridItem}>
+            <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="Facility Directory"
+                subtitle="Find hospitals & health centers nearby"
                 icon="hospital-marker"
                 color={theme.colors.primary}
                 onPress={() =>
                   navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })
                 }
-                compact
               />
             </View>
-            <View style={styles.gridItem}>
+            <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="YAKAP Guide"
+                subtitle="Enrollment guide for free healthcare"
                 icon="card-account-details"
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
-                compact
               />
             </View>
           </View>
