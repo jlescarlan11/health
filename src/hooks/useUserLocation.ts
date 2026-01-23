@@ -6,9 +6,12 @@ import { Alert, Linking } from 'react-native';
 
 interface UseUserLocationOptions {
   watch?: boolean;
+  requestOnMount?: boolean;
+  showDeniedAlert?: boolean;
 }
 
 export const useUserLocation = (options: UseUserLocationOptions = { watch: false }) => {
+  const { watch = false, requestOnMount = true, showDeniedAlert = true } = options;
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
@@ -21,14 +24,16 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
 
       if (status !== 'granted') {
         setErrorMsg('Permission to access location was denied');
-        Alert.alert(
-          'Location Permission Required',
-          'This app needs access to your location to show nearby facilities. Please enable it in settings.',
-          [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => Linking.openSettings() },
-          ],
-        );
+        if (showDeniedAlert) {
+          Alert.alert(
+            'Location Permission Required',
+            'This app needs access to your location to show nearby facilities. Please enable it in settings.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Open Settings', onPress: () => Linking.openSettings() },
+            ],
+          );
+        }
         return false;
       }
       return true;
@@ -36,7 +41,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
       console.warn('Error requesting location permission:', err);
       return false;
     }
-  }, []);
+  }, [showDeniedAlert]);
 
   const getCurrentLocation = useCallback(async () => {
     const hasPermission = await requestPermission();
@@ -63,13 +68,19 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
     let subscription: Location.LocationSubscription | null = null;
 
     const startWatching = async () => {
-      const hasPermission = await requestPermission();
-      if (!hasPermission) return;
+      const { status: currentStatus } = await Location.getForegroundPermissionsAsync();
+      setPermissionStatus(currentStatus);
+
+      if (currentStatus !== 'granted') {
+        if (!requestOnMount) return;
+        const hasPermission = await requestPermission();
+        if (!hasPermission) return;
+      }
 
       // Get initial location immediately
       getCurrentLocation();
 
-      if (options.watch) {
+      if (watch) {
         try {
           subscription = await Location.watchPositionAsync(
             {
@@ -100,7 +111,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
         subscription.remove();
       }
     };
-  }, [dispatch, requestPermission, options.watch, getCurrentLocation]);
+  }, [dispatch, requestPermission, watch, getCurrentLocation, requestOnMount]);
 
   return { location, errorMsg, permissionStatus, requestPermission };
 };

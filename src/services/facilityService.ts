@@ -72,11 +72,18 @@ import {
   saveFacilitiesFull as saveFacilitiesToDb,
 } from './database';
 import NetInfo from '@react-native-community/netinfo';
+import { normalizeFacilitiesApiResponse } from '../utils/validation';
 
 export const fetchFacilitiesFromApi = async () => {
   try {
     const response = await axios.get(`${API_URL}/facilities`);
-    return response.data;
+    const normalized = normalizeFacilitiesApiResponse(response.data);
+    if (normalized.rejectedCount > 0) {
+      console.warn(
+        `[FacilityService] Dropped ${normalized.rejectedCount} malformed facility record(s) from API response.`,
+      );
+    }
+    return normalized.data;
   } catch (error: unknown) {
     console.error('Error fetching facilities from API:', error);
     throw error;
@@ -95,20 +102,22 @@ export const getFacilities = async () => {
       // Assuming response.data is the array or has a facilities property.
       // Based on existing logs: response.data?.facilities?.length or response.data?.length
 
-      let facilitiesToSave = [];
+      let facilitiesToSave: unknown[] = [];
       if (Array.isArray(data)) {
         facilitiesToSave = data;
       } else if (data.facilities && Array.isArray(data.facilities)) {
         facilitiesToSave = data.facilities;
       }
 
-      if (facilitiesToSave.length > 0) {
-        saveFacilitiesToDb(facilitiesToSave).catch((err) =>
+      const normalized = normalizeFacilitiesApiResponse(facilitiesToSave);
+
+      if (normalized.facilities.length > 0) {
+        saveFacilitiesToDb(normalized.facilities).catch((err) =>
           console.error('Failed to cache facilities:', err),
         );
       }
 
-      return data;
+      return normalizeFacilitiesApiResponse(data).data;
     } catch (error) {
       console.warn('API fetch failed, falling back to local database:', error);
     }
@@ -118,7 +127,7 @@ export const getFacilities = async () => {
   console.log('Fetching facilities from local database');
   const localData = await getFacilitiesFromDb();
   if (localData && localData.length > 0) {
-    return localData;
+    return normalizeFacilitiesApiResponse(localData).data;
   }
 
   throw new Error('No internet connection and no cached data available.');

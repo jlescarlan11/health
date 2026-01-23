@@ -1,10 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity } from 'react-native';
 import { Card, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility, FacilityService } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
 import { getOpenStatus } from '../../utils';
+import { openExternalMaps } from '../../utils/linkingUtils';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -44,6 +45,19 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   const { text: statusText, color: statusColor } = getOpenStatus(facility);
 
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${showDistance && distance !== undefined ? `, Distance: ${formatDistance(distance)}` : ''}`;
+
+  const handleDirectionsPress = async () => {
+    const opened = await openExternalMaps({
+      latitude: facility.latitude,
+      longitude: facility.longitude,
+      label: facility.name,
+      address: facility.address,
+    });
+
+    if (!opened) {
+      Alert.alert('Error', 'Failed to open maps for directions.');
+    }
+  };
 
   // Determine which services to show
   const displayServices = React.useMemo(() => {
@@ -113,6 +127,18 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           </View>
 
           <View style={styles.rightHeader}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={`Directions to ${facility.name}`}
+              accessibilityHint="Opens your maps app with directions"
+              style={[styles.directionsButton, { backgroundColor: theme.colors.surfaceVariant }]}
+              onPress={(e) => {
+                e.stopPropagation();
+                handleDirectionsPress();
+              }}
+            >
+              <MaterialCommunityIcons name="directions" size={18} color={theme.colors.primary} />
+            </TouchableOpacity>
             {facility.yakapAccredited && (
               <View
                 style={[styles.yakapBadge, { backgroundColor: theme.colors.secondaryContainer }]}
@@ -244,6 +270,11 @@ const styles = StyleSheet.create({
 
   rightHeader: {
     alignItems: 'flex-end',
+  },
+  directionsButton: {
+    padding: 8,
+    borderRadius: 16,
+    marginBottom: 8,
   },
   yakapBadge: {
     flexDirection: 'row',

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { getFacilities } from '../services/facilityService';
 import { Facility, FacilityService } from '../types';
 import { calculateDistance } from '../utils/locationUtils';
-import { getOpenStatus } from '../utils/facilityUtils';
+import { getOpenStatus, resolveServiceAlias } from '../utils/facilityUtils';
 
 interface FacilityFilters {
   type?: string;
@@ -62,6 +62,86 @@ const sortFacilities = (a: Facility, b: Facility) => {
   return (a.distance || Infinity) - (b.distance || Infinity);
 };
 
+const normalizeSearchText = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ');
+
+const toSearchableText = (value: unknown) => normalizeSearchText(String(value ?? ''));
+
+const getResolvedSearchQuery = (searchQuery: string) => {
+  const normalized = normalizeSearchText(searchQuery);
+  if (!normalized) return '';
+
+  const resolved = normalizeSearchText(resolveServiceAlias(normalized));
+
+  // Guard against overly-broad substring alias rules (e.g. "service" -> "Emergency" via "er").
+  if (resolved === 'emergency') {
+    const hasEmergencyToken =
+      /\bemergency\b/.test(normalized) ||
+      /\burgent\b/.test(normalized) ||
+      /\ber\b/.test(normalized);
+    return hasEmergencyToken ? resolved : normalized;
+  }
+
+  if (resolved === 'ob-gyn') {
+    const hasObGynToken =
+      /\bob\b/.test(normalized) ||
+      normalized.includes('gyne') ||
+      normalized.includes('women');
+    return hasObGynToken ? resolved : normalized;
+  }
+
+  if (resolved === 'ent') {
+    const hasEntToken =
+      /\bent\b/.test(normalized) ||
+      normalized.includes('ear') ||
+      normalized.includes('nose') ||
+      normalized.includes('throat');
+    return hasEntToken ? resolved : normalized;
+  }
+
+  return resolved;
+};
+
+const matchesSearchQuery = (facility: Facility, searchQuery?: string) => {
+  if (!searchQuery) return true;
+
+  const query = normalizeSearchText(searchQuery);
+  if (!query) return true;
+
+  const normalizedName = toSearchableText(facility.name);
+  const normalizedAddress = toSearchableText(facility.address);
+
+  if (
+    normalizedName.includes(query) ||
+    normalizedAddress.includes(query)
+  ) {
+    return true;
+  }
+
+  const resolvedQuery = getResolvedSearchQuery(query);
+  const serviceStrings: string[] = [
+    ...(facility.services || []),
+    ...(facility.specialized_services || []),
+  ]
+    .filter(Boolean)
+    .map(String);
+
+  return serviceStrings.some((service) => {
+    const rawService = toSearchableText(service);
+    const resolvedService = toSearchableText(resolveServiceAlias(String(service)));
+
+    return (
+      rawService.includes(query) ||
+      rawService.includes(resolvedQuery) ||
+      resolvedService.includes(query) ||
+      resolvedService.includes(resolvedQuery)
+    );
+  });
+};
+
 const facilitiesSlice = createSlice({
   name: 'facilities',
   initialState,
@@ -99,10 +179,7 @@ const facilitiesSlice = createSlice({
         const matchesType = !type || facility.type === type;
         const matchesYakap =
           yakapAccredited === undefined || facility.yakapAccredited === yakapAccredited;
-        const matchesSearch =
-          !searchQuery ||
-          facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          facility.address.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = matchesSearchQuery(facility, searchQuery);
 
         // Simple service match (has at least one of the filtered services)
         // Adjust logic as needed (e.g., must have ALL)
@@ -156,10 +233,7 @@ const facilitiesSlice = createSlice({
           const matchesType = !type || facility.type === type;
           const matchesYakap =
             yakapAccredited === undefined || facility.yakapAccredited === yakapAccredited;
-          const matchesSearch =
-            !searchQuery ||
-            facility.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            facility.address.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesSearch = matchesSearchQuery(facility, searchQuery);
 
           const matchesServices =
             !services ||
