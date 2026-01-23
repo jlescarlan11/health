@@ -13,7 +13,7 @@ export const YakapLogo: React.FC<YakapLogoProps> = ({ width = 28, height = 28, s
     <Svg
       width={width}
       height={height}
-      viewBox="0 0 375 375"
+      viewBox="25 25 325 325"
       style={style}
     >
       <Defs>

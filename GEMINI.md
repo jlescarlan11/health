@@ -247,3 +247,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Refined Trigger:** Modified `App.tsx` to remove the `AppState` listener that triggered the "Safety Check" modal on app resume (background -> active).
   - **New Behavior:** The safety modal now only appears on the initial app launch (cold start) if the user is flagged as high risk, preventing accidental triggers when briefly switching apps or locking the screen.
   - **Files Modified:** `App.tsx`.
+
+- **Yakap Brand Update (Jan 23, 2026):**
+  - **Icon Replacement:** Replaced the generic MaterialCommunityIcon ('card-account-details') with the official Yakap logo (SVG) across the application.
+  - **Implementation:** Installed `react-native-svg` and created a reusable `YakapLogo` component in `src/components/common/YakapLogo.tsx`.
+  - **UI Updates:** Integrated the new logo into the `MainHomeScreen` "YAKAP Guide" card and the `YakapHomeScreen` hero section for consistent branding.
+  - **Files Created/Modified:** `src/components/common/YakapLogo.tsx`, `src/screens/MainHomeScreen.tsx`, `src/features/yakap/YakapHomeScreen.tsx`.

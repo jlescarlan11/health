@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
-import { YakapLogo } from '../components/common';
+import { YakapLogo, CheckSymptomsLogo } from '../components/common';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -136,7 +136,7 @@ export const MainHomeScreen = () => {
               <FeatureCard
                 title="Check Symptoms"
                 subtitle="AI-powered health assessment"
-                icon="stethoscope"
+                customIcon={<CheckSymptomsLogo width={44} height={44} />}
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('Check', { screen: 'CheckSymptom' })}
               />
@@ -156,7 +156,7 @@ export const MainHomeScreen = () => {
               <FeatureCard
                 title="YAKAP Guide"
                 subtitle="Enrollment guide for free healthcare"
-                customIcon={<YakapLogo width={32} height={32} />}
+                customIcon={<YakapLogo width={44} height={44} />}
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
               />

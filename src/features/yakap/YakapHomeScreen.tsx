@@ -70,7 +70,7 @@ const YakapHomeScreen = () => {
         >
           <View style={styles.heroContent}>
             <View style={styles.logoContainer}>
-              <YakapLogo width={80} height={80} />
+              <YakapLogo width={100} height={100} />
             </View>
             <Text
               variant="headlineMedium"
