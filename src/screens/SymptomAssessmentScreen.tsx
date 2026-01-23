@@ -857,15 +857,35 @@ const SymptomAssessmentScreen = () => {
 
             const resolvedTag = isRecentResolvedRef.current ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]` : '';
             console.log(`[DEBUG_EXPANSION] resolvedTag: "${resolvedTag}", Ref: ${isRecentResolvedRef.current}, Keyword: ${resolvedKeywordRef.current}`);
-            const followUpPrompt = `${resolvedTag} The assessment for "${initialSymptom}" is incomplete or ambiguous. History: ${historyItems.map((h) => h.text).join('. ')}. Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns. Return JSON format matching the original question schema.`;
+            
+            const followUpPrompt = `
+              ${resolvedTag} The assessment for "${initialSymptom}" is incomplete.
+              History: ${historyItems.map((h) => h.text).join('. ')}.
+              
+              Task: Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns.
+              
+              REQUIRED OUTPUT FORMAT (JSON ONLY, NO MARKDOWN):
+              {
+                "questions": [
+                  {
+                    "id": "unique_id",
+                    "type": "text" | "single-select" | "multi-select",
+                    "text": "Question text",
+                    "options": ["Option A", "Option B"] // Use empty array [] for text type
+                  }
+                ]
+              }
+            `;
+
             try {
               let accumulatedResponse = '';
-              setStreamingText(''); // Initialize streaming bubble
+              // setStreamingText(''); // Don't show raw JSON stream
+              // setIsTyping(true) is already set, so the user sees the typing indicator
 
               const stream = streamGeminiResponse(followUpPrompt);
               for await (const chunk of stream) {
                 accumulatedResponse += chunk;
-                setStreamingText((prev) => (prev || '') + chunk);
+                // setStreamingText((prev) => (prev || '') + chunk); // Removed to prevent JSON leak
               }
 
               if (accumulatedResponse) {
@@ -880,7 +900,10 @@ const SymptomAssessmentScreen = () => {
                   return;
                 }
 
-                const jsonMatch = accumulatedResponse.match(/\{[\s\S]*\}/);
+                // Clean up potential markdown code blocks
+                const cleanJson = accumulatedResponse.replace(/```json\n?|\n?```/g, '').trim();
+                const jsonMatch = cleanJson.match(/\{[\s\S]*\}/);
+
                 if (jsonMatch) {
                   const parsed = JSON.parse(jsonMatch[0]);
                   const newQuestions = (parsed.questions || []).map((q: any, i: number) => ({
@@ -913,6 +936,8 @@ const SymptomAssessmentScreen = () => {
                     setProcessing(false);
                     return;
                   }
+                } else {
+                  console.warn('[Assessment] Expansion response did not contain valid JSON:', accumulatedResponse);
                 }
               }
               // Fallback if parsing fails or no questions
