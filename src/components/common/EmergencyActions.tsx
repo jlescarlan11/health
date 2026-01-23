@@ -63,7 +63,7 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <IconButton
           icon="phone"
           mode="contained"
-          containerColor="#D32F2F"
+          containerColor="#C84848"
           iconColor={theme.colors.onError}
           onPress={() => handleCall('(054) 473-3111')}
         />
@@ -82,7 +82,7 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <IconButton
           icon="phone"
           mode="contained"
-          containerColor="#D32F2F"
+          containerColor="#C84848"
           iconColor={theme.colors.onError}
           onPress={() => handleCall('1553')}
         />
