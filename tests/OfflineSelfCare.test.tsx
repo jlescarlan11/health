@@ -140,7 +140,7 @@ describe('Offline Self-Care Logic (T-005)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
+      expect(getByText('Self Care (Home Management)')).toBeTruthy();
       expect(getByText(/manageable at home/)).toBeTruthy();
       // Facilities section should be hidden
       expect(queryByText('Recommended Facilities')).toBeNull();
@@ -159,7 +159,7 @@ describe('Offline Self-Care Logic (T-005)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
+      expect(getByText('Self Care (Home Management)')).toBeTruthy();
     });
   });
 
@@ -175,7 +175,7 @@ describe('Offline Self-Care Logic (T-005)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
+      expect(getByText('Health Center (Primary Care)')).toBeTruthy();
     });
   });
 
@@ -191,7 +191,7 @@ describe('Offline Self-Care Logic (T-005)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
+      expect(getByText('Health Center (Primary Care)')).toBeTruthy();
     });
   });
 
@@ -207,7 +207,7 @@ describe('Offline Self-Care Logic (T-005)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
+      expect(getByText('Health Center (Primary Care)')).toBeTruthy();
     });
   });
 
@@ -223,7 +223,7 @@ describe('Offline Self-Care Logic (T-005)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
+      expect(getByText('Health Center (Primary Care)')).toBeTruthy();
     });
   });
 });
@@ -274,7 +274,7 @@ describe('UI Consistency (T-006)', () => {
 
     await waitFor(() => {
       // getCareLevelInfo should normalize it to render correctly
-      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
+      expect(getByText('Self Care (Home Management)')).toBeTruthy();
     });
   });
 
@@ -298,7 +298,7 @@ describe('UI Consistency (T-006)', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
+      expect(getByText('Self Care (Home Management)')).toBeTruthy();
     });
   });
 });

@@ -63,8 +63,8 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <IconButton
           icon="phone"
           mode="contained"
-          containerColor={theme.colors.primary}
-          iconColor={theme.colors.onPrimary}
+          containerColor="#D32F2F"
+          iconColor={theme.colors.onError}
           onPress={() => handleCall('(054) 473-3111')}
         />
       </Surface>
@@ -82,8 +82,8 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <IconButton
           icon="phone"
           mode="contained"
-          containerColor={theme.colors.primary}
-          iconColor={theme.colors.onPrimary}
+          containerColor="#D32F2F"
+          iconColor={theme.colors.onError}
           onPress={() => handleCall('1553')}
         />
       </Surface>
@@ -116,12 +116,13 @@ const styles = StyleSheet.create({
   contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 12,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#E0E2E3',
-    justifyContent: 'center',
   },
   contactInfo: {
     flex: 1,
