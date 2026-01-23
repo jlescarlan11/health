@@ -203,7 +203,7 @@ const RecommendationScreen = () => {
   const handleBack = useCallback(() => {
     Alert.alert(
       'Exit Recommendation',
-      'Are you sure you want to exit? You will be returned to the AI Navigator start screen.',
+      'Are you sure you want to exit? You will be returned to the Check Symptom start screen.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -217,7 +217,7 @@ const RecommendationScreen = () => {
                   {
                     name: 'Check',
                     state: {
-                      routes: [{ name: 'NavigatorHome' }],
+                      routes: [{ name: 'CheckSymptom' }],
                     },
                   },
                 ],
@@ -976,7 +976,7 @@ const RecommendationScreen = () => {
                     {
                       name: 'Check',
                       state: {
-                        routes: [{ name: 'NavigatorHome' }],
+                        routes: [{ name: 'CheckSymptom' }],
                       },
                     },
                   ],

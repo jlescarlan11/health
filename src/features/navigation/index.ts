@@ -1,1 +1,1 @@
-export { default as NavigatorHomeScreen } from './NavigatorHomeScreen';
+export { default as CheckSymptomScreen } from './CheckSymptomScreen';

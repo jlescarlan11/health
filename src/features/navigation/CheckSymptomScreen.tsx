@@ -21,7 +21,7 @@ import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk } from '../../store/navigationSlice';
 
-type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
+type NavigationProp = CheckStackScreenProps<'CheckSymptom'>['navigation'];
 
 const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 'Prenatal Care'];
 
@@ -88,7 +88,7 @@ const SymptomItem = ({
   );
 };
 
-const NavigatorHomeScreen = () => {
+const CheckSymptomScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
   const theme = useTheme();
@@ -416,4 +416,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NavigatorHomeScreen;
+export default CheckSymptomScreen;

@@ -29,7 +29,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       Check: {
         path: 'check',
         screens: {
-          NavigatorHome: '',
+          CheckSymptom: '',
         },
       },
       Find: {

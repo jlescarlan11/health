@@ -28,7 +28,7 @@ export const MainHomeScreen = () => {
     compact = false,
   }: {
     title: string;
-    subtitle: string;
+    subtitle?: string;
     icon: keyof (typeof MaterialCommunityIcons)['glyphMap'];
     color: string;
     onPress: () => void;
@@ -54,44 +54,47 @@ export const MainHomeScreen = () => {
         onPress={onPress}
         testID={testID}
         accessible={true}
-        accessibilityLabel={`${title}, ${subtitle}`}
+        accessibilityLabel={`${title}${subtitle ? `, ${subtitle}` : ''}`}
         accessibilityRole="button"
         accessibilityHint={`Double tap to navigate to ${title}`}
       >
         <Card.Content style={[styles.cardContent, compact && styles.cardContentCompact]}>
-          <View 
+          <View
             style={[
-              styles.iconContainer, 
+              styles.iconContainer,
               { backgroundColor: color + '26' },
-              compact && styles.iconContainerCompact
+              compact && styles.iconContainerCompact,
             ]}
           >
-            <MaterialCommunityIcons name={icon} size={compact ? 24 : 28} color={color} />
+            <MaterialCommunityIcons name={icon} size={compact ? 20 : 28} color={color} />
           </View>
-          
+
           <View style={styles.textContainer}>
-            <Title 
-              numberOfLines={compact ? 1 : 2}
+            <Title
+              numberOfLines={2}
               style={[
-                styles.cardTitle, 
+                styles.cardTitle,
                 compact && styles.cardTitleCompact,
-                { color: theme.colors.onSurface }
+                { color: theme.colors.onSurface },
+                subtitle ? { marginBottom: compact ? 4 : 2 } : { marginBottom: 0 },
               ]}
             >
               {title}
             </Title>
-            <Paragraph 
-              numberOfLines={2}
-              style={[
-                styles.cardSubtitle, 
-                compact && styles.cardSubtitleCompact,
-                { color: theme.colors.onSurfaceVariant }
-              ]}
-            >
-              {subtitle}
-            </Paragraph>
+            {subtitle && (
+              <Paragraph
+                numberOfLines={2}
+                style={[
+                  styles.cardSubtitle,
+                  compact && styles.cardSubtitleCompact,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
+                {subtitle}
+              </Paragraph>
+            )}
           </View>
-          
+
           {!compact && (
             <MaterialCommunityIcons
               name="chevron-right"
@@ -124,7 +127,6 @@ export const MainHomeScreen = () => {
                   color={theme.colors.primary}
                   onPress={() => navigation.navigate('ClinicalNote')}
                 />
-
               </View>
             )}
             <View style={styles.bottomStackItem}>
@@ -132,36 +134,29 @@ export const MainHomeScreen = () => {
                 title="Check Symptoms"
                 subtitle="AI-powered health assessment"
                 icon="stethoscope"
-                color={theme.colors.secondary}
-                onPress={() => navigation.navigate('Check', { screen: 'NavigatorHome' })}
+                color={theme.colors.primary}
+                onPress={() => navigation.navigate('Check', { screen: 'CheckSymptom' })}
               />
             </View>
           </View>
 
-          <View
-            style={[
-              styles.sectionDivider,
-              { backgroundColor: theme.colors.outline ?? theme.colors.onSurfaceVariant },
-            ]}
-          />
-
           <View style={styles.gridRow}>
             <View style={styles.gridItem}>
               <FeatureCard
-                title="Facilities"
-                subtitle="Nearby centers"
+                title="Facility Directory"
                 icon="hospital-marker"
                 color={theme.colors.primary}
-                onPress={() => navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })}
+                onPress={() =>
+                  navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })
+                }
                 compact
               />
             </View>
             <View style={styles.gridItem}>
               <FeatureCard
-                title="YAKAP"
-                subtitle="Health benefits"
+                title="YAKAP Guide"
                 icon="card-account-details"
-                color={theme.colors.secondary}
+                color={theme.colors.primary}
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
                 compact
               />
@@ -199,11 +194,6 @@ const styles = StyleSheet.create({
   gridItem: {
     flex: 1,
   },
-  sectionDivider: {
-    height: 1,
-    width: '100%',
-    marginVertical: 16,
-  },
   card: {
     borderRadius: 24,
     borderWidth: 0,
@@ -223,7 +213,7 @@ const styles = StyleSheet.create({
   cardContentCompact: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
   },
   iconContainer: {
     width: 56,
@@ -234,11 +224,11 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   iconContainerCompact: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     marginBottom: 0,
-    marginRight: 12,
+    marginRight: 10,
   },
   textContainer: {
     flex: 1,
@@ -248,13 +238,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.5,
     lineHeight: 24,
-    marginBottom: 2,
   },
   cardTitleCompact: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 20,
-    marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 14,

@@ -59,7 +59,7 @@ describe('MainHomeScreen', () => {
   it('navigates to AiChat when Check Symptoms is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('Check Symptoms'));
-    expect(mockNavigate).toHaveBeenCalledWith('Check', { screen: 'NavigatorHome' });
+    expect(mockNavigate).toHaveBeenCalledWith('Check', { screen: 'CheckSymptom' });
   });
 
   it('navigates to FacilityDirectory when Find Facilities is pressed', () => {

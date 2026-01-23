@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import NavigatorHomeScreen from '../features/navigation/NavigatorHomeScreen';
+import CheckSymptomScreen from '../features/navigation/CheckSymptomScreen';
 import { CheckStackParamList } from './types';
 import StandardHeader from '../components/common/StandardHeader';
 
@@ -16,11 +16,11 @@ const CheckNavigator = () => {
       }}
     >
       <Stack.Screen
-        name="NavigatorHome"
-        component={NavigatorHomeScreen}
+        name="CheckSymptom"
+        component={CheckSymptomScreen}
         options={{
           headerShown: true,
-          header: () => <StandardHeader title="AI Navigator" showBackButton />,
+          header: () => <StandardHeader title="Check Symptom" showBackButton />,
         }}
       />
     </Stack.Navigator>
