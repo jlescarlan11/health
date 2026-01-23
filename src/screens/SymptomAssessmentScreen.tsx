@@ -154,6 +154,12 @@ const SymptomAssessmentScreen = () => {
   const keyboardHeight = useRef(new Animated.Value(0)).current;
   const keyboardScrollRaf = useRef<number | null>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
+  const trimmedInitialSymptom = (initialSymptom || '').trim();
+  const hasInitialSymptom = trimmedInitialSymptom.length > 0;
+  const safetySymptomReference = hasInitialSymptom
+    ? `"${trimmedInitialSymptom}"`
+    : 'the symptoms you shared earlier';
+  const safetyShortLabel = hasInitialSymptom ? 'those symptoms' : 'your current concern';
 
   // Core State
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1542,8 +1548,7 @@ const SymptomAssessmentScreen = () => {
               SAFETY CHECK
             </Text>
             <Text style={{ paddingHorizontal: 16, marginBottom: 8, color: theme.colors.onSurface }}>
-              Just to be perfectly safe, are you experiencing any other severe symptoms like
-              difficulty breathing or chest pain, or is it just the {initialSymptom}?
+              {`Just to be perfectly safe, since you told me about ${safetySymptomReference}, are you experiencing any other severe symptoms like difficulty breathing or chest pain, or is it still limited to ${safetyShortLabel}?`}
             </Text>
             <Button
               variant="primary"
@@ -1554,7 +1559,7 @@ const SymptomAssessmentScreen = () => {
             <Button
               variant="outline"
               onPress={() => handleNext(formatSelectionAnswer(currentQuestion, []))}
-              title={`No, just the ${initialSymptom}`}
+              title={`No, just ${safetyShortLabel}`}
               style={{ width: '100%' }}
             />
             <Button
@@ -1745,7 +1750,23 @@ const styles = StyleSheet.create({
   assistantBubble: { borderBottomLeftRadius: 4 },
   userBubble: { borderBottomRightRadius: 4 },
   messageText: { fontSize: 16, lineHeight: 22 },
-  inputSection: { padding: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  inputSection: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    zIndex: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+  },
 });
 
 export default SymptomAssessmentScreen;

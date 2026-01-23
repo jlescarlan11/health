@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text, Surface, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import type { TriageLogic } from '../../../types/triage';
@@ -9,12 +9,16 @@ interface ConfidenceSignalProps {
   missingFields?: string[];
   isRecentResolved?: boolean;
   triage_logic?: TriageLogic;
+  style?: StyleProp<ViewStyle>;
 }
+
+const ICON_SCALE = 0.75;
 
 export const ConfidenceSignal = ({
   missingFields = [],
   isRecentResolved = false,
   triage_logic,
+  style,
 }: ConfidenceSignalProps) => {
   const theme = useTheme();
 
@@ -91,10 +95,13 @@ export const ConfidenceSignal = ({
     return null;
   }
 
+  const iconSize = Math.round(24 * ICON_SCALE);
+
   return (
     <Surface
       style={[
         styles.container,
+        style,
         {
           backgroundColor: theme.colors.elevation.level1,
           borderLeftColor: theme.colors.primary,
@@ -107,7 +114,7 @@ export const ConfidenceSignal = ({
       <View style={styles.iconContainer}>
         <MaterialCommunityIcons
           name="shield-check-outline"
-          size={24}
+          size={iconSize}
           color={theme.colors.primary}
         />
       </View>
@@ -132,7 +139,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 12,
     borderRadius: 8,
-    marginBottom: 16,
     borderLeftWidth: 4,
   },
   iconContainer: {
