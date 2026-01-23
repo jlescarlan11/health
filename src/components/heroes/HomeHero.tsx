@@ -3,7 +3,12 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
 import HeroSection from './HeroSection';
 
-const HomeHero: React.FC = () => {
+interface HomeHeroProps {
+  hasClinicalReport?: boolean;
+  onClinicalReportPress?: () => void;
+}
+
+const HomeHero: React.FC<HomeHeroProps> = ({ hasClinicalReport, onClinicalReportPress }) => {
   const theme = useTheme();
 
   const today = new Date();
@@ -17,19 +22,34 @@ const HomeHero: React.FC = () => {
   const greeting = 'Kumusta!';
 
   return (
-    <HeroSection 
-      colors={[theme.colors.secondaryContainer, theme.colors.background]} 
-      height={280}
-    >
+    <HeroSection colors={[theme.colors.secondaryContainer, theme.colors.background]} height={280}>
       <View style={styles.container}>
         <View style={styles.contentContainer}>
           <Text style={[styles.date, { color: theme.colors.onSurfaceVariant }]}>
             {formattedDate}
           </Text>
           <Text style={[styles.greeting, { color: theme.colors.primary }]}>{greeting}</Text>
-          <Text style={[styles.subtitle, { color: theme.colors.onSurface }]}>
-            How can we help you today?
-          </Text>
+          {hasClinicalReport && onClinicalReportPress ? (
+            <Text style={[styles.subtitle, { color: theme.colors.onSurface }]}>
+              Your{' '}
+              <Text
+                style={{
+                  textDecorationLine: 'underline',
+                  color: theme.colors.primary,
+                  fontWeight: '700',
+                }}
+                onPress={onClinicalReportPress}
+                role="link"
+              >
+                clinical report
+              </Text>{' '}
+              is ready
+            </Text>
+          ) : (
+            <Text style={[styles.subtitle, { color: theme.colors.onSurface }]}>
+              How can we help you today?
+            </Text>
+          )}
         </View>
       </View>
     </HeroSection>
