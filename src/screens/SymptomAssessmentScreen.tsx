@@ -22,10 +22,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { speechService } from '../services/speechService';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
+import { RootState } from '../store';
 import {
   generateAssessmentPlan,
   extractClinicalProfile,
@@ -34,7 +35,7 @@ import {
 } from '../services/gemini';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
-import { setHighRisk } from '../store/navigationSlice';
+import { setHighRisk, updateAssessmentState, clearAssessmentState } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
 import { TriageArbiter, TriageSignal } from '../services/triageArbiter';
 import { TriageFlow, AssessmentQuestion, AssessmentProfile, GroupedOption } from '../types/triage';
@@ -146,6 +147,7 @@ const SymptomAssessmentScreen = () => {
   const route = useRoute<ScreenRouteProp>();
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
+  const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -162,32 +164,38 @@ const SymptomAssessmentScreen = () => {
   const safetyShortLabel = hasInitialSymptom ? 'those symptoms' : 'your current concern';
 
   // Core State
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
-  const [fullPlan, setFullPlan] = useState<AssessmentQuestion[]>([]);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({}); // Map question ID -> User Answer
-  const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<Message[]>(savedState?.messages || []);
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>(savedState?.questions || []);
+  const [fullPlan, setFullPlan] = useState<AssessmentQuestion[]>(savedState?.fullPlan || []);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(savedState?.currentQuestionIndex || 0);
+  const [answers, setAnswers] = useState<Record<string, string>>(savedState?.answers || {}); // Map question ID -> User Answer
+  const [loading, setLoading] = useState(!savedState);
   const [processing, setProcessing] = useState(false);
   const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
-  const [expansionCount, setExpansionCount] = useState(0);
-  const [readiness, setReadiness] = useState(0.0); // 0.0 to 1.0
-  const [assessmentStage, setAssessmentStage] = useState<AssessmentStage>('intake');
-  const [hasAdvancedBeyondIntake, setHasAdvancedBeyondIntake] = useState(false);
+  const [expansionCount, setExpansionCount] = useState(savedState?.expansionCount || 0);
+  const [readiness, setReadiness] = useState(savedState?.readiness || 0.0); // 0.0 to 1.0
+  const [assessmentStage, setAssessmentStage] = useState<AssessmentStage>(
+    (savedState?.assessmentStage as AssessmentStage) || 'intake'
+  );
+  const [hasAdvancedBeyondIntake, setHasAdvancedBeyondIntake] = useState(
+    savedState ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers).length > 0 : false
+  );
   const [arbiterSignal, setArbiterSignal] = useState<TriageSignal | null>(null);
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
-    null,
+    (savedState?.symptomCategory as any) || null,
   );
-  const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(undefined);
-  const [clarificationCount, setClarificationCount] = useState(0);
+  const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(savedState?.previousProfile);
+  const [clarificationCount, setClarificationCount] = useState(savedState?.clarificationCount || 0);
   const [showRedFlagsChecklist, setShowRedFlagsChecklist] = useState(false);
   const [isClarifyingDenial, setIsClarifyingDenial] = useState(false);
-  const [isRecentResolved, setIsRecentResolved] = useState(false);
-  const [resolvedKeyword, setResolvedKeyword] = useState<string | null>(null);
+  const [isRecentResolved, setIsRecentResolved] = useState(savedState?.isRecentResolved || false);
+  const [resolvedKeyword, setResolvedKeyword] = useState<string | null>(savedState?.resolvedKeyword || null);
 
   // Offline
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
-  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(savedState?.isOfflineMode || false);
+  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(savedState?.currentOfflineNodeId || null);
+
+  const [suppressedKeywords, setSuppressedKeywords] = useState<string[]>(savedState?.suppressedKeywords || []);
 
   // Ref sync to prevent closure staleness in setTimeout callbacks
   const isRecentResolvedRef = useRef(isRecentResolved);
@@ -209,7 +217,7 @@ const SymptomAssessmentScreen = () => {
   }, []);
 
   // Emergency Verification State
-  const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(false);
+  const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(savedState?.isVerifyingEmergency || false);
   const isVerifyingEmergencyRef = useRef(isVerifyingEmergency);
   useEffect(() => {
     isVerifyingEmergencyRef.current = isVerifyingEmergency;
@@ -220,13 +228,62 @@ const SymptomAssessmentScreen = () => {
     answer: string;
     currentQ: AssessmentQuestion;
     safetyCheck: any;
-  } | null>(null);
-  const [suppressedKeywords, setSuppressedKeywords] = useState<string[]>([]);
+  } | null>(savedState?.emergencyVerificationData || null);
 
   // UI Interactions
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [streamingText, setStreamingText] = useState<string | null>(null);
+
+  // Sync state to Redux for persistence
+  useEffect(() => {
+    if (loading) return;
+    dispatch(
+      updateAssessmentState({
+        messages,
+        questions,
+        fullPlan,
+        currentQuestionIndex,
+        answers,
+        expansionCount,
+        readiness,
+        assessmentStage,
+        symptomCategory,
+        previousProfile,
+        clarificationCount,
+        suppressedKeywords,
+        isRecentResolved,
+        resolvedKeyword,
+        initialSymptom,
+        isOfflineMode,
+        currentOfflineNodeId,
+        isVerifyingEmergency,
+        emergencyVerificationData,
+      })
+    );
+  }, [
+    messages,
+    questions,
+    fullPlan,
+    currentQuestionIndex,
+    answers,
+    expansionCount,
+    readiness,
+    assessmentStage,
+    symptomCategory,
+    previousProfile,
+    clarificationCount,
+    suppressedKeywords,
+    isRecentResolved,
+    resolvedKeyword,
+    initialSymptom,
+    isOfflineMode,
+    currentOfflineNodeId,
+    isVerifyingEmergency,
+    emergencyVerificationData,
+    dispatch,
+    loading,
+  ]);
 
   // Voice
   const [isRecording, setIsRecording] = useState(false);
@@ -336,7 +393,9 @@ const SymptomAssessmentScreen = () => {
 
   // --- INITIALIZATION ---
   useEffect(() => {
-    initializeAssessment();
+    if (!savedState) {
+      initializeAssessment();
+    }
   }, []);
 
   // --- AUTO-SCROLL LOGIC ---
@@ -1136,6 +1195,7 @@ const SymptomAssessmentScreen = () => {
       const resolvedKeywordFinal = resolvedKeyword || profile.resolved_keyword;
 
       setTimeout(() => {
+        dispatch(clearAssessmentState());
         navigation.replace('Recommendation', {
           assessmentData: {
             symptoms: initialSymptom || '',
@@ -1218,19 +1278,31 @@ const SymptomAssessmentScreen = () => {
 
   // --- UTILS ---
   const handleBack = useCallback(() => {
-    // If we go back, we pop the last Q&A pair (User Answer + Assistant Question)
-    // But we need to distinguish between "User just answered" vs "Waiting for user"
-
     if (messages.length <= 1) {
       navigation.goBack();
       return;
     }
 
-    Alert.alert('Restart Assessment?', 'Going back will restart the assessment. Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Restart', style: 'destructive', onPress: () => navigation.goBack() },
-    ]);
-  }, [messages, navigation]);
+    Alert.alert(
+      'Exit Assessment?',
+      'You can exit and resume this assessment later, or restart it from the beginning.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Restart', 
+          style: 'destructive', 
+          onPress: () => {
+            dispatch(clearAssessmentState());
+            navigation.goBack();
+          } 
+        },
+        { 
+          text: 'Exit & Save', 
+          onPress: () => navigation.goBack() 
+        },
+      ],
+    );
+  }, [messages, navigation, dispatch]);
 
   useFocusEffect(
     useCallback(() => {
@@ -1459,7 +1531,7 @@ const SymptomAssessmentScreen = () => {
                 {
                   backgroundColor: theme.colors.surface,
                   borderColor: theme.colors.error,
-                  borderWidth: 1,
+                  borderWidth: 0.5,
                 },
               ]}
             >
@@ -1685,28 +1757,29 @@ const SymptomAssessmentScreen = () => {
                 >
                   {offlineOptions
                     ? offlineOptions.map((opt) => (
-                        <Chip
-                          key={opt.label}
-                          onPress={() => handleNext(opt.label)}
-                          disabled={processing}
-                        >
-                          {opt.label}
-                        </Chip>
-                      ))
-                    : currentQuestion!.options!.map((opt, idx) => {
-                        if (typeof opt === 'string') {
-                          return (
-                            <Chip
-                              key={idx}
-                              onPress={() => handleNext(opt)}
-                              disabled={processing}
-                              style={{ marginRight: 8 }}
-                            >
-                              {opt}
-                            </Chip>
-                          );
-                        }
-                        return null;
+                                                  <Chip
+                                                    key={opt.label}
+                                                    onPress={() => handleNext(opt.label)}
+                                                    disabled={processing}
+                                                    textStyle={{ color: theme.colors.primary }}
+                                                  >
+                                                    {opt.label}
+                                                  </Chip>
+                                                ))
+                                              : currentQuestion!.options!.map((opt, idx) => {
+                                                  if (typeof opt === 'string') {
+                                                    return (
+                                                      <Chip
+                                                        key={idx}
+                                                        onPress={() => handleNext(opt)}
+                                                        disabled={processing}
+                                                        style={{ marginRight: 8 }}
+                                                        textStyle={{ color: theme.colors.primary }}
+                                                      >
+                                                        {opt}
+                                                      </Chip>
+                                                    );
+                                                  }                        return null;
                       })}
                 </ScrollView>
               );

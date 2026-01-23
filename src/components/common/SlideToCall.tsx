@@ -49,11 +49,12 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
 
         onPanResponderMove: (_, gestureState) => {
           if (!trackWidth) return;
-          const MAX_VISUAL_DRAG = 60; // Revert to a short, controlled pull distance
-          const resistance = 0.4; // Slightly more responsive than original but still heavy
+          // Limit stretch to 1/4 of the track width
+          const MAX_PAN = trackWidth / 4;
+          const resistance = 0.5;
 
           if (gestureState.dx > 0) {
-            const moveX = Math.min(gestureState.dx * resistance, MAX_VISUAL_DRAG);
+            const moveX = Math.min(gestureState.dx * resistance, MAX_PAN);
             pan.setValue(moveX);
           } else {
             pan.setValue(0);
@@ -62,26 +63,25 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
 
         onPanResponderRelease: (_, gestureState) => {
           if (!trackWidth) return;
-          const GESTURE_THRESHOLD = 100; // Intent threshold
+          const GESTURE_THRESHOLD = 100; // Adjusted threshold
 
           if (gestureState.dx >= GESTURE_THRESHOLD) {
-            // RELEASE SNAP-BACK SEQUENCE: Just return to start (<<<) then call
+            // RELEASE SNAP-BACK SEQUENCE
             Animated.timing(pan, {
               toValue: 0,
-              duration: 250,
-              useNativeDriver: true,
+              duration: 200,
+              useNativeDriver: false,
             }).start(({ finished }) => {
               if (finished) {
                 onSwipeComplete();
               }
             });
           } else {
-            // Smoothly animate back if threshold not met
             Animated.spring(pan, {
               toValue: 0,
-              useNativeDriver: true,
+              useNativeDriver: false,
               friction: 8,
-              tension: 40,
+              tension: 50,
             }).start();
           }
         },
@@ -89,7 +89,7 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
         onPanResponderTerminate: () => {
           Animated.spring(pan, {
             toValue: 0,
-            useNativeDriver: true,
+            useNativeDriver: false,
           }).start();
         },
       }),
@@ -104,20 +104,25 @@ export const SlideToCall: React.FC<SlideToCallProps> = ({
         {...panResponder.panHandlers}
       >
         <Text style={[styles.text, { color: theme.colors.onError }]}>{label}</Text>
+
+        {/* The stretching tail */}
         <Animated.View
           style={[
-            styles.button,
+            styles.stretchHandle,
             {
-              backgroundColor: theme.colors.surface,
-              transform: [{ translateX: pan }],
+              backgroundColor: '#FFFFFF',
+              width: Animated.add(50, pan),
             },
           ]}
         >
-          <MaterialCommunityIcons
-            name="chevron-double-right"
-            size={28}
-            color={theme.colors.error}
-          />
+          {/* The leading circle with shadow to distinguish it */}
+          <View style={[styles.circle, { backgroundColor: theme.colors.surface }]}>
+            <MaterialCommunityIcons
+              name="chevron-double-right"
+              size={28}
+              color={theme.colors.error}
+            />
+          </View>
         </Animated.View>
       </View>
     </View>
@@ -129,7 +134,6 @@ const styles = StyleSheet.create({
     height: 58,
     borderRadius: 29,
     justifyContent: 'center',
-    // Subtle shadow/elevation
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -145,18 +149,26 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
-  button: {
+  stretchHandle: {
+    height: 50,
+    borderRadius: 25,
+    zIndex: 2,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  circle: {
     width: 50,
     height: 50,
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
-    elevation: 2,
+    // Shadow shifted to the left to separate from the tail
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
+    shadowOffset: { width: -3, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   text: {
     position: 'absolute',

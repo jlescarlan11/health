@@ -26,7 +26,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
-import { setHighRisk, setRecommendation as setReduxRecommendation } from '../store/navigationSlice';
+import { setHighRisk, setRecommendation as setReduxRecommendation, clearAssessmentState } from '../store/navigationSlice';
 import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient } from '../api/geminiClient';
 import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
@@ -967,7 +967,8 @@ const RecommendationScreen = () => {
           </Text>
           <Button
             title="Start New Assessment"
-            onPress={() =>
+            onPress={() => {
+              dispatch(clearAssessmentState());
               navigation.dispatch(
                 CommonActions.reset({
                   index: 1,
@@ -981,8 +982,8 @@ const RecommendationScreen = () => {
                     },
                   ],
                 }),
-              )
-            }
+              );
+            }}
             variant="primary"
             style={styles.restartButton}
             icon="refresh"
@@ -1044,7 +1045,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
     padding: 16,
     borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: 0.5,
   },
   justificationHeader: {
     flexDirection: 'row',

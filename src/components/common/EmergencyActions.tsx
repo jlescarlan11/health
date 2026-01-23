@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     marginBottom: 8,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#E0E2E3',
   },
   contactInfo: {
