@@ -13,3 +13,4 @@ export * from './ProgressBar';
 export * from './MultiSelectChecklist';
 export * from './YakapLogo';
 export * from './CheckSymptomsLogo';
+export * from './FacilityDirectoryLogo';

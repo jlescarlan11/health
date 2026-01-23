@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
-import { YakapLogo, CheckSymptomsLogo } from '../components/common';
+import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo } from '../components/common';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -145,7 +145,7 @@ export const MainHomeScreen = () => {
               <FeatureCard
                 title="Facility Directory"
                 subtitle="Find hospitals & health centers nearby"
-                icon="hospital-marker"
+                customIcon={<FacilityDirectoryLogo width={44} height={44} />}
                 color={theme.colors.secondary}
                 onPress={() =>
                   navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })

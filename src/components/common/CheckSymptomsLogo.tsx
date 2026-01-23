@@ -47,7 +47,6 @@ export const CheckSymptomsLogo: React.FC<CheckSymptomsLogoProps> = ({ width = 28
                 <G clipPath="url(#f20f528bfd)">
                   <G clipPath="url(#cc5ffae86e)">
                     <G clipPath="url(#4199b3900e)">
-                      <Rect x="-136.5" width="648" y="-136.499997" height="647.999984" fill="#379777" fillOpacity="1" />
                     </G>
                   </G>
                 </G>

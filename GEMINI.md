@@ -253,3 +253,15 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Implementation:** Installed `react-native-svg` and created a reusable `YakapLogo` component in `src/components/common/YakapLogo.tsx`.
   - **UI Updates:** Integrated the new logo into the `MainHomeScreen` "YAKAP Guide" card and the `YakapHomeScreen` hero section for consistent branding.
   - **Files Created/Modified:** `src/components/common/YakapLogo.tsx`, `src/screens/MainHomeScreen.tsx`, `src/features/yakap/YakapHomeScreen.tsx`.
+
+- **Check Symptoms Brand Update (Jan 23, 2026):**
+  - **Icon Replacement:** Replaced the default 'stethoscope' icon on the Check Symptoms card with the official SVG logo.
+  - **Implementation:** Created a new reusable component `src/components/common/CheckSymptomsLogo.tsx` using `react-native-svg`.
+  - **Build Fix:** Resolved an Android build failure caused by `react-native-svg` import resolution issues with Fabric. Fixed by adding a `metro.config.js` to explicitly resolve `svg`, `ts`, and `tsx` extensions.
+  - **Files Created/Modified:** `src/components/common/CheckSymptomsLogo.tsx`, `src/screens/MainHomeScreen.tsx`, `metro.config.js`, `package.json`.
+
+- **Facility Directory Brand Update (Jan 23, 2026):**
+  - **Icon Replacement:** Replaced the default 'hospital-marker' icon on the Facility Directory card with the official SVG logo.
+  - **Implementation:** Created a new reusable component `src/components/common/FacilityDirectoryLogo.tsx` using `react-native-svg`.
+  - **UI Integration:** Updated the `MainHomeScreen` "Facility Directory" card to use the new logo, maintaining consistent branding across all three main features.
+  - **Files Created/Modified:** `src/components/common/FacilityDirectoryLogo.tsx`, `src/screens/MainHomeScreen.tsx`.

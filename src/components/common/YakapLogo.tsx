@@ -67,7 +67,6 @@ export const YakapLogo: React.FC<YakapLogoProps> = ({ width = 28, height = 28, s
                           It might look weird.
                           But let's trust the SVG for now.
                       */}
-                      <Rect x="-136.5" width="648" y="-136.499997" height="647.999984" fill="#379777" fillOpacity="1" />
                     </G>
                   </G>
                 </G>
