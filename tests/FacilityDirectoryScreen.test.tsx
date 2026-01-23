@@ -37,6 +37,7 @@ jest.mock('../src/store/facilitiesSlice', () => ({
 
 describe('FacilityDirectoryScreen Permission Banner', () => {
   const mockRequestPermission = jest.fn();
+  const mockGetCurrentLocation = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -44,10 +45,11 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
     jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
   });
 
-  it('shows "Enable" button and calls requestPermission when status is undetermined', () => {
+  it('shows "Enable" button and calls getCurrentLocation when status is undetermined', () => {
     (useUserLocation as jest.Mock).mockReturnValue({
       permissionStatus: 'undetermined',
       requestPermission: mockRequestPermission,
+      getCurrentLocation: mockGetCurrentLocation,
     });
 
     const { getByText } = render(<FacilityDirectoryScreen />);
@@ -56,13 +58,14 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
     expect(enableButton).toBeTruthy();
 
     fireEvent.press(enableButton);
-    expect(mockRequestPermission).toHaveBeenCalled();
+    expect(mockGetCurrentLocation).toHaveBeenCalled();
   });
 
   it('shows "Open Settings" button and calls Linking.openSettings when status is denied', () => {
     (useUserLocation as jest.Mock).mockReturnValue({
       permissionStatus: 'denied',
       requestPermission: mockRequestPermission,
+      getCurrentLocation: mockGetCurrentLocation,
     });
 
     const { getByText } = render(<FacilityDirectoryScreen />);
@@ -78,6 +81,7 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
     (useUserLocation as jest.Mock).mockReturnValue({
       permissionStatus: 'granted',
       requestPermission: mockRequestPermission,
+      getCurrentLocation: mockGetCurrentLocation,
     });
 
     const { queryByText } = render(<FacilityDirectoryScreen />);
