@@ -655,14 +655,6 @@ const RecommendationScreen = () => {
     paddingVertical: theme.spacing?.sm ?? 8,
   };
   const handoverButtonLabelText = 'View Handover Report';
-  const renderHandoverIcon = ({ color }: { color: string }) => (
-    <MaterialCommunityIcons
-      name="file-document"
-      size={22}
-      color={color}
-      style={{ marginRight: theme.spacing?.sm ?? 8 }}
-    />
-  );
   const handoverButtonLabelStyle = {
     marginLeft: 0, // spacing already handled via icon margin
     // Color handled by primary variant
@@ -690,12 +682,41 @@ const RecommendationScreen = () => {
           />
         </View>
 
+        {/* Key Observations Section - Neutral/Informational */}
+        {recommendation.key_concerns.length > 0 && (
+          <View style={styles.observationsSection}>
+            <Divider style={styles.restartDivider} />
+            <View style={styles.sectionHeaderRow}>
+              <Text
+                variant="titleLarge"
+                style={styles.sectionTitle}
+              >
+                Key Observation
+              </Text>
+            </View>
+            <View style={styles.concernsList}>
+              {recommendation.key_concerns.map((concern, idx) => (
+                <View key={`concern-${idx}`} style={styles.concernRow}>
+                  <MaterialCommunityIcons
+                    name="check-circle-outline"
+                    size={18}
+                    color={theme.colors.primary}
+                    style={{ marginTop: 2 }}
+                  />
+                  <Text variant="bodyMedium" style={styles.concernText}>
+                    {concern}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {!!recommendation.clinical_soap && (
           <View style={styles.handoverSection}>
             <Divider style={styles.restartDivider} />
             <View style={styles.handoverHeader}>
-              <MaterialCommunityIcons name="doctor" size={24} color={theme.colors.primary} />
-              <Text variant="titleMedium" style={styles.handoverTitle}>
+              <Text variant="titleLarge" style={styles.handoverTitle}>
                 For Healthcare Professionals
               </Text>
             </View>
@@ -707,7 +728,6 @@ const RecommendationScreen = () => {
               title={handoverButtonLabelText}
               onPress={() => navigation.navigate('ClinicalNote')}
               variant="primary"
-              icon={renderHandoverIcon}
               style={handoverButtonStyle}
               contentStyle={handoverButtonContentStyle}
               labelStyle={handoverButtonLabelStyle}
@@ -716,40 +736,6 @@ const RecommendationScreen = () => {
               accessibilityRole="button"
             />
           </View>
-        )}
-
-        {/* Key Observations Section - Neutral/Informational */}
-        {recommendation.key_concerns.length > 0 && (
-          <Surface style={styles.observationsContainer} elevation={0}>
-            <View style={styles.sectionHeaderRow}>
-              <MaterialCommunityIcons
-                name="clipboard-text-search-outline"
-                size={22}
-                color={theme.colors.secondary}
-              />
-              <Text
-                variant="titleMedium"
-                style={[styles.sectionTitle, { color: theme.colors.secondary }]}
-              >
-                KEY OBSERVATIONS
-              </Text>
-            </View>
-            <View style={styles.concernsList}>
-              {recommendation.key_concerns.map((concern, idx) => (
-                <View key={`concern-${idx}`} style={styles.concernRow}>
-                  <MaterialCommunityIcons
-                    name="check-circle-outline"
-                    size={18}
-                    color={theme.colors.secondary}
-                    style={{ marginTop: 2 }}
-                  />
-                  <Text variant="bodyMedium" style={styles.concernText}>
-                    {concern}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </Surface>
         )}
 
         {level === 'self-care' && !showFacilities && (
@@ -768,6 +754,7 @@ const RecommendationScreen = () => {
         {/* Facilities Section */}
         {showFacilities && (
           <View style={styles.facilitiesSection}>
+            <Divider style={styles.restartDivider} />
             <View style={styles.sectionHeader}>
               <Text variant="titleLarge" style={styles.sectionHeading}>
                 {isEmergency ? 'Nearest Emergency Care' : 'Recommended Facilities'}
@@ -866,29 +853,28 @@ const styles = StyleSheet.create({
   loadingText: { marginTop: 16, fontWeight: '500' },
   content: { padding: 16, paddingVertical: 12, paddingBottom: 40 },
   statusCardWrapper: {
-    marginBottom: 16,
+    marginBottom: 24,
   },
 
 
-  observationsContainer: {
+  observationsSection: {
     marginBottom: 24,
-    backgroundColor: '#F5F7F8',
-    borderRadius: 12,
-    padding: 16,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 12,
+    marginTop: 8,
   },
   sectionTitle: {
-    marginLeft: 8,
     fontWeight: '800',
+    fontSize: 22,
+    color: '#333',
     letterSpacing: 0.5,
   },
 
 
-  concernsList: { paddingLeft: 0, marginTop: 8 },
+  concernsList: { paddingLeft: 0, marginTop: 4 },
   concernRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
   concernText: {
     flex: 1,
@@ -899,23 +885,23 @@ const styles = StyleSheet.create({
   },
 
   facilitiesSection: { marginBottom: 24 },
-  sectionHeader: { marginBottom: 16 },
+  sectionHeader: { marginBottom: 16, marginTop: 8 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },
   sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },
 
   handoverSection: {
-    marginTop: 8,
     marginBottom: 24,
   },
   handoverHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
     marginTop: 8,
   },
   handoverTitle: {
-    marginLeft: 12,
-    fontWeight: 'bold',
+    fontWeight: '800',
+    fontSize: 22,
+    color: '#333',
   },
   handoverSubtitle: {
     color: '#666',
@@ -933,7 +919,6 @@ const styles = StyleSheet.create({
   },
 
   restartSection: {
-    marginTop: 8,
     alignItems: 'center',
   },
   restartDivider: {
@@ -942,6 +927,7 @@ const styles = StyleSheet.create({
   },
   restartText: {
     marginBottom: 16,
+    marginTop: 8,
     fontWeight: '600',
   },
   restartButton: {
