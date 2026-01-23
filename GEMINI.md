@@ -242,3 +242,8 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Accessibility:** Implemented proper accessibility roles and labels for the signal component.
   - **Verification:** Added unit tests for the component and integration tests for the conditional rendering logic.
   - **Files Created/Modified:** `src/components/features/navigation/ConfidenceSignal.tsx`, `src/screens/RecommendationScreen.tsx`, `tests/ConfidenceSignalIntegration.test.tsx`.
+
+- **Safety Check Behavior (Jan 23, 2026):**
+  - **Refined Trigger:** Modified `App.tsx` to remove the `AppState` listener that triggered the "Safety Check" modal on app resume (background -> active).
+  - **New Behavior:** The safety modal now only appears on the initial app launch (cold start) if the user is flagged as high risk, preventing accidental triggers when briefly switching apps or locking the screen.
+  - **Files Modified:** `App.tsx`.

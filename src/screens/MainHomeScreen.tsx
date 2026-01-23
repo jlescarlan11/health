@@ -62,11 +62,11 @@ export const MainHomeScreen = () => {
           <View
             style={[
               styles.iconContainer,
-              { backgroundColor: color + '26' },
+              { backgroundColor: color },
               compact && styles.iconContainerCompact,
             ]}
           >
-            <MaterialCommunityIcons name={icon} size={compact ? 20 : 28} color={color} />
+            <MaterialCommunityIcons name={icon} size={compact ? 20 : 28} color="#FFFFFF" />
           </View>
 
           <View style={styles.textContainer}>
@@ -135,7 +135,7 @@ export const MainHomeScreen = () => {
                 title="Facility Directory"
                 subtitle="Find hospitals & health centers nearby"
                 icon="hospital-marker"
-                color={theme.colors.primary}
+                color={theme.colors.secondary}
                 onPress={() =>
                   navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })
                 }
