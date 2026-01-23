@@ -493,7 +493,7 @@ const RecommendationScreen = () => {
   useEffect(() => {
     // Load facilities if they aren't in the store
     if (facilities.length === 0) {
-      dispatch(fetchFacilities({ page: 1, refresh: true }));
+      dispatch(fetchFacilities());
     }
   }, [dispatch, facilities.length]);
 
@@ -793,7 +793,7 @@ const RecommendationScreen = () => {
                 </Text>
                 <Button
                   variant="text"
-                  onPress={() => dispatch(fetchFacilities({ page: 1, refresh: true }))}
+                  onPress={() => dispatch(fetchFacilities())}
                   title="Retry Loading"
                 />
               </Surface>

@@ -35,7 +35,7 @@ export const FacilityDirectoryScreen = () => {
 
   // Load initial data
   useEffect(() => {
-    dispatch(fetchFacilities({ page: 1, refresh: true }));
+    dispatch(fetchFacilities());
   }, [dispatch]);
 
   // Debounce search dispatch

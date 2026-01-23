@@ -20,9 +20,6 @@ interface FacilitiesState {
   filters: FacilityFilters;
   isLoading: boolean;
   error: string | null;
-  total: number;
-  page: number;
-  hasMore: boolean;
 }
 
 const initialState: FacilitiesState = {
@@ -33,24 +30,13 @@ const initialState: FacilitiesState = {
   filters: {},
   isLoading: false,
   error: null,
-  total: 0,
-  page: 1,
-  hasMore: true,
 };
 
 export const fetchFacilities = createAsyncThunk(
   'facilities/fetchFacilities',
-  async (
-    params: { page: number; limit?: number; refresh?: boolean } = {
-      page: 1,
-      limit: 20,
-      refresh: true,
-    },
-  ) => {
-    const { page, limit = 20, refresh = false } = params;
-    const offset = (page - 1) * limit;
-    const data = await getFacilities({ limit, offset });
-    return { data, page, refresh };
+  async () => {
+    const data = await getFacilities();
+    return { data };
   },
 );
 
@@ -152,38 +138,19 @@ const facilitiesSlice = createSlice({
       })
       .addCase(fetchFacilities.fulfilled, (state, action) => {
         state.isLoading = false;
-        const { data, page, refresh } = action.payload;
+        const { data } = action.payload;
 
         let newFacilities: Facility[] = [];
-        let total = 0;
 
         if (Array.isArray(data)) {
           newFacilities = data;
-          total = data.length; // Fallback if total not provided
         } else if (data && typeof data === 'object') {
           newFacilities = data.facilities || [];
-          total = data.total || newFacilities.length;
         }
 
-        if (refresh) {
-          state.facilities = newFacilities;
-        } else {
-          // Append and remove duplicates
-          const existingIds = new Set(state.facilities.map((f) => f.id));
-          const uniqueNewFacilities = newFacilities.filter((f) => !existingIds.has(f.id));
-          state.facilities = [...state.facilities, ...uniqueNewFacilities];
-        }
-
-        state.total = total;
-        state.page = page;
-        state.hasMore = state.facilities.length < total;
+        state.facilities = newFacilities;
 
         // Re-apply filters on the updated list
-        // Note: For true server-side pagination, client-side filtering might be incomplete.
-        // But assuming we are pulling 'all' data via pagination or just displaying list, this is fine for now.
-        // If filters are active, we might want to trigger a server-side filtered fetch instead.
-        // For now, we update the client-side filtered list with what we have.
-        // Copy-pasting filter logic from setFilters to ensure consistency
         const { type, services, yakapAccredited, searchQuery, openNow } = state.filters || {};
         state.filteredFacilities = state.facilities.filter((facility) => {
           const matchesType = !type || facility.type === type;

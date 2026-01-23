@@ -19,38 +19,22 @@ export const FacilityListView: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<FacilityListNavigationProp>();
 
-  const { filteredFacilities, isLoading, error, page, hasMore } = useSelector(
+  const { filteredFacilities, isLoading, error } = useSelector(
     (state: RootState) => state.facilities,
   );
 
   const loadFacilities = useCallback(
-    (refresh = false) => {
-      // If refreshing, reset to page 1. If loading more, increment page.
-      const targetPage = refresh ? 1 : page + 1;
-      if (!refresh && !hasMore) return;
-
-      dispatch(
-        fetchFacilities({
-          page: targetPage,
-          limit: 20,
-          refresh,
-        }),
-      );
+    () => {
+      dispatch(fetchFacilities());
     },
-    [dispatch, page, hasMore],
+    [dispatch],
   );
 
   // Removed useEffect for initial load to avoid double fetching if parent handles it.
-  // Parent component should dispatch fetchFacilities({ page: 1 }) on mount if needed.
+  // Parent component should dispatch fetchFacilities() on mount if needed.
 
   const handleRefresh = () => {
-    loadFacilities(true);
-  };
-
-  const handleLoadMore = () => {
-    if (!isLoading && hasMore) {
-      loadFacilities(false);
-    }
+    loadFacilities();
   };
 
   const handleFacilityPress = (facility: Facility) => {
@@ -92,7 +76,7 @@ export const FacilityListView: React.FC = () => {
       return (
         <View style={styles.center}>
           <Text style={{ color: theme.colors.error, marginBottom: 12 }}>{error}</Text>
-          <Button variant="outline" onPress={() => loadFacilities(true)} title="Retry" />
+          <Button variant="outline" onPress={loadFacilities} title="Retry" />
         </View>
       );
     }
@@ -113,12 +97,8 @@ export const FacilityListView: React.FC = () => {
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
       contentContainerStyle={styles.listContent}
-      onEndReached={handleLoadMore}
-      onEndReachedThreshold={0.5}
       showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={isLoading && page === 1} onRefresh={handleRefresh} />
-      }
+      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
       ListFooterComponent={renderFooter}
       ListEmptyComponent={renderEmpty}
     />

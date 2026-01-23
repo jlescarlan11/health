@@ -29,7 +29,6 @@ describe('Facility Routes', () => {
   describe('GET /api/facilities', () => {
     it('should return a list of facilities with frontend structure', async () => {
       prismaMock.facility.findMany.mockResolvedValue([mockFacility]);
-      prismaMock.facility.count.mockResolvedValue(1);
 
       const response = await request(app).get('/api/facilities');
 
@@ -42,11 +41,16 @@ describe('Facility Routes', () => {
       expect(response.body.facilities[0].photoUrl).toBe('url1');
 
       expect(prismaMock.facility.findMany).toHaveBeenCalledTimes(1);
+      expect(prismaMock.facility.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { name: 'asc' },
+        }),
+      );
+      expect(prismaMock.facility.count).not.toHaveBeenCalled();
     });
 
     it('should filter by type', async () => {
       prismaMock.facility.findMany.mockResolvedValue([mockFacility]);
-      prismaMock.facility.count.mockResolvedValue(1);
 
       const response = await request(app).get('/api/facilities?type=hospital');
 
@@ -54,6 +58,43 @@ describe('Facility Routes', () => {
       expect(prismaMock.facility.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { type: 'hospital' } }),
       );
+    });
+
+    it('should paginate when limit is provided', async () => {
+      prismaMock.facility.findMany.mockResolvedValue([mockFacility]);
+      prismaMock.facility.count.mockResolvedValue(1);
+
+      const response = await request(app).get('/api/facilities?limit=10&offset=0');
+
+      expect(response.status).toBe(200);
+      expect(response.body.limit).toBe(10);
+      expect(response.body.offset).toBe(0);
+      expect(response.body.total).toBe(1);
+      expect(prismaMock.facility.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 10,
+          skip: 0,
+        }),
+      );
+      expect(prismaMock.facility.count).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fetch all when limit is -1 (ignores offset)', async () => {
+      prismaMock.facility.findMany.mockResolvedValue([mockFacility]);
+
+      const response = await request(app).get('/api/facilities?limit=-1&offset=10');
+
+      expect(response.status).toBe(200);
+      expect(response.body.limit).toBe(1);
+      expect(response.body.offset).toBe(0);
+      expect(response.body.total).toBe(1);
+      expect(prismaMock.facility.findMany).toHaveBeenCalledWith(
+        expect.not.objectContaining({ take: expect.anything() }),
+      );
+      expect(prismaMock.facility.findMany).toHaveBeenCalledWith(
+        expect.not.objectContaining({ skip: expect.anything() }),
+      );
+      expect(prismaMock.facility.count).not.toHaveBeenCalled();
     });
   });
 
