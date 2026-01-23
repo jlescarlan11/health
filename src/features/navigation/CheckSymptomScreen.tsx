@@ -46,45 +46,35 @@ const SymptomItem = ({
   onPress: () => void;
 }) => {
   const theme = useTheme();
-  const [isPressed, setIsPressed] = useState(false);
 
   return (
-    <Surface
+    <Chip
+      selected={isSelected}
+      onPress={onPress}
+      mode="flat"
+      showSelectedCheck={false}
+      icon={({ size, color }) => (
+        <MaterialCommunityIcons
+          name={(isSelected ? 'check' : icon) as any}
+          size={size}
+          color={isSelected ? theme.colors.onPrimary : theme.colors.primary}
+        />
+      )}
       style={[
-        styles.symptomCard,
+        styles.symptomChip,
         {
           backgroundColor: isSelected
             ? theme.colors.primary
-            : isPressed
-              ? theme.colors.surface
-              : theme.colors.secondaryContainer,
-          elevation: isPressed ? 2 : 0,
+            : theme.colors.secondaryContainer,
         },
       ]}
+      textStyle={[
+        styles.symptomLabel,
+        { color: isSelected ? theme.colors.onPrimary : theme.colors.onSurface },
+      ]}
     >
-      <Pressable
-        style={styles.symptomPressable}
-        onPress={onPress}
-        onPressIn={() => setIsPressed(true)}
-        onPressOut={() => setIsPressed(false)}
-        android_ripple={{ color: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)' }}
-      >
-        <MaterialCommunityIcons
-          name={(isSelected ? 'check' : icon) as any}
-          size={24}
-          color={isSelected ? theme.colors.onPrimary : theme.colors.primary}
-        />
-        <Text
-          variant="bodyMedium"
-          style={[
-            styles.symptomLabel,
-            { color: isSelected ? theme.colors.onPrimary : theme.colors.onSurface },
-          ]}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Surface>
+      {label}
+    </Chip>
   );
 };
 
@@ -397,22 +387,20 @@ const styles = StyleSheet.create({
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },
-  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  symptomCard: {
-    width: '48%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 0,
-  },
-  symptomPressable: {
+  chipContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
+    flexWrap: 'wrap',
     gap: 8,
+  },
+  symptomChip: {
+    flexGrow: 1,
+    flexBasis: '30%',
+    marginBottom: 4,
+    borderRadius: 8,
   },
   symptomLabel: {
     fontWeight: '500',
-    flex: 1,
+    fontSize: 14,
   },
 });
 
