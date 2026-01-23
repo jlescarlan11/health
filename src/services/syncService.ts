@@ -4,6 +4,7 @@ import { fetchFacilitiesFromApi } from './facilityService';
 import { saveFacilitiesFull } from './database';
 import { store } from '../store';
 import { syncCompleted, setOfflineStatus } from '../store/offlineSlice';
+import { Facility } from '../types';
 
 export const syncFacilities = async () => {
   const state = await NetInfo.fetch();
@@ -17,7 +18,7 @@ export const syncFacilities = async () => {
     console.log('Starting facilities sync...');
     const data = await fetchFacilitiesFromApi();
 
-    let facilitiesToSave = [];
+    let facilitiesToSave: Facility[] = [];
     if (Array.isArray(data)) {
       facilitiesToSave = data;
     } else if (data.facilities && Array.isArray(data.facilities)) {
