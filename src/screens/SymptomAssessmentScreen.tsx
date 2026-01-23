@@ -542,7 +542,7 @@ const SymptomAssessmentScreen = () => {
       logConversationStep(currentQuestionIndex, currentQ.text, answer, safetyCheck);
 
       if (safetyCheck.isEmergency) {
-        const activeKeywords =
+        const activeKeywords = 
           safetyCheck.matchedKeywords?.filter((k) => !suppressedKeywords.includes(k)) || [];
 
         if (activeKeywords.length > 0) {
@@ -641,7 +641,7 @@ const SymptomAssessmentScreen = () => {
           }
 
           // --- TURN FLOOR LOCK (Deterministic Category Floor) ---
-          const isComplexCategory =
+          const isComplexCategory = 
             profile.symptom_category === 'complex' ||
             profile.symptom_category === 'critical' ||
             profile.is_complex_case;
@@ -681,17 +681,17 @@ const SymptomAssessmentScreen = () => {
           // Handle Clarification Signal (Force Clarification for Hedging/Ambiguous Denial)
           if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' && !arbiterResult.needs_reset) {
             console.log(`[Assessment] Arbiter requesting clarification. Count: ${clarificationCount + 1}/${MAX_CLARIFICATIONS}`);
-            
+
             // Extract the hedged symptom from friction details if possible
             // Format: [System] Hedging detected in: fieldName ("detectedPhrase")
             const hedgingMatch = profile.clinical_friction_details?.match(/Hedging detected in: ([^ ]+) \("(.*)"\)/);
             const hedgedField = hedgingMatch ? hedgingMatch[1] : 'symptoms you mentioned';
-            
+
             setIsClarifyingDenial(true);
             setClarificationCount((prev) => prev + 1);
             setIsTyping(false);
-            
-            const clarificationText = clarificationCount === 0 
+
+            const clarificationText = clarificationCount === 0
               ? `I want to be perfectly safe. You mentioned "${hedgedField}" might be present. To be certain, is this happening to you right now?`
               : `I'm still a bit unsure about your safety regarding "${hedgedField}". It's important for me to know for sure: are you experiencing this right now?`;
 
@@ -846,7 +846,7 @@ const SymptomAssessmentScreen = () => {
               ...prev,
               {
                 id: `expansion-notice-${Date.now()}`,
-                text: 'I need to clarify just a few more specific details to be sure about your safety...',
+                text: 'I need to clarify just a few more specific details to be sure about your safety...', 
                 sender: 'assistant',
               },
             ]);
@@ -857,13 +857,13 @@ const SymptomAssessmentScreen = () => {
 
             const resolvedTag = isRecentResolvedRef.current ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]` : '';
             console.log(`[DEBUG_EXPANSION] resolvedTag: "${resolvedTag}", Ref: ${isRecentResolvedRef.current}, Keyword: ${resolvedKeywordRef.current}`);
-            
+
             const followUpPrompt = `
               ${resolvedTag} The assessment for "${initialSymptom}" is incomplete.
               History: ${historyItems.map((h) => h.text).join('. ')}.
-              
+
               Task: Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns.
-              
+
               REQUIRED OUTPUT FORMAT (JSON ONLY, NO MARKDOWN):
               {
                 "questions": [
@@ -1065,8 +1065,7 @@ const SymptomAssessmentScreen = () => {
           }
         } catch (e) {
           console.warn(
-            '[Assessment] Arbiter consultation or follow-up failed, continuing planned path...',
-            e,
+            '[Assessment] Arbiter consultation or follow-up failed, continuing planned path...', e,
           );
         }
       }
@@ -1147,8 +1146,8 @@ const SymptomAssessmentScreen = () => {
         /**
          * PATHWAY: RECENTLY RESOLVED (TRANSIENT)
          * User reports a high-risk symptom occurred but has since stopped (e.g. TIA, Angina).
-         * Logic: We MUST NOT skip assessment. Instead, we flag the state for the final 
-         * recommendation engine to enforce a "Hospital Floor" safety protocol while 
+         * Logic: We MUST NOT skip assessment. Instead, we flag the state for the final
+         * recommendation engine to enforce a "Hospital Floor" safety protocol while
          * continuing to gather context about the episode's duration and progression.
          */
         console.log(`[Assessment] RECENTLY RESOLVED: ${keyword}. Flagging and continuing.`);
@@ -1187,7 +1186,7 @@ const SymptomAssessmentScreen = () => {
     setAssessmentStage('generating');
 
     try {
-      const profile =
+      const profile = 
         preExtractedProfile ||
         (await extractClinicalProfile(
           currentHistory.map((m) => ({
@@ -1313,17 +1312,17 @@ const SymptomAssessmentScreen = () => {
       'You can exit and resume this assessment later, or restart it from the beginning.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Restart', 
-          style: 'destructive', 
+        {
+          text: 'Restart',
+          style: 'destructive',
           onPress: () => {
             dispatch(clearAssessmentState());
             navigation.goBack();
-          } 
+          }
         },
-        { 
-          text: 'Exit & Save', 
-          onPress: () => navigation.goBack() 
+        {
+          text: 'Exit & Save',
+          onPress: () => navigation.goBack()
         },
       ],
     );
@@ -1376,7 +1375,7 @@ const SymptomAssessmentScreen = () => {
           <View
             style={[
               styles.avatar,
-              {
+              { 
                 backgroundColor: theme.colors.primaryContainer,
               },
             ]}
@@ -1389,14 +1388,14 @@ const SymptomAssessmentScreen = () => {
           </View>
         )}
         <View
-          style={[
+          style={[ 
             styles.bubble,
             isAssistant ? styles.assistantBubble : styles.userBubble,
             { backgroundColor: isAssistant ? theme.colors.surface : theme.colors.primary },
           ]}
         >
           <Text
-            style={[
+            style={[ 
               styles.messageText,
               { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
             ]}
@@ -1419,7 +1418,7 @@ const SymptomAssessmentScreen = () => {
 
   // Determine current options if offline
   const currentQuestion = questions[currentQuestionIndex];
-  const offlineOptions =
+  const offlineOptions = 
     isOfflineMode && currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId]?.options : null;
 
   const totalQuestions = Math.max(questions.length, 1);
@@ -1439,39 +1438,39 @@ const SymptomAssessmentScreen = () => {
       case 'generating':
         return {
           value: 1,
-          label: 'Generating recommendation...',
+          label: 'Generating recommendation...', 
           color: '#2196F3',
         };
       case 'review':
         return {
           value: Math.max(questionProgress, 0.85),
-          label: 'Reviewing your responses...',
+          label: 'Reviewing your responses...', 
           color: theme.colors.primary,
         };
       case 'follow_up':
         return {
           value: Math.max(questionProgress, 0.35),
-          label: 'Follow-up questions...',
+          label: 'Follow-up questions...', 
           color: theme.colors.primary,
         };
       case 'intake':
       default:
         return {
           value: Math.max(questionProgress, 0.1),
-          label: 'Gathering initial symptoms...',
+          label: 'Gathering initial symptoms...', 
           color: theme.colors.primary,
         };
     }
   })();
 
   // Determine if current question has a "None" option and if it's mandatory
-  const currentOptions =
+  const currentOptions = 
     currentQuestion?.options || (currentQuestion ? parseRedFlags(currentQuestion.text) : []);
   const hasNoneOptionInCurrent = currentOptions.some((opt: any) => {
     if (typeof opt === 'string') return isNoneOption(opt);
     if (opt && typeof opt === 'object' && 'label' in opt) return isNoneOption((opt as any).label);
     if (opt && typeof opt === 'object' && 'items' in opt) {
-      return (opt as any).items.some((i: any) =>
+      return (opt as any).items.some((i: any) => 
         isNoneOption(typeof i === 'string' ? i : i.id || i.label || ''),
       );
     }
@@ -1516,7 +1515,7 @@ const SymptomAssessmentScreen = () => {
               <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
             </View>
             <View
-              style={[
+              style={[ 
                 styles.bubble,
                 styles.assistantBubble,
                 { backgroundColor: theme.colors.surface },
@@ -1534,7 +1533,7 @@ const SymptomAssessmentScreen = () => {
               <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
             </View>
             <View
-              style={[
+              style={[ 
                 styles.bubble,
                 styles.assistantBubble,
                 { backgroundColor: theme.colors.surface, padding: 12 },
@@ -1550,7 +1549,7 @@ const SymptomAssessmentScreen = () => {
               <MaterialCommunityIcons name="alert" size={18} color={theme.colors.error} />
             </View>
             <View
-              style={[
+              style={[ 
                 styles.bubble,
                 styles.assistantBubble,
                 {
@@ -1572,7 +1571,7 @@ const SymptomAssessmentScreen = () => {
       </ScrollView>
 
       <Animated.View
-        style={[
+        style={[ 
           styles.inputSection,
           {
             marginBottom: keyboardHeight,
@@ -1764,12 +1763,12 @@ const SymptomAssessmentScreen = () => {
           <>
             {/* Suggestions / Offline Chips */}
             {(() => {
-              const shouldShowChips =
+              const shouldShowChips = 
                 offlineOptions ||
-                (!isOfflineMode &&
-                  currentQuestion?.options &&
-                  currentQuestion.options.length > 0 &&
-                  currentQuestion.type !== 'text' &&
+                (!isOfflineMode && 
+                  currentQuestion?.options && 
+                  currentQuestion.options.length > 0 && 
+                  currentQuestion.type !== 'text' && 
                   currentQuestion.type !== 'number');
 
               if (!shouldShowChips) return null;

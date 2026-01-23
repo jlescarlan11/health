@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
+import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo } from '../components/common';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -22,6 +23,7 @@ export const MainHomeScreen = () => {
     title,
     subtitle,
     icon,
+    customIcon,
     color,
     onPress,
     testID,
@@ -29,7 +31,8 @@ export const MainHomeScreen = () => {
   }: {
     title: string;
     subtitle?: string;
-    icon: keyof (typeof MaterialCommunityIcons)['glyphMap'];
+    icon?: keyof (typeof MaterialCommunityIcons)['glyphMap'];
+    customIcon?: React.ReactNode;
     color: string;
     onPress: () => void;
     testID?: string;
@@ -62,11 +65,19 @@ export const MainHomeScreen = () => {
           <View
             style={[
               styles.iconContainer,
-              { backgroundColor: color + '26' },
+              { backgroundColor: color },
               compact && styles.iconContainerCompact,
             ]}
           >
-            <MaterialCommunityIcons name={icon} size={compact ? 20 : 28} color={color} />
+            {customIcon ? (
+              customIcon
+            ) : (
+              <MaterialCommunityIcons
+                name={icon as any}
+                size={compact ? 20 : 28}
+                color="#FFFFFF"
+              />
+            )}
           </View>
 
           <View style={styles.textContainer}>
@@ -114,51 +125,40 @@ export const MainHomeScreen = () => {
       edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <HomeHero />
+        <HomeHero 
+          hasClinicalReport={!!lastNote}
+          onClinicalReportPress={() => navigation.navigate('ClinicalNote')}
+        />
 
         <View style={styles.cardsContainer}>
           <View style={styles.bottomStack}>
-            {lastNote && (
-              <View style={styles.bottomStackItem}>
-                <FeatureCard
-                  title="Clinical Handover"
-                  subtitle={`Note from ${new Date(lastNote.timestamp).toLocaleDateString()}`}
-                  icon="doctor"
-                  color={theme.colors.primary}
-                  onPress={() => navigation.navigate('ClinicalNote')}
-                />
-              </View>
-            )}
             <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="Check Symptoms"
                 subtitle="AI-powered health assessment"
-                icon="stethoscope"
+                customIcon={<CheckSymptomsLogo width={44} height={44} />}
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('Check', { screen: 'CheckSymptom' })}
               />
             </View>
-          </View>
-
-          <View style={styles.gridRow}>
-            <View style={styles.gridItem}>
+            <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="Facility Directory"
-                icon="hospital-marker"
-                color={theme.colors.primary}
+                subtitle="Find hospitals & health centers nearby"
+                customIcon={<FacilityDirectoryLogo width={44} height={44} />}
+                color={theme.colors.secondary}
                 onPress={() =>
                   navigation.navigate('Find', { screen: 'FacilityDirectory', params: {} })
                 }
-                compact
               />
             </View>
-            <View style={styles.gridItem}>
+            <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="YAKAP Guide"
-                icon="card-account-details"
+                subtitle="Enrollment guide for free healthcare"
+                customIcon={<YakapLogo width={44} height={44} />}
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
-                compact
               />
             </View>
           </View>

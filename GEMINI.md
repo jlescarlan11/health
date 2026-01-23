@@ -242,3 +242,26 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Accessibility:** Implemented proper accessibility roles and labels for the signal component.
   - **Verification:** Added unit tests for the component and integration tests for the conditional rendering logic.
   - **Files Created/Modified:** `src/components/features/navigation/ConfidenceSignal.tsx`, `src/screens/RecommendationScreen.tsx`, `tests/ConfidenceSignalIntegration.test.tsx`.
+
+- **Safety Check Behavior (Jan 23, 2026):**
+  - **Refined Trigger:** Modified `App.tsx` to remove the `AppState` listener that triggered the "Safety Check" modal on app resume (background -> active).
+  - **New Behavior:** The safety modal now only appears on the initial app launch (cold start) if the user is flagged as high risk, preventing accidental triggers when briefly switching apps or locking the screen.
+  - **Files Modified:** `App.tsx`.
+
+- **Yakap Brand Update (Jan 23, 2026):**
+  - **Icon Replacement:** Replaced the generic MaterialCommunityIcon ('card-account-details') with the official Yakap logo (SVG) across the application.
+  - **Implementation:** Installed `react-native-svg` and created a reusable `YakapLogo` component in `src/components/common/YakapLogo.tsx`.
+  - **UI Updates:** Integrated the new logo into the `MainHomeScreen` "YAKAP Guide" card and the `YakapHomeScreen` hero section for consistent branding.
+  - **Files Created/Modified:** `src/components/common/YakapLogo.tsx`, `src/screens/MainHomeScreen.tsx`, `src/features/yakap/YakapHomeScreen.tsx`.
+
+- **Check Symptoms Brand Update (Jan 23, 2026):**
+  - **Icon Replacement:** Replaced the default 'stethoscope' icon on the Check Symptoms card with the official SVG logo.
+  - **Implementation:** Created a new reusable component `src/components/common/CheckSymptomsLogo.tsx` using `react-native-svg`.
+  - **Build Fix:** Resolved an Android build failure caused by `react-native-svg` import resolution issues with Fabric. Fixed by adding a `metro.config.js` to explicitly resolve `svg`, `ts`, and `tsx` extensions.
+  - **Files Created/Modified:** `src/components/common/CheckSymptomsLogo.tsx`, `src/screens/MainHomeScreen.tsx`, `metro.config.js`, `package.json`.
+
+- **Facility Directory Brand Update (Jan 23, 2026):**
+  - **Icon Replacement:** Replaced the default 'hospital-marker' icon on the Facility Directory card with the official SVG logo.
+  - **Implementation:** Created a new reusable component `src/components/common/FacilityDirectoryLogo.tsx` using `react-native-svg`.
+  - **UI Integration:** Updated the `MainHomeScreen` "Facility Directory" card to use the new logo, maintaining consistent branding across all three main features.
+  - **Files Created/Modified:** `src/components/common/FacilityDirectoryLogo.tsx`, `src/screens/MainHomeScreen.tsx`.

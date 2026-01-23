@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { StyleSheet, View, AppState, AppStateStatus } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as StoreProvider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
@@ -64,7 +64,6 @@ const AppContent = () => {
   const dispatch = useAppDispatch();
   const isHighRisk = useAppSelector((state) => state.navigation.isHighRisk);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
-  const appState = useRef(AppState.currentState);
 
   useEffect(() => {
     // Check TTL on app start
@@ -74,18 +73,6 @@ const AppContent = () => {
     if (isHighRisk) {
       setSafetyModalVisible(true);
     }
-
-    // AppState Listener for background -> foreground transitions
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (
-        appState.current.match(/inactive|background/) &&
-        nextAppState === 'active' &&
-        isHighRisk
-      ) {
-        setSafetyModalVisible(true);
-      }
-      appState.current = nextAppState;
-    });
 
     // Initialize Database and Sync
     const startup = async () => {
@@ -115,7 +102,6 @@ const AppContent = () => {
     });
 
     return () => {
-      subscription.remove();
       unsubscribe();
     };
   }, [isHighRisk]);
