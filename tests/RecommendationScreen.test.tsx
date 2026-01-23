@@ -3,13 +3,31 @@ import { render, waitFor } from '@testing-library/react-native';
 import RecommendationScreen from '../src/screens/RecommendationScreen';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { navigationReducer, facilitiesReducer, offlineReducer, settingsReducer } from '../src/store';
+import {
+  navigationReducer,
+  facilitiesReducer,
+  offlineReducer,
+  settingsReducer,
+} from '../src/store';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { geminiClient } from '../src/api/geminiClient';
 import { PaperProvider } from 'react-native-paper';
 import { theme } from '../src/theme';
+import * as locationHook from '../src/hooks/useUserLocation';
 
 // Mock dependencies
+jest.mock('../src/hooks/useUserLocation', () => ({
+  useUserLocation: jest.fn(() => ({
+    location: {
+      coords: { latitude: 13.6218, longitude: 123.1875 },
+      timestamp: Date.now(),
+    },
+    errorMsg: null,
+    permissionStatus: 'granted',
+    requestPermission: jest.fn(() => Promise.resolve(true)),
+  })),
+}));
+
 jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
   useNavigation: jest.fn(),
@@ -124,7 +142,7 @@ describe('RecommendationScreen', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
     expect(getByText('Analyzing symptoms...')).toBeTruthy();
   });
@@ -148,7 +166,7 @@ describe('RecommendationScreen', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => {
@@ -165,13 +183,15 @@ describe('RecommendationScreen', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => {
-      // Fallback level for low risk is health_center
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
-      expect(getByText(/suggest a professional evaluation at your local Health Center/)).toBeTruthy();
+      // Fallback level for low risk is self-care
+      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
+      expect(
+        getByText(/condition appears manageable at home/i),
+      ).toBeTruthy();
     });
   });
 });

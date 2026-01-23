@@ -1,5 +1,12 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { View, StyleSheet, Animated, StyleProp, ViewStyle, KeyboardTypeOptions } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Animated,
+  StyleProp,
+  ViewStyle,
+  KeyboardTypeOptions,
+} from 'react-native';
 import { TextInput, IconButton, useTheme } from 'react-native-paper';
 import { VoiceVisualizer } from './VoiceVisualizer';
 

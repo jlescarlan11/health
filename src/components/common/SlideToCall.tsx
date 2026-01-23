@@ -1,5 +1,13 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { View, StyleSheet, PanResponder, Animated, StyleProp, ViewStyle, LayoutChangeEvent } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  PanResponder,
+  Animated,
+  StyleProp,
+  ViewStyle,
+  LayoutChangeEvent,
+} from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 

@@ -64,19 +64,20 @@ export const {
 } = offlineSlice.actions;
 
 // Thunk to check TTL
-export const checkAssessmentTTL = () => (dispatch: any, getState: () => { offline: OfflineState }) => {
-  const { latestAssessment } = getState().offline;
-  if (latestAssessment) {
-    const now = Date.now();
-    const ttl = 24 * 60 * 60 * 1000; // 24 hours
-    if (now - latestAssessment.timestamp > ttl) {
-      dispatch(clearLatestAssessment());
+export const checkAssessmentTTL =
+  () => (dispatch: any, getState: () => { offline: OfflineState }) => {
+    const { latestAssessment } = getState().offline;
+    if (latestAssessment) {
+      const now = Date.now();
+      const ttl = 24 * 60 * 60 * 1000; // 24 hours
+      if (now - latestAssessment.timestamp > ttl) {
+        dispatch(clearLatestAssessment());
+      }
     }
-  }
-};
+  };
 
 // Selectors
-export const selectLatestClinicalNote = (state: { offline: OfflineState }) => 
+export const selectLatestClinicalNote = (state: { offline: OfflineState }) =>
   state.offline.latestAssessment;
 
 export default offlineSlice.reducer;

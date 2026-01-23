@@ -39,10 +39,7 @@ const AppNavigator = () => {
       <Stack.Screen name="YAKAP" component={YakapNavigator} />
 
       {/* AI Navigator Flow */}
-      <Stack.Screen
-        name="SymptomAssessment"
-        component={SymptomAssessmentScreen}
-      />
+      <Stack.Screen name="SymptomAssessment" component={SymptomAssessmentScreen} />
       <Stack.Screen
         name="Recommendation"
         component={RecommendationScreen}
@@ -51,10 +48,7 @@ const AppNavigator = () => {
           header: () => <StandardHeader title="Recommendation" />,
         }}
       />
-      <Stack.Screen
-        name="ClinicalNote"
-        component={ClinicalNoteScreen}
-      />
+      <Stack.Screen name="ClinicalNote" component={ClinicalNoteScreen} />
       <Stack.Screen
         name="CrisisSupport"
         component={CrisisSupportScreen}
@@ -64,29 +58,14 @@ const AppNavigator = () => {
       />
 
       {/* Facilities Flow */}
-      <Stack.Screen
-        name="FacilityDetails"
-        component={FacilityDetailsScreen}
-      />
+      <Stack.Screen name="FacilityDetails" component={FacilityDetailsScreen} />
 
       {/* YAKAP Flow */}
       <Stack.Screen name="YakapFaq" component={YakapFaqScreen} />
-      <Stack.Screen
-        name="EligibilityChecker"
-        component={EligibilityCheckerScreen}
-      />
-      <Stack.Screen
-        name="EnrollmentPathway"
-        component={EnrollmentPathwayScreen}
-      />
-      <Stack.Screen
-        name="EnrollmentGuide"
-        component={EnrollmentGuideScreen}
-      />
-      <Stack.Screen
-        name="EnrollmentCompletion"
-        component={EnrollmentCompletionScreen}
-      />
+      <Stack.Screen name="EligibilityChecker" component={EligibilityCheckerScreen} />
+      <Stack.Screen name="EnrollmentPathway" component={EnrollmentPathwayScreen} />
+      <Stack.Screen name="EnrollmentGuide" component={EnrollmentGuideScreen} />
+      <Stack.Screen name="EnrollmentCompletion" component={EnrollmentCompletionScreen} />
 
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
       <Stack.Screen

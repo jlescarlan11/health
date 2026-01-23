@@ -18,7 +18,7 @@ describe('TriageArbiter Coherence & Completeness', () => {
     triage_readiness_score: 0.95,
     ambiguity_detected: false,
     internal_consistency_score: 1.0,
-    red_flags_resolved: true
+    red_flags_resolved: true,
   };
 
   describe('Mandatory Safety Gates', () => {
@@ -39,7 +39,12 @@ describe('TriageArbiter Coherence & Completeness', () => {
 
   describe('Clinical Coherence (Stage B)', () => {
     it('should return RESOLVE_AMBIGUITY if ambiguity_detected is true regardless of readiness', () => {
-      const profile = { ...baseProfile, ambiguity_detected: true, triage_readiness_score: 1.0, uncertainty_accepted: false };
+      const profile = {
+        ...baseProfile,
+        ambiguity_detected: true,
+        triage_readiness_score: 1.0,
+        uncertainty_accepted: false,
+      };
       const result = TriageArbiter.evaluateAssessmentState(mockHistory, profile, 4, 5, []);
       expect(result.signal).toBe('RESOLVE_AMBIGUITY');
       expect(result.reason).toContain('COHERENCE FAIL: Unresolved clinical ambiguity');
@@ -59,7 +64,7 @@ describe('TriageArbiter Coherence & Completeness', () => {
     });
 
     it('should deny termination if internal consistency is low', () => {
-      const profile = { ...baseProfile, internal_consistency_score: 0.80 };
+      const profile = { ...baseProfile, internal_consistency_score: 0.8 };
       const remaining = [{ tier: 3 }];
       const result = TriageArbiter.evaluateAssessmentState(mockHistory, profile, 4, 5, remaining);
       expect(result.signal).toBe('CONTINUE');

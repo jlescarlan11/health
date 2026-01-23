@@ -1,5 +1,18 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  BackHandler,
+  useWindowDimensions,
+} from 'react-native';
 import { Text, useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,7 +30,6 @@ import { setHighRisk, setRecommendation as setReduxRecommendation } from '../sto
 import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient } from '../api/geminiClient';
 import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
-import { EmergencyButton } from '../components/common/EmergencyButton';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { Button, SafetyRecheckModal } from '../components/common';
 import { Facility, AssessmentResponse } from '../types';
@@ -25,10 +37,20 @@ import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
-import { AssessmentProfile } from '../types/triage';
+import { AssessmentProfile, TriageLevel } from '../types/triage';
 import { ConfidenceSignal } from '../components/features/navigation/ConfidenceSignal';
+import { TriageStatusCard } from '../components/features/triage/TriageStatusCard';
+import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
+
+const SYSTEM_INSTRUCTIONS: Record<string, string> = {
+  Cardiac: 'Keep patient calm and seated. Loosen tight clothing.',
+  Respiratory: 'Help patient sit upright. Keep them calm.',
+  Trauma: 'Apply firm pressure to bleeding. Do not move if neck injury suspected.',
+  Neurological: 'Check breathing. Place in recovery position if unconscious.',
+  Other: 'Keep patient comfortable. Monitor breathing.',
+};
 
 const isFallbackProfile = (profile?: AssessmentProfile) => {
   if (!profile || !profile.summary) return false;
@@ -58,10 +80,73 @@ const formatClinicalSummary = (profile?: AssessmentProfile) => {
   return parts.join('. ');
 };
 
+const mapCareLevelToTriageLevel = (
+  level: AssessmentResponse['recommended_level'],
+): TriageLevel => {
+  if (level === 'self_care') return 'self-care';
+  if (level === 'health_center') return 'health-center';
+  return level;
+};
+
+const applyOpacity = (hex: string, alpha: number) => {
+  const sanitized = hex.replace('#', '');
+  const parsed = parseInt(sanitized, 16);
+  const r = (parsed >> 16) & 255;
+  const g = (parsed >> 8) & 255;
+  const b = parsed & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const MAX_SYMPTOM_SUMMARY_LENGTH = 120;
+
+const collapseWhitespace = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+// Prefer ending summaries at a natural word break instead of cutting mid-word.
+const truncateToWordBoundary = (value: string, limit: number) => {
+  if (value.length <= limit) return value;
+  const truncated = value.slice(0, limit);
+  const lastSpace = truncated.lastIndexOf(' ');
+  const safeSlice =
+    lastSpace > Math.floor(limit / 2) ? truncated.slice(0, lastSpace) : truncated;
+  return safeSlice.trim().replace(/[.,;:!?]+$/, '');
+};
+
+const appendEllipsisIfNeeded = (text: string, wasTruncated: boolean) => {
+  const trimmed = text.trim();
+  if (!trimmed) return '';
+  if (!wasTruncated) return trimmed;
+  const withoutPunctuation = trimmed.replace(/[.,;:!?]+$/, '').trim();
+  return withoutPunctuation ? `${withoutPunctuation}...` : '...';
+};
+
+// Create a short, human-readable view of the initial report for safety UI.
+const summarizeInitialSymptom = (symptom?: string) => {
+  const normalized = collapseWhitespace(symptom ?? '');
+  if (!normalized) return '';
+  if (normalized.length <= MAX_SYMPTOM_SUMMARY_LENGTH) {
+    return normalized;
+  }
+
+  const sentences =
+    normalized
+      .match(/[^.!?]+[.!?]*/g)
+      ?.map((segment) => segment.trim())
+      .filter(Boolean) || [];
+  const candidate = sentences.length
+    ? sentences[0].length <= MAX_SYMPTOM_SUMMARY_LENGTH
+      ? sentences[0]
+      : truncateToWordBoundary(sentences[0], MAX_SYMPTOM_SUMMARY_LENGTH)
+    : truncateToWordBoundary(normalized, MAX_SYMPTOM_SUMMARY_LENGTH);
+
+  const wasTruncated = normalized.length > candidate.length;
+  return appendEllipsisIfNeeded(candidate, wasTruncated);
+};
+
 const RecommendationScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
   const navigation = useNavigation<ScreenProps['navigation']>();
   const theme = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const dispatch = useDispatch<AppDispatch>();
 
   // Try to get location to improve sorting
@@ -79,6 +164,29 @@ const RecommendationScreen = () => {
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
+  const level = recommendation
+    ? mapCareLevelToTriageLevel(recommendation.recommended_level)
+    : 'self-care';
+  const [showFacilities, setShowFacilities] = useState<boolean>(level !== 'self-care');
+  const handleEmergencyAction = useCallback(() => setSafetyModalVisible(true), [setSafetyModalVisible]);
+
+  const missingFields = useMemo(() => {
+    if (!recommendation?.is_conservative_fallback) return [];
+
+    const profile = assessmentData.extractedProfile;
+    const missing: string[] = [];
+
+    if (!profile?.age) missing.push('Age');
+    if (!profile?.duration) missing.push('Duration');
+    if (!profile?.severity) missing.push('Severity');
+
+    return missing;
+  }, [recommendation?.is_conservative_fallback, assessmentData.extractedProfile]);
+
+  const initialSymptomSummary = useMemo(
+    () => summarizeInitialSymptom(assessmentData.symptoms),
+    [assessmentData.symptoms],
+  );
 
   // Refs for stabilizing analyzeSymptoms dependencies
   const symptomsRef = useRef(assessmentData.symptoms);
@@ -133,6 +241,10 @@ const RecommendationScreen = () => {
       return () => subscription.remove();
     }, [handleBack]),
   );
+
+  useEffect(() => {
+    setShowFacilities(level !== 'self-care');
+  }, [level]);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -195,6 +307,11 @@ const RecommendationScreen = () => {
       const isFallback = isFallbackProfile(profile);
       const profileSummary = formatClinicalSummary(profile);
 
+      // Add Recent Resolved tag if applicable
+      const resolvedTag = profile?.is_recent_resolved
+        ? `[RECENT_RESOLVED: ${profile.resolved_keyword || 'Unknown symptom'}]`
+        : '';
+
       // Extract user answers once for reuse
       const userAnswersOnly = answersRef.current
         .map((a) => a.answer)
@@ -206,10 +323,11 @@ const RecommendationScreen = () => {
 
       // Clinical Context for LLM - Optimized to use summary as primary source
       const triageContextParts = [
+        resolvedTag,
         `Initial Symptom: ${symptomsRef.current}.`,
         `Clinical Profile Summary: ${profileSummary}.`,
         `\nContext: ${distanceContext}`,
-      ];
+      ].filter(Boolean);
 
       // Only include full answers if profile is missing, fallback, or readiness is low
       if (
@@ -217,7 +335,9 @@ const RecommendationScreen = () => {
         isFallback ||
         (profile?.triage_readiness_score !== undefined && profile.triage_readiness_score < 0.7)
       ) {
-        triageContextParts.push(`\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`);
+        triageContextParts.push(
+          `\nRaw History for analysis: ${JSON.stringify(answersRef.current)}`,
+        );
       }
 
       const triageContext = triageContextParts.join('\n');
@@ -282,12 +402,31 @@ const RecommendationScreen = () => {
       }
 
       const isHighRiskFallback = localResult.score >= 5 || !!specificRiskMatch;
-      // If a specific risk combination is found, force 'emergency', otherwise fallback to hospital/health_center based on score
-      const fallbackLevel = specificRiskMatch
-        ? 'emergency'
-        : isHighRiskFallback
-          ? 'hospital'
-          : 'health_center';
+      
+      // Safety Guards for Self-Care eligibility
+      const profile = profileRef.current;
+      const isVulnerable = profile?.is_vulnerable === true;
+      const hasMatchedKeywords = localResult.matchedKeywords.length > 0;
+      
+      // Determine fallback level based on score and safety constraints
+      let fallbackLevel: TriageLevel;
+      
+      if (specificRiskMatch) {
+        fallbackLevel = 'emergency';
+      } else if (isHighRiskFallback) {
+        fallbackLevel = 'hospital';
+      } else if (
+        localResult.score !== null && 
+        localResult.score <= OFFLINE_SELF_CARE_THRESHOLD && 
+        !isVulnerable && 
+        !hasMatchedKeywords
+      ) {
+        // Only allow self-care if score is low, not vulnerable, and NO keywords matched at all
+        fallbackLevel = 'self-care';
+      } else {
+        // Default to health center for ambiguous or mild cases that don't meet strict self-care criteria
+        fallbackLevel = 'health-center';
+      }
 
       let fallbackAdvice = '';
 
@@ -296,15 +435,20 @@ const RecommendationScreen = () => {
       } else if (isHighRiskFallback) {
         fallbackAdvice =
           'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).';
+      } else if (fallbackLevel === 'self-care') {
+        fallbackAdvice = 
+          'Based on your reported symptoms and current offline status, your condition appears manageable at home. Please monitor for any worsening signs and consult a doctor if symptoms persist. (Note: Fallback care level determined by local safety analysis).';
       } else {
         fallbackAdvice =
           'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
       }
 
+      const normalizedFallbackLevel = fallbackLevel.replace(/-/g, '_') as AssessmentResponse['recommended_level'];
+
       const fallbackResponse: AssessmentResponse = {
-        recommended_level: fallbackLevel,
+        recommended_level: normalizedFallbackLevel,
         user_advice: fallbackAdvice,
-        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : 'Health Center'}.`,
+        clinical_soap: `S: ${localAnalysisContext}. O: N/A. A: Fallback triage (Score: ${localResult.score}).${specificRiskMatch ? ` Risk: ${specificRiskMatch.reason}` : ''} P: Refer to ${fallbackLevel === 'emergency' ? 'Emergency Room' : fallbackLevel === 'hospital' ? 'Hospital' : fallbackLevel === 'health-center' ? 'Health Center' : 'Home Management'}.`,
         key_concerns: [
           'Need for professional evaluation',
           ...localResult.matchedKeywords.map((k) => `Monitored: ${k}`),
@@ -322,6 +466,21 @@ const RecommendationScreen = () => {
         follow_up_questions: [],
         triage_readiness_score: 0.5,
         is_conservative_fallback: true,
+        triage_logic: {
+          original_level: normalizedFallbackLevel,
+          final_level: normalizedFallbackLevel,
+          adjustments: [
+            {
+              from: normalizedFallbackLevel,
+              to: normalizedFallbackLevel,
+              rule: 'OFFLINE_FALLBACK',
+              reason:
+                specificRiskMatch?.reason ||
+                'Offline emergency detector determined fallback level.',
+              timestamp: new Date().toISOString(),
+            },
+          ],
+        },
       };
 
       setRecommendation(fallbackResponse);
@@ -401,50 +560,53 @@ const RecommendationScreen = () => {
     navigation.navigate('FacilityDetails', { facilityId });
   };
 
-  const getCareLevelInfo = (level: string) => {
-    switch (level) {
+  const getCareLevelInfo = useCallback((level: string) => {
+    // Normalize level string to handle both hyphenated and underscored versions
+    const normalizedLevel = level.toLowerCase().replace('-', '_');
+
+    switch (normalizedLevel) {
       case 'emergency':
         return {
           label: 'EMERGENCY (LIFE-THREATENING)',
-          color: '#B91C1C', // Stronger but professional red
+          color: theme.colors.error,
           icon: 'alert-decagram',
-          bgColor: '#FEF2F2',
-          borderColor: '#FCA5A5',
+          bgColor: theme.colors.errorContainer,
+          borderColor: theme.colors.error,
         };
       case 'hospital':
         return {
           label: 'HOSPITAL (SPECIALIZED CARE)',
-          color: '#EA580C', // Professional orange
+          color: theme.colors.secondary,
           icon: 'hospital-building',
-          bgColor: '#FFF7ED',
-          borderColor: '#FDBA74',
+          bgColor: theme.colors.secondaryContainer,
+          borderColor: theme.colors.secondary,
         };
       case 'health_center':
         return {
           label: 'HEALTH CENTER (PRIMARY CARE)',
           color: theme.colors.primary,
           icon: 'hospital-marker',
-          bgColor: '#F0F9F6',
-          borderColor: '#A7F3D0',
+          bgColor: theme.colors.primaryContainer,
+          borderColor: theme.colors.primary,
         };
       case 'self_care':
         return {
           label: 'SELF CARE (HOME)',
-          color: '#059669',
+          color: theme.colors.tertiary,
           icon: 'home-heart',
-          bgColor: '#F0FDF4',
-          borderColor: '#BBF7D0',
+          bgColor: theme.colors.tertiaryContainer,
+          borderColor: theme.colors.tertiary,
         };
       default:
         return {
-          label: level.toUpperCase(),
+          label: level.toUpperCase().replace('_', ' '),
           color: theme.colors.primary,
           icon: 'hospital-building',
-          bgColor: '#F0F9F6',
-          borderColor: '#A7F3D0',
+          bgColor: theme.colors.primaryContainer,
+          borderColor: theme.colors.primary,
         };
     }
-  };
+  }, [theme]);
 
   if (loading) {
     return (
@@ -458,7 +620,83 @@ const RecommendationScreen = () => {
   if (!recommendation) return null;
 
   const isEmergency = recommendation.recommended_level === 'emergency';
+  const triageLevel = mapCareLevelToTriageLevel(recommendation.recommended_level);
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
+  const displayAdvice = (() => {
+    if (isEmergency && recommendation.medical_justification) {
+      return (
+        recommendation.user_advice
+          .replace(
+            /CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./,
+            '',
+          )
+          .replace(/CRITICAL: High risk combination detected \(.*?\)\./, '')
+          .replace('Your symptoms indicate a mental health crisis.', '')
+          .trim() || 'Seek medical help immediately.'
+      );
+    }
+    return recommendation.user_advice;
+  })();
+  const showEmergencyJustification =
+    isEmergency && Boolean(recommendation.medical_justification);
+  const showAssessmentContextSection =
+    recommendation.is_conservative_fallback ||
+    Boolean(assessmentData.extractedProfile?.clinical_friction_detected) ||
+    showEmergencyJustification;
+
+  const infoBoxBaseStyle = {
+    padding: theme.spacing.md,
+    borderRadius: theme.roundness ?? 8,
+  };
+  const infoBoxSpacingStyle = {
+    marginTop: theme.spacing.lg,
+  };
+  const confidenceInfoBackground = applyOpacity(theme.colors.surfaceVariant, 0.4);
+  const frictionInfoBackground = applyOpacity(theme.colors.primaryContainer, 0.2);
+  const outlinedButtonBorderRadius = Math.min(
+    Math.max(theme.roundness ?? 10, 8),
+    12,
+  );
+  const handoverBorderRadius =
+    (theme as { borderRadius?: { medium?: number } }).borderRadius?.medium ??
+    outlinedButtonBorderRadius;
+  const handoverButtonStyle = [
+    styles.handoverButton,
+    {
+      marginHorizontal: theme.spacing.lg,
+      marginVertical: theme.spacing.md,
+      borderWidth: 1,
+      borderColor: theme.colors.primary,
+      borderRadius: handoverBorderRadius,
+      backgroundColor: 'transparent',
+      alignSelf: 'stretch',
+    },
+  ];
+  const handoverButtonContentStyle = {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+  };
+  const handoverButtonLabelText = 'View Handover Report';
+  const renderHandoverIcon = ({ color }: { color: string }) => (
+    <MaterialCommunityIcons
+      name="file-document"
+      size={22}
+      color={color}
+      style={{ marginRight: theme.spacing.sm ?? 8 }}
+    />
+  );
+  const handoverButtonLabelStyle = {
+    marginLeft: 0, // spacing already handled via icon margin
+    color: theme.colors.primary,
+  };
+  const selfCareToggleStyle = {
+    marginHorizontal: theme.spacing.large,
+    marginTop: theme.spacing.large,
+    marginBottom: theme.spacing.large,
+  };
+  const selfCareToggleContentStyle = {
+    paddingVertical: theme.spacing.medium,
+  };
 
   return (
     <SafeAreaView
@@ -466,106 +704,119 @@ const RecommendationScreen = () => {
       edges={['left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Emergency Banner */}
-        {isEmergency && (
-          <Surface
-            style={[styles.emergencyBanner, { backgroundColor: theme.colors.error }]}
-            elevation={2}
-          >
-            <View style={styles.emergencyHeader}>
-              <MaterialCommunityIcons name="alert-octagon" size={40} color="white" />
-              <View style={styles.emergencyTextContainer}>
-                <Text style={styles.emergencyTitle}>URGENT CARE REQUIRED</Text>
-                <Text style={styles.emergencySubtitle}>Seek medical help immediately</Text>
-              </View>
-            </View>
-            <EmergencyButton
-              onPress={() => setSafetyModalVisible(true)}
-              style={styles.emergencyButton}
-              buttonColor="white"
-              textColor={theme.colors.error}
-            />
-          </Surface>
-        )}
-
-        {/* Care Level Badge */}
-        <Surface
-          style={[styles.careBadge, { backgroundColor: careInfo.bgColor, marginBottom: 12 }]}
-          elevation={1}
-        >
-          <MaterialCommunityIcons
-            name={careInfo.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
-            size={20}
-            color={careInfo.color}
+        <View style={styles.statusCardWrapper}>
+          <TriageStatusCard
+            level={triageLevel}
+            instruction={displayAdvice}
+            onEmergencyAction={isEmergency ? handleEmergencyAction : undefined}
           />
-          <Text variant="labelLarge" style={[styles.careLabel, { color: careInfo.color }]}>
-            {careInfo.label}
-          </Text>
-        </Surface>
+        </View>
 
-        {/* Safety Note for Conservative Triage */}
-        {recommendation.is_conservative_fallback && <ConfidenceSignal />}
-
-        {/* Clinical Friction Alert */}
-        {assessmentData.extractedProfile?.clinical_friction_detected && (
-          <Surface
-            style={[
-              styles.frictionContainer,
-              { backgroundColor: '#FFF8E1', borderColor: '#FFC107' }, // Amber/Warning context
-            ]}
-            elevation={0}
-          >
-            <View style={styles.frictionHeader}>
-              <MaterialCommunityIcons name="alert-outline" size={20} color="#B07B01" />
-              <Text style={[styles.frictionTitle, { color: '#B07B01' }]}>CLINICAL CONTEXT</Text>
+        {!!recommendation.clinical_soap && (
+          <View style={styles.handoverSection}>
+            <Divider style={styles.restartDivider} />
+            <View style={styles.handoverHeader}>
+              <MaterialCommunityIcons name="doctor" size={24} color={theme.colors.primary} />
+              <Text variant="titleMedium" style={styles.handoverTitle}>
+                For Healthcare Professionals
+              </Text>
             </View>
-            <Text style={[styles.frictionText, { color: '#4E342E' }]}>
-              {assessmentData.extractedProfile.clinical_friction_details ||
-                'Contradictory symptoms detected.'}
+            <Text variant="bodySmall" style={styles.handoverSubtitle}>
+              If you are at the facility, you can share this clinical handover report with the nurse
+              or doctor.
             </Text>
-          </Surface>
+            <Button
+              title={handoverButtonLabelText}
+              onPress={() => navigation.navigate('ClinicalNote')}
+              variant="outline"
+              icon={renderHandoverIcon}
+              style={handoverButtonStyle}
+              contentStyle={handoverButtonContentStyle}
+              labelStyle={handoverButtonLabelStyle}
+              accessibilityLabel="View clinical handover report"
+              accessibilityHint="Opens detailed medical information for healthcare providers"
+              accessibilityRole="button"
+            />
+          </View>
         )}
 
-        {/* Assessment & Advice - Integrated Layout */}
-        <View style={styles.adviceSection}>
-          <View style={styles.adviceHeader}>
-            <MaterialCommunityIcons name="heart-pulse" size={24} color={theme.colors.primary} />
-            <Text
-              variant="titleMedium"
-              style={[styles.adviceTitle, { color: theme.colors.primary }]}
-            >
-              ASSESSMENT & GUIDANCE
-            </Text>
-          </View>
-          {isEmergency && recommendation.medical_justification && (
-            <Surface
-              style={[
-                styles.justificationContainer,
-                { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' },
-              ]}
-              elevation={0}
-            >
-              <View style={styles.justificationHeader}>
-                <MaterialCommunityIcons name="shield-alert-outline" size={20} color="#B91C1C" />
-                <Text style={[styles.justificationTitle, { color: '#B91C1C' }]}>
-                  EMERGENCY JUSTIFICATION
+        {/* Assessment Context & Safety Details */}
+        {showAssessmentContextSection && (
+          <View style={styles.adviceSection}>
+            <View style={styles.adviceHeader}>
+              <MaterialCommunityIcons name="heart-pulse" size={24} color={theme.colors.primary} />
+              <Text
+                variant="titleMedium"
+                style={[styles.adviceTitle, { color: theme.colors.primary }]}
+              >
+                ASSESSMENT CONTEXT
+              </Text>
+            </View>
+            {recommendation.is_conservative_fallback && (
+              <View
+                style={[
+                  infoBoxBaseStyle,
+                  infoBoxSpacingStyle,
+                  { backgroundColor: confidenceInfoBackground },
+                ]}
+              >
+                <ConfidenceSignal
+                  missingFields={missingFields}
+                  isRecentResolved={assessmentData.extractedProfile?.is_recent_resolved}
+                  triage_logic={recommendation.triage_logic}
+                  style={{
+                    backgroundColor: 'transparent',
+                    padding: 0,
+                    borderRadius: 0,
+                    margin: 0,
+                    elevation: 0,
+                  }}
+                />
+              </View>
+            )}
+            {assessmentData.extractedProfile?.clinical_friction_detected && (
+              <View
+                style={[
+                  infoBoxBaseStyle,
+                  infoBoxSpacingStyle,
+                  { backgroundColor: frictionInfoBackground },
+                ]}
+              >
+                <View style={styles.frictionHeader}>
+                  <MaterialCommunityIcons
+                    name="alert-outline"
+                    size={Math.round(20 * 0.75)}
+                    color="#B07B01"
+                  />
+                  <Text style={[styles.frictionTitle, { color: '#B07B01' }]}>CLINICAL CONTEXT</Text>
+                </View>
+                <Text style={[styles.frictionText, { color: '#4E342E' }]}>
+                  {assessmentData.extractedProfile.clinical_friction_details ||
+                    'Contradictory symptoms detected.'}
                 </Text>
               </View>
-              <Text style={[styles.justificationText, { color: '#7F1D1D' }]}>
-                {recommendation.medical_justification}
-              </Text>
-            </Surface>
-          )}
-          <Text variant="bodyLarge" style={styles.adviceText}>
-            {isEmergency && recommendation.medical_justification
-              ? recommendation.user_advice
-                  .replace(/CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./, '')
-                  .replace(/CRITICAL: High risk combination detected \(.*?\)\./, '')
-                  .replace('Your symptoms indicate a mental health crisis.', '')
-                  .trim() || 'Seek medical help immediately.'
-              : recommendation.user_advice}
-          </Text>
-        </View>
+            )}
+            {showEmergencyJustification && (
+              <Surface
+                style={[
+                  styles.justificationContainer,
+                  { backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' },
+                ]}
+                elevation={0}
+              >
+                <View style={styles.justificationHeader}>
+                  <MaterialCommunityIcons name="shield-alert-outline" size={20} color="#B91C1C" />
+                  <Text style={[styles.justificationTitle, { color: '#B91C1C' }]}>
+                    EMERGENCY JUSTIFICATION
+                  </Text>
+                </View>
+                <Text style={[styles.justificationText, { color: '#7F1D1D' }]}>
+                  {recommendation.medical_justification}
+                </Text>
+              </Surface>
+            )}
+          </View>
+        )}
 
         {/* Critical Warnings Section - High Visibility (Moved & unwrapped for consistency) */}
         {recommendation.critical_warnings.length > 0 && (
@@ -641,8 +892,21 @@ const RecommendationScreen = () => {
           </Surface>
         )}
 
+        {level === 'self-care' && !showFacilities && (
+          <Button
+            title="Find Nearby Clinics (Optional)"
+            variant="outline"
+            onPress={() => setShowFacilities(true)}
+            icon="map-marker-outline"
+            accessibilityLabel="Find nearby clinics"
+            accessibilityHint="Shows optional list of nearby healthcare facilities"
+            style={selfCareToggleStyle}
+            contentStyle={selfCareToggleContentStyle}
+          />
+        )}
+
         {/* Facilities Section */}
-        {recommendation.recommended_level !== 'self_care' && (
+        {showFacilities && (
           <View style={styles.facilitiesSection}>
             <View style={styles.sectionHeader}>
               <Text variant="titleLarge" style={styles.sectionHeading}>
@@ -692,30 +956,6 @@ const RecommendationScreen = () => {
           </View>
         )}
 
-        {/* Clinical Handover Section */}
-        {!!recommendation.clinical_soap && (
-          <View style={styles.handoverSection}>
-            <Divider style={styles.restartDivider} />
-            <View style={styles.handoverHeader}>
-              <MaterialCommunityIcons name="doctor" size={24} color={theme.colors.primary} />
-              <Text variant="titleMedium" style={styles.handoverTitle}>
-                For Healthcare Professionals
-              </Text>
-            </View>
-            <Text variant="bodySmall" style={styles.handoverSubtitle}>
-              If you are at the facility, you can share this clinical handover report with the nurse
-              or doctor.
-            </Text>
-            <Button
-              title="View Handover Report"
-              onPress={() => navigation.navigate('ClinicalNote')}
-              variant="outline"
-              icon="file-document-outline"
-              style={styles.handoverButton}
-            />
-          </View>
-        )}
-
         {/* Restart Section */}
         <View style={styles.restartSection}>
           <Divider style={styles.restartDivider} />
@@ -753,6 +993,7 @@ const RecommendationScreen = () => {
       <SafetyRecheckModal
         visible={safetyModalVisible}
         onDismiss={() => setSafetyModalVisible(false)}
+        initialSymptomSummary={initialSymptomSummary}
       />
     </SafeAreaView>
   );
@@ -763,34 +1004,10 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontWeight: '500' },
   content: { padding: 16, paddingVertical: 12, paddingBottom: 40 },
-
-  emergencyBanner: {
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 20,
+  statusCardWrapper: {
+    marginBottom: 16,
   },
-  emergencyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  emergencyTextContainer: { flex: 1, marginLeft: 12 },
-  emergencyTitle: { color: 'white', fontWeight: '900', fontSize: 18, letterSpacing: 0.5 },
-  emergencySubtitle: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '600' },
-  emergencyButton: { borderRadius: 12, marginVertical: 0 },
 
-  careBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  careLabel: { marginLeft: 8, fontWeight: '900', letterSpacing: 1, fontSize: 12 },
-
-  frictionContainer: {
-    marginVertical: 12,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
   frictionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -823,13 +1040,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  adviceText: {
-    lineHeight: 26,
-    color: '#2C3333',
-    fontWeight: '500',
-    fontSize: 17,
-  },
-
   justificationContainer: {
     marginVertical: 12,
     padding: 16,
@@ -922,9 +1132,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 18,
   },
-  handoverButton: {
-    marginBottom: 16,
-  },
+  handoverButton: {},
 
   emptyState: {
     padding: 40,

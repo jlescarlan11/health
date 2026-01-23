@@ -201,10 +201,12 @@ describe('detectEmergency', () => {
     });
 
     it('should detect Bicolano emergency terms', () => {
-      expect(detectEmergency('naghihingalo na siya').matchedKeywords).toContain('hingalo');
+      expect(detectEmergency('naghihingalo na siya').matchedKeywords).toContain('naghihingalo');
       expect(detectEmergency('may kulog sa daghan').matchedKeywords).toContain('kulog sa daghan');
       expect(detectEmergency('garo gadan na siya').matchedKeywords).toContain('garo gadan');
-      expect(detectEmergency('nagkukumbulsion an aki').matchedKeywords).toContain('nagkukumbulsion');
+      expect(detectEmergency('nagkukumbulsion an aki').matchedKeywords).toContain(
+        'nagkukumbulsion',
+      );
     });
 
     it('should detect Bicolano terms with minor typos', () => {

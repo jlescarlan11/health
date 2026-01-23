@@ -3,7 +3,12 @@ import { render, waitFor } from '@testing-library/react-native';
 import RecommendationScreen from '../src/screens/RecommendationScreen';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { navigationReducer, facilitiesReducer, offlineReducer, settingsReducer } from '../src/store';
+import {
+  navigationReducer,
+  facilitiesReducer,
+  offlineReducer,
+  settingsReducer,
+} from '../src/store';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { geminiClient } from '../src/api/geminiClient';
 import { PaperProvider } from 'react-native-paper';
@@ -127,12 +132,12 @@ describe('ConfidenceSignal Integration', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => {
       expect(getByText('Safety Note')).toBeTruthy();
-      expect(getByText(/We’ve recommended a slightly higher level of care/)).toBeTruthy();
+      expect(getByText(/Recommended higher care level because your symptoms/)).toBeTruthy();
     });
   });
 
@@ -156,11 +161,54 @@ describe('ConfidenceSignal Integration', () => {
         <PaperProvider theme={theme}>
           <RecommendationScreen />
         </PaperProvider>
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => {
       expect(queryByText('Safety Note')).toBeNull();
+    });
+  });
+
+  it('displays specific missing fields in ConfidenceSignal when data is incomplete', async () => {
+    const incompleteProfile = {
+      ...mockAssessmentData.extractedProfile,
+      age: null,
+      severity: null,
+    };
+
+    (useRoute as jest.Mock).mockReturnValue({
+      params: {
+        assessmentData: {
+          ...mockAssessmentData,
+          extractedProfile: incompleteProfile,
+        },
+      },
+    });
+
+    const mockResponse = {
+      recommended_level: 'hospital',
+      user_advice: 'Go to hospital just in case.',
+      clinical_soap: 'SOAP note',
+      key_concerns: [],
+      critical_warnings: [],
+      relevant_services: ['Consultation'],
+      red_flags: [],
+      triage_readiness_score: 0.6,
+      is_conservative_fallback: true,
+    };
+
+    (geminiClient.assessSymptoms as jest.Mock).mockResolvedValue(mockResponse);
+
+    const { getByText } = render(
+      <ReduxProvider store={store}>
+        <PaperProvider theme={theme}>
+          <RecommendationScreen />
+        </PaperProvider>
+      </ReduxProvider>,
+    );
+
+    await waitFor(() => {
+      expect(getByText(/Recommended higher care level because Age and Severity were unclear/)).toBeTruthy();
     });
   });
 });

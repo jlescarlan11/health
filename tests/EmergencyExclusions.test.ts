@@ -23,7 +23,10 @@ describe('EmergencyDetector Contextual Exclusions', () => {
   });
 
   test('should NOT exclude when "enableExclusions" is set to false', () => {
-    const result = detectEmergency('My father had chest pain', { isUserInput: true, enableExclusions: false });
+    const result = detectEmergency('My father had chest pain', {
+      isUserInput: true,
+      enableExclusions: false,
+    });
     expect(result.isEmergency).toBe(true);
     expect(result.hasExclusions).toBe(false);
   });
@@ -31,7 +34,9 @@ describe('EmergencyDetector Contextual Exclusions', () => {
   test('should detect real emergency when exclusion is in another segment', () => {
     // "Father had chest pain. I am having difficulty breathing."
     // Segment 1 has exclusion. Segment 2 does not.
-    const result = detectEmergency('Father had chest pain. I am having difficulty breathing.', { isUserInput: true });
+    const result = detectEmergency('Father had chest pain. I am having difficulty breathing.', {
+      isUserInput: true,
+    });
     expect(result.isEmergency).toBe(true);
     expect(result.matchedKeywords).toContain('difficulty breathing');
     expect(result.excludedKeywords).toContain('chest pain');

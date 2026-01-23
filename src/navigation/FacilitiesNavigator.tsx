@@ -14,10 +14,7 @@ const FacilitiesNavigator = () => {
         cardShadowEnabled: false,
       }}
     >
-      <Stack.Screen
-        name="FacilityDirectory"
-        component={FacilityDirectoryScreen}
-      />
+      <Stack.Screen name="FacilityDirectory" component={FacilityDirectoryScreen} />
     </Stack.Navigator>
   );
 };

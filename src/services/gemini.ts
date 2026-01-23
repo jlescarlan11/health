@@ -10,12 +10,105 @@ import {
   calculateTriageScore,
   prioritizeQuestions,
   parseAndValidateLLMResponse,
+  normalizeSlot,
 } from '../utils/aiUtils';
+import { applyHedgingCorrections } from '../utils/hedgingDetector';
+import { SystemLockDetector } from './base/SystemLockDetector';
+import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
+import { isMaternalContext, isTraumaContext } from '../utils/clinicalUtils';
 
 const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 const MAX_RETRIES = 3;
 const BASE_DELAY = 1000;
+
+type SafetyFallbackContext = 'maternal' | 'trauma' | 'general';
+
+const MATERNAL_SAFETY_GOLDEN_SET: AssessmentQuestion[] = [
+  {
+    id: 'maternal_gestation',
+    text: 'How many weeks pregnant are you or how long has it been since delivery?',
+  },
+  {
+    id: 'maternal_bleeding',
+    text: 'Are you experiencing vaginal bleeding? If so, how heavy is it and has it changed recently?',
+  },
+  {
+    id: 'maternal_fetal',
+    text: 'If you are pregnant, have you noticed any change in fetal movement in the past day?',
+  },
+  {
+    id: 'maternal_pain',
+    text: 'Where is the pain located, and how would you describe its severity?',
+  },
+  {
+    id: 'maternal_history',
+    text: 'Do you have a history of pregnancy complications like preeclampsia, preterm labor, or placenta issues?',
+  },
+  DEFAULT_RED_FLAG_QUESTION,
+];
+
+const TRAUMA_SAFETY_GOLDEN_SET: AssessmentQuestion[] = [
+  {
+    id: 'trauma_mobility',
+    text: 'Can you bear weight or move the injured limb without it giving way?',
+  },
+  {
+    id: 'trauma_bleeding',
+    text: 'Is there active bleeding, pooling blood, or an exposed bone near the wound?',
+  },
+  {
+    id: 'trauma_pain',
+    text: 'On a scale of 1 to 10, how intense is the pain and does it feel sharp, dull, or throbbing?',
+  },
+  {
+    id: 'trauma_mechanism',
+    text: 'What happened to cause the injury (e.g., fall, hit, blow, accident)?',
+  },
+  {
+    id: 'trauma_timing',
+    text: 'When did the injury occur or when did you first notice symptoms?',
+  },
+  DEFAULT_RED_FLAG_QUESTION,
+];
+
+const GENERAL_SAFETY_GOLDEN_SET: AssessmentQuestion[] = [
+  {
+    id: 'general_duration',
+    text: 'How long have you been dealing with this chief complaint?',
+  },
+  {
+    id: 'general_severity',
+    text: 'On a scale of 1 to 10, how severe would you rate the symptoms right now?',
+  },
+  {
+    id: 'general_age',
+    text: 'What is your current age?',
+  },
+  {
+    id: 'general_history',
+    text: 'Do you have any significant medical history, chronic conditions, or recent hospital visits?',
+  },
+  {
+    id: 'general_medications',
+    text: 'Are you currently taking any prescribed or over-the-counter medications?',
+  },
+  DEFAULT_RED_FLAG_QUESTION,
+];
+
+const SAFETY_GOLDEN_SET_BY_CONTEXT: Record<SafetyFallbackContext, AssessmentQuestion[]> = {
+  maternal: MATERNAL_SAFETY_GOLDEN_SET,
+  trauma: TRAUMA_SAFETY_GOLDEN_SET,
+  general: GENERAL_SAFETY_GOLDEN_SET,
+};
+
+const detectSafetyFallbackContext = (text: string): SafetyFallbackContext => {
+  const normalized = text?.trim() || '';
+
+  if (isMaternalContext(normalized)) return 'maternal';
+  if (isTraumaContext(normalized)) return 'trauma';
+  return 'general';
+};
 
 const generateContentWithRetry = async (
   model: GenerativeModel,
@@ -73,25 +166,34 @@ export const generateAssessmentPlan = async (
     );
     const questions = parsed.questions || [];
 
-    return { questions: prioritizeQuestions(questions), intro: parsed.intro };
+    let prioritizedQuestions: AssessmentQuestion[];
+    try {
+      prioritizedQuestions = prioritizeQuestions(questions);
+    } catch (prioritizationError) {
+      console.error('[Gemini] Prioritization failed:', prioritizationError);
+      console.log('[Gemini] Original Questions Data:', JSON.stringify(questions));
+      console.log('[Gemini] Fallback: Injecting default red flags into original list.');
+
+      // Fallback behavior:
+      // 1. Recover any valid questions from the original list (filter out potential duplicates of red_flags)
+      // 2. Inject the safe default red flag question
+      const safeQuestions = Array.isArray(questions)
+        ? questions.filter((q) => q && q.id !== 'red_flags')
+        : [];
+
+      // Inject default at index 1 (after basics) or 0 if empty
+      const insertIndex = safeQuestions.length > 0 ? 1 : 0;
+      safeQuestions.splice(insertIndex, 0, DEFAULT_RED_FLAG_QUESTION);
+
+      prioritizedQuestions = safeQuestions;
+    }
+
+    return { questions: prioritizedQuestions, intro: parsed.intro };
   } catch (error) {
     console.error('[Gemini] Failed to generate assessment plan:', error);
-    // Fallback questions if AI fails
+    const fallbackContext = detectSafetyFallbackContext(initialSymptom);
     return {
-      questions: [
-        {
-          id: 'basics',
-          text: 'Could you please tell me your age and how long you have had these symptoms?',
-        },
-        {
-          id: 'severity',
-          text: 'On a scale of 1 to 10, how severe is it, and is it getting better or worse?',
-        },
-        {
-          id: 'red_flags',
-          text: 'To be safe, are you experiencing any difficulty breathing, chest pain, or severe bleeding?',
-        },
-      ],
+      questions: SAFETY_GOLDEN_SET_BY_CONTEXT[fallbackContext],
     };
   }
 };
@@ -123,10 +225,41 @@ export const extractClinicalProfile = async (
     // Direct parse since responseMimeType is already "application/json"
     const profile = JSON.parse(responseText) as AssessmentProfile;
 
-    // Deterministically calculate the score
-    profile.triage_readiness_score = calculateTriageScore(profile);
+    // Normalize slots to prevent dirty nulls from polluting logic
+    profile.age = normalizeSlot(profile.age);
+    profile.duration = normalizeSlot(profile.duration);
+    profile.severity = normalizeSlot(profile.severity);
+    profile.progression = normalizeSlot(profile.progression);
+    profile.red_flag_denials = normalizeSlot(profile.red_flag_denials, { allowNone: true });
 
-    return profile;
+    /**
+     * DETERMINISTIC SAFETY FILTER:
+     * We run the profile through a regex-based hedging detector. 
+     * If the user said "maybe" or "not sure" about a red flag or critical slot, 
+     * we reject the definitive extraction and downgrade confidence. 
+     * This ensures the TriageArbiter sees the ambiguity and triggers a Force Clarification.
+     */
+    const correctedProfile = applyHedgingCorrections(profile);
+
+    /**
+     * SYSTEM-BASED LOCK & SCORING:
+     * Deterministically calculate the score and apply anatomical system overrides.
+     * We pass the full conversation text to ensure the keyword detector in calculateTriageScore
+     * has complete context for safety overrides.
+     */
+    const { score, escalated_category } = calculateTriageScore({
+      ...correctedProfile,
+      symptom_text: conversationText,
+    });
+
+    correctedProfile.triage_readiness_score = score;
+    correctedProfile.symptom_category = escalated_category;
+
+    if (escalated_category === 'complex' || escalated_category === 'critical') {
+      correctedProfile.is_complex_case = true;
+    }
+
+    return correctedProfile;
   } catch (error) {
     console.error('[Gemini] Failed to extract profile:', error);
 
@@ -146,10 +279,7 @@ export const extractClinicalProfile = async (
 /**
  * Refines a question to naturally follow the user's last answer (Call #3)
  */
-export const refineQuestion = async (
-  questionText: string,
-  userAnswer: string,
-): Promise<string> => {
+export const refineQuestion = async (questionText: string, userAnswer: string): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const prompt = REFINE_QUESTION_PROMPT.replace('{{questionText}}', questionText).replace(

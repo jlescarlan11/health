@@ -53,11 +53,13 @@ export const getDirections = async (
     }
 
     return {
-      routes: data.routes.map((route: { geometry: LineString; duration: number; distance: number }) => ({
-        geometry: route.geometry,
-        duration: route.duration,
-        distance: route.distance,
-      })),
+      routes: data.routes.map(
+        (route: { geometry: LineString; duration: number; distance: number }) => ({
+          geometry: route.geometry,
+          duration: route.duration,
+          distance: route.distance,
+        }),
+      ),
     };
   } catch (error: unknown) {
     console.error('Error fetching directions:', error);

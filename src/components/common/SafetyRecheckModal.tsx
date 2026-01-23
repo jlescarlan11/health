@@ -10,12 +10,14 @@ interface SafetyRecheckModalProps {
   visible: boolean;
   onDismiss: () => void;
   onCallInitiated?: (number: string) => void;
+  initialSymptomSummary?: string;
 }
 
 export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
   visible,
   onDismiss,
   onCallInitiated,
+  initialSymptomSummary,
 }) => {
   const theme = useTheme();
 
@@ -32,6 +34,20 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
         If you or someone else is in immediate danger or experiencing a life-threatening emergency,
         please contact emergency services right away.
       </Text>
+
+      {initialSymptomSummary ? (
+        <View style={styles.summaryContainer}>
+          <Text
+            style={[styles.summaryLabel, { color: theme.colors.primary }]}
+            variant="labelSmall"
+          >
+            Reported symptom (summary)
+          </Text>
+          <Text style={[styles.summaryText, { color: theme.colors.onSurface }]} variant="bodySmall">
+            {initialSymptomSummary}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.emergencySection}>
         <EmergencyActions onCallInitiated={onCallInitiated} variant="light" />
@@ -79,6 +95,19 @@ const styles = StyleSheet.create({
   },
   emergencySection: {
     marginBottom: 24,
+  },
+  summaryContainer: {
+    marginBottom: 16,
+  },
+  summaryLabel: {
+    marginBottom: 4,
+    fontWeight: '700',
+    letterSpacing: 0.35,
+    textTransform: 'uppercase',
+  },
+  summaryText: {
+    fontSize: 15,
+    lineHeight: 20,
   },
   closeButton: {
     marginTop: 8,

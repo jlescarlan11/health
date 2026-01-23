@@ -2,6 +2,13 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
+const ensureApiBase = (url?: string) => {
+  if (!url) return url;
+  const normalized = url.replace(/\/+$/, '');
+  if (/\/api(\/|$)/.test(normalized)) return normalized;
+  return `${normalized}/api`;
+};
+
 // Get API URL from config, with fallback logic for mobile devices
 const getApiUrl = () => {
   const configUrl = Constants.expoConfig?.extra?.apiUrl || Constants.expoConfig?.extra?.backendUrl;
@@ -12,7 +19,7 @@ const getApiUrl = () => {
     configUrl !== 'http://localhost:3000/api' &&
     !configUrl.includes('process.env')
   ) {
-    return configUrl;
+    return ensureApiBase(configUrl);
   }
 
   // For mobile devices, localhost won't work - need to use the machine's IP
@@ -28,7 +35,7 @@ const getApiUrl = () => {
       if (ipMatch) {
         const detectedUrl = `http://${ipMatch[1]}:3000/api`;
         console.log(`[FacilityService] Auto-detected backend URL: ${detectedUrl}`);
-        return detectedUrl;
+        return ensureApiBase(detectedUrl);
       }
     }
 
@@ -39,7 +46,7 @@ const getApiUrl = () => {
       if (ipMatch) {
         const detectedUrl = `http://${ipMatch[1]}:3000/api`;
         console.log(`[FacilityService] Auto-detected backend URL from manifest: ${detectedUrl}`);
-        return detectedUrl;
+        return ensureApiBase(detectedUrl);
       }
     }
 
@@ -55,7 +62,7 @@ const getApiUrl = () => {
     );
   }
 
-  return configUrl || 'http://localhost:3000/api';
+  return ensureApiBase(configUrl || 'http://localhost:3000/api');
 };
 
 const API_URL = getApiUrl();

@@ -1,111 +1,94 @@
-import { GeminiClient } from '../geminiClient';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateAssessmentPlan } from '../../services/gemini';
+import { prioritizeQuestions } from '../../utils/aiUtils';
+import { DEFAULT_RED_FLAG_QUESTION } from '../../constants/clinical';
 
-// Mocks
-jest.mock('@google/generative-ai');
-jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(() => Promise.resolve(null)),
-  setItem: jest.fn(() => Promise.resolve()),
-  removeItem: jest.fn(() => Promise.resolve()),
-  getAllKeys: jest.fn(() => Promise.resolve([])),
-  multiRemove: jest.fn(() => Promise.resolve()),
-}));
-jest.mock('expo-constants', () => ({
-  expoConfig: { extra: { geminiApiKey: 'test-key' } },
-}));
-// We mock the detectors to return false so we test the AI logic specifically
-jest.mock('../../services/emergencyDetector', () => ({
-  detectEmergency: () => ({ isEmergency: false }),
-}));
-jest.mock('../../services/mentalHealthDetector', () => ({
-  detectMentalHealthCrisis: () => ({ isCrisis: false }),
-}));
+let mockGenerateContent: jest.Mock;
+const createLLMResult = (
+  payload = { questions: [{ id: 'q1', text: 'Test Q' }], intro: 'Test Intro' },
+) => ({
+  response: {
+    text: jest.fn().mockReturnValue(JSON.stringify(payload)),
+  },
+});
 
-describe('GeminiClient Fallback Strategy', () => {
-  let client: GeminiClient;
-  let mockSendMessage: jest.Mock;
+// Mock dependencies
+jest.mock('@google/generative-ai', () => {
+  mockGenerateContent = jest.fn();
+  return {
+    GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
+      getGenerativeModel: jest.fn().mockReturnValue({
+        generateContent: mockGenerateContent,
+      }),
+    })),
+  };
+});
 
+jest.mock('../../utils/aiUtils', () => {
+  const actual = jest.requireActual('../../utils/aiUtils');
+  return {
+    ...actual,
+    prioritizeQuestions: jest.fn(),
+    parseAndValidateLLMResponse: jest.fn().mockImplementation((text) => JSON.parse(text)),
+  };
+});
+
+describe('Gemini Service Fallback', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-
-    mockSendMessage = jest.fn();
-
-    // Mock the chain: getGenerativeModel -> startChat -> sendMessage
-    (GoogleGenerativeAI as unknown as jest.Mock).mockImplementation(() => ({
-      getGenerativeModel: () => ({
-        startChat: () => ({
-          sendMessage: mockSendMessage,
-        }),
-      }),
-    }));
-
-    client = new GeminiClient();
+    console.error = jest.fn(); // Suppress expected error logs
+    console.log = jest.fn();   // Suppress expected logs
+    mockGenerateContent.mockReset();
+    mockGenerateContent.mockResolvedValue(createLLMResult());
   });
 
-  const mockAIResponse = (responseObj: Record<string, unknown>) => {
-    mockSendMessage.mockResolvedValue({
-      response: {
-        text: () => JSON.stringify(responseObj),
-      },
-    });
-  };
-
-  test('should upgrade Self-Care to Health Center if readiness is low', async () => {
-    mockAIResponse({
-      recommended_level: 'self_care',
-      triage_readiness_score: 0.5,
-      ambiguity_detected: false,
-      user_advice: 'Rest at home.',
-      follow_up_questions: [],
-      red_flags: [],
+  it('should inject default red flags when prioritizeQuestions throws', async () => {
+    // 1. Mock prioritizeQuestions to throw
+    (prioritizeQuestions as jest.Mock).mockImplementation(() => {
+      throw new Error('Test Error: Prioritization Crashed');
     });
 
-    const result = await client.assessSymptoms('mild headache');
-    expect(result.recommended_level).toBe('health_center');
-    expect(result.user_advice).toContain('upgraded');
+    // 2. Call function
+    const result = await generateAssessmentPlan('headache');
+
+    // 3. Verify Fallback behavior
+    expect(result.questions).toBeDefined();
+    // Should have 2 questions: 'q1' (recovered) + 'red_flags' (injected)
+    expect(result.questions.length).toBe(2);
+    
+    const redFlagQ = result.questions.find(q => q.id === 'red_flags');
+    expect(redFlagQ).toBeDefined();
+    expect(redFlagQ).toEqual(DEFAULT_RED_FLAG_QUESTION);
+    
+    // Original question should be preserved
+    expect(result.questions.find(q => q.id === 'q1')).toBeDefined();
   });
 
-  test('should upgrade Health Center to Hospital if ambiguity is detected', async () => {
-    mockAIResponse({
-      recommended_level: 'health_center',
-      triage_readiness_score: 0.9,
-      ambiguity_detected: true,
-      user_advice: 'Go to clinic.',
-      follow_up_questions: [],
-      red_flags: [],
+  it('should handle critically malformed input data gracefully', async () => {
+    // Mock parse to return something that causes issues if accessed directly (though our safe code handles it)
+    const { parseAndValidateLLMResponse } = require('../../utils/aiUtils');
+    parseAndValidateLLMResponse.mockReturnValue({ questions: null }); // Parsing returns null questions
+
+    (prioritizeQuestions as jest.Mock).mockImplementation(() => {
+        throw new TypeError('Cannot read properties of null');
     });
 
-    const result = await client.assessSymptoms('stomach pain');
-    expect(result.recommended_level).toBe('hospital');
+    const result = await generateAssessmentPlan('headache');
+
+    expect(result.questions).toBeDefined();
+    // Should have 1 question: 'red_flags' (injected) since original was null/empty
+    expect(result.questions.length).toBe(1);
+    expect(result.questions[0].id).toBe('red_flags');
   });
 
-  test('should force Emergency if red flags are present but AI recommends Hospital', async () => {
-    mockAIResponse({
-      recommended_level: 'hospital',
-      triage_readiness_score: 0.9,
-      ambiguity_detected: false,
-      red_flags: ['Chest pain'],
-      user_advice: 'Hospital checkup needed.',
-      follow_up_questions: [],
-    });
+  it('should fall back to the trauma safety golden set when Gemini fails in a trauma context', async () => {
+    mockGenerateContent.mockRejectedValue(new Error('Service unavailable'));
 
-    const result = await client.assessSymptoms('chest pain');
-    expect(result.recommended_level).toBe('emergency');
-    expect(result.user_advice).toContain('Upgraded to Emergency');
-  });
+    const result = await generateAssessmentPlan('knee injury with bleeding wound');
 
-  test('should NOT upgrade if readiness is high and no ambiguity', async () => {
-    mockAIResponse({
-      recommended_level: 'self_care',
-      triage_readiness_score: 0.95,
-      ambiguity_detected: false,
-      user_advice: 'Rest at home.',
-      follow_up_questions: [],
-      red_flags: [],
-    });
-
-    const result = await client.assessSymptoms('mild headache');
-    expect(result.recommended_level).toBe('self_care');
-    expect(result.user_advice).not.toContain('upgraded');
+    expect(result.questions).toBeDefined();
+    expect(result.questions.some((q) => q.text.includes('bear weight'))).toBe(true);
+    expect(result.questions.some((q) => q.text.toLowerCase().includes('active bleeding'))).toBe(true);
+    expect(result.questions.some((q) => q.id === 'trauma_mechanism')).toBe(true);
+    expect(result.questions.some((q) => q.id === 'general_age')).toBe(false);
   });
 });

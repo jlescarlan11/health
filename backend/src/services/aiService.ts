@@ -64,7 +64,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     ${facilityContext}
 
     VALID_SERVICES = [
-      ${VALID_SERVICES.map(s => `"${s}"`).join(', ')}
+      ${VALID_SERVICES.map((s) => `"${s}"`).join(', ')}
     ]
 
     Task:
@@ -114,7 +114,8 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   const currentIdx = levels.indexOf(parsedResponse.recommendation);
 
   const isLowReadiness =
-    parsedResponse.triage_readiness_score !== undefined && parsedResponse.triage_readiness_score < 0.80;
+    parsedResponse.triage_readiness_score !== undefined &&
+    parsedResponse.triage_readiness_score < 0.8;
   const isAmbiguous = parsedResponse.ambiguity_detected === true;
 
   if ((isLowReadiness || isAmbiguous) && currentIdx !== -1 && currentIdx < 3) {
