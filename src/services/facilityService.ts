@@ -69,13 +69,13 @@ const API_URL = getApiUrl();
 
 import {
   getFacilities as getFacilitiesFromDb,
-  saveFacilities as saveFacilitiesToDb,
+  saveFacilitiesFull as saveFacilitiesToDb,
 } from './database';
 import NetInfo from '@react-native-community/netinfo';
 
-export const fetchFacilitiesFromApi = async (params: { limit?: number; offset?: number } = {}) => {
+export const fetchFacilitiesFromApi = async () => {
   try {
-    const response = await axios.get(`${API_URL}/facilities`, { params });
+    const response = await axios.get(`${API_URL}/facilities`);
     return response.data;
   } catch (error: unknown) {
     console.error('Error fetching facilities from API:', error);
@@ -83,12 +83,12 @@ export const fetchFacilitiesFromApi = async (params: { limit?: number; offset?: 
   }
 };
 
-export const getFacilities = async (params: { limit?: number; offset?: number } = {}) => {
+export const getFacilities = async () => {
   const netInfo = await NetInfo.fetch();
 
   if (netInfo.isConnected) {
     try {
-      const data = await fetchFacilitiesFromApi(params);
+      const data = await fetchFacilitiesFromApi();
       // Optionally cache the data here as well, or rely on the background sync service.
       // For robust fallback, it's good to cache on every successful fetch.
       // We need to match the data structure expected by saveFacilities.
@@ -118,21 +118,6 @@ export const getFacilities = async (params: { limit?: number; offset?: number } 
   console.log('Fetching facilities from local database');
   const localData = await getFacilitiesFromDb();
   if (localData && localData.length > 0) {
-    // Maintain API return structure if possible.
-    // The API seems to return direct array or object with facilities.
-    // We will return the array directly as that's usually easier to handle,
-    // but we should check what the caller expects.
-    // Looking at `fetchFacilitiesFromApi`, it returns `response.data`.
-    // If `response.data` is `{ facilities: [...] }`, we should mock that?
-    // Let's assume for now the caller handles `data` or `data.facilities`.
-    // If pagination was requested but we're offline, we might need to simulate pagination or just return all.
-    // Simulating basic pagination for offline mode:
-    if (params.limit && params.offset !== undefined) {
-      return {
-        facilities: localData.slice(params.offset, params.offset + params.limit),
-        total: localData.length,
-      };
-    }
     return localData;
   }
 

@@ -1,7 +1,7 @@
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchFacilitiesFromApi } from './facilityService';
-import { saveFacilities } from './database';
+import { saveFacilitiesFull } from './database';
 import { store } from '../store';
 import { syncCompleted, setOfflineStatus } from '../store/offlineSlice';
 
@@ -25,7 +25,7 @@ export const syncFacilities = async () => {
     }
 
     if (facilitiesToSave.length > 0) {
-      await saveFacilities(facilitiesToSave);
+      await saveFacilitiesFull(facilitiesToSave);
       const timestamp = Date.now();
       await AsyncStorage.setItem('last_sync_timestamp', timestamp.toString());
       store.dispatch(syncCompleted());

@@ -41,8 +41,8 @@ export const listFacilities = async (req: Request, res: Response) => {
       type: type as string,
       yakap_accredited:
         yakap_accredited === 'true' ? true : yakap_accredited === 'false' ? false : undefined,
-      limit: limit ? Number(limit) : undefined,
-      offset: offset ? Number(offset) : undefined,
+      limit: limit === undefined || limit === '' ? undefined : Number(limit),
+      offset: offset === undefined || offset === '' ? undefined : Number(offset),
     });
 
     res.json({

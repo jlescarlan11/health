@@ -16,7 +16,7 @@ interface GetNearbyFacilitiesParams {
 }
 
 export const getAllFacilities = async (params: GetFacilitiesParams) => {
-  const { type, yakap_accredited, limit = 10, offset = 0 } = params;
+  const { type, yakap_accredited, limit, offset } = params;
 
   const where: Prisma.FacilityWhereInput = {};
 
@@ -28,17 +28,31 @@ export const getAllFacilities = async (params: GetFacilitiesParams) => {
     where.yakap_accredited = yakap_accredited;
   }
 
+  const fetchAll = limit === undefined || limit === null || limit === -1;
+
+  if (fetchAll) {
+    const facilities = await prisma.facility.findMany({
+      where,
+      orderBy: { name: 'asc' },
+    });
+
+    const total = facilities.length;
+    return { facilities, total, limit: total, offset: 0 };
+  }
+
+  const normalizedOffset = offset ?? 0;
+
   const [facilities, total] = await Promise.all([
     prisma.facility.findMany({
       where,
       take: limit,
-      skip: offset,
+      skip: normalizedOffset,
       orderBy: { name: 'asc' },
     }),
     prisma.facility.count({ where }),
   ]);
 
-  return { facilities, total, limit, offset };
+  return { facilities, total, limit, offset: normalizedOffset };
 };
 
 export const getFacilityById = async (id: string): Promise<Facility | null> => {
