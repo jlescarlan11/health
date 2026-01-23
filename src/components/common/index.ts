@@ -11,3 +11,4 @@ export * from './SafetyRecheckModal';
 export * from './EmergencyActions';
 export * from './ProgressBar';
 export * from './MultiSelectChecklist';
+export * from './YakapLogo';

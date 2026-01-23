@@ -7,6 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Button } from '../../components/common/Button';
 import StandardHeader from '../../components/common/StandardHeader';
+import { YakapLogo } from '../../components/common';
 import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
 import { YakapStackScreenProps } from '../../types/navigation';
 
@@ -68,6 +69,9 @@ const YakapHomeScreen = () => {
           style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer + '30' }]}
         >
           <View style={styles.heroContent}>
+            <View style={styles.logoContainer}>
+              <YakapLogo width={80} height={80} />
+            </View>
             <Text
               variant="headlineMedium"
               style={[styles.heroTitle, { color: theme.colors.onSurface }]}
@@ -156,6 +160,9 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     alignItems: 'flex-start',
+  },
+  logoContainer: {
+    marginBottom: 24,
   },
   heroTitle: {
     fontWeight: '800',

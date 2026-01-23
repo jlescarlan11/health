@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
+import { YakapLogo } from '../components/common';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -22,6 +23,7 @@ export const MainHomeScreen = () => {
     title,
     subtitle,
     icon,
+    customIcon,
     color,
     onPress,
     testID,
@@ -29,7 +31,8 @@ export const MainHomeScreen = () => {
   }: {
     title: string;
     subtitle?: string;
-    icon: keyof (typeof MaterialCommunityIcons)['glyphMap'];
+    icon?: keyof (typeof MaterialCommunityIcons)['glyphMap'];
+    customIcon?: React.ReactNode;
     color: string;
     onPress: () => void;
     testID?: string;
@@ -66,7 +69,15 @@ export const MainHomeScreen = () => {
               compact && styles.iconContainerCompact,
             ]}
           >
-            <MaterialCommunityIcons name={icon} size={compact ? 20 : 28} color="#FFFFFF" />
+            {customIcon ? (
+              customIcon
+            ) : (
+              <MaterialCommunityIcons
+                name={icon as any}
+                size={compact ? 20 : 28}
+                color="#FFFFFF"
+              />
+            )}
           </View>
 
           <View style={styles.textContainer}>
@@ -145,7 +156,7 @@ export const MainHomeScreen = () => {
               <FeatureCard
                 title="YAKAP Guide"
                 subtitle="Enrollment guide for free healthcare"
-                icon="card-account-details"
+                customIcon={<YakapLogo width={32} height={32} />}
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
               />
