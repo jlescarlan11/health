@@ -15,6 +15,12 @@ const palette = {
 
 export const theme = {
   ...MD3LightTheme,
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+  },
   colors: {
     ...MD3LightTheme.colors,
 
