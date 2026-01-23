@@ -32,7 +32,7 @@ export const FacilityDirectoryScreen = () => {
 
   // Use the custom hook for location management
   // It will automatically update the Redux store with the user's location
-  const { permissionStatus, requestPermission } = useUserLocation({
+  const { permissionStatus, requestPermission, getCurrentLocation } = useUserLocation({
     watch: false,
     requestOnMount: false,
     showDeniedAlert: false,
@@ -101,7 +101,7 @@ export const FacilityDirectoryScreen = () => {
 
   const handlePermissionPress = () => {
     if (permissionStatus === 'undetermined') {
-      requestPermission();
+      getCurrentLocation();
     } else {
       Linking.openSettings().catch(() => {});
     }

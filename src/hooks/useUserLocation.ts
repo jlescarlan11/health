@@ -113,5 +113,5 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
     };
   }, [dispatch, requestPermission, watch, getCurrentLocation, requestOnMount]);
 
-  return { location, errorMsg, permissionStatus, requestPermission };
+  return { location, errorMsg, permissionStatus, requestPermission, getCurrentLocation };
 };

@@ -54,25 +54,28 @@ export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
           <MaterialCommunityIcons
             name={levelConfig.icon}
             size={36}
-            color={levelConfig.color}
+            color={levelConfig.foregroundColor}
             accessibilityLabel={`${level} triage level icon`}
           />
         </View>
-        <Text variant="bodySmall" style={[styles.introText, { color: theme.colors.onSurface }]}>
+        <Text variant="bodySmall" style={[styles.introText, { color: levelConfig.contentColor }]}>
           {RECOMMENDATION_INTRO}
         </Text>
         <Text
           variant="headlineMedium"
           style={[
             styles.primaryLabel,
-            { color: levelConfig.color, lineHeight: 34, letterSpacing: 0.5 },
+            { color: levelConfig.foregroundColor, lineHeight: 34, letterSpacing: 0.5 },
           ]}
           accessibilityRole="header"
         >
           {levelLabel}
         </Text>
         {instruction ? (
-          <Text variant="bodyMedium" style={[styles.justificationText, { color: theme.colors.onSurface }]}>
+          <Text
+            variant="bodyMedium"
+            style={[styles.justificationText, { color: levelConfig.contentColor }]}
+          >
             {instruction.trim()}
           </Text>
         ) : null}
@@ -135,29 +138,34 @@ const getLevelConfig = (
   colors: ThemeColors,
 ): {
   icon: keyof (typeof MaterialCommunityIcons)['glyphMap'];
-  color: string;
   backgroundColor: string;
+  foregroundColor: string;
+  contentColor: string;
 } => {
   const levelMap: Record<TriageLevel, LevelConfig> = {
     emergency: {
       icon: 'alert-decagram',
-      color: colors.error,
+      foregroundColor: colors.error,
       backgroundColor: colors.errorContainer,
+      contentColor: colors.onSurface,
     },
     hospital: {
       icon: 'hospital-building',
-      color: colors.secondary,
+      foregroundColor: colors.secondary,
       backgroundColor: colors.secondaryContainer,
+      contentColor: colors.onSurface,
     },
     'health-center': {
       icon: 'medical-bag',
-      color: colors.primary,
-      backgroundColor: colors.primaryContainer,
+      foregroundColor: colors.onPrimary,
+      backgroundColor: colors.primary,
+      contentColor: colors.onPrimary,
     },
     'self-care': {
       icon: 'home-heart',
-      color: colors.tertiary,
+      foregroundColor: colors.tertiary,
       backgroundColor: colors.tertiaryContainer,
+      contentColor: colors.onSurface,
     },
   };
 
@@ -166,6 +174,7 @@ const getLevelConfig = (
 
 type LevelConfig = {
   icon: keyof (typeof MaterialCommunityIcons)['glyphMap'];
-  color: string;
   backgroundColor: string;
+  foregroundColor: string;
+  contentColor: string;
 };

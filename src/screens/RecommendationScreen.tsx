@@ -655,12 +655,22 @@ const RecommendationScreen = () => {
   const handoverButtonContentStyle = {
     paddingHorizontal: theme.spacing?.lg ?? 16,
     paddingVertical: theme.spacing?.sm ?? 8,
+    justifyContent: 'center',
   };
   const handoverButtonLabelText = 'View Handover Report';
   const handoverButtonLabelStyle = {
-    marginLeft: 0, // spacing already handled via icon margin
-    // Color handled by primary variant
+    marginLeft: 0,
   };
+  const restartButtonStyle = [
+    styles.restartButton,
+    {
+      marginHorizontal: theme.spacing?.lg ?? 16,
+      marginVertical: theme.spacing?.md ?? 12,
+      borderRadius: handoverBorderRadius,
+      alignSelf: 'stretch',
+    },
+  ];
+  const restartButtonContentStyle = handoverButtonContentStyle;
   const selfCareToggleStyle = {
     marginHorizontal: theme.spacing.large,
     marginTop: theme.spacing.large,
@@ -834,8 +844,8 @@ const RecommendationScreen = () => {
               );
             }}
             variant="primary"
-            style={styles.restartButton}
-            icon="refresh"
+            style={restartButtonStyle}
+            contentStyle={restartButtonContentStyle}
           />
         </View>
       </ScrollView>
