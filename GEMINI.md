@@ -260,3 +260,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Implementation:** Created a new reusable component `src/components/common/FacilityDirectoryLogo.tsx` using `react-native-svg`.
   - **UI Integration:** Updated the `MainHomeScreen` "Facility Directory" card to use the new logo, maintaining consistent branding across all three main features.
   - **Files Created/Modified:** `src/components/common/FacilityDirectoryLogo.tsx`, `src/screens/MainHomeScreen.tsx`.
+
+- **Database Reliability Update (Jan 24, 2026):**
+  - **Transaction Safety:** Hardened `saveFacilitiesFull` in `src/services/database.ts` to validate facility data *before* opening a database transaction. This prevents potential deadlocks where an error is thrown after `BEGIN TRANSACTION` but before the rollback block is reachable.
+  - **Type Safety:** Updated `src/services/syncService.ts` to explicitly type `facilitiesToSave` as `Facility[]`, resolving implicit `any` type warnings.
+  - **Verification:** Added `src/services/__tests__/database.test.ts` to verify the transaction safety logic (validation before transaction start) and confirmed all tests pass.
+  - **Files Created/Modified:** `src/services/database.ts`, `src/services/syncService.ts`, `src/services/__tests__/database.test.ts`.

@@ -32,7 +32,7 @@ export const FacilityDirectoryScreen = () => {
 
   // Use the custom hook for location management
   // It will automatically update the Redux store with the user's location
-  const { permissionStatus } = useUserLocation({
+  const { permissionStatus, requestPermission } = useUserLocation({
     watch: false,
     requestOnMount: false,
     showDeniedAlert: false,
@@ -98,6 +98,14 @@ export const FacilityDirectoryScreen = () => {
 
   const showLocationPermissionBanner =
     permissionStatus === 'denied' || permissionStatus === 'undetermined';
+
+  const handlePermissionPress = () => {
+    if (permissionStatus === 'undetermined') {
+      requestPermission();
+    } else {
+      Linking.openSettings().catch(() => {});
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -177,9 +185,9 @@ export const FacilityDirectoryScreen = () => {
                       Enable location to see the nearest facilities.
                     </Text>
                     <Button
-                      title="Open Settings"
+                      title={permissionStatus === 'undetermined' ? 'Enable' : 'Open Settings'}
                       variant="text"
-                      onPress={() => Linking.openSettings().catch(() => {})}
+                      onPress={handlePermissionPress}
                       style={styles.locationBannerCta}
                       contentStyle={styles.locationBannerCtaContent}
                       labelStyle={styles.locationBannerCtaLabel}

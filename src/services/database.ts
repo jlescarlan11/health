@@ -163,22 +163,8 @@ export const saveFacilitiesFull = async (facilities: Facility[]) => {
 
   const timestamp = Date.now();
 
-  try {
-    await db.execAsync('BEGIN TRANSACTION');
-
-    const existing = await db.getAllAsync<{ id: string; data: string | null }>(
-      'SELECT id, data FROM facilities',
-    );
-    const existingDataById = new Map(existing.map((row) => [row.id, row.data ?? '']));
-
-    const incomingIds = new Set<string>();
-    if (facilities.length === 0) {
-      await db.execAsync('DELETE FROM facilities');
-      await db.execAsync('COMMIT');
-      console.log('Cleared facilities offline storage (empty dataset)');
-      return;
-    }
-
+  const incomingIds = new Set<string>();
+  if (facilities.length > 0) {
     for (const facility of facilities) {
       if (!facility?.id) {
         throw new Error('Invalid facilities dataset: missing facility.id');
@@ -189,6 +175,22 @@ export const saveFacilitiesFull = async (facilities: Facility[]) => {
     if (incomingIds.size === 0) {
       throw new Error('Invalid facilities dataset: no facility ids present');
     }
+  }
+
+  try {
+    await db.execAsync('BEGIN TRANSACTION');
+
+    if (facilities.length === 0) {
+      await db.execAsync('DELETE FROM facilities');
+      await db.execAsync('COMMIT');
+      console.log('Cleared facilities offline storage (empty dataset)');
+      return;
+    }
+
+    const existing = await db.getAllAsync<{ id: string; data: string | null }>(
+      'SELECT id, data FROM facilities',
+    );
+    const existingDataById = new Map(existing.map((row) => [row.id, row.data ?? '']));
 
     const deleteStatement = await db.prepareAsync('DELETE FROM facilities WHERE id = $id');
     const upsertStatement = await db.prepareAsync(
