@@ -65,18 +65,12 @@ export const formatClinicalShareText = (
     if (sections.s) shareText += `SUBJECTIVE (History):\n${sections.s}\n\n`;
     if (sections.o) shareText += `OBJECTIVE (Signs):\n${sections.o}\n\n`;
 
-    let assessment = sections.a || '';
-    if (medicalJustification) {
-      assessment += (assessment ? '\n\n' : '') + `Emergency Justification: ${medicalJustification}`;
-    }
+    const assessment = sections.a || '';
     if (assessment) shareText += `ASSESSMENT (Triage):\n${assessment}\n\n`;
 
     if (sections.p) shareText += `PLAN (Next Steps):\n${sections.p}\n`;
   } else {
     shareText += clinicalSoap;
-    if (medicalJustification) {
-      shareText += `\n\nEmergency Justification: ${medicalJustification}`;
-    }
   }
 
   return shareText.trim();

@@ -52,19 +52,19 @@ describe('MainHomeScreen', () => {
 
     expect(getByText('Kumusta!')).toBeTruthy();
     expect(getByText('Check Symptoms')).toBeTruthy();
-    expect(getByText('Find Facilities')).toBeTruthy();
-    expect(getByText('YAKAP Enrollment')).toBeTruthy();
+    expect(getByText('Facility Directory')).toBeTruthy();
+    expect(getByText('YAKAP Guide')).toBeTruthy();
   });
 
   it('navigates to AiChat when Check Symptoms is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('Check Symptoms'));
-    expect(mockNavigate).toHaveBeenCalledWith('Check', { screen: 'NavigatorHome' });
+    expect(mockNavigate).toHaveBeenCalledWith('Check', { screen: 'CheckSymptom' });
   });
 
   it('navigates to FacilityDirectory when Find Facilities is pressed', () => {
     const { getByText } = render(component);
-    fireEvent.press(getByText('Find Facilities'));
+    fireEvent.press(getByText('Facility Directory'));
     expect(mockNavigate).toHaveBeenCalledWith(
       'Find',
       expect.objectContaining({ screen: 'FacilityDirectory' }),
@@ -73,7 +73,7 @@ describe('MainHomeScreen', () => {
 
   it('navigates to YakapHome when YAKAP Enrollment is pressed', () => {
     const { getByText } = render(component);
-    fireEvent.press(getByText('YAKAP Enrollment'));
+    fireEvent.press(getByText('YAKAP Guide'));
     expect(mockNavigate).toHaveBeenCalledWith('YAKAP', { screen: 'YakapHome' });
   });
 });

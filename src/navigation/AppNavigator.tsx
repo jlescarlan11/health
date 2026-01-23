@@ -38,7 +38,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Find" component={FacilitiesNavigator} />
       <Stack.Screen name="YAKAP" component={YakapNavigator} />
 
-      {/* AI Navigator Flow */}
+      {/* Check Symptom Flow */}
       <Stack.Screen name="SymptomAssessment" component={SymptomAssessmentScreen} />
       <Stack.Screen
         name="Recommendation"

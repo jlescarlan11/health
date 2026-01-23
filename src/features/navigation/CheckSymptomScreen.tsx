@@ -14,16 +14,17 @@ import { Text, Chip, useTheme, Card, Surface } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
+import { RootState } from '../../store';
 import { InputCard, EmergencyActions } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
-import { setHighRisk } from '../../store/navigationSlice';
+import { setHighRisk, clearAssessmentState, setSymptomDraft } from '../../store/navigationSlice';
 
-type NavigationProp = CheckStackScreenProps<'NavigatorHome'>['navigation'];
+type NavigationProp = CheckStackScreenProps<'CheckSymptom'>['navigation'];
 
-const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Injury', 'Prenatal Care'];
+const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Prenatal Care', 'Injury'];
 
 const SYMPTOM_ICONS: Record<string, string> = {
   Fever: 'thermometer',
@@ -46,51 +47,41 @@ const SymptomItem = ({
   onPress: () => void;
 }) => {
   const theme = useTheme();
-  const [isPressed, setIsPressed] = useState(false);
 
   return (
-    <Surface
-      style={[
-        styles.symptomCard,
-        {
-          backgroundColor: isSelected
-            ? theme.colors.primary
-            : isPressed
-              ? theme.colors.surface
-              : theme.colors.secondaryContainer,
-          elevation: isPressed ? 2 : 0,
-        },
-      ]}
-    >
-      <Pressable
-        style={styles.symptomPressable}
-        onPress={onPress}
-        onPressIn={() => setIsPressed(true)}
-        onPressOut={() => setIsPressed(false)}
-        android_ripple={{ color: isSelected ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.05)' }}
-      >
+    <Chip
+      selected={isSelected}
+      onPress={onPress}
+      mode="flat"
+      showSelectedCheck={false}
+      icon={({ size, color }) => (
         <MaterialCommunityIcons
           name={(isSelected ? 'check' : icon) as any}
-          size={24}
+          size={size}
           color={isSelected ? theme.colors.onPrimary : theme.colors.primary}
         />
-        <Text
-          variant="bodyMedium"
-          style={[
-            styles.symptomLabel,
-            { color: isSelected ? theme.colors.onPrimary : theme.colors.onSurface },
-          ]}
-        >
-          {label}
-        </Text>
-      </Pressable>
-    </Surface>
+      )}
+      style={[
+        styles.symptomChip,
+        {
+          backgroundColor: isSelected ? theme.colors.primary : theme.colors.secondaryContainer,
+        },
+      ]}
+      textStyle={[
+        styles.symptomLabel,
+        { color: isSelected ? theme.colors.onPrimary : theme.colors.primary },
+      ]}
+    >
+      {label}
+    </Chip>
   );
 };
 
-const NavigatorHomeScreen = () => {
+const CheckSymptomScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
+  const savedDraft = useSelector((state: RootState) => state.navigation.symptomDraft);
+  const assessmentState = useSelector((state: RootState) => state.navigation.assessmentState);
   const theme = useTheme();
 
   const insets = useSafeAreaInsets();
@@ -98,10 +89,23 @@ const NavigatorHomeScreen = () => {
   const keyboardHeightRef = useRef(new Animated.Value(0));
   const keyboardHeight = keyboardHeightRef.current;
 
-  const [symptom, setSymptom] = useState('');
+  const [symptom, setSymptom] = useState(savedDraft || '');
   const [isRecording, setIsRecording] = useState(false);
   const [volume, setVolume] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Persist draft to Redux
+  useEffect(() => {
+    dispatch(setSymptomDraft(symptom));
+  }, [symptom, dispatch]);
+
+  // Handle Assessment Redirection
+  useEffect(() => {
+    if (assessmentState && !isProcessing) {
+      // If there is an ongoing assessment, we might want to redirect
+      // But let's allow the user to start a new one if they want by typing
+    }
+  }, [assessmentState]);
 
   useEffect(() => {
     const keyboardWillShow = Keyboard.addListener(
@@ -246,6 +250,7 @@ const NavigatorHomeScreen = () => {
         return;
       }
 
+      dispatch(clearAssessmentState());
       navigation.navigate('SymptomAssessment', { initialSymptom: symptom });
     } finally {
       setIsProcessing(false);
@@ -269,7 +274,7 @@ const NavigatorHomeScreen = () => {
                 styles.emergencyCard,
                 {
                   backgroundColor: theme.colors.surface,
-                  borderWidth: 1,
+                  borderWidth: 0.5,
                   borderColor: theme.colors.surface,
                   shadowColor: theme.colors.shadow,
                   shadowOffset: { width: 0, height: 4 },
@@ -319,6 +324,32 @@ const NavigatorHomeScreen = () => {
               Describe your symptoms and our AI will guide you to the right care.
             </Text>
           </View>
+
+          {assessmentState && (
+            <Pressable
+              onPress={() => navigation.navigate('SymptomAssessment', { initialSymptom: assessmentState.initialSymptom })}
+              style={({ pressed }) => [
+                styles.resumeBanner,
+                {
+                  backgroundColor: theme.colors.primaryContainer,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <View style={styles.resumeContent}>
+                <MaterialCommunityIcons name="play-circle-outline" size={24} color={theme.colors.primary} />
+                <View style={styles.resumeTextContainer}>
+                  <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer, fontWeight: 'bold' }}>
+                    Ongoing Assessment
+                  </Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onPrimaryContainer }}>
+                    Continue your assessment for "{assessmentState.initialSymptom}"
+                  </Text>
+                </View>
+                <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.primary} />
+              </View>
+            </Pressable>
+          )}
 
           <View style={styles.quickActions}>
             <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -390,6 +421,21 @@ const styles = StyleSheet.create({
   heroSection: { marginBottom: 24 },
   welcomeText: { fontWeight: 'bold', textAlign: 'left' },
   subtitle: { marginTop: 8, lineHeight: 20 },
+  resumeBanner: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 151, 119, 0.2)',
+  },
+  resumeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  resumeTextContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
   anchoredInputContainer: {
     paddingHorizontal: 16,
     paddingTop: 10,
@@ -397,23 +443,19 @@ const styles = StyleSheet.create({
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },
-  chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  symptomCard: {
-    width: '48%',
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 0,
-  },
-  symptomPressable: {
+  chipContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
+    flexWrap: 'wrap',
     gap: 8,
+  },
+  symptomChip: {
+    marginBottom: 4,
+    borderRadius: 8,
   },
   symptomLabel: {
     fontWeight: '500',
-    flex: 1,
+    fontSize: 14,
   },
 });
 
-export default NavigatorHomeScreen;
+export default CheckSymptomScreen;

@@ -1,7 +1,7 @@
 # Validation Test Plan: Recently Resolved Critical Symptoms (T2.1)
 
 ## Overview
-This test plan validates the behavior of the AI Navigator when handling transient high-risk symptoms (e.g., chest pain that has stopped). It ensures the AI recognizes the `[RECENT_RESOLVED]` tag, asks prioritized temporal questions, and maintains a safety-first triage level (Hospital Floor).
+This test plan validates the behavior of the Check Symptom Assistant when handling transient high-risk symptoms (e.g., chest pain that has stopped). It ensures the AI recognizes the `[RECENT_RESOLVED]` tag, asks prioritized temporal questions, and maintains a safety-first triage level (Hospital Floor).
 
 ## Test Scenarios
 

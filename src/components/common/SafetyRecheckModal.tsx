@@ -56,7 +56,7 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
       <Button
         title="I AM SAFE, CONTINUE"
         onPress={onDismiss}
-        variant="outline"
+        variant="primary"
         style={styles.closeButton}
       />
     </Modal>

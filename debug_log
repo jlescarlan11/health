@@ -1,43 +1,760 @@
 === EMERGENCY DETECTION START ===
- LOG  Input: "I've been having irregular menstruation for years now. Like in a year. I only get my period like les..."
+ LOG  Input: "when i pee, it is somewhat painful and this happens for 3 days consecutively. there are yimes that w..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "when i pee. it is somewhat painful and this happens for 3 days consecutively. there are yimes that when i pee. there arw only small amount of urine. i laso have a fever"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 4/10 | Emergency: NO
+ LOG  Systems: Other
+ LOG  Reasoning: Non-emergency (score 4/10). Symptoms: fever.
+ LOG  Medical Justification: Potential concerns: fever.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "when i pee, it is somewhat painful and this happens for 3 days consecutively. there are yimes that w..."
  LOG  Input Type: USER INPUT
  LOG  
 Sanitization:
- LOG    Sanitized input: "I've been having irregular menstruation for years now. Like in a year. I only get my period like less than few times and each period is not bloody red but brownish flow is not heavy. but now suddenly. I woke up with a lot of blood coming out from me"
+ LOG    Sanitized input: "when i pee. it is somewhat painful and this happens for 3 days consecutively. there are yimes that when i pee. there arw only small amount of urine. i laso have a fever"
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 10/10 | Emergency: YES
- LOG  Systems: Respiratory
- LOG  Reasoning: Emergency detected (score 10/10). Symptoms: choking. Systems: Respiratory. [Context: Absolute emergency detected.]
- LOG  Medical Justification: choking (Severity: 10/10 - Respiratory); Context: Absolute emergency detected.
+ LOG  Score: 4/10 | Emergency: NO
+ LOG  Systems: Other
+ LOG  Reasoning: Non-emergency (score 4/10). Symptoms: fever.
+ LOG  Medical Justification: Potential concerns: fever.
  LOG  === EMERGENCY DETECTION END ===
- LOG 
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "Initial Symptom: I've been having irregular menstruation for years now. Like in a year. I only get m..."
+ LOG  Input: "22..."
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "I've been having irregular menstruation for years now. Like in a year. I only get my period like less than few times and each period is not bloody red but brownish flow is not heavy. but now suddenly. I woke up with a lot of blood coming out from me"
+ LOG    Sanitized input: ""
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 10/10 | Emergency: YES
- LOG  Systems: Respiratory
- LOG  Reasoning: Emergency detected (score 10/10). Symptoms: choking. Systems: Respiratory. [Context: Absolute emergency detected.]
- LOG  Medical Justification: choking (Severity: 10/10 - Respiratory); Context: Absolute emergency detected.
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
  LOG  === EMERGENCY DETECTION END ===
  LOG 
+╔═══ CONVERSATION STEP 0 ═══╗
+ LOG  ║ Q: How old are you?
+ LOG  ║ A: 22
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 1 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 1, activeQuestions.length: 11
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=1, Required=7
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "I'm experiencing High fever (above 39°C or 102.2°F) that won't go down, Weakness or feeling faint, N..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I'm experiencing High fever (above 39°C or 102. 2°F) that won't go down. Weakness or feeling faint. Not able to pee at all"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 5/10 | Emergency: NO
+ LOG  Systems: Other
+ LOG  Reasoning: Non-emergency (score 5/10). Symptoms: high fever, fever.
+ LOG  Medical Justification: Potential concerns: high fever, fever.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  
+╔═══ CONVERSATION STEP 1 ═══╗
+ LOG  ║ Q: Do you have any of the following serious symptoms?
+ LOG  ║ A: I'm experiencing High fever (above 39°C or 102.2°F) that won't go down, Weakness or feeling faint, Not able to pee at all.
+ LOG  ║ Emergency: false (score: 5)
+ LOG  ║ Keywords: high fever, fever
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 2 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 2, activeQuestions.length: 11
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=2, Required=7
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "it is the same ..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "it is the same"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 2 ═══╗
+ LOG  ║ Q: You mentioned this has been happening for 3 days. Has the pain when you pee stayed the same, gotten worse, or gotten better since then?
+ LOG  ║ A: it is the same
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 3 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 3, activeQuestions.length: 11
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=3, Required=7
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "3 days", "match": false, "right": "three days"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "8..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: ""
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 3 ═══╗
+ LOG  ║ Q: On a scale of 1 to 10, where 1 is no pain and 10 is the worst pain possible, how bad is the pain when you pee?
+ LOG  ║ A: 8
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 4 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [SBL Override] Escalating complex -> critical based on system keywords.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 4, activeQuestions.length: 11
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=4, Required=7
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "it feels like burning, and stinging. do i need to go to the health center?..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "it feels like burning. and stinging. do i need to go to the health center"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 4 ═══╗
+ LOG  ║ Q: How would you describe the pain when you pee?
+ LOG  ║ A: it feels like burning, and stinging. do i need to go to the health center?
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 5 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 5, activeQuestions.length: 11
+ WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=false
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=5, Required=7  
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "the same", "match": false, "right": "same"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Feeling very tired or weak..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Feeling very tired or weak"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 5 ═══╗
+ LOG  ║ Q: Besides the painful peeing, small amounts of urine, and fever, are you also feeling any of these?
+ LOG  ║ A: Feeling very tired or weak
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 6 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 6, activeQuestions.length: 11
+ WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=false
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=6, Required=7  
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "Same", "match": false, "right": "the same"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Strong urge to pee..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Strong urge to pee"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 6 ═══╗
+ LOG  ║ Q: Are you peeing more often than usual, or do you feel a strong urge to pee even when your bladder feels empty?
+ LOG  ║ A: Strong urge to pee
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 7 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 7, activeQuestions.length: 11
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "stayed the same", "match": false, "right": "Same"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Cloudy pee..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Cloudy pee"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 7 ═══╗
+ LOG  ║ Q: Have you noticed any changes in the color of your pee, or does it look cloudy or have an unusual smell?
+ LOG  ║ A: Cloudy pee
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 8 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 8, activeQuestions.length: 11
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "same", "match": false, "right": "stayed the same"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 8 ═══╗
+ LOG  ║ Q: Have you had similar problems with painful peeing or fever before?        
+ LOG  ║ A: Yes
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 9 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 9, activeQuestions.length: 11
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "the same", "match": false, "right": "same"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 9 ═══╗
+ LOG  ║ Q: Are you pregnant or could you be pregnant?
+ LOG  ║ A: No
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 10 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 10, activeQuestions.length: 11
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "same", "match": false, "right": "the same"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "no..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "no"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 10 ═══╗
+ LOG  ║ Q: Do you have any other health conditions, like diabetes, or are you taking any medications regularly?
+ LOG  ║ A: no
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 11 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 11, activeQuestions.length: 11
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: COMPLETENESS FAIL: Missing critical slots [Red Flag Assessment]
+ LOG  [Assessment] Effective Readiness: 1 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Plan exhausted but safety criteria not met. Expansion 1/2. Fetching more questions.
+ LOG  [DEBUG_EXPANSION] resolvedTag: "", Ref: false, Keyword: null
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Safety criteria not met (Readiness: 1) but plan cannot be expanded further. Finalizing with conservative fallback.
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Finalizing... Extracting Slots.
+ LOG  
+╔═══ FINAL PROFILE EXTRACTION ═══╗
+ LOG  {
+  "age": "22",
+  "duration": "3 days",
+  "severity": "8/10",
+  "progression": "same",
+  "red_flag_denials": null,
+  "denial_confidence": null,
+  "summary": "A 22-year-old patient reports a 3-day history of painful (burning, stinging, 8/10, stable) and small amounts of urination, along with high fever (above 39°C, unresolving), weakness/feeling faint, inability to pee at all, persistent tiredness, strong urge to pee, and cloudy urine, having experienced similar issues previously.",
+  "ambiguity_detected": false,
+  "internal_inconsistency_detected": false,
+  "clinical_friction_detected": false,
+  "clinical_friction_details": null,
+  "is_complex_case": true,
+  "is_vulnerable": true,
+  "symptom_category": "critical",
+  "red_flags_resolved": true,
+  "uncertainty_accepted": false,
+  "turn_count": 11,
+  "triage_readiness_score": 1
+}
+ LOG  ╚════════════════════════════════╝
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Initial Symptom: when i pee, it is somewhat painful and this happens for 3 days consecutively. there..."
+ LOG  Input Type: USER INPUT
+ LOG  
+Sanitization:
+ LOG    Sanitized input: "when i pee. it is somewhat painful and this happens for 3 days consecutively. there are yimes that when i pee. there arw only small amount of urine. i laso have a fever. I'm experiencing High fever (above 39°C or 102. 2°F) that won't go down. Weakness or feeling faint. Not able to pee at all. it is the same. it feels like burning. and stinging. do i need to go to the health center. Feeling very tired or weak. Strong urge to pee. Cloudy pee. Yes. No. no"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 5/10 | Emergency: NO
+ LOG  Systems: Other
+ LOG  Reasoning: Non-emergency (score 5/10). Symptoms: fever, high fever.
+ LOG  Medical Justification: Potential concerns: fever, high fever.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG  [GeminiClient] Sending request (Attempt 1)...
+ LOG  [GeminiClient] Red flags detected but not Emergency. Upgrading to Emergency.
+ LOG  [GeminiClient] Authority Block: Bypassed. Red flag denials ("") did not pass strengthened validation.
+ LOG 
 ╔════════════════════════════════════════════════════════════╗
- LOG  ║              FINAL ASSESSMENT & RECOMMENDATION             ║      
- LOG  ╠════════════════════════════════════════════════════════════╣      
- LOG  ║ CONTEXT: Initial Symptom: I've been having irregular mens... ║    
- LOG  ╟────────────────────────────────────────────────────────────╢      
- LOG  ║ RECOMMENDED LEVEL: EMERGENCY                                ║     
- LOG  ║ READINESS: 100%       | AMBIGUITY: NO                      ║      
- LOG  ╟────────────────────────────────────────────────────────────╢      
- LOG  ║ ADVICE: CRITICAL: Potential life-threatening condition det ║      
- LOG  ║         ected based on your symptoms. Go to the nearest em ║      
- LOG  ╟────────────────────────────────────────────────────────────╢      
- LOG  ║ RED FLAGS: choking                                         ║      
+ LOG  ║              FINAL ASSESSMENT & RECOMMENDATION             ║
+ LOG  ╠════════════════════════════════════════════════════════════╣
+ LOG  ║ CONTEXT: Initial Symptom: when i pee, it is somewhat pain... ║
  LOG  ╟────────────────────────────────────────────────────────────╢
- LOG  ║ CLINICAL SOAP: S: Patient reports choking. O: AI detected  ║
- LOG  ╚════════════════════════════════════════════════════════════╝      
+ LOG  ║ RECOMMENDED LEVEL: EMERGENCY                                ║
+ LOG  ║ READINESS: N/A        | AMBIGUITY: NO                      ║
+ LOG  ╟────────────────────────────────────────────────────────────╢
+ LOG  ║ ADVICE: I understand you've been experiencing painful urin ║
+ LOG  ║         ation, very small amounts of urine, and at times a ║
+ LOG  ╟────────────────────────────────────────────────────────────╢
+ LOG  ║ RED FLAGS: High fever (>39°C, unresolving), Inability to p ║
+ LOG  ╟────────────────────────────────────────────────────────────╢
+ LOG  ║ CLINICAL SOAP: S: 22-year-old patient with 3-day history o ║
+ LOG  ╚════════════════════════════════════════════════════════════╝

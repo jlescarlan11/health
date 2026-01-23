@@ -5,7 +5,7 @@ import { AssessmentData } from './triage';
 
 // Define the parameters for each screen in the stack navigators
 export type CheckStackParamList = {
-  NavigatorHome: undefined;
+  CheckSymptom: undefined;
 };
 
 export type FacilitiesStackParamList = {
