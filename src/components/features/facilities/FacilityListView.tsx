@@ -14,7 +14,11 @@ import { Facility } from '../../../types';
 
 type FacilityListNavigationProp = FacilitiesStackScreenProps<'FacilityDirectory'>['navigation'];
 
-export const FacilityListView: React.FC = () => {
+type FacilityListViewProps = {
+  ListHeaderComponent?: React.ReactElement | null;
+};
+
+export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderComponent }) => {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<FacilityListNavigationProp>();
@@ -99,6 +103,7 @@ export const FacilityListView: React.FC = () => {
       contentContainerStyle={styles.listContent}
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleRefresh} />}
+      ListHeaderComponent={ListHeaderComponent}
       ListFooterComponent={renderFooter}
       ListEmptyComponent={renderEmpty}
     />
