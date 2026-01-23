@@ -453,10 +453,11 @@ export class GeminiClient {
     }
 
     // 2. Cache Check (non-blocking read)
+    const cacheKey = this.getCacheKey(symptoms, history);
+    const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
+
     // Skip cache if we have a pending emergency fallback to force fresh verification
     if (!emergencyFallback) {
-      const cacheKey = this.getCacheKey(symptoms, history);
-      const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
       try {
         const cachedJson = await AsyncStorage.getItem(fullCacheKey);
         if (cachedJson) {

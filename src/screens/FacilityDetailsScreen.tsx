@@ -9,7 +9,6 @@ import {
   Linking,
   Share,
   Dimensions,
-  Platform,
   Alert,
 } from 'react-native';
 import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
@@ -104,26 +103,10 @@ export const FacilityDetailsScreen = () => {
     }
   };
 
-  const openExternalMaps = () => {
-    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-    const latLng = `${facility.latitude},${facility.longitude}`;
-    const label = facility.name;
-    const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`,
-    });
-
-    if (url) Linking.openURL(url).catch(() => Alert.alert('Error', 'Failed to open maps.'));
-  };
-
-  const handleDirections = () => {
-    openExternalMaps();
-  };
-
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `${facility.name}\nAddress: ${facility.address}\nView on map: https://www.google.com/maps/search/?api=1&query=${facility.latitude},${facility.longitude}`,
+        message: `${facility.name}\nAddress: ${facility.address}`,
         title: `Check out ${facility.name}`,
       });
     } catch {
@@ -202,13 +185,6 @@ export const FacilityDetailsScreen = () => {
               onPress={handleCall}
               style={styles.actionButton}
               variant="primary"
-            />
-            <Button
-              icon="directions"
-              title="Directions"
-              onPress={handleDirections}
-              style={styles.actionButton}
-              variant="outline"
             />
             <Button
               icon="share"

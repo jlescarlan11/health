@@ -149,7 +149,12 @@ While your symptoms have eased, the type of event you described still needs prom
   });
 
   test('regression: triage levels match pre-refactor decision logic', async () => {
-    const cases = [
+    const cases: {
+      name: string;
+      response: Record<string, unknown>;
+      profile: AssessmentProfile | undefined;
+      expected: string;
+    }[] = [
       {
         name: 'red flags upgrade to emergency',
         response: {
