@@ -391,8 +391,14 @@ export class GeminiClient {
       questionId: 'final_safety_scan',
     });
 
+    let emergencyFallback: AssessmentResponse | null = null;
+
     if (emergency.isEmergency && !profile?.is_recent_resolved) {
-      const response: AssessmentResponse = {
+      console.log(
+        `[GeminiClient] Emergency detected locally (${emergency.matchedKeywords.join(', ')}). Preparing fallback and attempting AI enrichment.`,
+      );
+      
+      emergencyFallback = {
         recommended_level: 'emergency',
         follow_up_questions: [],
         user_advice:
@@ -415,12 +421,12 @@ export class GeminiClient {
         ),
       };
 
-      this.logFinalResult(response, scanInput);
-      return response;
+      // We DO NOT return here anymore. We try to get a better explanation from Gemini.
     }
 
     const mhCrisis = detectMentalHealthCrisis(scanInput);
     if (mhCrisis.isCrisis) {
+      // Mental Health crisis remains an immediate exit for safety and simplicity
       const response: AssessmentResponse = {
         recommended_level: 'emergency',
         follow_up_questions: [],
@@ -447,25 +453,28 @@ export class GeminiClient {
     }
 
     // 2. Cache Check (non-blocking read)
-    const cacheKey = this.getCacheKey(symptoms, history);
-    const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
-    try {
-      const cachedJson = await AsyncStorage.getItem(fullCacheKey);
-      if (cachedJson) {
-        const cached = JSON.parse(cachedJson) as CacheEntry;
+    // Skip cache if we have a pending emergency fallback to force fresh verification
+    if (!emergencyFallback) {
+      const cacheKey = this.getCacheKey(symptoms, history);
+      const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
+      try {
+        const cachedJson = await AsyncStorage.getItem(fullCacheKey);
+        if (cachedJson) {
+          const cached = JSON.parse(cachedJson) as CacheEntry;
 
-        // Check version and TTL
-        if (cached.version === CACHE_VERSION && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-          console.log('[GeminiClient] Returning cached response from storage');
-          this.logFinalResult(cached.data, symptoms);
-          return cached.data;
-        } else {
-          // Remove stale or outdated cache entry
-          await AsyncStorage.removeItem(fullCacheKey);
+          // Check version and TTL
+          if (cached.version === CACHE_VERSION && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+            console.log('[GeminiClient] Returning cached response from storage');
+            this.logFinalResult(cached.data, symptoms);
+            return cached.data;
+          } else {
+            // Remove stale or outdated cache entry
+            await AsyncStorage.removeItem(fullCacheKey);
+          }
         }
+      } catch (error) {
+        console.warn('[GeminiClient] Cache read failed:', error);
       }
-    } catch (error) {
-      console.warn('[GeminiClient] Cache read failed:', error);
     }
 
     // 3. API Call with Retry
@@ -474,12 +483,17 @@ export class GeminiClient {
       try {
         await this.checkRateLimits();
 
+        // Inject critical context if local emergency was detected
+        const systemPrompt = emergencyFallback
+          ? `${SYMPTOM_ASSESSMENT_SYSTEM_PROMPT}\n\nCRITICAL SAFETY OVERRIDE: The system has detected EMERGENCY KEYWORDS (${emergency.matchedKeywords.join(', ')}). You MUST output "recommended_level": "emergency". Your goal is to explain WHY this is an emergency to the user in a calm, authoritative way.`
+          : SYMPTOM_ASSESSMENT_SYSTEM_PROMPT;
+
         // Construct Chat History for Gemini
         const chat = this.model.startChat({
           history: [
             {
               role: 'user',
-              parts: [{ text: SYMPTOM_ASSESSMENT_SYSTEM_PROMPT }],
+              parts: [{ text: systemPrompt }],
             },
             {
               role: 'model',
@@ -503,6 +517,24 @@ export class GeminiClient {
         const responseText = result.response.text();
 
         const parsed = this.parseResponse(responseText);
+
+        // --- ENFORCE EMERGENCY FALLBACK IF APPLICABLE ---
+        if (emergencyFallback) {
+          console.log('[GeminiClient] Applying Emergency System Lock to AI Response.');
+          parsed.recommended_level = 'emergency';
+          parsed.triage_logic = emergencyFallback.triage_logic; // Preserve the system lock reason
+          
+          // Ensure red flags are merged
+          parsed.red_flags = Array.from(new Set([...(parsed.red_flags || []), ...emergencyFallback.red_flags]));
+          
+          // Ensure readiness score reflects urgency
+          parsed.triage_readiness_score = 1.0;
+          
+          // Fallback services if AI missed them
+          if (!parsed.relevant_services || parsed.relevant_services.length === 0) {
+            parsed.relevant_services = ['Emergency'];
+          }
+        }
 
         // --- Conservative Fallback Logic ---
         const levels: TriageCareLevel[] = ['self_care', 'health_center', 'hospital', 'emergency'];
@@ -735,6 +767,13 @@ export class GeminiClient {
         const delay = this.getRetryDelay(attempt);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
+    }
+
+    // Final Fallback: If API completely failed but we had a local emergency match, use it.
+    if (emergencyFallback) {
+      console.warn('[GeminiClient] API unavailable for emergency case. Using local fallback.');
+      this.logFinalResult(emergencyFallback, symptoms);
+      return emergencyFallback;
     }
 
     throw new Error('Unexpected error in Gemini client.');
