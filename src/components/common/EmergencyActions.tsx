@@ -52,7 +52,6 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
         elevation={1}
       >
-        <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
           <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>
             NCGH Emergency
@@ -74,7 +73,6 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
         elevation={1}
       >
-        <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
           <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>
             Mental Health Crisis
@@ -119,18 +117,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    paddingLeft: 0,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#E0E2E3',
     justifyContent: 'center',
-  },
-  accentBar: {
-    width: 4,
-    height: '60%',
-    borderRadius: 2,
-    marginHorizontal: 8,
   },
   contactInfo: {
     flex: 1,
