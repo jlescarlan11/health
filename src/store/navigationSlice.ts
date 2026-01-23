@@ -26,6 +26,28 @@ interface NavigationState {
   error: string | null;
   isHighRisk: boolean;
   lastRiskTimestamp: number;
+  symptomDraft: string;
+  assessmentState: {
+    messages: any[];
+    questions: any[];
+    fullPlan: any[];
+    currentQuestionIndex: number;
+    answers: Record<string, string>;
+    expansionCount: number;
+    readiness: number;
+    assessmentStage: string;
+    symptomCategory: string | null;
+    previousProfile: any | undefined;
+    clarificationCount: number;
+    suppressedKeywords: string[];
+    isRecentResolved: boolean;
+    resolvedKeyword: string | null;
+    initialSymptom: string;
+    isOfflineMode: boolean;
+    currentOfflineNodeId: string | null;
+    isVerifyingEmergency: boolean;
+    emergencyVerificationData: any | null;
+  } | null;
 }
 
 const initialState: NavigationState = {
@@ -36,6 +58,8 @@ const initialState: NavigationState = {
   error: null,
   isHighRisk: false,
   lastRiskTimestamp: 0,
+  symptomDraft: '',
+  assessmentState: null,
 };
 
 const navigationSlice = createSlice({
@@ -65,11 +89,27 @@ const navigationSlice = createSlice({
         state.lastRiskTimestamp = 0;
       }
     },
+    setSymptomDraft: (state, action: PayloadAction<string>) => {
+      state.symptomDraft = action.payload;
+    },
+    updateAssessmentState: (state, action: PayloadAction<Partial<NavigationState['assessmentState']>>) => {
+      if (!state.assessmentState && action.payload) {
+        state.assessmentState = action.payload as any;
+      } else if (state.assessmentState && action.payload) {
+        state.assessmentState = { ...state.assessmentState, ...action.payload };
+      }
+    },
+    clearAssessmentState: (state) => {
+      state.assessmentState = null;
+      state.symptomDraft = '';
+    },
     clearSession: (state) => {
       state.chatHistory = [];
       state.currentSymptoms = [];
       state.recommendation = null;
       state.error = null;
+      state.assessmentState = null;
+      state.symptomDraft = '';
     },
   },
 });
@@ -81,6 +121,9 @@ export const {
   setLoading,
   setError,
   setHighRisk,
+  setSymptomDraft,
+  updateAssessmentState,
+  clearAssessmentState,
   clearSession,
 } = navigationSlice.actions;
 export default navigationSlice.reducer;

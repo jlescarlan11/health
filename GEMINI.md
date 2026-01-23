@@ -6,7 +6,7 @@
 
 ### Key Features
 
-- **AI Navigation Assistant:** Uses Google Gemini 2.5 Flash to triage symptoms and recommend care levels (Self-Care, Health Center, Hospital, Emergency).
+- **Check Symptom Assistant:** Uses Google Gemini 2.5 Flash to triage symptoms and recommend care levels (Self-Care, Health Center, Hospital, Emergency).
 - **Model Note**: The project explicitly uses 'gemini-2.5-flash' as verified by the user.
 - **AI Question Generator**: The generator must assign the identifier `red_flags` to relevant screening questions in `prompts.ts`.
 - **UI Components**: Implemented `MultiSelectChecklist` for red flag screening in `SymptomAssessmentScreen.tsx`.
@@ -128,7 +128,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 
 ## Recent Updates (Jan 12, 2026)
 
-- **Input Field Refinement:** Enhanced the `InputCard` component used in AI Navigator and Symptom Assessment.
+- **Input Field Refinement:** Enhanced the `InputCard` component used in Check Symptom and Symptom Assessment.
   - **Floating Labels:** Implemented `mode="outlined"` with floating labels that transition to the border on focus, improving clarity and alignment.
   - **Dynamic Height:** The input field now automatically expands from a single line (40px) up to three lines (approx. 100px) based on content.
   - **External Action Buttons:** The microphone and send buttons are now positioned outside the `TextInput` border for better clarity.
@@ -137,11 +137,11 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Vertical Alignment:** Refined `minHeight`, `lineHeight`, and `textContent` padding to ensure text is perfectly centered vertically and starts as a true single line.
   - **Layout Optimization:** Removed gaps between the input card and bottom navigation for a more cohesive feel, with a subtle 8px spacing for balance.
   - **Visual Consistency:** Removed redundant placeholders in favor of consistent floating labels across the app.
-  - **Files Modified:** `src/components/common/InputCard.tsx`, `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
+  - **Files Modified:** `src/components/common/InputCard.tsx`, `src/features/navigation/CheckSymptomScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
 
 - **Keyboard Interaction Update (Jan 15, 2026):**
-  - **Behavior Change:** Removed `KeyboardAvoidingView` and all automatic keyboard adjustment logic from `NavigatorHomeScreen` and `SymptomAssessmentScreen`. The input field and action buttons now remain static at the bottom of the screen, allowing the keyboard to overlay them rather than pushing the content up or resizing the view.
-  - **Files Modified:** `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
+  - **Behavior Change:** Removed `KeyboardAvoidingView` and all automatic keyboard adjustment logic from `CheckSymptomScreen` and `SymptomAssessmentScreen`. The input field and action buttons now remain static at the bottom of the screen, allowing the keyboard to overlay them rather than pushing the content up or resizing the view.
+  - **Files Modified:** `src/features/navigation/CheckSymptomScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
 
 - **Authentication Removal & Redux Fix:** Completely removed all authentication-related functionality, screens, and logic.
   - **UI/UX:** Removed the "Me" tab, Profile screen, and login flows (Phone/OTP). Simplified greetings in `HomeHero` and removed the profile button from `CustomHeader`.
@@ -176,20 +176,20 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Files Modified:** `src/features/yakap/EligibilityCheckerScreen.tsx`, `src/store/settingsSlice.ts`.
 
 * **Keyboard & Layout Optimization (Jan 15, 2026):**
-  - **Keyboard Awareness:** Integrated `react-native-keyboard-aware-scroll-view` to prevent the system keyboard from covering input fields in `NavigatorHomeScreen` and `SymptomAssessmentScreen`.
+  - **Keyboard Awareness:** Integrated `react-native-keyboard-aware-scroll-view` to prevent the system keyboard from covering input fields in `CheckSymptomScreen` and `SymptomAssessmentScreen`.
   - **Dynamic View Resizing:** Implemented `KeyboardAvoidingView` in `FacilityDirectoryScreen` to ensure the facility list remains visible and accessible while the search bar is focused on both iOS and Android.
   - **Safe Area Integration:** Standardized `SafeAreaView` usage across all screens with explicit edge handling to prevent layout shifts and ensure consistent spacing with system UI elements.
-  - **Files Modified:** `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`, `src/features/facilities/FacilityDirectoryScreen.tsx`, `package.json`.
+  - **Files Modified:** `src/features/navigation/CheckSymptomScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`, `src/features/facilities/FacilityDirectoryScreen.tsx`, `package.json`.
 
 * **Layout Fixes (Jan 15, 2026):**
-  - **Keyboard Overlap:** Resolved issues where the keyboard covered input fields in `NavigatorHomeScreen` and `SymptomAssessmentScreen` by switching `KeyboardAvoidingView` behavior to `height` on Android. This ensures the view resizes correctly with the edge-to-edge configuration.
+  - **Keyboard Overlap:** Resolved issues where the keyboard covered input fields in `CheckSymptomScreen` and `SymptomAssessmentScreen` by switching `KeyboardAvoidingView` behavior to `height` on Android. This ensures the view resizes correctly with the edge-to-edge configuration.
   - **System Navigation Safety:** Updated input containers to explicitly include `insets.bottom` plus an 8px buffer in their padding. This prevents the input fields from being obscured by the Android system navigation bar (gesture bar or buttons).
   - **Merge Resolution:** Concluded a pending merge of the `development` branch while applying these layout fixes.
-  - **Files Modified:** `src/features/navigation/NavigatorHomeScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
+  - **Files Modified:** `src/features/navigation/CheckSymptomScreen.tsx`, `src/screens/SymptomAssessmentScreen.tsx`.
 
 * **Navigation Refactor & System Integration (Jan 15, 2026):**
   - **Removed Custom Bottom Navigation:** Deleted the custom bottom tab bar (`TabNavigator`) to eliminate conflicts with native system navigation gestures and buttons. The app now uses a clean, stack-based navigation structure rooted at `MainHomeScreen`.
-  - **Native Navigation Support:** Implemented back buttons in the headers of all primary feature screens (`NavigatorHomeScreen`, `FacilityDirectoryScreen`, `YakapHomeScreen`) to ensure users can navigate back to the home screen using either the in-app UI or the system back button.
+  - **Native Navigation Support:** Implemented back buttons in the headers of all primary feature screens (`CheckSymptomScreen`, `FacilityDirectoryScreen`, `YakapHomeScreen`) to ensure users can navigate back to the home screen using either the in-app UI or the system back button.
   - **Deep Linking Update:** Updated the `linking` configuration in `App.tsx` to reflect the flattened navigation structure, removing the nested `Main` route.
   - **Files Modified/Deleted:** `src/navigation/TabNavigator.tsx` (Deleted), `src/navigation/AppNavigator.tsx`, `src/types/navigation.ts`, `App.tsx`.
 
@@ -221,7 +221,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 
 - **Comprehensive Dead Code Cleanup (Jan 17, 2026):**
   - **File Deletion:** Removed 8 dead files including legacy Auth components (`OTPInput`, `PhoneInput`), unused shared components (`Alert`, `Input`, `CustomHeader`), legacy storage services (`storageService`, `storageLoader`), and the obsolete `slotExtractor.ts`.
-  - **Active Code Refinement:** Eliminated unused imports, variables, and state in 10+ active files (`ClinicalNoteScreen`, `SymptomAssessmentScreen`, `NavigatorHomeScreen`, `StandardHeader`, etc.) as identified by static analysis.
+  - **Active Code Refinement:** Eliminated unused imports, variables, and state in 10+ active files (`ClinicalNoteScreen`, `SymptomAssessmentScreen`, `CheckSymptomScreen`, `StandardHeader`, etc.) as identified by static analysis.
   - **Backend Consolidation:** Created `backend/src/utils/constants.ts` to centralize `VALID_SERVICES`, removing redundancy in `aiService.ts`.
   - **Navigation Fix:** Corrected a bug in `StandardHeader.tsx` where `handleBackPress` used the wrong reference for `backRoute` navigation.
   - **Migration Cleanup:** Refactored Redux Persist migrations in `src/store/index.ts` to use a cleaner `delete` strategy for legacy state purging.

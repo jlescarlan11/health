@@ -52,7 +52,6 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
         elevation={1}
       >
-        <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
           <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>
             NCGH Emergency
@@ -64,8 +63,8 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <IconButton
           icon="phone"
           mode="contained"
-          containerColor={theme.colors.primary}
-          iconColor={theme.colors.onPrimary}
+          containerColor="#C84848"
+          iconColor={theme.colors.onError}
           onPress={() => handleCall('(054) 473-3111')}
         />
       </Surface>
@@ -74,7 +73,6 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
         elevation={1}
       >
-        <View style={[styles.accentBar, { backgroundColor: theme.colors.primary }]} />
         <View style={styles.contactInfo}>
           <Text style={[styles.contactName, { color: theme.colors.onSurface }]}>
             Mental Health Crisis
@@ -84,8 +82,8 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
         <IconButton
           icon="phone"
           mode="contained"
-          containerColor={theme.colors.primary}
-          iconColor={theme.colors.onPrimary}
+          containerColor="#C84848"
+          iconColor={theme.colors.onError}
           onPress={() => handleCall('1553')}
         />
       </Surface>
@@ -118,19 +116,13 @@ const styles = StyleSheet.create({
   contactCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    paddingLeft: 0,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 12,
     borderRadius: 12,
     marginBottom: 8,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: '#E0E2E3',
-    justifyContent: 'center',
-  },
-  accentBar: {
-    width: 4,
-    height: '60%',
-    borderRadius: 2,
-    marginHorizontal: 8,
   },
   contactInfo: {
     flex: 1,

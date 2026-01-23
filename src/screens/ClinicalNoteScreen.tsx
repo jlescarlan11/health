@@ -91,11 +91,7 @@ export const ClinicalNoteScreen = () => {
             <Section title="OBJECTIVE (Signs)" content={sections.o} />
             <Section
               title="ASSESSMENT (Triage)"
-              content={
-                latestAssessment.medical_justification
-                  ? `${sections.a}\n\nEmergency Justification: ${latestAssessment.medical_justification}`
-                  : sections.a
-              }
+              content={sections.a}
             />
             <Section title="PLAN (Next Steps)" content={sections.p} />
           </>

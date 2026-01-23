@@ -170,7 +170,7 @@ describe('RecommendationScreen', () => {
     );
 
     await waitFor(() => {
-      expect(getByText('HEALTH CENTER (PRIMARY CARE)')).toBeTruthy();
+      expect(getByText('Health Center (Primary Care)')).toBeTruthy();
       expect(getByText('Go to health center')).toBeTruthy();
     });
   });
@@ -188,7 +188,7 @@ describe('RecommendationScreen', () => {
 
     await waitFor(() => {
       // Fallback level for low risk is self-care
-      expect(getByText('SELF CARE (HOME)')).toBeTruthy();
+      expect(getByText('Self Care (Home Management)')).toBeTruthy();
       expect(
         getByText(/condition appears manageable at home/i),
       ).toBeTruthy();

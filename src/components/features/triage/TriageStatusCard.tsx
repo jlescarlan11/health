@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   justificationText: {
-    textAlign: 'center',
+    textAlign: 'justify',
     lineHeight: 22,
   },
   actionContainer: {
