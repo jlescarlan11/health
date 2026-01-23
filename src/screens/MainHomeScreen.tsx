@@ -114,21 +114,13 @@ export const MainHomeScreen = () => {
       edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <HomeHero />
+        <HomeHero 
+          hasClinicalReport={!!lastNote}
+          onClinicalReportPress={() => navigation.navigate('ClinicalNote')}
+        />
 
         <View style={styles.cardsContainer}>
           <View style={styles.bottomStack}>
-            {lastNote && (
-              <View style={styles.bottomStackItem}>
-                <FeatureCard
-                  title="Clinical Handover"
-                  subtitle={`Note from ${new Date(lastNote.timestamp).toLocaleDateString()}`}
-                  icon="doctor"
-                  color={theme.colors.primary}
-                  onPress={() => navigation.navigate('ClinicalNote')}
-                />
-              </View>
-            )}
             <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="Check Symptoms"

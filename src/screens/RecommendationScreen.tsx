@@ -232,8 +232,10 @@ const RecommendationScreen = () => {
   );
 
   useEffect(() => {
+    // Clear assessment state when reaching this screen to ensure "Ongoing Assessment" is removed
+    dispatch(clearAssessmentState());
     setShowFacilities(level !== 'self-care');
-  }, [level]);
+  }, [level, dispatch]);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
