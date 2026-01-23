@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Linking,
-  Platform,
   LayoutAnimation,
   TouchableOpacity,
 } from 'react-native';
@@ -33,15 +32,6 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
 
   const handlePhilHealthLink = () => {
     Linking.openURL('https://memberinquiry.philhealth.gov.ph/member/pinApplication.xhtml');
-  };
-
-  const handleMap = () => {
-    const query = 'PhilHealth Local Health Insurance Office';
-    const url = Platform.select({
-      ios: `maps:0,0?q=${encodeURIComponent(query)}`,
-      android: `geo:0,0?q=${encodeURIComponent(query)}`,
-    });
-    if (url) Linking.openURL(url);
   };
 
   const renderContent = () => {
@@ -159,46 +149,12 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={handleMap}
-            style={[
-              styles.optionCard,
-              {
-                backgroundColor: theme.colors.surface,
-                // Refined soft shadow
-                shadowColor: theme.colors.shadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.08,
-                shadowRadius: 12,
-                elevation: 4,
-              },
-            ]}
+          <Text
+            variant="bodyMedium"
+            style={[styles.inPersonNote, { color: theme.colors.onSurfaceVariant }]}
           >
-            <View style={styles.optionContent}>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    color: theme.colors.onSurface,
-                    fontWeight: 'bold',
-                    fontSize: 18,
-                    marginBottom: 6,
-                  }}
-                >
-                  Visit Local Office
-                </Text>
-                <Text style={{ color: theme.colors.onSurfaceVariant, fontSize: 14, opacity: 0.8 }}>
-                  Go to the nearest PhilHealth Local Health Insurance Office.
-                </Text>
-              </View>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={24}
-                color={theme.colors.primary}
-                style={{ marginLeft: 8 }}
-              />
-            </View>
-          </TouchableOpacity>
+            Prefer in-person registration? Visit your nearest PhilHealth office for assistance.
+          </Text>
 
           <View style={styles.secondaryActions}>
             <Button
@@ -350,5 +306,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  inPersonNote: {
+    marginTop: 12,
+    lineHeight: 22,
+    opacity: 0.85,
   },
 });

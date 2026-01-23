@@ -22,9 +22,8 @@ The project is built as a **React Native** application using **Expo SDK 54**.
 - **Frontend:** React Native 0.81.x, TypeScript, Expo
 - **State Management:** Redux Toolkit (slices located in `src/store/`)
 - **Navigation:** React Navigation (via Expo Router or standard React Navigation 6.x patterns)
-- **AI Integration:** Google Gemini API (`src/services/gemini.ts`)
-- **Maps:** @rnmapbox/maps
-- **Data Persistence:** Expo SQLite (local), Redux Persist
+- **AI Integration**: Google Gemini API (`src/services/gemini.ts`)
+- **Data Persistence**: Expo SQLite (local), Redux Persist
 - **Backend Services:** Firebase Auth, Custom Node.js/Express backend (`backend/` directory), PostgreSQL (Aiven)
 
 ### Directory Structure (`src/`)
@@ -69,7 +68,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     ```
 2.  **Environment Variables:**
     - Ensure `.env` exists (copied from `.env.example`).
-    - Keys needed: `EXPO_PUBLIC_GEMINI_API_KEY`, `EXPO_PUBLIC_MAPBOX_TOKEN`, etc.
+    - Keys needed: `EXPO_PUBLIC_GEMINI_API_KEY`, etc.
 
 ### Running the App
 
@@ -105,26 +104,22 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 
 ## Recent Updates (Jan 2, 2026)
 
-- **Mapbox Integration:** Implemented fully functional map view using `@rnmapbox/maps`.
-  - **Features:** Marker clustering, custom markers (Hospital/Health Center/YAKAP), user location tracking, and route drawing via Mapbox Directions API.
-  - **Offline Support:** Automatic downloading of offline map packs for Naga City region on map initialization.
-  - **Navigation:** Seamless transition between List and Map views. "Get Directions" in Facility Details now offers in-app navigation or external maps.
-  - **Files Created/Modified:**
-    - `src/services/mapService.ts` (New: Directions API & Offline Manager)
-    - `src/components/features/facilities/FacilityMapView.tsx` (Major update: Route display, interactions)
-    - `src/features/facilities/FacilityDirectoryScreen.tsx` (Added `initialViewMode` param support)
-    - `src/screens/FacilityDetailsScreen.tsx` (Integrated map actions)
+- **Map Decommissioning (Jan 24, 2026):**
+  - **Logic Removal:** Deleted all map-specific services, routing, and directions logic from `src/services/mapService.ts`.
+  - **Dependency Cleanup:** Uninstalled `@rnmapbox/maps` and map-related types from `package.json`.
+  - **Configuration:** Removed Mapbox plugins and tokens from `app.json`, `app.config.js`, and `.env.example`.
+  - **UI Refinement:** Transitioned to a purely list-based facility directory. Integrated native device maps via `Linking` for directions in `FacilityDetailsScreen.tsx`.
+
 - **Geolocation Support:** Implemented `expo-location` for real-time user positioning and distance calculation.
-  - **Features:** Runtime permission handling with graceful fallbacks, active location watching when map is visible, and automatic distance-based sorting of facilities.
+  - **Features:** Runtime permission handling with graceful fallbacks, and automatic distance-based sorting of facilities.
   - **Architecture:** Created reusable `useUserLocation` hook and integrated location state into Redux (`facilitiesSlice`) for global access.
   - **Integration:**
-    - `FacilityDirectoryScreen`: Toggles location watching based on view mode (Map vs List).
-    - `FacilityMapView`: Uses Redux location state for centering and routing.
+    - `FacilityDirectoryScreen`: Displays distance-sorted list of facilities.
     - `RecommendationScreen`: Fetches location to ensure nearest facility recommendations are accurate.
-  - **Files Created/Modified:** `src/hooks/useUserLocation.ts`, `src/store/facilitiesSlice.ts`, `src/features/facilities/FacilityDirectoryScreen.tsx`, `src/components/features/facilities/FacilityMapView.tsx`.
+  - **Files Created/Modified:** `src/hooks/useUserLocation.ts`, `src/store/facilitiesSlice.ts`, `src/features/facilities/FacilityDirectoryScreen.tsx`.
 - **Color Palette Update:** Implemented a unified color system across the app.
   - **Palette:** Background `#F5F7F8`, Primary `#379777` (Green), Secondary `#F4CE14` (Yellow), Text/Surface `#45474B`.
-  - **Implementation:** Created `src/theme/index.ts` defining a custom React Native Paper theme. Refactored major screens and components (`App.tsx`, `MainHomeScreen`, `FacilityDetailsScreen`, `FacilityMapView`, `YakapHomeScreen`, etc.) to use `useTheme` and dynamic colors instead of hardcoded hex values.
+  - **Implementation:** Created `src/theme/index.ts` defining a custom React Native Paper theme. Refactored major screens and components (`App.tsx`, `MainHomeScreen`, `FacilityDetailsScreen`, `YakapHomeScreen`, etc.) to use `useTheme` and dynamic colors instead of hardcoded hex values.
 
 ## Recent Updates (Jan 12, 2026)
 

@@ -37,13 +37,6 @@ module.exports = {
     },
     plugins: [
       'expo-router',
-      [
-        '@rnmapbox/maps',
-        {
-          RNMapboxMapsImpl: 'mapbox',
-          RNMAPBOX_MAPS_DOWNLOAD_TOKEN: process.env.RNMAPBOX_MAPS_DOWNLOAD_TOKEN,
-        },
-      ],
       'expo-sqlite',
       '@react-native-firebase/app',
       'expo-system-ui',

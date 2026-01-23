@@ -26,7 +26,6 @@ HEALTH is an AI-powered mobile healthcare navigation application designed for Na
 - **Backend**: Node.js 24.12.0, Express, Prisma
 - **Database**: PostgreSQL (Aiven)
 - **AI**: Google Gemini 2.5 Flash
-- **Maps**: @rnmapbox/maps
 - **State Management**: Redux Toolkit
 
 ## Prerequisites
@@ -59,8 +58,6 @@ HEALTH is an AI-powered mobile healthcare navigation application designed for Na
 
 2.  Update `.env` with your API keys and configuration:
     - `EXPO_PUBLIC_GEMINI_API_KEY`: Your Google Gemini API Key
-    - `EXPO_PUBLIC_MAPBOX_TOKEN`: Your Mapbox Access Token (for runtime API calls)
-    - `RNMAPBOX_MAPS_DOWNLOAD_TOKEN`: Your Mapbox Download Token (for downloading SDK resources during build)
     - `DATABASE_URL`: PostgreSQL connection string
     - `FIREBASE_CONFIG`: Firebase configuration
 
@@ -102,7 +99,7 @@ The project follows a feature-based architecture under the `src/` directory:
 
 ```
 src/
-├── api/                # API clients (Gemini, Backend, Mapbox)
+├── api/                # API clients (Gemini, Backend)
 ├── assets/             # Static assets
 ├── components/         # Reusable UI components
 │   ├── common/         # Generic components (Buttons, Inputs)
