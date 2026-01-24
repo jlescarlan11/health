@@ -12,6 +12,7 @@ import {
   GENERATE_ASSESSMENT_QUESTIONS_PROMPT,
   FINAL_SLOT_EXTRACTION_PROMPT,
   REFINE_QUESTION_PROMPT,
+  REFINE_PLAN_PROMPT,
 } from '../constants/prompts';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
@@ -660,6 +661,41 @@ export class GeminiClient {
   }
 
   /**
+   * Refines the assessment plan by generating focused follow-up questions based on the current profile.
+   * This is a lightweight call to replace the tail of the plan when the context changes.
+   */
+  public async refineAssessmentPlan(
+    currentProfile: AssessmentProfile,
+    remainingCount: number,
+  ): Promise<AssessmentQuestion[]> {
+    try {
+      // Format the profile for the prompt
+      const profileContext = JSON.stringify(currentProfile, null, 2);
+
+      const prompt = REFINE_PLAN_PROMPT.replace('{{currentProfile}}', profileContext).replace(
+        '{{remainingCount}}',
+        remainingCount.toString(),
+      );
+
+      const responseText = await this.generateContentWithRetry(prompt, {
+        responseMimeType: 'application/json',
+      });
+
+      const parsed = parseAndValidateLLMResponse<{ questions: AssessmentQuestion[] }>(responseText);
+
+      // Basic validation/normalization
+      const questions = parsed.questions || [];
+
+      // Ensure we don't return more than requested
+      return questions.slice(0, remainingCount);
+    } catch (error) {
+      console.error('[GeminiClient] Failed to refine assessment plan:', error);
+      // Fallback: Return empty array so the caller keeps the existing plan or handles it gracefully
+      return [];
+    }
+  }
+
+  /**
    * Extracts the final clinical profile (Call #2) with caching and de-duplication.
    */
   public async extractClinicalProfile(
@@ -891,7 +927,7 @@ export class GeminiClient {
 
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
-      const transientMarkers = ['timeout', 'network', 'connection reset', 'temporarily unavailable'];
+      const transientMarkers = ['timeout', 'network', 'connection reset', 'unavailable'];
       if (transientMarkers.some((marker) => message.includes(marker))) {
         return true;
       }

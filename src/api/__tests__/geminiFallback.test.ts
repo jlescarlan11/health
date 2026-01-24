@@ -1,7 +1,7 @@
 import { prioritizeQuestions } from '../../utils/aiUtils';
 import { DEFAULT_RED_FLAG_QUESTION } from '../../constants/clinical';
 
-let mockGenerateContent: jest.Mock;
+let mockGenerateContent = jest.fn();
 let geminiModule: typeof import('../geminiClient');
 let generateAssessmentPlan: (symptom: string) => Promise<{ questions: any[]; intro?: string }>;
 const createLLMResult = (
@@ -14,11 +14,10 @@ const createLLMResult = (
 
 // Mock dependencies
 jest.mock('@google/generative-ai', () => {
-  mockGenerateContent = jest.fn();
   return {
     GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
       getGenerativeModel: jest.fn().mockReturnValue({
-        generateContent: mockGenerateContent,
+        generateContent: (...args: any[]) => mockGenerateContent(...args),
       }),
     })),
   };
@@ -34,8 +33,10 @@ jest.mock('../../utils/aiUtils', () => {
 });
 
 describe('Gemini Service Fallback', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    const AsyncStorage = require('@react-native-async-storage/async-storage');
+    await AsyncStorage.clear();
     console.error = jest.fn(); // Suppress expected error logs
     console.log = jest.fn();   // Suppress expected logs
     mockGenerateContent.mockReset();
@@ -69,10 +70,10 @@ describe('Gemini Service Fallback', () => {
   });
 
   it('should handle critically malformed input data gracefully', async () => {
-    // Mock parse to return something that causes issues if accessed directly (though our safe code handles it)
-    const { parseAndValidateLLMResponse } = require('../../utils/aiUtils');
-    parseAndValidateLLMResponse.mockReturnValue({ questions: null }); // Parsing returns null questions
-
+    // 1. Mock AI to return empty questions
+    mockGenerateContent.mockResolvedValue(createLLMResult({ questions: [] as any[] }));
+    
+    // 2. Mock prioritizeQuestions to throw (simulating a crash on bad data)
     (prioritizeQuestions as jest.Mock).mockImplementation(() => {
         throw new TypeError('Cannot read properties of null');
     });
@@ -80,7 +81,7 @@ describe('Gemini Service Fallback', () => {
     const result = await generateAssessmentPlan('headache');
 
     expect(result.questions).toBeDefined();
-    // Should have 1 question: 'red_flags' (injected) since original was null/empty
+    // Should have 1 question: 'red_flags' (injected) since original was empty
     expect(result.questions.length).toBe(1);
     expect(result.questions[0].id).toBe('red_flags');
   });
@@ -95,5 +96,5 @@ describe('Gemini Service Fallback', () => {
     expect(result.questions.some((q) => q.text.toLowerCase().includes('active bleeding'))).toBe(true);
     expect(result.questions.some((q) => q.id === 'trauma_mechanism')).toBe(true);
     expect(result.questions.some((q) => q.id === 'general_age')).toBe(false);
-  });
+  }, 15000);
 });

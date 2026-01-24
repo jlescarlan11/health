@@ -254,32 +254,34 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
   const slots: ClinicalSlots = {};
 
   // 1. Extract Age
-  // Matches: "35 years old", "35 yo", "age 35", "35y", "35 y/o"
+  // Matches: "35 years old", "35 yo", "age 35", "35y", "35 y/o", "I am 35", "I'm 35"
   const ageRegex = /(\d+)\s*(?:years?\s*old|y\/?o|y\.?o\.?|yrs?\b|y\b)/i;
   const ageMatch = lowerText.match(ageRegex);
 
-  const altAgeRegex = /age\s*(\d+)/i;
+  const altAgeRegex = /\b(?:age|i am|i'm)\s*(\d+)\b/i;
   const altAgeMatch = lowerText.match(altAgeRegex);
 
   if (ageMatch) {
-    slots.age = ageMatch[0].trim();
+    slots.age = ageMatch[1];
   } else if (altAgeMatch) {
-    slots.age = `Age ${altAgeMatch[1]}`;
+    slots.age = altAgeMatch[1];
   }
 
   // 2. Extract Duration
   // Matches: "3 days", "2 hours", "since yesterday", "for a week", "started 2 hours ago"
+  // Added capture groups to return only the duration part.
   const durationPatterns = [
-    /started\s+(?:yesterday|\d+\s*\w+\s*ago)/i,
-    /since\s+(?:yesterday|last\s+\w+|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+)/i,
-    /for\s+(?:a|an|\d+)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)/i,
-    /(\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)\s*(?:ago|now)?/i,
+    /started\s+(yesterday|\d+\s*\w+\s*ago)/i,
+    /since\s+(yesterday|last\s+\w+|monday|tuesday|wednesday|thursday|friday|saturday|sunday|\d+)/i,
+    /for\s+((?:a|an|\d+)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?))/i,
+    // Negative lookahead to avoid matching "30 years" in "30 years old"
+    /\b((?:\d+|a|an)\s*(?:hours?|mins?|minutes?|days?|weeks?|months?|years?)(?:\s*(?:ago|now))?)(?!\s*old)\b/i,
   ];
 
   for (const pattern of durationPatterns) {
     const match = lowerText.match(pattern);
     if (match) {
-      slots.duration = match[0].trim();
+      slots.duration = (match[1] || match[0]).trim();
       break;
     }
   }
@@ -300,15 +302,6 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
     if (qualSeverityMatch) {
       slots.severity = qualSeverityMatch[0].trim();
     }
-  }
-
-  // 4. Extract Temperature
-  // Matches: "39C", "102F", "38.5 degrees celsius", "100.4 F"
-  const tempRegex = /\b(\d{2,3}(?:\.\d)?)\s*(?:°|deg|degrees)?\s*(c|f|celsius|fahrenheit)\b/i;
-  const tempMatch = lowerText.match(tempRegex);
-
-  if (tempMatch) {
-    slots.temperature = tempMatch[0].trim();
   }
 
   return slots;
@@ -391,4 +384,40 @@ export const computeUnresolvedSlotGoals = (
     const hasIncrementalValue = Boolean(incrementalRecord[slotId]);
     return !hasProfileValue && !hasAnswerValue && !hasIncrementalValue;
   });
+};
+
+export interface ClinicalChange {
+  field: keyof AssessmentProfile;
+  oldValue: string | null;
+  newValue: string | null;
+}
+
+/**
+ * Detects semantic changes between two clinical profiles, ignoring superficial formatting.
+ * Used to trigger reactive acknowledgements when a user corrects previously established info.
+ */
+export const detectProfileChanges = (
+  prev: AssessmentProfile | undefined,
+  next: AssessmentProfile,
+): ClinicalChange | null => {
+  if (!prev) return null;
+
+  const fieldsToCheck: (keyof AssessmentProfile)[] = ['age', 'duration', 'severity'];
+
+  for (const field of fieldsToCheck) {
+    const oldVal = prev[field];
+    const newVal = next[field];
+
+    // Only detect corrections to previously established values
+    if (!oldVal || !newVal) continue;
+
+    const normOld = String(oldVal).trim().toLowerCase().replace(/\s+/g, ' ');
+    const normNew = String(newVal).trim().toLowerCase().replace(/\s+/g, ' ');
+
+    if (normOld !== normNew) {
+      return { field, oldValue: oldVal as string, newValue: newVal as string };
+    }
+  }
+
+  return null;
 };

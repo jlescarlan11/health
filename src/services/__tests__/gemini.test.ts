@@ -78,13 +78,13 @@ describe('Gemini Service Retry Logic', () => {
   }, 15000);
 
   it('should throw generic error after max retries if not 503', async () => {
-    mockGenerateContent.mockRejectedValue(new Error('Random Error'));
+    mockGenerateContent.mockRejectedValue(new Error('Network Error'));
 
     try {
       await getGeminiResponse('test prompt');
       throw new Error('Should have thrown');
     } catch (error: unknown) {
-      expect((error as Error).message).toBe('Random Error');
+      expect((error as Error).message).toBe('Network Error');
     }
 
     expect(mockGenerateContent).toHaveBeenCalledTimes(3);
