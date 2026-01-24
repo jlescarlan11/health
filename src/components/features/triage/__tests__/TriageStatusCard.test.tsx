@@ -35,8 +35,8 @@ const levelFixtures: LevelFixture[] = [
   {
     level: 'self-care',
     icon: 'home-heart',
-    color: theme.colors.tertiary,
-    backgroundColor: theme.colors.tertiaryContainer,
+    color: theme.colors.primary,
+    backgroundColor: theme.colors.secondaryContainer,
   },
 ];
 

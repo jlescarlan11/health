@@ -157,15 +157,15 @@ const getLevelConfig = (
     },
     'health-center': {
       icon: 'medical-bag',
-      foregroundColor: colors.onPrimary,
-      backgroundColor: colors.primary,
-      contentColor: colors.onPrimary,
+      foregroundColor: colors.primary,
+      backgroundColor: colors.primaryContainer,
+      contentColor: colors.onSurface,
     },
     'self-care': {
       icon: 'home-heart',
-      foregroundColor: colors.tertiary,
-      backgroundColor: colors.tertiaryContainer,
-      contentColor: colors.onSurface,
+      foregroundColor: colors.primary,
+      backgroundColor: colors.secondaryContainer,
+      contentColor: colors.primary,
     },
   };
 

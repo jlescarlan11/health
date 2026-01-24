@@ -583,10 +583,10 @@ const RecommendationScreen = () => {
       case 'self_care':
         return {
           label: 'SELF CARE (HOME)',
-          color: theme.colors.tertiary,
+          color: theme.colors.primary,
           icon: 'home-heart',
-          bgColor: theme.colors.tertiaryContainer,
-          borderColor: theme.colors.tertiary,
+          bgColor: theme.colors.secondaryContainer,
+          borderColor: theme.colors.primary,
         };
       default:
         return {
@@ -646,7 +646,6 @@ const RecommendationScreen = () => {
   const handoverButtonStyle = [
     styles.handoverButton,
     {
-      marginHorizontal: theme.spacing?.lg ?? 16,
       marginVertical: theme.spacing?.md ?? 12,
       borderRadius: handoverBorderRadius,
       alignSelf: 'stretch',
@@ -664,7 +663,6 @@ const RecommendationScreen = () => {
   const restartButtonStyle = [
     styles.restartButton,
     {
-      marginHorizontal: theme.spacing?.lg ?? 16,
       marginVertical: theme.spacing?.md ?? 12,
       borderRadius: handoverBorderRadius,
       alignSelf: 'stretch',
@@ -843,7 +841,7 @@ const RecommendationScreen = () => {
                 }),
               );
             }}
-            variant="primary"
+            variant="outline"
             style={restartButtonStyle}
             contentStyle={restartButtonContentStyle}
           />

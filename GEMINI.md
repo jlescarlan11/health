@@ -266,3 +266,10 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Type Safety:** Updated `src/services/syncService.ts` to explicitly type `facilitiesToSave` as `Facility[]`, resolving implicit `any` type warnings.
   - **Verification:** Added `src/services/__tests__/database.test.ts` to verify the transaction safety logic (validation before transaction start) and confirmed all tests pass.
   - **Files Created/Modified:** `src/services/database.ts`, `src/services/syncService.ts`, `src/services/__tests__/database.test.ts`.
+
+- **UI/UX Polish (Jan 24, 2026):**
+  - **Button Alignment:** Fixed the rendering of the "Start New Assessment" and "View Handover Report" buttons in `RecommendationScreen.tsx`. Removed redundant `marginHorizontal` that was causing misalignment within the padded container.
+  - **Visual Hierarchy:** Changed the "Start New Assessment" button variant from `primary` to `outline` to better distinguish it as a reset action at the end of the flow.
+  - **Triage Card Consistency:** Updated `TriageStatusCard.tsx` to use `primaryContainer` background and `primary` foreground for the 'Health Center' level, ensuring visual consistency with other triage levels.
+  - **Self-Care Style Update:** Modified the 'Self-Care' recommendation styling in `TriageStatusCard.tsx` and `RecommendationScreen.tsx` to match the visual identity of symptom chips (using `secondaryContainer` background and `primary` text/icon color).
+  - **Files Modified:** `src/screens/RecommendationScreen.tsx`, `src/components/features/triage/TriageStatusCard.tsx`, `src/components/features/triage/__tests__/TriageStatusCard.test.tsx`.
