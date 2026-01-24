@@ -288,3 +288,33 @@ When the conversation history contains the [RECENT_RESOLVED] tag, this indicates
    - Do not use buzzwords or technical scoring terms in the output.
    - The "medical_justification" must be a simple, plain-English sentence explaining the risk (e.g., "The combination of high fever and confusion requires immediate checkup.").
 `;
+
+export const REFINE_PLAN_PROMPT = `
+${SHARED_MEDICAL_CONTEXT}
+
+You are a dynamic assessment refiner. The patient's situation has evolved, and we need to update our line of questioning.
+
+CURRENT CLINICAL PROFILE:
+{{currentProfile}}
+
+TASK:
+Generate exactly {{remainingCount}} follow-up questions to gather the most critical missing information.
+Prioritize:
+1. Missing core slots (Age, Duration, Severity, Progression) if not present.
+2. Resolving ambiguity or contradictions.
+3. Checking relevant red flags if not yet ruled out.
+
+OUTPUT FORMAT (JSON ONLY):
+{
+  "questions": [
+    {
+      "id": "string",
+      "type": "text" | "single-select" | "multi-select" | "number",
+      "text": "Question text (Grade 5 reading level)",
+      "options": ["Option 1", "Option 2"],
+      "tier": 1 | 2 | 3,
+      "is_red_flag": boolean
+    }
+  ]
+}
+`;

@@ -12,11 +12,6 @@ export interface EmpatheticResponseOutput {
   metadata: Record<string, unknown>;
 }
 
-const stripTrailingPunctuation = (value?: string) => {
-  if (!value) return '';
-  return value.trim().replace(/[.!?]+$/g, '');
-};
-
 const ensureSentenceEnding = (value?: string) => {
   if (!value) return '';
   const trimmed = value.trim();
@@ -40,14 +35,15 @@ export const formatEmpatheticResponse = ({
     contentBlocks.push(body.trim());
   }
 
-  const reasonSentence = reason ? `I'm mentioning this because ${stripTrailingPunctuation(reason)}.` : '';
+  // Reason is intentionally excluded from the user-facing text
+  // but preserved in metadata for debugging context.
+  
   const actionSentence = ensureSentenceEnding(
     nextAction ?? 'Please follow the guidance above so I can continue helping safely',
   );
 
-  const supplementalSentence = [reasonSentence, actionSentence].filter(Boolean).join(' ');
-  if (supplementalSentence) {
-    contentBlocks.push(supplementalSentence);
+  if (actionSentence) {
+    contentBlocks.push(actionSentence);
   }
 
   return {

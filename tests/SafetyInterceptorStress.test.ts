@@ -92,15 +92,15 @@ describe('Safety interceptor stress tests', () => {
 
   it('bubbles only once for a mental health crisis keyword that builds over streaming chunks', () => {
     const mentalChunks = ['I feel', 'I feel like', 'I feel like dying'];
-    let pendingKeyword: string | null = null;
+    let pendingKeywords: string[] = [];
     const triggers: boolean[] = [];
 
     mentalChunks.forEach((chunk) => {
       const { triggered, activeKeywords, mentalResult } = runMentalHealthGuardLike(chunk, {
-        pendingKeyword,
+        suppressedKeywords: pendingKeywords,
       });
-      if (triggered && !pendingKeyword) {
-        pendingKeyword = activeKeywords[0];
+      if (triggered && pendingKeywords.length === 0) {
+        pendingKeywords = activeKeywords;
         expect(mentalResult.score).toBeGreaterThanOrEqual(8);
       }
       triggers.push(triggered);
@@ -109,7 +109,7 @@ describe('Safety interceptor stress tests', () => {
     expect(triggers).toEqual([false, false, true]);
 
     const repeatedAlert = runMentalHealthGuardLike('I still feel like dying', {
-      pendingKeyword,
+      suppressedKeywords: pendingKeywords,
     });
     expect(repeatedAlert.triggered).toBe(false);
   });

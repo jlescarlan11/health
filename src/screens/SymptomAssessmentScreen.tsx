@@ -51,6 +51,7 @@ import {
   computeUnresolvedSlotGoals,
   createClinicalSlotParser,
   reconcileClinicalProfileWithSlots,
+  detectProfileChanges,
 } from '../utils/clinicalUtils';
 import { calculateTriageScore } from '../utils/aiUtils';
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
@@ -196,12 +197,26 @@ const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[
   }
 };
 
+const SENTIMENT_PATTERNS = {
+  distress: /\b(pain|hurt|severe|scared|dying|bad|worse)\b/i,
+  denial: /\b(no|none|okay|fine|better)\b/i,
+  uncertainty: /\b(don'?t\s+know|unsure|maybe|not\s+sure)\b/i,
+};
+
 const buildBridgeText = (lastUserText: string, nextQuestionText: string) => {
-  const trimmedLastText = lastUserText?.trim();
-  const acknowledgement = trimmedLastText
-    ? `Thanks for sharing that ${trimmedLastText}.`
-    : 'Thanks for sharing that with me.';
-  return `${acknowledgement} ${nextQuestionText}`;
+  const text = lastUserText || '';
+
+  if (SENTIMENT_PATTERNS.distress.test(text)) {
+    return `I'm sorry you're going through this... ${nextQuestionText}`;
+  }
+  if (SENTIMENT_PATTERNS.denial.test(text)) {
+    return `That's good to know... ${nextQuestionText}`;
+  }
+  if (SENTIMENT_PATTERNS.uncertainty.test(text)) {
+    return `That's okay, we can work with that... ${nextQuestionText}`;
+  }
+
+  return `Got it. ${nextQuestionText}`;
 };
 
 const escapeForRegex = (value: string) => value.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
@@ -226,17 +241,22 @@ const OUT_OF_SCOPE_INDICATORS = [
   'just testing',
   'not sure what to say',
 ];
-const OUT_OF_SCOPE_PATTERN = new RegExp(`\\b(?:${OUT_OF_SCOPE_INDICATORS.map(escapeForRegex).join('|')})\\b`, 'i');
+const OUT_OF_SCOPE_PATTERN = new RegExp(
+  `\\b(?:${OUT_OF_SCOPE_INDICATORS.map(escapeForRegex).join('|')})\\b`,
+  'i',
+);
 const OUT_OF_SCOPE_REMINDER_THRESHOLD = 2;
 
 const MIN_TURNS_SIMPLE = 4;
 const MIN_TURNS_COMPLEX = 7;
+const CATEGORY_RANKING: Record<string, number> = {
+  simple: 1,
+  complex: 2,
+  critical: 3,
+};
 const CORE_SLOT_ORDER: (keyof AssessmentProfile)[] = ['duration', 'severity', 'progression'];
 
-const replaceTemplatePlaceholders = (
-  template: string,
-  values: Record<string, string>,
-): string => {
+const replaceTemplatePlaceholders = (template: string, values: Record<string, string>): string => {
   let result = template;
   for (const [key, value] of Object.entries(values)) {
     result = result.replace(new RegExp(`{{${key}}}`, 'g'), value || '');
@@ -339,7 +359,9 @@ const SymptomAssessmentScreen = () => {
   const [messages, setMessages] = useState<Message[]>(savedState?.messages || []);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>(savedState?.questions || []);
   const [fullPlan, setFullPlan] = useState<AssessmentQuestion[]>(savedState?.fullPlan || []);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(savedState?.currentQuestionIndex || 0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(
+    savedState?.currentQuestionIndex || 0,
+  );
   const [answers, setAnswers] = useState<Record<string, string>>(savedState?.answers || {}); // Map question ID -> User Answer
   const [loading, setLoading] = useState(!savedState);
   const [processing, setProcessing] = useState(false);
@@ -350,38 +372,56 @@ const SymptomAssessmentScreen = () => {
     savedState?.triageSnapshot ?? null,
   );
   const [assessmentStage, setAssessmentStage] = useState<AssessmentStage>(
-    (savedState?.assessmentStage as AssessmentStage) || 'intake'
+    (savedState?.assessmentStage as AssessmentStage) || 'intake',
   );
   const [hasAdvancedBeyondIntake, setHasAdvancedBeyondIntake] = useState(
-    savedState ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers).length > 0 : false
+    savedState
+      ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers).length > 0
+      : false,
   );
   const [arbiterSignal, setArbiterSignal] = useState<TriageSignal | null>(null);
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
     (savedState?.symptomCategory as any) || null,
   );
-  const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(savedState?.previousProfile);
+  const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(
+    savedState?.previousProfile,
+  );
   const [clarificationCount, setClarificationCount] = useState(savedState?.clarificationCount || 0);
   const [showRedFlagsChecklist, setShowRedFlagsChecklist] = useState(false);
   const [isClarifyingDenial, setIsClarifyingDenial] = useState(false);
   const [isRecentResolved, setIsRecentResolved] = useState(savedState?.isRecentResolved || false);
-  const [resolvedKeyword, setResolvedKeyword] = useState<string | null>(savedState?.resolvedKeyword || null);
-  const [sessionBuffer, setSessionBuffer] = useState<Message[]>(savedState?.sessionBuffer || savedState?.messages || []);
-  const [outOfScopeBuffer, setOutOfScopeBuffer] = useState<string[]>(savedState?.outOfScopeBuffer || []);
+  const [resolvedKeyword, setResolvedKeyword] = useState<string | null>(
+    savedState?.resolvedKeyword || null,
+  );
+  const [sessionBuffer, setSessionBuffer] = useState<Message[]>(
+    savedState?.sessionBuffer || savedState?.messages || [],
+  );
+  const [outOfScopeBuffer, setOutOfScopeBuffer] = useState<string[]>(
+    savedState?.outOfScopeBuffer || [],
+  );
   const getHistoryContext = useCallback(() => {
     const contextParts = sessionBuffer.map((msg) => msg.text).filter(Boolean);
     return contextParts.join('. ');
   }, [sessionBuffer]);
-  const [incrementalSlots, setIncrementalSlots] = useState<ClinicalSlots>(hydrateInitialSlots);
+  const [incrementalSlots, setIncrementalSlots] = useState<ClinicalSlots>(
+    savedState?.incrementalSlots || hydrateInitialSlots,
+  );
   const [currentTurnMeta, setCurrentTurnMeta] = useState<AssessmentTurnMeta | null>(
     savedState?.currentTurnMeta ?? null,
   );
 
   // Offline
   const [isOfflineMode, setIsOfflineMode] = useState(savedState?.isOfflineMode || false);
-  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(savedState?.currentOfflineNodeId || null);
+  const [currentOfflineNodeId, setCurrentOfflineNodeId] = useState<string | null>(
+    savedState?.currentOfflineNodeId || null,
+  );
 
-  const [suppressedKeywords, setSuppressedKeywords] = useState<string[]>(savedState?.suppressedKeywords || []);
-  const [pendingRedFlag, setPendingRedFlag] = useState<string | null>(savedState?.pendingRedFlag || null);
+  const [suppressedKeywords, setSuppressedKeywords] = useState<string[]>(
+    savedState?.suppressedKeywords || [],
+  );
+  const [pendingRedFlag, setPendingRedFlag] = useState<string | null>(
+    savedState?.pendingRedFlag || null,
+  );
 
   // Ref sync to prevent closure staleness in setTimeout callbacks
   const isRecentResolvedRef = useRef(isRecentResolved);
@@ -403,7 +443,9 @@ const SymptomAssessmentScreen = () => {
   }, []);
 
   // Emergency Verification State
-  const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(savedState?.isVerifyingEmergency || false);
+  const [isVerifyingEmergency, setIsVerifyingEmergency] = useState(
+    savedState?.isVerifyingEmergency || false,
+  );
   const isVerifyingEmergencyRef = useRef(isVerifyingEmergency);
   useEffect(() => {
     isVerifyingEmergencyRef.current = isVerifyingEmergency;
@@ -435,8 +477,7 @@ const SymptomAssessmentScreen = () => {
           const guardResult = runEmergencyGuard({
             text: msg.text,
             sender: msg.sender,
-            questionId:
-              (msg.metadata?.currentTurnMeta as AssessmentTurnMeta)?.questionId,
+            questionId: (msg.metadata?.currentTurnMeta as AssessmentTurnMeta)?.questionId,
             extraHistory: msg.text,
           });
 
@@ -506,11 +547,7 @@ const SymptomAssessmentScreen = () => {
       slotSnapshot?: ClinicalSlots,
     ) => {
       const slotSource = slotSnapshot ?? incrementalSlots;
-      const slotGoals = computeUnresolvedSlotGoals(
-        profile,
-        slotSource,
-        answersOverride ?? answers,
-      );
+      const slotGoals = computeUnresolvedSlotGoals(profile, slotSource, answersOverride ?? answers);
       return questionList.map((question) => ({
         ...question,
         metadata: {
@@ -522,17 +559,14 @@ const SymptomAssessmentScreen = () => {
     [incrementalSlots, answers],
   );
 
-  const deriveIntentTag = useCallback(
-    (question?: AssessmentQuestion, clarifying?: boolean) => {
-      if (clarifying) return 'clarification';
-      if (question?.id === 'red_flags') return 'red_flag';
-      if (question?.type === 'multi-select') return 'multi_select';
-      if (question?.type === 'single-select') return 'single_select';
-      if (question?.type === 'number') return 'numeric';
-      return 'text';
-    },
-    [],
-  );
+  const deriveIntentTag = useCallback((question?: AssessmentQuestion, clarifying?: boolean) => {
+    if (clarifying) return 'clarification';
+    if (question?.id === 'red_flags') return 'red_flag';
+    if (question?.type === 'multi-select') return 'multi_select';
+    if (question?.type === 'single-select') return 'single_select';
+    if (question?.type === 'number') return 'numeric';
+    return 'text';
+  }, []);
 
   interface SafetyGuardParams {
     text: string;
@@ -610,13 +644,7 @@ const SymptomAssessmentScreen = () => {
 
       return { safetyCheck, triggered };
     },
-    [
-      getHistoryContext,
-      isOfflineMode,
-      questions,
-      currentQuestionIndex,
-      suppressedKeywords,
-    ],
+    [getHistoryContext, isOfflineMode, questions, currentQuestionIndex, suppressedKeywords],
   );
 
   // Sync state to Redux for persistence
@@ -648,7 +676,8 @@ const SymptomAssessmentScreen = () => {
         outOfScopeBuffer,
         currentTurnMeta,
         triageSnapshot,
-      })
+        incrementalSlots,
+      }),
     );
   }, [
     messages,
@@ -675,6 +704,7 @@ const SymptomAssessmentScreen = () => {
     outOfScopeBuffer,
     currentTurnMeta,
     triageSnapshot,
+    incrementalSlots,
     dispatch,
     loading,
   ]);
@@ -870,7 +900,12 @@ const SymptomAssessmentScreen = () => {
         return true;
       });
 
-      const annotatedPlan = annotateQuestionsWithSlotMetadata(prunedPlan, undefined, undefined, slots);
+      const annotatedPlan = annotateQuestionsWithSlotMetadata(
+        prunedPlan,
+        undefined,
+        undefined,
+        slots,
+      );
       setQuestions(annotatedPlan);
       setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
 
@@ -912,8 +947,12 @@ const SymptomAssessmentScreen = () => {
     if (isClarifyingDenial) setIsClarifyingDenial(false);
 
     const currentQ = questions[currentQuestionIndex];
+    console.log(`[DEBUG_TEST] currentQ: ${currentQ?.text}, questions.length: ${questions.length}, index: ${currentQuestionIndex}, isOffline: ${isOfflineMode}`);
     let slotSnapshot: ClinicalSlots | undefined;
-    if (!currentQ && !isOfflineMode) return;
+    if (!currentQ && !isOfflineMode) {
+      console.log('[DEBUG_TEST] Aborting: No currentQ and not offline.');
+      return;
+    }
 
     setProcessing(true);
     if (!skipEmergencyCheck) {
@@ -971,7 +1010,7 @@ const SymptomAssessmentScreen = () => {
       !skipEmergencyCheck &&
       guardResult &&
       !guardResult.triggered &&
-      guardResult.safetyCheck?.matchedKeywords.length === 0 &&
+      (guardResult.safetyCheck?.matchedKeywords?.length || 0) === 0 &&
       OUT_OF_SCOPE_PATTERN.test(trimmedAnswer);
 
     if (shouldRedirectForOutOfScope && currentQ && handleOutOfScopeFallback(answer, currentQ)) {
@@ -994,6 +1033,7 @@ const SymptomAssessmentScreen = () => {
       if (nextIdx >= 0 || isAtEnd) {
         console.log(`[Assessment] Turn ${nextIdx} reached. Consulting Arbiter...`);
         try {
+          let activeQuestions = questions;
           const historyItems = nextHistory.map((m) => ({
             role: m.sender as 'user' | 'assistant',
             text: m.text,
@@ -1001,20 +1041,120 @@ const SymptomAssessmentScreen = () => {
           const triageHistoryText = historyItems
             .map((item) => `${item.role.toUpperCase()}: ${item.text}`)
             .join('\n');
-          const profile = await geminiClient.extractClinicalProfile(historyItems);
+          const extractedProfile = await geminiClient.extractClinicalProfile(historyItems);
+
+          // Reconcile and Detect Changes
+          const profile = reconcileClinicalProfileWithSlots(
+            extractedProfile,
+            slotSnapshot ?? incrementalSlots,
+          );
+
+          // --- Mid-Stream Category Escalation Detection ---
+          // Triggers when clinical extraction elevates the acuity level during an active session.
+          const oldCat = symptomCategory;
+          const newCat = profile.symptom_category;
+          if (oldCat && newCat && oldCat !== newCat) {
+            const oldRank = CATEGORY_RANKING[oldCat] || 0;
+            const newRank = CATEGORY_RANKING[newCat] || 0;
+
+            if (newRank > oldRank) {
+              console.log(
+                `[Assessment] Mid-stream escalation detected: ${oldCat} -> ${newCat} (Turn ${nextIdx})`,
+              );
+              // --- DYNAMIC FLOW ARCHITECTURE: RE-PLANNING ---
+              // If the category escalated (e.g. simple -> critical) and we are not at the end,
+              // we must pivot the assessment to focus on the new, higher-risk profile.
+              if (!effectiveIsAtEnd) {
+                console.log(
+                  `[Assessment] Triggering Refinement Plan due to escalation (${oldCat} -> ${newCat})`,
+                );
+                try {
+                  // 1. Generate refined plan (Next 3 critical questions)
+                  const remainingCount = 3;
+                  const refinedQuestions = await geminiClient.refineAssessmentPlan(
+                    profile,
+                    remainingCount,
+                  );
+
+                  if (refinedQuestions.length > 0) {
+                    // 2. Inject Pivot Message
+                    const pivotTimestamp = Date.now();
+                    appendMessagesToConversation([
+                      composeAssistantMessage({
+                        id: `pivot-${pivotTimestamp}`,
+                        body: 'Given the new details you shared, I need to ask a few specific questions to better understand your situation.',
+                        reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
+                        reasonSource: 'escalation-pivot',
+                        nextAction: 'Refining assessment plan.',
+                        timestamp: pivotTimestamp,
+                      }),
+                    ]);
+
+                    // 3. Update Question Queue
+                    // Keep history (0 to nextIdx), replace future questions with refined plan
+                    const keptQuestions = activeQuestions.slice(0, nextIdx);
+                    const newQueue = [...keptQuestions, ...refinedQuestions];
+
+                    const annotatedNewQueue = annotateQuestionsWithSlotMetadata(
+                      newQueue,
+                      profile,
+                      newAnswers,
+                      slotSnapshot,
+                    );
+
+                    setQuestions(annotatedNewQueue);
+                    activeQuestions = annotatedNewQueue;
+                    effectiveIsAtEnd = nextIdx >= activeQuestions.length; // Re-evaluate termination condition
+
+                    console.log(
+                      `[Assessment] Plan refined. New queue length: ${activeQuestions.length}`,
+                    );
+                  }
+                } catch (refineErr) {
+                  console.error('[Assessment] Failed to refine plan:', refineErr);
+                  // Fallback: Continue with existing plan
+                }
+              }
+            }
+          }
+
+          const change = detectProfileChanges(previousProfile, profile);
+
+          if (change) {
+            console.log(
+              `[Assessment] Detected correction in ${change.field}: "${change.oldValue}" -> "${change.newValue}"`,
+            );
+            const fieldLabel =
+              change.field === 'duration'
+                ? 'duration'
+                : change.field === 'age'
+                  ? 'age'
+                  : 'severity';
+            const ackTimestamp = Date.now();
+            appendMessagesToConversation([
+              composeAssistantMessage({
+                id: `ack-${ackTimestamp}`,
+                body: `Thanks for clarifying — I've updated the ${fieldLabel} to ${change.newValue}.`,
+                reason: 'User corrected a clinical value.',
+                reasonSource: 'reactive-ack',
+                nextAction: 'Continuing with assessment.',
+                timestamp: ackTimestamp,
+              }),
+            ]);
+          }
 
           // --- DYNAMIC PLAN PRUNING ---
           // Filter out future questions if their slots (Age, Duration, Severity, Progression)
           // have been populated by the latest AI extraction.
-          let activeQuestions = questions;
+          // let activeQuestions = questions; // Removed to preserve updates from escalation block
           const slotsToCheck = ['age', 'duration', 'severity', 'progression'];
           const populatedSlots = slotsToCheck.filter(
             (slot) => profile[slot as keyof AssessmentProfile],
           );
 
           if (populatedSlots.length > 0) {
-            const historyPart = questions.slice(0, nextIdx);
-            const futurePart = questions.slice(nextIdx);
+            const historyPart = activeQuestions.slice(0, nextIdx);
+            const futurePart = activeQuestions.slice(nextIdx);
 
             const prunedFuture = futurePart.filter((q) => {
               if (populatedSlots.includes(q.id)) {
@@ -1039,7 +1179,9 @@ const SymptomAssessmentScreen = () => {
             }
           }
 
-          console.log(`[DEBUG_NEXT_LOGIC] nextIdx: ${nextIdx}, activeQuestions.length: ${activeQuestions.length}`);
+          console.log(
+            `[DEBUG_NEXT_LOGIC] nextIdx: ${nextIdx}, activeQuestions.length: ${activeQuestions.length}`,
+          );
           let effectiveIsAtEnd = nextIdx >= activeQuestions.length;
 
           // Update Readiness Visualization
@@ -1056,9 +1198,14 @@ const SymptomAssessmentScreen = () => {
             slotSnapshot ?? incrementalSlots,
             newAnswers,
           );
-          const missingCoreSlotGoals = CORE_SLOT_ORDER
-            .map((slotId) => unresolvedSlotGoals.find((goal) => goal.slotId === slotId))
-            .filter((goal): goal is QuestionSlotGoal => Boolean(goal));
+          const missingCoreSlotGoals = CORE_SLOT_ORDER.map((slotId) =>
+            unresolvedSlotGoals.find((goal) => goal.slotId === slotId),
+          ).filter((goal): goal is QuestionSlotGoal => Boolean(goal));
+
+          const triageScoreResult = calculateTriageScore({
+            ...profile,
+            symptom_text: triageHistoryText,
+          });
 
           setTriageSnapshot({
             score: triageScoreResult.score,
@@ -1113,11 +1260,6 @@ const SymptomAssessmentScreen = () => {
 
           setPreviousProfile(profile);
 
-          const triageScoreResult = calculateTriageScore({
-            ...profile,
-            symptom_text: triageHistoryText,
-          });
-
           setArbiterSignal(arbiterResult.signal);
           console.log(
             `[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`,
@@ -1128,20 +1270,25 @@ const SymptomAssessmentScreen = () => {
 
           // Handle Clarification Signal (Force Clarification for Hedging/Ambiguous Denial)
           if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' && !arbiterResult.needs_reset) {
-            console.log(`[Assessment] Arbiter requesting clarification. Count: ${clarificationCount + 1}/${MAX_CLARIFICATIONS}`);
+            console.log(
+              `[Assessment] Arbiter requesting clarification. Count: ${clarificationCount + 1}/${MAX_CLARIFICATIONS}`,
+            );
 
             // Extract the hedged symptom from friction details if possible
             // Format: [System] Hedging detected in: fieldName ("detectedPhrase")
-            const hedgingMatch = profile.clinical_friction_details?.match(/Hedging detected in: ([^ ]+) \("(.*)"\)/);
+            const hedgingMatch = profile.clinical_friction_details?.match(
+              /Hedging detected in: ([^ ]+) \("(.*)"\)/,
+            );
             const hedgedField = hedgingMatch ? hedgingMatch[1] : 'symptoms you mentioned';
 
             setIsClarifyingDenial(true);
             setClarificationCount((prev) => prev + 1);
             setIsTyping(false);
 
-            const clarificationText = clarificationCount === 0
-              ? `I want to be perfectly safe. You mentioned "${hedgedField}" might be present. To be certain, is this happening to you right now?`
-              : `I'm still a bit unsure about your safety regarding "${hedgedField}". It's important for me to know for sure: are you experiencing this right now?`;
+            const clarificationText =
+              clarificationCount === 0
+                ? `I want to be perfectly safe. You mentioned "${hedgedField}" might be present. To be certain, is this happening to you right now?`
+                : `I'm still a bit unsure about your safety regarding "${hedgedField}". It's important for me to know for sure: are you experiencing this right now?`;
 
             {
               const clarificationTimestamp = Date.now();
@@ -1173,31 +1320,24 @@ const SymptomAssessmentScreen = () => {
             effectiveReadiness >= TERMINATION_THRESHOLD;
 
           // --- CLARIFICATION FEEDBACK (User Guidance) ---
-          const needsClarificationHeader = isAmbiguous || hasFriction;
           let clarificationHeader = '';
 
-          if (needsClarificationHeader && !hasShownClarificationHeader.current) {
-            clarificationHeader =
-              "To ensure I fully understand your situation and provide the safest advice, I'd like to clarify a few details.\n\n";
-            hasShownClarificationHeader.current = true;
-          }
-
-            if (canTerminate) {
-              console.log('[Assessment] Arbiter approved termination. Finalizing.');
-              setIsTyping(false);
-              setAssessmentStage('review');
-              const terminationTimestamp = Date.now();
-              appendMessagesToConversation([
-                composeAssistantMessage({
-                  id: 'early-exit',
-                  body: 'Thank you. I have sufficient information to provide a safe recommendation.',
-                  header: clarificationHeader,
-                  reason: arbiterResult.reason,
-                  reasonSource: 'arbiter-termination',
-                  nextAction: 'I will now finalize your recommendation and share it shortly.',
-                  timestamp: terminationTimestamp,
-                }),
-              ]);
+          if (canTerminate) {
+            console.log('[Assessment] Arbiter approved termination. Finalizing.');
+            setIsTyping(false);
+            setAssessmentStage('review');
+            const terminationTimestamp = Date.now();
+            appendMessagesToConversation([
+              composeAssistantMessage({
+                id: 'early-exit',
+                body: 'Thank you. I have sufficient information to provide a safe recommendation.',
+                header: clarificationHeader,
+                reason: arbiterResult.reason,
+                reasonSource: 'arbiter-termination',
+                nextAction: 'I will now finalize your recommendation and share it shortly.',
+                timestamp: terminationTimestamp,
+              }),
+            ]);
             setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
             return;
           }
@@ -1262,17 +1402,17 @@ const SymptomAssessmentScreen = () => {
               // Proactive resolution: Inject message immediately and return
               {
                 const frictionTimestamp = Date.now();
-              appendMessagesToConversation([
-                composeAssistantMessage({
-                  id: `friction-msg-${frictionTimestamp}`,
-                  header: clarificationHeader,
-                  body: frictionQuestion.text,
-                  reason: arbiterResult.reason,
-                  reasonSource: 'arbiter-friction',
-                  nextAction: 'Please answer this so I can resolve the conflicting details.',
-                  timestamp: frictionTimestamp,
-                }),
-              ]);
+                appendMessagesToConversation([
+                  composeAssistantMessage({
+                    id: `friction-msg-${frictionTimestamp}`,
+                    header: clarificationHeader,
+                    body: frictionQuestion.text,
+                    reason: arbiterResult.reason,
+                    reasonSource: 'arbiter-friction',
+                    nextAction: 'Please answer this so I can resolve the conflicting details.',
+                    timestamp: frictionTimestamp,
+                  }),
+                ]);
               }
 
               setCurrentQuestionIndex(nextIdx);
@@ -1310,8 +1450,7 @@ const SymptomAssessmentScreen = () => {
               appendMessagesToConversation([
                 composeAssistantMessage({
                   id: `system-reset-${resetTimestamp}`,
-                  body:
-                    "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
+                  body: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
                   reason: arbiterResult.reason,
                   reasonSource: 'arbiter-reset',
                   nextAction: 'Please help me review those details so I can keep you safe.',
@@ -1348,8 +1487,12 @@ const SymptomAssessmentScreen = () => {
 
             setIsTyping(true);
 
-            const resolvedTag = isRecentResolvedRef.current ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]` : '';
-            console.log(`[DEBUG_EXPANSION] resolvedTag: "${resolvedTag}", Ref: ${isRecentResolvedRef.current}, Keyword: ${resolvedKeywordRef.current}`);
+            const resolvedTag = isRecentResolvedRef.current
+              ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]`
+              : '';
+            console.log(
+              `[DEBUG_EXPANSION] resolvedTag: "${resolvedTag}", Ref: ${isRecentResolvedRef.current}, Keyword: ${resolvedKeywordRef.current}`,
+            );
 
             const unresolvedSlotsText =
               unresolvedSlotGoals.length > 0
@@ -1366,7 +1509,8 @@ const SymptomAssessmentScreen = () => {
               .slice(-2)
               .map((msg) => msg.text.trim())
               .filter(Boolean);
-            const recentResponsesText = recentUserResponses.length > 0 ? recentUserResponses.join(' | ') : 'none yet';
+            const recentResponsesText =
+              recentUserResponses.length > 0 ? recentUserResponses.join(' | ') : 'none yet';
 
             const flagDetails: string[] = [];
             if (profile.ambiguity_detected) flagDetails.push('Ambiguity detected');
@@ -1458,7 +1602,8 @@ const SymptomAssessmentScreen = () => {
                           body: nextQ.text,
                           reason: arbiterResult.reason,
                           reasonSource: 'arbiter-expansion',
-                          nextAction: 'Please answer this follow-up so I can cover every safety concern.',
+                          nextAction:
+                            'Please answer this follow-up so I can cover every safety concern.',
                           timestamp: extraTimestamp,
                         }),
                       ]);
@@ -1476,7 +1621,10 @@ const SymptomAssessmentScreen = () => {
                     return;
                   }
                 } else {
-                  console.warn('[Assessment] Expansion response did not contain valid JSON:', accumulatedResponse);
+                  console.warn(
+                    '[Assessment] Expansion response did not contain valid JSON:',
+                    accumulatedResponse,
+                  );
                 }
               }
               // Fallback if parsing fails or no questions
@@ -1557,7 +1705,8 @@ const SymptomAssessmentScreen = () => {
                   body: nextQ.text,
                   reason: arbiterResult.reason,
                   reasonSource: 'arbiter-default-question',
-                  nextAction: 'Please answer this question so I can better understand your symptoms.',
+                  nextAction:
+                    'Please answer this question so I can better understand your symptoms.',
                   timestamp: defaultTimestamp,
                 }),
               ]);
@@ -1569,7 +1718,8 @@ const SymptomAssessmentScreen = () => {
           }
         } catch (e) {
           console.warn(
-            '[Assessment] Arbiter consultation or follow-up failed, continuing planned path...', e,
+            '[Assessment] Arbiter consultation or follow-up failed, continuing planned path...',
+            e,
           );
         }
       }
@@ -1596,23 +1746,23 @@ const SymptomAssessmentScreen = () => {
           setIsTyping(false);
           setProcessing(false);
         }, 600);
-        } else {
-          // EXHAUSTED QUESTIONS -> Finalize
-          setIsTyping(false);
-          setAssessmentStage('review');
-          {
-            const finalizingTimestamp = Date.now();
-            appendMessagesToConversation([
-              composeAssistantMessage({
-                id: 'finalizing',
-                body: "Thank you. I'm now analyzing your responses to provide the best guidance...",
-                reason: 'Assessment complete and ready for final review.',
-                reasonSource: 'finalizing',
-                nextAction: 'Please wait while I synthesize the recommendation for you.',
-                timestamp: finalizingTimestamp,
-              }),
-            ]);
-          }
+      } else {
+        // EXHAUSTED QUESTIONS -> Finalize
+        setIsTyping(false);
+        setAssessmentStage('review');
+        {
+          const finalizingTimestamp = Date.now();
+          appendMessagesToConversation([
+            composeAssistantMessage({
+              id: 'finalizing',
+              body: "Thank you. I'm now analyzing your responses to provide the best guidance...",
+              reason: 'Assessment complete and ready for final review.',
+              reasonSource: 'finalizing',
+              nextAction: 'Please wait while I synthesize the recommendation for you.',
+              timestamp: finalizingTimestamp,
+            }),
+          ]);
+        }
         setTimeout(() => {
           finalizeAssessment(newAnswers, nextHistory);
         }, 1500);
@@ -1729,8 +1879,7 @@ const SymptomAssessmentScreen = () => {
         appendMessagesToConversation([
           composeAssistantMessage({
             id: `finalize-${finalizeTimestamp}`,
-            body:
-              'Thank you. I have a clear picture of your situation now. Given your symptoms, I have generated a specific care plan. Let me walk you through it.',
+            body: 'Thank you. I have a clear picture of your situation now. Given your symptoms, I have generated a specific care plan. Let me walk you through it.',
             reason: 'Assessment complete and ready for handover.',
             reasonSource: 'finalize-assessment',
             nextAction: 'Please stay tuned while I prepare the recommendation for you.',
@@ -1853,11 +2002,11 @@ const SymptomAssessmentScreen = () => {
           onPress: () => {
             dispatch(clearAssessmentState());
             navigation.goBack();
-          }
+          },
         },
         {
           text: 'Exit & Save',
-          onPress: () => navigation.goBack()
+          onPress: () => navigation.goBack(),
         },
       ],
     );
@@ -1910,7 +2059,7 @@ const SymptomAssessmentScreen = () => {
           <View
             style={[
               styles.avatar,
-              { 
+              {
                 backgroundColor: theme.colors.primaryContainer,
               },
             ]}
@@ -1923,14 +2072,14 @@ const SymptomAssessmentScreen = () => {
           </View>
         )}
         <View
-          style={[ 
+          style={[
             styles.bubble,
             isAssistant ? styles.assistantBubble : styles.userBubble,
             { backgroundColor: isAssistant ? theme.colors.surface : theme.colors.primary },
           ]}
         >
           <Text
-            style={[ 
+            style={[
               styles.messageText,
               { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
             ]}
@@ -1953,7 +2102,7 @@ const SymptomAssessmentScreen = () => {
 
   // Determine current options if offline
   const currentQuestion = questions[currentQuestionIndex];
-  const offlineOptions = 
+  const offlineOptions =
     isOfflineMode && currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId]?.options : null;
 
   const totalQuestions = Math.max(questions.length, 1);
@@ -1973,39 +2122,39 @@ const SymptomAssessmentScreen = () => {
       case 'generating':
         return {
           value: 1,
-          label: 'Generating recommendation...', 
+          label: 'Generating recommendation...',
           color: '#2196F3',
         };
       case 'review':
         return {
           value: Math.max(questionProgress, 0.85),
-          label: 'Reviewing your responses...', 
+          label: 'Reviewing your responses...',
           color: theme.colors.primary,
         };
       case 'follow_up':
         return {
           value: Math.max(questionProgress, 0.35),
-          label: 'Follow-up questions...', 
+          label: 'Follow-up questions...',
           color: theme.colors.primary,
         };
       case 'intake':
       default:
         return {
           value: Math.max(questionProgress, 0.1),
-          label: 'Gathering initial symptoms...', 
+          label: 'Gathering initial symptoms...',
           color: theme.colors.primary,
         };
     }
   })();
 
   // Determine if current question has a "None" option and if it's mandatory
-  const currentOptions = 
+  const currentOptions =
     currentQuestion?.options || (currentQuestion ? parseRedFlags(currentQuestion.text) : []);
   const hasNoneOptionInCurrent = currentOptions.some((opt: any) => {
     if (typeof opt === 'string') return isNoneOption(opt);
     if (opt && typeof opt === 'object' && 'label' in opt) return isNoneOption((opt as any).label);
     if (opt && typeof opt === 'object' && 'items' in opt) {
-      return (opt as any).items.some((i: any) => 
+      return (opt as any).items.some((i: any) =>
         isNoneOption(typeof i === 'string' ? i : i.id || i.label || ''),
       );
     }
@@ -2050,7 +2199,7 @@ const SymptomAssessmentScreen = () => {
               <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
             </View>
             <View
-              style={[ 
+              style={[
                 styles.bubble,
                 styles.assistantBubble,
                 { backgroundColor: theme.colors.surface },
@@ -2068,7 +2217,7 @@ const SymptomAssessmentScreen = () => {
               <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
             </View>
             <View
-              style={[ 
+              style={[
                 styles.bubble,
                 styles.assistantBubble,
                 { backgroundColor: theme.colors.surface, padding: 12 },
@@ -2084,7 +2233,7 @@ const SymptomAssessmentScreen = () => {
               <MaterialCommunityIcons name="alert" size={18} color={theme.colors.error} />
             </View>
             <View
-              style={[ 
+              style={[
                 styles.bubble,
                 styles.assistantBubble,
                 {
@@ -2106,7 +2255,7 @@ const SymptomAssessmentScreen = () => {
       </ScrollView>
 
       <Animated.View
-        style={[ 
+        style={[
           styles.inputSection,
           {
             marginBottom: keyboardHeight,
@@ -2298,12 +2447,12 @@ const SymptomAssessmentScreen = () => {
           <>
             {/* Suggestions / Offline Chips */}
             {(() => {
-              const shouldShowChips = 
+              const shouldShowChips =
                 offlineOptions ||
-                (!isOfflineMode && 
-                  currentQuestion?.options && 
-                  currentQuestion.options.length > 0 && 
-                  currentQuestion.type !== 'text' && 
+                (!isOfflineMode &&
+                  currentQuestion?.options &&
+                  currentQuestion.options.length > 0 &&
+                  currentQuestion.type !== 'text' &&
                   currentQuestion.type !== 'number');
 
               if (!shouldShowChips) return null;
@@ -2316,29 +2465,30 @@ const SymptomAssessmentScreen = () => {
                 >
                   {offlineOptions
                     ? offlineOptions.map((opt) => (
-                                                  <Chip
-                                                    key={opt.label}
-                                                    onPress={() => handleNext(opt.label)}
-                                                    disabled={processing}
-                                                    textStyle={{ color: theme.colors.primary }}
-                                                  >
-                                                    {opt.label}
-                                                  </Chip>
-                                                ))
-                                              : currentQuestion!.options!.map((opt, idx) => {
-                                                  if (typeof opt === 'string') {
-                                                    return (
-                                                      <Chip
-                                                        key={idx}
-                                                        onPress={() => handleNext(opt)}
-                                                        disabled={processing}
-                                                        style={{ marginRight: 8 }}
-                                                        textStyle={{ color: theme.colors.primary }}
-                                                      >
-                                                        {opt}
-                                                      </Chip>
-                                                    );
-                                                  }                        return null;
+                        <Chip
+                          key={opt.label}
+                          onPress={() => handleNext(opt.label)}
+                          disabled={processing}
+                          textStyle={{ color: theme.colors.primary }}
+                        >
+                          {opt.label}
+                        </Chip>
+                      ))
+                    : currentQuestion!.options!.map((opt, idx) => {
+                        if (typeof opt === 'string') {
+                          return (
+                            <Chip
+                              key={idx}
+                              onPress={() => handleNext(opt)}
+                              disabled={processing}
+                              style={{ marginRight: 8 }}
+                              textStyle={{ color: theme.colors.primary }}
+                            >
+                              {opt}
+                            </Chip>
+                          );
+                        }
+                        return null;
                       })}
                 </ScrollView>
               );

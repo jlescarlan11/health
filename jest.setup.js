@@ -114,9 +114,23 @@ jest.mock('expo-linear-gradient', () => {
 
 // Mock expo-sqlite
 jest.mock('expo-sqlite', () => ({
-  openDatabase: () => ({
-    transaction: () => {},
-  }),
+  openDatabaseAsync: jest.fn(() =>
+    Promise.resolve({
+      execAsync: jest.fn(() => Promise.resolve()),
+      getAllAsync: jest.fn(() => Promise.resolve([])),
+      runAsync: jest.fn(() => Promise.resolve({ lastInsertRowId: 1, changes: 1 })),
+      prepareAsync: jest.fn(() =>
+        Promise.resolve({
+          executeAsync: jest.fn(() => Promise.resolve({})),
+          finalizeAsync: jest.fn(() => Promise.resolve()),
+        }),
+      ),
+      transactionAsync: jest.fn((callback) => callback({
+        execAsync: jest.fn(() => Promise.resolve()),
+      })),
+      closeAsync: jest.fn(() => Promise.resolve()),
+    }),
+  ),
 }));
 
 jest.mock('@react-native-community/netinfo', () => ({

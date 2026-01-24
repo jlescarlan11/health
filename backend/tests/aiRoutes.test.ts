@@ -73,7 +73,8 @@ describe('AI Routes', () => {
       expect(response.body.facilities).toHaveLength(1);
       expect(prismaMock.facility.findMany).toHaveBeenCalledTimes(1);
 
-      const { where, take, orderBy } = prismaMock.facility.findMany.mock.calls[0][0];
+      const lastCall = prismaMock.facility.findMany.mock.calls[0][0];
+      const { where, take, orderBy } = lastCall as any;
       expect(take).toBe(3);
       expect(orderBy).toEqual({ name: 'asc' });
       expect(where).toHaveProperty('AND');
