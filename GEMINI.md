@@ -273,3 +273,20 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Triage Card Consistency:** Updated `TriageStatusCard.tsx` to use `primaryContainer` background and `primary` foreground for the 'Health Center' level, ensuring visual consistency with other triage levels.
   - **Self-Care Style Update:** Modified the 'Self-Care' recommendation styling in `TriageStatusCard.tsx` and `RecommendationScreen.tsx` to match the visual identity of symptom chips (using `secondaryContainer` background and `primary` text/icon color).
   - **Files Modified:** `src/screens/RecommendationScreen.tsx`, `src/components/features/triage/TriageStatusCard.tsx`, `src/components/features/triage/__tests__/TriageStatusCard.test.tsx`.
+
+- **Test Suite Stabilization (Jan 25, 2026):**
+  - **Fixes:** Resolved multiple test failures caused by async logic, regex inaccuracies, and incomplete mocks.
+    - **`geminiClient.ts`**: Updated `isTransientFailure` to correctly retry on "503 Service Unavailable" errors.
+    - **`clinicalUtils.ts`**: Improved regex to correctly extract age from "I am 30" and prevent "years old" from being parsed as duration.
+    - **`jest.setup.js`**: Updated `expo-sqlite` mock to support the async API (`openDatabaseAsync`), fixing database service tests.
+    - **`geminiFallback.test.ts`**: Fixed mock initialization and added `AsyncStorage.clear()` to prevent test state leakage.
+    - **`gemini.test.ts`**: Updated retry tests to use transient error types ("Network Error") to correctly trigger retry logic.
+    - **`SafetyInterceptorStress.test.ts`**: Fixed array handling for suppressed keywords in mental health guard tests.
+  - **Cleanup:** Removed the flaky `tests/RecommendationScreen.test.tsx` integration test as per user request to unblock the pipeline, noting that core logic is covered by service-level tests.
+  - **Result:** All frontend (59 suites) and backend (6 suites) tests are now passing.
+
+- **Bug Fix: Assessment Plan Refinement (Jan 25, 2026):**
+  - **Issue:** Resolved a `TypeError: Cannot read property 'slice' of undefined` occurring during symptom assessment when the plan was refined due to category escalation.
+  - **Root Cause:** The `activeQuestions` variable was being accessed in the escalation logic block before its declaration in the subsequent pruning block.
+  - **Fix:** Hoisted the initialization of `activeQuestions` to the beginning of the `handleNext` logic flow in `SymptomAssessmentScreen.tsx` and updated the pruning logic to use this mutable reference, ensuring the question queue is correctly updated and propagated.
+  - **Verification:** Verified with `SymptomAssessmentDynamicPruning.test.tsx` and `SymptomAssessmentRedFlags.test.tsx`.
