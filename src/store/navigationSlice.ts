@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TriageSnapshot } from '../types/triage';
+import { ClinicalSlots } from '../utils/clinicalUtils';
 
 interface Message {
   id: string;
@@ -59,6 +60,7 @@ interface NavigationState {
       outOfScopeBuffer: string[];
       triageSnapshot: TriageSnapshot | null;
       currentTurnMeta?: AssessmentTurnMeta | null;
+      incrementalSlots: ClinicalSlots;
   } | null;
 }
 

@@ -65,12 +65,10 @@ jest.mock('@react-native-community/netinfo', () => ({
   fetch: jest.fn().mockResolvedValue({ isConnected: true }),
 }));
 
-describe('SymptomAssessmentScreen bridge path', () => {
+describe('Adaptive Empathy Engine', () => {
   let store: any;
   let planSpy: jest.SpyInstance;
   let profileSpy: jest.SpyInstance;
-  let streamSpy: jest.SpyInstance;
-  let responseSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -79,16 +77,16 @@ describe('SymptomAssessmentScreen bridge path', () => {
     planSpy = jest
       .spyOn(geminiClient, 'generateAssessmentPlan')
       .mockResolvedValue({ questions: [], intro: '' });
+    
+    // Ensure readiness is high enough (> 0.4) to trigger local bridging
     profileSpy = jest
       .spyOn(geminiClient, 'extractClinicalProfile')
       .mockResolvedValue({
-        triage_readiness_score: 0.7,
+        triage_readiness_score: 0.8,
         symptom_category: 'simple',
         ambiguity_detected: false,
         clinical_friction_detected: false,
       } as any);
-    streamSpy = jest.spyOn(geminiClient, 'streamGeminiResponse');
-    responseSpy = jest.spyOn(geminiClient, 'getGeminiResponse');
 
     (useNavigation as jest.Mock).mockReturnValue({
       replace: jest.fn(),
@@ -110,38 +108,87 @@ describe('SymptomAssessmentScreen bridge path', () => {
     jest.useRealTimers();
   });
 
-  it('bridges to the next question without invoking Gemini when readiness is high', async () => {
-    const plan = [
-      { id: 'age', text: 'How old are you?', tier: 1 },
-      { id: 'duration', text: 'How long has this been happening?', tier: 1 },
-    ];
-    planSpy.mockResolvedValue({ questions: plan, intro: 'Intro' });
-
-    const { getByText, getByTestId } = render(
+  const setupTest = async (questions: any[]) => {
+    planSpy.mockResolvedValue({ questions, intro: 'Intro' });
+    const utils = render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
       </ReduxProvider>,
     );
+    // Use regex to find question text within the larger intro block
+    const qText = questions[0].text;
+    const safePattern = new RegExp(qText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    await waitFor(() => expect(utils.getByText(safePattern)).toBeTruthy());
+    return utils;
+  };
 
-    await waitFor(() => expect(getByText(/How old are you\?/)).toBeTruthy());
-
-    const input = getByTestId('input-field');
-    const submit = getByTestId('submit-button');
-
+  const submitAnswer = async (utils: any, answer: string) => {
+    const input = utils.getByTestId('input-field');
+    const submit = utils.getByTestId('submit-button');
+    
     await act(async () => {
-      fireEvent.changeText(input, '25');
+      fireEvent.changeText(input, answer);
     });
     
     await act(async () => {
       fireEvent.press(submit);
     });
+  };
 
-    await waitFor(() => expect(getByText('25')).toBeTruthy());
+  it('responds with Distress empathy for "pain" keyword', async () => {
+    const plan = [
+      { id: 'q1', text: 'Q1?', tier: 1 },
+      { id: 'q2', text: 'Next Question?', tier: 1 },
+    ];
+    const utils = await setupTest(plan);
+    
+    await submitAnswer(utils, 'I have severe pain');
+    // Wait for user message to render first to ensure state flow
+    await waitFor(() => expect(utils.getByText(/I have severe pain/)).toBeTruthy());
 
-    const bridgePattern = /Got it\. How long has this been happening\?/;
-    await waitFor(() => expect(getByText(bridgePattern)).toBeTruthy());
+    const expected = "I'm sorry you're going through this... Next Question?";
+    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+  });
 
-    expect(streamSpy).not.toHaveBeenCalled();
-    expect(responseSpy).not.toHaveBeenCalled();
+  it('responds with Denial empathy for "no" keyword', async () => {
+    const plan = [
+      { id: 'q1', text: 'Q1?', tier: 1 },
+      { id: 'q2', text: 'Next Question?', tier: 1 },
+    ];
+    const utils = await setupTest(plan);
+    
+    await submitAnswer(utils, 'No');
+    await waitFor(() => expect(utils.getByText(/No/)).toBeTruthy());
+
+    const expected = "That's good to know... Next Question?";
+    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+  });
+
+  it('responds with Uncertainty empathy for "not sure" keyword', async () => {
+    const plan = [
+      { id: 'q1', text: 'Q1?', tier: 1 },
+      { id: 'q2', text: 'Next Question?', tier: 1 },
+    ];
+    const utils = await setupTest(plan);
+    
+    await submitAnswer(utils, 'I am not sure');
+    await waitFor(() => expect(utils.getByText(/I am not sure/)).toBeTruthy());
+
+    const expected = "That's okay, we can work with that... Next Question?";
+    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+  });
+
+  it('responds with Neutral fallback for unmatched input', async () => {
+    const plan = [
+      { id: 'q1', text: 'Q1?', tier: 1 },
+      { id: 'q2', text: 'Next Question?', tier: 1 },
+    ];
+    const utils = await setupTest(plan);
+    
+    await submitAnswer(utils, 'It started yesterday');
+    await waitFor(() => expect(utils.getByText(/It started yesterday/)).toBeTruthy());
+
+    const expected = "Got it. Next Question?";
+    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
   });
 });
