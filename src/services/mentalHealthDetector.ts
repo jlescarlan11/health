@@ -15,9 +15,9 @@ const CRISIS_KEYWORDS_SCORED: Record<string, number> = {
   overdose: 10,
   'take all the pills': 10,
   'better off dead': 10,
-  dying: 9,
-  'feel like dying': 9,
-  'feeling like dying': 9,
+  dying: 7,
+  'feel like dying': 7,
+  'feeling like dying': 7,
   'self-harm': 9,
   'hearing voices': 9,
   hallucinations: 9,
@@ -86,9 +86,7 @@ class MentalHealthDetector extends KeywordDetector {
       console.log(
         `[MentalHealthDetector] Crisis keywords detected: ${matchedKeywords.join(', ')} (Score: ${score})`,
       );
-      const medical_justification = matchedKeywords
-        .map((k) => `${k} (Severity: ${CRISIS_KEYWORDS_SCORED[k]}/10)`)
-        .join('; ');
+      const medical_justification = matchedKeywords.join('; ');
 
       return {
         isCrisis: true,

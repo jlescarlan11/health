@@ -22,7 +22,7 @@ import { RootState } from '../store';
 import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
-import { getOpenStatus } from '../utils';
+import { getOpenStatus, formatOperatingHours, OPEN_COLOR, WARNING_COLOR } from '../utils/facilityUtils';
 import { useTheme } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 import { openExternalMaps } from '../utils/linkingUtils';
@@ -279,19 +279,22 @@ export const FacilityDetailsScreen = () => {
               <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
                 Operating Hours
               </Text>
-              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
-                {facility.is_24_7
-                  ? 'Open 24 Hours, 7 Days a Week'
-                  : facility.hours || 'Hours not available'}
-              </Text>
+              
+              {formatOperatingHours(facility).map((line, idx) => (
+                <Text key={idx} style={[styles.infoText, { color: theme.colors.onSurface }]}>
+                  {line}
+                </Text>
+              ))}
+
               <View
                 style={[
                   styles.openStatus,
                   {
                     backgroundColor:
-                      openStatusColor === 'green'
+                      openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
                         ? theme.colors.primaryContainer
-                        : theme.colors.errorContainer,
+                        : theme.colors.surfaceVariant,
+                    marginTop: 8,
                   },
                 ]}
               >
@@ -300,7 +303,9 @@ export const FacilityDetailsScreen = () => {
                     styles.openStatusText,
                     {
                       color:
-                        openStatusColor === 'green' ? theme.colors.primary : theme.colors.error,
+                        openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
+                          ? theme.colors.primary
+                          : theme.colors.onSurfaceVariant,
                     },
                   ]}
                 >

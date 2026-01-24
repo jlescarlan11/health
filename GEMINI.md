@@ -290,3 +290,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Root Cause:** The `activeQuestions` variable was being accessed in the escalation logic block before its declaration in the subsequent pruning block.
   - **Fix:** Hoisted the initialization of `activeQuestions` to the beginning of the `handleNext` logic flow in `SymptomAssessmentScreen.tsx` and updated the pruning logic to use this mutable reference, ensuring the question queue is correctly updated and propagated.
   - **Verification:** Verified with `SymptomAssessmentDynamicPruning.test.tsx` and `SymptomAssessmentRedFlags.test.tsx`.
+
+- **Type Error Fix & Code Quality (Jan 25, 2026):**
+  - **Message Interface Fix:** Updated `src/store/navigationSlice.ts` to include `'assistant'` in the `sender` union type, resolving a type mismatch with the `SymptomAssessmentScreen`. Added an explicit `: Message` return type to `composeAssistantMessage` in `src/screens/SymptomAssessmentScreen.tsx` to fix generic string inference errors.
+  - **Hoisting Resolution:** Fixed `tsc` errors in `src/screens/SymptomAssessmentScreen.tsx` by moving `runEmergencyGuard` definition before its usage in `appendMessagesToConversation`, and correctly scoping the `effectiveIsAtEnd` variable in `handleNext`.
+  - **Test Update:** Fixed a type error in `src/api/__tests__/geminiCache.test.ts` by strictly typing the `role` property in mock history data.
+  - **Result:** Eliminated critical type errors in the assessment flow and improved code structure.

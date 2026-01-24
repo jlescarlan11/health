@@ -45,7 +45,7 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
     jest.spyOn(Linking, 'openSettings').mockResolvedValue(undefined);
   });
 
-  it('shows "Enable" button and calls getCurrentLocation when status is undetermined', () => {
+  it('shows banner and calls getCurrentLocation when status is undetermined', () => {
     (useUserLocation as jest.Mock).mockReturnValue({
       permissionStatus: 'undetermined',
       requestPermission: mockRequestPermission,
@@ -54,14 +54,14 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
 
     const { getByText } = render(<FacilityDirectoryScreen />);
 
-    const enableButton = getByText('Enable');
-    expect(enableButton).toBeTruthy();
+    const bannerText = getByText('Find the nearest help by sharing your location.');
+    expect(bannerText).toBeTruthy();
 
-    fireEvent.press(enableButton);
+    fireEvent.press(bannerText);
     expect(mockGetCurrentLocation).toHaveBeenCalled();
   });
 
-  it('shows "Open Settings" button and calls Linking.openSettings when status is denied', () => {
+  it('shows banner and calls Linking.openSettings when status is denied', () => {
     (useUserLocation as jest.Mock).mockReturnValue({
       permissionStatus: 'denied',
       requestPermission: mockRequestPermission,
@@ -70,10 +70,10 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
 
     const { getByText } = render(<FacilityDirectoryScreen />);
 
-    const settingsButton = getByText('Open Settings');
-    expect(settingsButton).toBeTruthy();
+    const bannerText = getByText('Find the nearest help by sharing your location.');
+    expect(bannerText).toBeTruthy();
 
-    fireEvent.press(settingsButton);
+    fireEvent.press(bannerText);
     expect(Linking.openSettings).toHaveBeenCalled();
   });
 
@@ -86,8 +86,6 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
 
     const { queryByText } = render(<FacilityDirectoryScreen />);
 
-    expect(queryByText('Enable')).toBeNull();
-    expect(queryByText('Open Settings')).toBeNull();
-    expect(queryByText('Enable location to see the nearest facilities.')).toBeNull();
+    expect(queryByText('Find the nearest help by sharing your location.')).toBeNull();
   });
 });

@@ -974,12 +974,21 @@ export class GeminiClient {
         `[GeminiClient] Emergency detected locally (${emergency.matchedKeywords.join(', ')}). Preparing fallback and attempting AI enrichment.`,
       );
       
+      let advice = 'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room or call emergency services immediately.';
+      
+      if (emergency.affectedSystems.includes('Trauma')) {
+        advice = 'CRITICAL: Severe injury detected. Please go to the nearest emergency room immediately for urgent trauma care.';
+      } else if (emergency.affectedSystems.includes('Cardiac') || emergency.affectedSystems.includes('Respiratory')) {
+        advice = 'CRITICAL: Potential life-threatening cardiovascular or respiratory distress detected. Seek emergency medical care immediately.';
+      } else if (emergency.affectedSystems.includes('Neurological')) {
+        advice = 'CRITICAL: Potential neurological emergency detected. Please go to the nearest emergency room immediately.';
+      }
+
       emergencyFallback = {
         recommended_level: 'emergency',
         follow_up_questions: [],
-        user_advice:
-          'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room or call emergency services (911) immediately.',
-        clinical_soap: `S: Patient reports ${emergency.matchedKeywords.join(', ')}. O: AI detected critical emergency keywords. A: Potential life-threatening condition. P: Immediate ED referral.`,
+        user_advice: advice,
+        clinical_soap: `S: Patient reports ${emergency.matchedKeywords.join(', ')}. O: AI detected critical emergency keywords (${emergency.affectedSystems.join(', ')}). A: Potential life-threatening condition. P: Immediate ED referral.`,
         key_concerns: emergency.matchedKeywords.map((k) => `Urgent: ${k}`),
         critical_warnings: ['Life-threatening condition possible', 'Do not delay care'],
         relevant_services: ['Emergency'],
