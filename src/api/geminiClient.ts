@@ -953,8 +953,9 @@ export class GeminiClient {
     // 0. Periodic Cleanup (non-blocking)
     this.performCacheCleanup().catch((e) => console.warn('Cleanup failed:', e));
 
-    const normalizeLevel = (level: string): TriageCareLevel =>
-      (level as string).replace('-', '_') as TriageCareLevel;
+  /**
+   * Refines a triage response from the LLM based on clinical context and safety rules.
+   */
 
     // 1. Safety Overrides (Local Logic)
     const scanInput = safetyContext || symptoms;

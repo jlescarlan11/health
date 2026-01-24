@@ -126,13 +126,6 @@ const styles = StyleSheet.create({
   },
 });
 
-type ThemeSpacing = {
-  xs: number;
-  sm: number;
-  md: number;
-  lg: number;
-};
-
 const getLevelConfig = (
   level: TriageLevel,
   colors: ThemeColors,

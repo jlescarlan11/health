@@ -48,6 +48,7 @@ export const fetchFacilities = createAsyncThunk(
 
 // Shared filtering logic
 const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facility[] => {
+  if (!filters) return facilities;
   const { type, services, yakapAccredited, searchQuery, openNow } = filters;
 
   return facilities.filter((facility) => {

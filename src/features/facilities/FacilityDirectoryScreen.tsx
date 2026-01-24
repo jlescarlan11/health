@@ -48,7 +48,6 @@ export const FacilityDirectoryScreen = () => {
     requestOnMount: false,
     showDeniedAlert: false,
   });
-
   const selectedDistrict = NAGA_CITY_DISTRICTS.find(d => d.id === manualDistrictId);
 
   // Load initial data
@@ -99,6 +98,7 @@ export const FacilityDirectoryScreen = () => {
   };
 
   const isFilterActive = (filterId: string) => {
+    if (!filters) return filterId === 'all';
     if (filterId === 'all') {
       return (
         (!filters.type || filters.type.length === 0) &&
