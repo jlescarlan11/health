@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { TriageSnapshot } from '../types/triage';
 
 interface Message {
   id: string;
@@ -6,6 +7,12 @@ interface Message {
   sender: 'user' | 'ai';
   timestamp: number;
   metadata?: Record<string, unknown>; // For additional context like facility IDs
+}
+
+export interface AssessmentTurnMeta {
+  questionId: string;
+  timestamp: number;
+  intentTag: string;
 }
 
 interface Recommendation {
@@ -27,26 +34,31 @@ interface NavigationState {
   isHighRisk: boolean;
   lastRiskTimestamp: number;
   symptomDraft: string;
-  assessmentState: {
-    messages: any[];
-    questions: any[];
-    fullPlan: any[];
-    currentQuestionIndex: number;
-    answers: Record<string, string>;
-    expansionCount: number;
-    readiness: number;
-    assessmentStage: string;
-    symptomCategory: string | null;
-    previousProfile: any | undefined;
-    clarificationCount: number;
-    suppressedKeywords: string[];
-    isRecentResolved: boolean;
-    resolvedKeyword: string | null;
-    initialSymptom: string;
-    isOfflineMode: boolean;
-    currentOfflineNodeId: string | null;
-    isVerifyingEmergency: boolean;
-    emergencyVerificationData: any | null;
+    assessmentState: {
+      messages: any[];
+      questions: any[];
+      fullPlan: any[];
+      currentQuestionIndex: number;
+      answers: Record<string, string>;
+      expansionCount: number;
+      readiness: number;
+      assessmentStage: string;
+      symptomCategory: string | null;
+      previousProfile: any | undefined;
+      clarificationCount: number;
+      suppressedKeywords: string[];
+      isRecentResolved: boolean;
+      resolvedKeyword: string | null;
+      initialSymptom: string;
+      isOfflineMode: boolean;
+      currentOfflineNodeId: string | null;
+      isVerifyingEmergency: boolean;
+      emergencyVerificationData: any | null;
+      pendingRedFlag: string | null;
+      sessionBuffer: Message[];
+      outOfScopeBuffer: string[];
+      triageSnapshot: TriageSnapshot | null;
+      currentTurnMeta?: AssessmentTurnMeta | null;
   } | null;
 }
 

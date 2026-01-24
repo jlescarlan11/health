@@ -1,4 +1,5 @@
 import { normalizeNumericValue } from './stringUtils';
+import { AssessmentProfile, QuestionSlotGoal } from '../types/triage';
 
 export interface SoapSections {
   s?: string;
@@ -311,4 +312,83 @@ export const extractClinicalSlots = (text: string): ClinicalSlots => {
   }
 
   return slots;
+};
+
+const mergeClinicalSlots = (current: ClinicalSlots, next: ClinicalSlots): ClinicalSlots => ({
+  age: next.age ?? current.age,
+  duration: next.duration ?? current.duration,
+  severity: next.severity ?? current.severity,
+  temperature: next.temperature ?? current.temperature,
+});
+
+export interface ClinicalSlotParser {
+  parseTurn(text: string): { parsed: ClinicalSlots; aggregated: ClinicalSlots };
+  getSlots(): ClinicalSlots;
+  reset(): void;
+}
+
+const EMPTY_ASSESSMENT_PROFILE: AssessmentProfile = {
+  age: null,
+  duration: null,
+  severity: null,
+  progression: null,
+  red_flag_denials: null,
+  summary: '',
+};
+
+const SLOT_METADATA_CANDIDATES: QuestionSlotGoal[] = [
+  { slotId: 'age', label: 'Age' },
+  { slotId: 'duration', label: 'Duration' },
+  { slotId: 'severity', label: 'Severity' },
+  { slotId: 'progression', label: 'Progression' },
+  { slotId: 'red_flag_denials', label: 'Red flag denials' },
+];
+
+const cloneSlots = (slots: ClinicalSlots): ClinicalSlots => ({ ...slots });
+
+export const createClinicalSlotParser = (): ClinicalSlotParser => {
+  let aggregatedSlots: ClinicalSlots = {};
+
+  return {
+    parseTurn(text: string) {
+      if (!text || !text.trim()) {
+        return { parsed: {}, aggregated: cloneSlots(aggregatedSlots) };
+      }
+
+      const parsed = extractClinicalSlots(text);
+      aggregatedSlots = mergeClinicalSlots(aggregatedSlots, parsed);
+
+      return { parsed, aggregated: cloneSlots(aggregatedSlots) };
+    },
+    getSlots: () => cloneSlots(aggregatedSlots),
+    reset: () => {
+      aggregatedSlots = {};
+    },
+  };
+};
+
+export const reconcileClinicalProfileWithSlots = (
+  profile: AssessmentProfile,
+  incrementalSlots: ClinicalSlots,
+): AssessmentProfile => ({
+  ...profile,
+  age: profile.age ?? incrementalSlots.age ?? null,
+  duration: profile.duration ?? incrementalSlots.duration ?? null,
+  severity: profile.severity ?? incrementalSlots.severity ?? null,
+});
+
+export const computeUnresolvedSlotGoals = (
+  profile: AssessmentProfile | undefined,
+  incrementalSlots: ClinicalSlots,
+  answers: Record<string, string>,
+): QuestionSlotGoal[] => {
+  const baseProfile = profile ?? EMPTY_ASSESSMENT_PROFILE;
+  const incrementalRecord = incrementalSlots as Record<string, string | undefined>;
+
+  return SLOT_METADATA_CANDIDATES.filter(({ slotId }) => {
+    const hasProfileValue = Boolean(baseProfile[slotId]);
+    const hasAnswerValue = Boolean(answers[slotId]);
+    const hasIncrementalValue = Boolean(incrementalRecord[slotId]);
+    return !hasProfileValue && !hasAnswerValue && !hasIncrementalValue;
+  });
 };
