@@ -1,6 +1,8 @@
 describe('Gemini Service Retry Logic', () => {
-  let getGeminiResponse: (prompt: string) => Promise<string>;
   let mockGenerateContent: jest.Mock;
+  let geminiModule: typeof import('../../api/geminiClient');
+  let getGeminiResponse: (prompt: string) => Promise<string>;
+  let refineQuestion: (questionText: string, userAnswer: string) => Promise<string>;
 
   beforeEach(() => {
     jest.resetModules();
@@ -18,8 +20,11 @@ describe('Gemini Service Retry Logic', () => {
     });
 
     // Re-require the module under test so it picks up the new mock
-    const geminiModule = require('../gemini');
-    getGeminiResponse = geminiModule.getGeminiResponse;
+    geminiModule = require('../../api/geminiClient');
+    getGeminiResponse = geminiModule.geminiClient.getGeminiResponse.bind(
+      geminiModule.geminiClient,
+    );
+    refineQuestion = geminiModule.geminiClient.refineQuestion.bind(geminiModule.geminiClient);
   });
 
   it('should succeed on first attempt', async () => {
@@ -86,7 +91,6 @@ describe('Gemini Service Retry Logic', () => {
   }, 15000);
 
   it('should successfully refine a question', async () => {
-    const refineQuestion = require('../gemini').refineQuestion;
     mockGenerateContent.mockResolvedValue({
       response: {
         text: () => 'Refined question?',
@@ -101,7 +105,6 @@ describe('Gemini Service Retry Logic', () => {
   });
 
   it('should fallback to original question on failure during refinement', async () => {
-    const refineQuestion = require('../gemini').refineQuestion;
     mockGenerateContent.mockRejectedValue(new Error('API Error'));
 
     const result = await refineQuestion('Original question?', 'User answer');

@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import prisma from '../lib/prisma';
-import { Facility } from '../../generated/prisma/client';
+import { Facility, Prisma } from '../../generated/prisma/client';
 import { VALID_SERVICES } from '../utils/constants';
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
@@ -25,31 +25,11 @@ interface GeminiParsedResponse {
   ambiguity_detected: boolean;
   reasoning: string;
   relevant_services: string[];
-  recommended_facility_ids: string[];
+  facility_type_constraints?: string[];
 }
 
 export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-  // Fetch all facilities to provide as context
-  const allFacilities = await prisma.facility.findMany({
-    select: {
-      id: true,
-      name: true,
-      type: true,
-      services: true,
-      specialized_services: true,
-      is_24_7: true,
-      address: true,
-    },
-  });
-
-  const facilityContext = allFacilities
-    .map(
-      (f) =>
-        `- ID: ${f.id}, Name: ${f.name}, Type: ${f.type}, Services: ${f.services.join(', ')}, Specialized: ${f.specialized_services.join(', ')}, 24/7: ${f.is_24_7}, Address: ${f.address}`,
-    )
-    .join('\n');
 
   const prompt = `
     You are a medical triage assistant for Naga City.
@@ -60,17 +40,14 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     - Severity: ${data.severity || 'Not specified'}
     - Medical History: ${data.medical_history || 'None'}
 
-    Available Healthcare Facilities in Naga City:
-    ${facilityContext}
-
     VALID_SERVICES = [
       ${VALID_SERVICES.map((s) => `"${s}"`).join(', ')}
     ]
 
     Task:
     1. Analyze the symptoms and severity to determine the appropriate level of care (Self-Care, Health Center, Hospital, or Emergency Room).
-    2. Recommend specific facilities from the provided list that are best suited to handle the case based on their type and services.
-    3. Include 2-3 "relevant_services" in your reasoning or as part of the recommendation, choosing ONLY from the VALID_SERVICES list above.
+    2. Provide 2-3 "relevant_services" that align with the VALID_SERVICES list.
+    3. Optionally include "facility_type_constraints" if the case needs a specific facility type (for example, "Hospital with trauma services").
     4. Provide a clear reasoning for your recommendation.
 
     Output Schema (JSON only):
@@ -80,7 +57,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
       "ambiguity_detected": boolean,
       "reasoning": "Brief explanation...",
       "relevant_services": ["Service 1", "Service 2"],
-      "recommended_facility_ids": ["id1", "id2"]
+      "facility_type_constraints": ["Hospital with trauma services"]
     }
     
     Return ONLY valid JSON.
@@ -123,31 +100,13 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     parsedResponse.recommendation = nextLevel;
     parsedResponse.reasoning += ` (Note: Recommendation upgraded to ${nextLevel} due to uncertainty/ambiguity for safety.)`;
 
-    // Update recommended facilities based on new level
-    let targetTypeKeyword = '';
-    if (nextLevel === 'Health Center')
-      targetTypeKeyword = 'Center'; // Matches "Barangay Health Center"
-    else if (nextLevel === 'Hospital' || nextLevel === 'Emergency') targetTypeKeyword = 'Hospital';
-
-    if (targetTypeKeyword) {
-      const newFacilities = allFacilities
-        .filter((f) => f.type.includes(targetTypeKeyword))
-        .slice(0, 3); // Take top 3
-      parsedResponse.recommended_facility_ids = newFacilities.map((f) => f.id);
-    } else {
-      // If Self-Care (unlikely to upgrade TO self-care), clear facilities
-      parsedResponse.recommended_facility_ids = [];
-    }
   }
   // -----------------------------------
 
-  // Retrieve full facility details for the recommended IDs
-  const recommendedFacilities = await prisma.facility.findMany({
-    where: {
-      id: {
-        in: parsedResponse.recommended_facility_ids || [],
-      },
-    },
+  const recommendedFacilities = await selectFacilitiesForRecommendation({
+    recommendation: parsedResponse.recommendation,
+    relevantServices: parsedResponse.relevant_services || [],
+    facilityTypeConstraints: parsedResponse.facility_type_constraints,
   });
 
   return {
@@ -155,4 +114,66 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     reasoning: parsedResponse.reasoning,
     facilities: recommendedFacilities,
   };
+};
+
+const FACILITY_LEVEL_KEYWORDS: Record<string, string[]> = {
+  'Health Center': ['Health Center', 'Center'],
+  Hospital: ['Hospital'],
+  Emergency: ['Emergency', 'Hospital'],
+};
+
+const resolveFacilityTypeKeywords = (
+  recommendation: string,
+  facilityTypeConstraints?: string[],
+): string[] => {
+  const normalizedLevel = recommendation?.trim();
+  const baseKeywords = FACILITY_LEVEL_KEYWORDS[normalizedLevel] ?? [];
+  const constraintKeywords =
+    facilityTypeConstraints?.map((constraint) => constraint.trim()).filter(Boolean) ?? [];
+
+  const allKeywords = [...constraintKeywords, ...baseKeywords].filter(Boolean);
+  return Array.from(new Set(allKeywords));
+};
+
+const selectFacilitiesForRecommendation = async ({
+  recommendation,
+  relevantServices,
+  facilityTypeConstraints,
+}: {
+  recommendation: string;
+  relevantServices?: string[];
+  facilityTypeConstraints?: string[];
+}): Promise<Facility[]> => {
+  const typeKeywords = resolveFacilityTypeKeywords(recommendation, facilityTypeConstraints);
+
+  if (typeKeywords.length === 0) {
+    return [];
+  }
+
+  const filters: Prisma.FacilityWhereInput[] = [];
+
+  if (typeKeywords.length > 0) {
+    filters.push({
+      OR: typeKeywords.map((keyword) => ({
+        type: { contains: keyword, mode: 'insensitive' },
+      })),
+    });
+  }
+
+  if (relevantServices && relevantServices.length > 0) {
+    filters.push({
+      OR: [
+        { services: { hasSome: relevantServices } },
+        { specialized_services: { hasSome: relevantServices } },
+      ],
+    });
+  }
+
+  const where: Prisma.FacilityWhereInput = filters.length > 0 ? { AND: filters } : {};
+
+  return prisma.facility.findMany({
+    where,
+    orderBy: { name: 'asc' },
+    take: 3,
+  });
 };

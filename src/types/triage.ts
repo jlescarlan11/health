@@ -158,6 +158,23 @@ export interface AssessmentProfile {
   resolved_keyword?: string;
 }
 
+export interface QuestionSlotGoal {
+  slotId: keyof AssessmentProfile;
+  label: string;
+}
+
+export interface TriageSnapshot {
+  score: number;
+  escalatedCategory: 'simple' | 'complex' | 'critical';
+  readiness: number;
+  unresolvedSlots: QuestionSlotGoal[];
+  missingCoreSlots: QuestionSlotGoal[];
+}
+
+export interface QuestionMetadata {
+  slotGoals?: QuestionSlotGoal[];
+}
+
 export interface GroupedOption {
   category: string;
   items: string[];
@@ -170,6 +187,7 @@ export interface AssessmentQuestion {
   options?: string[] | GroupedOption[];
   tier?: number;
   is_red_flag?: boolean;
+  metadata?: QuestionMetadata;
 }
 
 export interface AssessmentData {

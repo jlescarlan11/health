@@ -1,0 +1,5 @@
+Option C: Introduce a shared LLMClient abstraction is the best consolidation direction.
+
+It preserves the current role separation—`gemini.ts` for assessment planning/extraction and `GeminiClient` for final recommendations—while centralizing the shared Gemini instantiation, retry, and prompt execution logic. This reduces duplication, keeps coupling low, and lets both flows leverage consistent rate-limiting, streaming, and fallback behavior without reshaping the UI or test suites. Runtime cost controls remain unified because the abstraction can uniformly enforce retries and backoff across all calls.
+
+Option A is rejected because migrating the planning and extraction calls into `GeminiClient` would blur the intentional multi-call workflow, increase dependencies on the API client inside UI flows/tests, and make it harder to isolate prompt-specific tests. Option B is rejected because moving final recommendation logic into `gemini.ts` would merge the deterministic safety overrides, caching, and triage heuristics with the prompt helpers, undoing the documented separation and complicating auditability of triage adjustments.

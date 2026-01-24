@@ -4,6 +4,7 @@ import { detectEmergency } from '../src/services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../src/services/mentalHealthDetector';
 import { calculateTriageScore } from '../src/utils/aiUtils';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
+import { geminiClient } from '../src/api/geminiClient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -16,13 +17,6 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
   useNavigation: jest.fn(),
   useFocusEffect: jest.fn(),
-}));
-
-jest.mock('../src/services/gemini', () => ({
-  generateAssessmentPlan: jest.fn(),
-  extractClinicalProfile: jest.fn(),
-  streamGeminiResponse: jest.fn(),
-  getGeminiResponse: jest.fn(),
 }));
 
 jest.mock('../src/services/emergencyDetector', () => {
@@ -40,6 +34,11 @@ jest.mock('../src/services/mentalHealthDetector', () => {
     detectMentalHealthCrisis: jest.fn(actual.detectMentalHealthCrisis),
   };
 });
+
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
+let streamSpy: jest.SpyInstance;
+let responseSpy: jest.SpyInstance;
 
 // Mock components to simplify screen rendering
 jest.mock('../src/components/common', () => {
@@ -85,6 +84,23 @@ describe('Safety Regression Suite', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({
+        questions: [{ id: 'red_flags', text: 'Do you have symptoms?' }],
+        intro: 'Intro',
+      });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({ triage_readiness_score: 0.5 } as any);
+    streamSpy = jest
+      .spyOn(geminiClient, 'streamGeminiResponse')
+      .mockImplementation(async function* () {
+        yield 'chunk';
+      });
+    responseSpy = jest
+      .spyOn(geminiClient, 'getGeminiResponse')
+      .mockResolvedValue('Test response');
     (useNavigation as jest.Mock).mockReturnValue({
       replace: mockNavigate,
       goBack: jest.fn(),
@@ -95,6 +111,10 @@ describe('Safety Regression Suite', () => {
         settings: settingsReducer,
       }),
     });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('Golden Set Detectors', () => {

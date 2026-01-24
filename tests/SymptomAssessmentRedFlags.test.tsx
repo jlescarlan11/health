@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
-import { generateAssessmentPlan, extractClinicalProfile } from '../src/services/gemini';
+import { geminiClient } from '../src/api/geminiClient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -14,7 +14,8 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini');
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),
@@ -119,6 +120,12 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({ questions: [], intro: '' });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({ triage_readiness_score: 0.5, summary: 'Test' } as any);
     jest.useFakeTimers();
     (useNavigation as jest.Mock).mockReturnValue({
       replace: mockNavigate,
@@ -136,6 +143,10 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test('renders checklist when question ID is red_flags', async () => {
     const redFlagQuestion = {
       id: 'red_flags',
@@ -143,7 +154,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
       text: 'Do you have any of the following: Chest pain, Difficulty breathing, or Dizziness?',
     };
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+    planSpy.mockResolvedValue({
       questions: [redFlagQuestion],
       intro: 'Intro',
     });
@@ -174,7 +185,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
   test('Confirm button is disabled until at least one selection is made', async () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+    planSpy.mockResolvedValue({
       questions: [redFlagQuestion],
       intro: 'Intro',
     });
@@ -206,11 +217,11 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
   test('Confirm button sends selected symptoms', async () => {
     const redFlagQuestion = { id: 'red_flags', type: 'multi-select', text: 'Signs: Fever, Cough' };
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+    planSpy.mockResolvedValue({
       questions: [redFlagQuestion],
       intro: 'Intro',
     });
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({
+    profileSpy.mockResolvedValue({
       summary: 'Summary',
       age: '30',
       duration: '1 day',
@@ -237,7 +248,7 @@ describe('SymptomAssessmentScreen Red Flags Checklist', () => {
 
     await waitFor(
       () => {
-        expect(extractClinicalProfile).toHaveBeenCalledWith(
+        expect(profileSpy).toHaveBeenCalledWith(
           expect.arrayContaining([
             expect.objectContaining({
               text: expect.stringContaining("I'm experiencing Fever, Cough"),

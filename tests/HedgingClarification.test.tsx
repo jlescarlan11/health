@@ -1,11 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
-import {
-  generateAssessmentPlan,
-  extractClinicalProfile,
-  streamGeminiResponse,
-} from '../src/services/gemini';
+import { geminiClient } from '../src/api/geminiClient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -18,8 +14,6 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini');
-
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),
 }));
@@ -27,6 +21,10 @@ jest.mock('../src/services/emergencyDetector', () => ({
 jest.mock('../src/services/mentalHealthDetector', () => ({
   detectMentalHealthCrisis: jest.fn(() => ({ isCrisis: false, matchedKeywords: [] })),
 }));
+
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
+let streamSpy: jest.SpyInstance;
 
 // Mock components
 jest.mock('../src/components/common', () => {
@@ -86,6 +84,17 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({ questions: [], intro: '' });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({ triage_readiness_score: 0.4 } as any);
+    streamSpy = jest
+      .spyOn(geminiClient, 'streamGeminiResponse')
+      .mockImplementation(async function* () {
+        yield 'I understand. ';
+      });
     jest.useFakeTimers();
     (useNavigation as jest.Mock).mockReturnValue({
       replace: mockNavigate,
@@ -103,9 +112,13 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test('Forces clarification with binary choices when hedging is detected in red flags', async () => {
     // 1. Initial Plan
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+    planSpy.mockResolvedValue({
       questions: [
         { id: 'red_flags', text: 'Do you have difficulty breathing?' },
         { id: 'duration', text: 'How long has it been?' },
@@ -114,14 +127,14 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
     });
 
     // Mock streamGeminiResponse for the bridge logic
-    (streamGeminiResponse as jest.Mock).mockImplementation(async function* () {
+    streamSpy.mockImplementation(async function* () {
       yield 'I understand. ';
       yield 'How long has it been?';
     });
 
     // 2. Mock hedging scenario
     // Turn 1: User says "Maybe" -> applyHedgingCorrections (in gemini.ts) sets denial_confidence: 'low'
-    (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
+    profileSpy.mockResolvedValueOnce({
       denial_confidence: 'low',
       red_flags_resolved: false,
       ambiguity_detected: true,
@@ -132,7 +145,7 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
     });
 
     // Turn 2: User says "Yes, I am sure" (definitive)
-    (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
+    profileSpy.mockResolvedValueOnce({
       denial_confidence: 'high',
       red_flags_resolved: true,
       ambiguity_detected: false,
@@ -169,7 +182,7 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
 
     // 3. Verify it unblocks and moves to the next question
     // Call 2 happens during the "Proceed" turn
-    await waitFor(() => expect(extractClinicalProfile).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(profileSpy).toHaveBeenCalledTimes(2));
     
     // Verify the next planned question is now displayed
     await waitFor(() => expect(screen.getByText(/How long has it been?/)).toBeTruthy());

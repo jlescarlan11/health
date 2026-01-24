@@ -9,30 +9,10 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { detectEmergency } from '../src/services/emergencyDetector';
 import { geminiClient } from '../src/api/geminiClient';
 
-// Mock services
-jest.mock('../src/services/gemini', () => ({
-  generateAssessmentPlan: jest.fn(() => Promise.resolve({
-    questions: [{ id: 'q1', text: 'How are you?', type: 'text' }],
-    intro: 'Hi'
-  })),
-  extractClinicalProfile: jest.fn(() => Promise.resolve({
-    triage_readiness_score: 0.5,
-    summary: 'Test summary'
-  })),
-  getGeminiResponse: jest.fn(() => Promise.resolve('Test response')),
-  streamGeminiResponse: jest.fn(() => ({
-    [Symbol.asyncIterator]: () => {
-      let done = false;
-      return {
-        next: () => {
-          if (done) return Promise.resolve({ value: undefined, done: true });
-          done = true;
-          return Promise.resolve({ value: 'chunk', done: false });
-        }
-      };
-    }
-  })),
-}));
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
+let responseSpy: jest.SpyInstance;
+let streamSpy: jest.SpyInstance;
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(),
@@ -72,8 +52,32 @@ const renderScreen = (initialParams = { initialSymptom: 'Headache' }) => {
 describe('Temporal Emergency Verification', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({
+        questions: [{ id: 'q1', text: 'How are you?', type: 'text' }],
+        intro: 'Hi',
+      });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({
+        triage_readiness_score: 0.5,
+        summary: 'Test summary',
+      } as any);
+    responseSpy = jest
+      .spyOn(geminiClient, 'getGeminiResponse')
+      .mockResolvedValue('Test response');
+    streamSpy = jest
+      .spyOn(geminiClient, 'streamGeminiResponse')
+      .mockImplementation(async function* () {
+        yield 'chunk';
+      });
     await geminiClient.clearCache();
     (detectEmergency as jest.Mock).mockReturnValue({ isEmergency: false });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('renders all three emergency verification buttons with correct labels', async () => {
