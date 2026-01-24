@@ -22,7 +22,7 @@ The project is built as a **React Native** application using **Expo SDK 54**.
 - **Frontend:** React Native 0.81.x, TypeScript, Expo
 - **State Management:** Redux Toolkit (slices located in `src/store/`)
 - **Navigation:** React Navigation (via Expo Router or standard React Navigation 6.x patterns)
-- **AI Integration**: Google Gemini API (`src/services/gemini.ts`)
+- **AI Integration**: Google Gemini API (`src/api/geminiClient.ts`)
 - **Data Persistence**: Expo SQLite (local), Redux Persist
 - **Backend Services:** Firebase Auth, Custom Node.js/Express backend (`backend/` directory), PostgreSQL (Aiven)
 
@@ -98,7 +98,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 
 - `App.tsx`: Application entry point.
 - `src/store/store.ts`: Redux store definition.
-- `src/services/gemini.ts`: Interface for the AI Assistant.
+- `src/api/geminiClient.ts`: Interface for the AI Assistant.
 - `src/features/navigation/NavigationAssistant.tsx`: Main UI for the AI chat.
 - `project-brief.md`: Detailed product requirements and context.
 
@@ -197,9 +197,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 - **Symptom Assessment Progress & Logic Fix (Jan 16, 2026):**
   - **Progress Tracking:** Fixed the "progress reset" bug by changing the progress calculation to track the total number of unique questions answered (`Object.keys(answers).length`) rather than the index within the current question batch.
   - **Global Question State:** Refactored `SymptomAssessmentScreen` to maintain a global, cumulative list of questions instead of replacing state with each new AI batch. This ensures that the report generation at the end of the assessment has access to the text of all questions asked, not just the last batch.
-  - **Parsing Resilience:** Updated `src/services/gemini.ts` to gracefully handle empty question arrays from the AI (indicating "no more questions") instead of throwing a parsing error.
+  - **Parsing Resilience:** Updated `src/api/geminiClient.ts` to gracefully handle empty question arrays from the AI (indicating "no more questions") instead of throwing a parsing error.
   - **Test Coverage:** Updated `tests/SymptomAssessmentTurns.test.tsx` to accurately mock the 5-turn assessment flow and verified that all frontend tests pass.
-  - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/services/gemini.ts`, `tests/SymptomAssessmentTurns.test.tsx`.
+  - **Files Modified:** `src/screens/SymptomAssessmentScreen.tsx`, `src/api/geminiClient.ts`, `tests/SymptomAssessmentTurns.test.tsx`.
 
 * **Symptom Assessment UI Improvements (Jan 18, 2026):**
   - **Context-Aware Answer Formatting:** Resolved the issue where non-symptom answers (like Age or Duration) were incorrectly prefixed with "I'm experiencing...". Implemented `formatSelectionAnswer` to apply appropriate templates based on the question type (e.g., "I am [Age] years old").
@@ -210,9 +210,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 
 - **Gemini Streaming Fix (Jan 19, 2026):**
   - **Streaming Compatibility:** Resolved a runtime error ("Cannot read property 'pipeThrough' of undefined") caused by `generateContentStream` usage in React Native (Hermes).
-  - **Implementation:** Refactored `streamGeminiResponse` in `src/services/gemini.ts` to bypass the incompatible streaming method. It now uses `generateContentWithRetry` (unary) and simulates streaming by yielding chunks of the text response. This maintains the `AsyncGenerator` interface and preserves the typing effect in the UI without crashing the app.
+  - **Implementation:** Refactored `streamGeminiResponse` in `src/api/geminiClient.ts` to bypass the incompatible streaming method. It now uses `generateContentWithRetry` (unary) and simulates streaming by yielding chunks of the text response. This maintains the `AsyncGenerator` interface and preserves the typing effect in the UI without crashing the app.
   - **Verification:** Validated the fix with `src/services/__tests__/gemini.test.ts` and confirmed all frontend tests pass.
-  - **Files Modified:** `src/services/gemini.ts`.
+  - **Files Modified:** `src/api/geminiClient.ts`.
 
 - **Comprehensive Dead Code Cleanup (Jan 17, 2026):**
   - **File Deletion:** Removed 8 dead files including legacy Auth components (`OTPInput`, `PhoneInput`), unused shared components (`Alert`, `Input`, `CustomHeader`), legacy storage services (`storageService`, `storageLoader`), and the obsolete `slotExtractor.ts`.

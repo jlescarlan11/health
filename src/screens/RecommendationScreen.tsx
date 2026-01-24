@@ -119,6 +119,20 @@ const appendEllipsisIfNeeded = (text: string, wasTruncated: boolean) => {
   return withoutPunctuation ? `${withoutPunctuation}...` : '...';
 };
 
+const normalizeCacheSegment = (value: string) =>
+  collapseWhitespace(value).toLowerCase().trim();
+
+const buildStableCaseKey = (
+  initialSymptom?: string,
+  profileSummary?: string,
+  resolvedTag?: string,
+) => {
+  return [initialSymptom, profileSummary, resolvedTag]
+    .map((segment) => (segment ? normalizeCacheSegment(segment) : ''))
+    .filter(Boolean)
+    .join('|');
+};
+
 // Create a short, human-readable view of the initial report for safety UI.
 const summarizeInitialSymptom = (symptom?: string) => {
   const normalized = collapseWhitespace(symptom ?? '');
@@ -336,7 +350,19 @@ const RecommendationScreen = () => {
       // **Safety Context for local scan (User-only content)**
       const safetyContext = `Initial Symptom: ${symptomsRef.current}. Answers: ${userAnswersOnly}.`;
 
-      const response = await geminiClient.assessSymptoms(triageContext, [], safetyContext, profile);
+      const caseCacheKey = buildStableCaseKey(
+        symptomsRef.current,
+        profileSummary,
+        resolvedTag,
+      );
+
+      const response = await geminiClient.assessSymptoms(
+        triageContext,
+        [],
+        safetyContext,
+        profile,
+        caseCacheKey,
+      );
       setRecommendation(response);
 
       // Save to Redux for persistence and offline access

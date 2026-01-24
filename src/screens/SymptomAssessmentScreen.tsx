@@ -27,12 +27,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
-import {
-  generateAssessmentPlan,
-  extractClinicalProfile,
-  streamGeminiResponse,
-  getGeminiResponse,
-} from '../services/gemini';
+import { geminiClient } from '../api/geminiClient';
 import { detectEmergency } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import { setHighRisk, updateAssessmentState, clearAssessmentState } from '../store/navigationSlice';
@@ -40,8 +35,6 @@ import { TriageEngine } from '../services/triageEngine';
 import { TriageArbiter, TriageSignal } from '../services/triageArbiter';
 import { TriageFlow, AssessmentQuestion, AssessmentProfile, GroupedOption } from '../types/triage';
 import { extractClinicalSlots } from '../utils/clinicalUtils';
-import { BRIDGE_PROMPT } from '../constants/prompts';
-
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
 
 import StandardHeader from '../components/common/StandardHeader';
@@ -141,6 +134,14 @@ const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[
       }
       return joined;
   }
+};
+
+const buildBridgeText = (lastUserText: string, nextQuestionText: string) => {
+  const trimmedLastText = lastUserText?.trim();
+  const acknowledgement = trimmedLastText
+    ? `Thanks for sharing that ${trimmedLastText}.`
+    : 'Thanks for sharing that with me.';
+  return `${acknowledgement} ${nextQuestionText}`;
 };
 
 const SymptomAssessmentScreen = () => {
@@ -428,7 +429,9 @@ const SymptomAssessmentScreen = () => {
       const netInfo = await NetInfo.fetch();
       if (!netInfo.isConnected) throw new Error('NETWORK_ERROR');
 
-      const { questions: plan, intro } = await generateAssessmentPlan(initialSymptom || '');
+      const { questions: plan, intro } = await geminiClient.generateAssessmentPlan(
+        initialSymptom || '',
+      );
       setFullPlan(plan);
 
       // --- NEW: Dynamic Question Pruning ---
@@ -582,7 +585,7 @@ const SymptomAssessmentScreen = () => {
             role: m.sender as 'user' | 'assistant',
             text: m.text,
           }));
-          const profile = await extractClinicalProfile(historyItems);
+          const profile = await geminiClient.extractClinicalProfile(historyItems);
 
           // --- DYNAMIC PLAN PRUNING ---
           // Filter out future questions if their slots (Age, Duration, Severity, Progression)
@@ -774,7 +777,7 @@ const SymptomAssessmentScreen = () => {
 
             setIsTyping(true);
             try {
-              const generatedText = await getGeminiResponse(frictionContext);
+              const generatedText = await geminiClient.getGeminiResponse(frictionContext);
               const frictionQuestion: AssessmentQuestion = {
                 id: `friction-${Date.now()}`,
                 text: generatedText.trim(),
@@ -858,9 +861,50 @@ const SymptomAssessmentScreen = () => {
             const resolvedTag = isRecentResolvedRef.current ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]` : '';
             console.log(`[DEBUG_EXPANSION] resolvedTag: "${resolvedTag}", Ref: ${isRecentResolvedRef.current}, Keyword: ${resolvedKeywordRef.current}`);
 
+            const slotCandidates: { id: keyof AssessmentProfile; label: string }[] = [
+              { id: 'age', label: 'Age' },
+              { id: 'duration', label: 'Duration' },
+              { id: 'severity', label: 'Severity' },
+              { id: 'progression', label: 'Progression' },
+              { id: 'red_flag_denials', label: 'Red flag denials' },
+            ];
+            const unresolvedSlots = slotCandidates
+              .filter(
+                (slot) =>
+                  !profile[slot.id] &&
+                  !newAnswers[slot.id],
+              )
+              .map((slot) => slot.label);
+            const unresolvedSlotsText = unresolvedSlots.length > 0 ? unresolvedSlots.join(', ') : 'none identified';
+
+            const recentUserResponses = nextHistory
+              .filter((msg) => msg.sender === 'user')
+              .slice(-2)
+              .map((msg) => msg.text.trim())
+              .filter(Boolean);
+            const recentResponsesText = recentUserResponses.length > 0 ? recentUserResponses.join(' | ') : 'none yet';
+
+            const flagDetails: string[] = [];
+            if (profile.ambiguity_detected) flagDetails.push('Ambiguity detected');
+            if (profile.clinical_friction_detected) {
+              flagDetails.push(
+                profile.clinical_friction_details
+                  ? `Clinical friction (${profile.clinical_friction_details})`
+                  : 'Clinical friction detected',
+              );
+            }
+            if (profile.red_flags_resolved === false) flagDetails.push('Red flags unresolved');
+            if (profile.is_recent_resolved) flagDetails.push('Recent issue marked as resolved');
+            const flagsText = flagDetails.length > 0 ? flagDetails.join('; ') : 'none flagged';
+
+            const symptomContext = trimmedInitialSymptom || 'the symptoms you reported earlier';
+
             const followUpPrompt = `
               ${resolvedTag} The assessment for "${initialSymptom}" is incomplete.
-              History: ${historyItems.map((h) => h.text).join('. ')}.
+              Initial symptom: ${symptomContext}.
+              Unresolved slots: ${unresolvedSlotsText}.
+              Recent user responses: ${recentResponsesText}.
+              Flags: ${flagsText}.
 
               Task: Generate 3 specific follow-up questions to resolve clinical ambiguity and safety concerns.
 
@@ -882,7 +926,7 @@ const SymptomAssessmentScreen = () => {
               // setStreamingText(''); // Don't show raw JSON stream
               // setIsTyping(true) is already set, so the user sees the typing indicator
 
-              const stream = streamGeminiResponse(followUpPrompt);
+              const stream = geminiClient.streamGeminiResponse(followUpPrompt);
               for await (const chunk of stream) {
                 accumulatedResponse += chunk;
                 // setStreamingText((prev) => (prev || '') + chunk); // Removed to prevent JSON leak
@@ -971,78 +1015,29 @@ const SymptomAssessmentScreen = () => {
           if (!effectiveIsAtEnd) {
             const nextQ = activeQuestions[nextIdx];
             const readinessScore = profile.triage_readiness_score || 0;
+            const lastUserText =
+              historyItems
+                .slice()
+                .reverse()
+                .find((item) => item.role === 'user')?.text || '';
 
-            // --- STREAMING BRIDGE FEATURE ---
-            // If readiness exceeds 0.4, we trigger dynamic bridging for a more natural transition
             if (readinessScore > 0.4) {
               console.log(
-                `[Assessment] Readiness > 0.4 (${readinessScore}). Triggering bridging logic.`,
+                `[Assessment] Readiness > 0.4 (${readinessScore}). Using local bridge text.`,
               );
               setIsTyping(true);
-
-              let accumulatedBridge = '';
-              let isCancelled = false;
-
-              const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => {
-                  isCancelled = true;
-                  reject(new Error('BRIDGE_TIMEOUT'));
-                }, 2000),
-              );
-
-              const bridgePromise = (async () => {
-                const prompt = BRIDGE_PROMPT.replace(
-                  '{{conversationHistory}}',
-                  historyItems.map((h) => `${h.role.toUpperCase()}: ${h.text}`).join('\n'),
-                ).replace('{{nextQuestion}}', nextQ.text);
-
-                setStreamingText('');
-                const stream = streamGeminiResponse(prompt);
-                for await (const chunk of stream) {
-                  if (isCancelled) break;
-                  accumulatedBridge += chunk;
-                  setStreamingText((prev) => (prev || '') + chunk);
-                }
-                return accumulatedBridge;
-              })();
-
-              try {
-                const finalBridge = (await Promise.race([bridgePromise, timeoutPromise])) as string;
-
-                // Safety Check: Abort if emergency verification started during bridge
-                if (isVerifyingEmergencyRef.current) {
-                  console.warn(
-                    '[Assessment] Emergency verification triggered during bridging. Aborting bridge update.',
-                  );
-                  return;
-                }
-
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `ai-${nextIdx}-bridged`,
-                    text: clarificationHeader + finalBridge,
-                    sender: 'assistant',
-                  },
-                ]);
-              } catch (err) {
-                console.warn(
-                  `[Assessment] Bridging failed or timed out: ${err}. Falling back to static question.`,
-                );
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: `ai-${nextIdx}`,
-                    text: clarificationHeader + nextQ.text,
-                    sender: 'assistant',
-                  },
-                ]);
-              } finally {
-                setStreamingText(null);
-                setCurrentQuestionIndex(nextIdx);
-                setIsTyping(false);
-                setProcessing(false);
-              }
+              const bridgeText = buildBridgeText(lastUserText, nextQ.text);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: `ai-${nextIdx}-bridged`,
+                  text: clarificationHeader + bridgeText,
+                  sender: 'assistant',
+                },
+              ]);
+              setCurrentQuestionIndex(nextIdx);
+              setIsTyping(false);
+              setProcessing(false);
               return;
             }
 
@@ -1188,7 +1183,7 @@ const SymptomAssessmentScreen = () => {
     try {
       const profile = 
         preExtractedProfile ||
-        (await extractClinicalProfile(
+        (await geminiClient.extractClinicalProfile(
           currentHistory.map((m) => ({
             role: m.sender,
             text: m.text,

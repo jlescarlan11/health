@@ -3,7 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { AssessmentProfile, AssessmentResponse } from '../../types';
 import { detectEmergency, isNegated } from '../../services/emergencyDetector';
 
-// Mocks
+const expoConstantsMock = {
+  expoConfig: { extra: { geminiApiKey: 'test-key', forceEmergencyLocalFallback: false } },
+};
+
+jest.mock('expo-constants', () => expoConstantsMock);
 jest.mock('@google/generative-ai');
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn(() => Promise.resolve(null)),
@@ -11,9 +15,6 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn(() => Promise.resolve()),
   getAllKeys: jest.fn(() => Promise.resolve([])),
   multiRemove: jest.fn(() => Promise.resolve()),
-}));
-jest.mock('expo-constants', () => ({
-  expoConfig: { extra: { geminiApiKey: 'test-key' } },
 }));
 
 jest.mock('../../services/emergencyDetector', () => ({
@@ -42,6 +43,7 @@ describe('GeminiClient assessSymptoms triage adjustments', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    expoConstantsMock.expoConfig.extra.forceEmergencyLocalFallback = false;
 
     mockSendMessage = jest.fn();
 
@@ -282,5 +284,49 @@ While your symptoms have eased, the type of event you described still needs prom
     );
 
     expect(result.recommended_level).toBe('health_center');
+  });
+
+  test('emergency local-only toggle short-circuits to fallback without Gemini', async () => {
+    expoConstantsMock.expoConfig.extra.forceEmergencyLocalFallback = true;
+    (detectEmergency as jest.Mock).mockReturnValue({
+      isEmergency: true,
+      score: 9,
+      matchedKeywords: ['severe chest pain'],
+      affectedSystems: ['Cardiac'],
+      medical_justification: 'Cardiac keywords detected',
+    });
+
+    const result = await client.assessSymptoms('Severe chest pain');
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
+    expect(result.recommended_level).toBe('emergency');
+    expect(result.medical_justification).toBe('Cardiac keywords detected');
+    expect(result.critical_warnings).toContain('Do not delay care');
+  });
+
+  test('fallback enrichment still happens when toggle is disabled', async () => {
+    expoConstantsMock.expoConfig.extra.forceEmergencyLocalFallback = false;
+    (detectEmergency as jest.Mock).mockReturnValue({
+      isEmergency: true,
+      score: 9,
+      matchedKeywords: ['severe chest pain'],
+      affectedSystems: ['Cardiac'],
+      medical_justification: 'Cardiac keywords detected',
+    });
+
+    mockAIResponse({
+      recommended_level: 'self_care',
+      red_flags: [],
+      user_advice: 'Gemini response',
+      follow_up_questions: [],
+      triage_readiness_score: 0.95,
+      ambiguity_detected: false,
+    });
+
+    const result = await client.assessSymptoms('Severe chest pain');
+
+    expect(mockSendMessage).toHaveBeenCalledTimes(1);
+    expect(result.recommended_level).toBe('emergency');
+    expect(result.red_flags).toContain('severe chest pain');
   });
 });

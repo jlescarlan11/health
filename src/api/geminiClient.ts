@@ -1,12 +1,33 @@
-import { GoogleGenerativeAI, GenerativeModel, Content } from '@google/generative-ai';
+import {
+  GoogleGenerativeAI,
+  GenerativeModel,
+  Content,
+  GenerateContentRequest,
+} from '@google/generative-ai';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SYMPTOM_ASSESSMENT_SYSTEM_PROMPT, VALID_SERVICES } from '../constants/prompts';
+import {
+  SYMPTOM_ASSESSMENT_SYSTEM_PROMPT,
+  VALID_SERVICES,
+  GENERATE_ASSESSMENT_QUESTIONS_PROMPT,
+  FINAL_SLOT_EXTRACTION_PROMPT,
+  REFINE_QUESTION_PROMPT,
+} from '../constants/prompts';
+import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
-import { FacilityService, AssessmentResponse } from '../types';
+import { applyHedgingCorrections } from '../utils/hedgingDetector';
+import {
+  calculateTriageScore,
+  prioritizeQuestions,
+  parseAndValidateLLMResponse,
+  normalizeSlot,
+} from '../utils/aiUtils';
+import { isMaternalContext, isTraumaContext } from '../utils/clinicalUtils';
+import { AssessmentResponse } from '../types';
 import {
   AssessmentProfile,
+  AssessmentQuestion,
   TriageAdjustmentRule,
   TriageLogic,
   TriageCareLevel,
@@ -25,6 +46,152 @@ const STORAGE_KEY_DAILY_DATE = 'gemini_daily_usage_date';
 const STORAGE_KEY_CACHE_PREFIX = 'gemini_cache_';
 const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
 const STORAGE_KEY_RPM_TIMESTAMPS = 'gemini_rpm_timestamps';
+
+const slotHistoryWindowSetting = Number(Constants.expoConfig?.extra?.slotExtractionHistoryWindow);
+const DEFAULT_USER_HISTORY_WINDOW =
+  Number.isFinite(slotHistoryWindowSetting) && slotHistoryWindowSetting > 0
+    ? slotHistoryWindowSetting
+    : 8;
+
+const PROFILE_CACHE_TTL_MS = 60 * 60 * 1000;
+const PROFILE_CACHE_PREFIX = 'clinical_profile_cache_';
+const PROFILE_CACHE_VERSION = 1;
+
+const PLAN_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const PLAN_CACHE_PREFIX = 'assessment_plan_cache_';
+const PLAN_CACHE_VERSION = 1;
+
+const normalizeCacheInput = (value: string): string =>
+  value.replace(/\s+/g, ' ').trim().toLowerCase();
+
+const getAssessmentPlanCacheKey = (symptom: string): string =>
+  `${PLAN_CACHE_PREFIX}${normalizeCacheInput(symptom || '')}`;
+
+const simpleHash = (value: string): string => {
+  let hash = 0;
+  if (!value || value.length === 0) {
+    return '0';
+  }
+  for (let i = 0; i < value.length; i++) {
+    const char = value.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
+};
+
+const getHistoryHash = (text: string): string => simpleHash(normalizeCacheInput(text || ''));
+const getProfileCacheKey = (historyHash: string): string =>
+  `${PROFILE_CACHE_PREFIX}${historyHash}|v${PROFILE_CACHE_VERSION}`;
+
+interface ClinicalProfileCacheEntry {
+  data: AssessmentProfile;
+  timestamp: number;
+  version: number;
+}
+
+interface AssessmentPlanCacheEntry {
+  data: { questions: AssessmentQuestion[]; intro?: string };
+  timestamp: number;
+  version: number;
+}
+
+type SafetyFallbackContext = 'maternal' | 'trauma' | 'general';
+
+const MATERNAL_SAFETY_GOLDEN_SET: AssessmentQuestion[] = [
+  {
+    id: 'maternal_gestation',
+    text: 'How many weeks pregnant are you or how long has it been since delivery?',
+  },
+  {
+    id: 'maternal_bleeding',
+    text: 'Are you experiencing vaginal bleeding? If so, how heavy is it and has it changed recently?',
+  },
+  {
+    id: 'maternal_fetal',
+    text: 'If you are pregnant, have you noticed any change in fetal movement in the past day?',
+  },
+  {
+    id: 'maternal_pain',
+    text: 'Where is the pain located, and how would you describe its severity?',
+  },
+  {
+    id: 'maternal_history',
+    text: 'Do you have a history of pregnancy complications like preeclampsia, preterm labor, or placenta issues?',
+  },
+  DEFAULT_RED_FLAG_QUESTION,
+];
+
+const TRAUMA_SAFETY_GOLDEN_SET: AssessmentQuestion[] = [
+  {
+    id: 'trauma_mobility',
+    text: 'Can you bear weight or move the injured limb without it giving way?',
+  },
+  {
+    id: 'trauma_bleeding',
+    text: 'Is there active bleeding, pooling blood, or an exposed bone near the wound?',
+  },
+  {
+    id: 'trauma_pain',
+    text: 'On a scale of 1 to 10, how intense is the pain and does it feel sharp, dull, or throbbing?',
+  },
+  {
+    id: 'trauma_mechanism',
+    text: 'What happened to cause the injury (e.g., fall, hit, blow, accident)?',
+  },
+  {
+    id: 'trauma_timing',
+    text: 'When did the injury occur or when did you first notice symptoms?',
+  },
+  DEFAULT_RED_FLAG_QUESTION,
+];
+
+const GENERAL_SAFETY_GOLDEN_SET: AssessmentQuestion[] = [
+  {
+    id: 'general_duration',
+    text: 'How long have you been dealing with this chief complaint?',
+  },
+  {
+    id: 'general_severity',
+    text: 'On a scale of 1 to 10, how severe would you rate the symptoms right now?',
+  },
+  {
+    id: 'general_age',
+    text: 'What is your current age?',
+  },
+  {
+    id: 'general_history',
+    text: 'Do you have any significant medical history, chronic conditions, or recent hospital visits?',
+  },
+  {
+    id: 'general_medications',
+    text: 'Are you currently taking any prescribed or over-the-counter medications?',
+  },
+  DEFAULT_RED_FLAG_QUESTION,
+];
+
+const SAFETY_GOLDEN_SET_BY_CONTEXT: Record<SafetyFallbackContext, AssessmentQuestion[]> = {
+  maternal: MATERNAL_SAFETY_GOLDEN_SET,
+  trauma: TRAUMA_SAFETY_GOLDEN_SET,
+  general: GENERAL_SAFETY_GOLDEN_SET,
+};
+
+const detectSafetyFallbackContext = (text: string): SafetyFallbackContext => {
+  const normalized = text?.trim() || '';
+
+  if (isMaternalContext(normalized)) return 'maternal';
+  if (isTraumaContext(normalized)) return 'trauma';
+  return 'general';
+};
+
+class NonRetryableError extends Error {
+  public readonly isRetryable = false;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'NonRetryableError';
+  }
+}
 
 // Canonical triage adjustment metadata for auditing and analytics.
 const TRIAGE_ADJUSTMENT_RULES: Record<
@@ -105,6 +272,8 @@ export class GeminiClient {
   private model: GenerativeModel;
   private requestTimestamps: number[]; // For RPM tracking
   private cacheQueue: Promise<void>; // For non-blocking cache operations
+  private profileCacheQueue: Promise<void>;
+  private inFlightProfileExtractions: Map<string, Promise<AssessmentProfile>>;
 
   constructor() {
     if (!API_KEY) {
@@ -117,13 +286,27 @@ export class GeminiClient {
     });
     this.requestTimestamps = [];
     this.cacheQueue = Promise.resolve();
+    this.profileCacheQueue = Promise.resolve();
+    this.inFlightProfileExtractions = new Map<string, Promise<AssessmentProfile>>();
   }
 
   /**
-   * Generates a cache key based on symptoms and history using hash-based approach.
+   * Normalizes strings used for cache keys to avoid volatility from whitespace or casing.
    */
-  private getCacheKey(symptoms: string, history: ChatMessage[] = []): string {
-    const symptomsKey = symptoms.toLowerCase().trim();
+  private normalizeCacheKeyInput(value: string): string {
+    return value.replace(/\s+/g, ' ').toLowerCase().trim();
+  }
+
+  /**
+   * Generates a cache key based on symptoms, history, and an optional override input.
+   */
+  private getCacheKey(
+    symptoms: string,
+    history: ChatMessage[] = [],
+    cacheKeyInput?: string,
+  ): string {
+    const overrideSource = cacheKeyInput?.trim() ? cacheKeyInput : symptoms;
+    const symptomsKey = this.normalizeCacheKeyInput(overrideSource);
 
     if (history.length === 0) {
       return symptomsKey;
@@ -190,7 +373,7 @@ export class GeminiClient {
       }
 
       if (count >= RATE_LIMIT_DAILY) {
-        throw new Error('Daily AI request limit reached. Please try again tomorrow.');
+        throw new NonRetryableError('Daily AI request limit reached. Please try again tomorrow.');
       }
 
       // Increment and save
@@ -260,13 +443,13 @@ export class GeminiClient {
       };
     } catch (error) {
       console.error('JSON Parse Error:', error);
-      throw new Error('Invalid response format from AI.');
+      throw new NonRetryableError('Invalid response format from AI.');
     }
   }
 
   /**
-   * Periodically clears all cached assessments to maintain medical relevance.
-   * Runs if more than 24 hours have passed since the last bulk cleanup.
+   * Periodically clears cache entries that are expired or no longer match the current version.
+   * Runs if more than 24 hours have passed since the last cleanup trigger.
    */
   private async performCacheCleanup(): Promise<void> {
     try {
@@ -279,10 +462,34 @@ export class GeminiClient {
         const cacheKeys = (allKeys || []).filter((key) => key.startsWith(STORAGE_KEY_CACHE_PREFIX));
 
         if (cacheKeys.length > 0) {
-          await AsyncStorage.multiRemove(cacheKeys);
-          console.log(
-            `[GeminiClient] Automatically cleared ${cacheKeys.length} stale cache entries.`,
-          );
+          const keyPairs = await AsyncStorage.multiGet(cacheKeys);
+          const keysToRemove: string[] = [];
+
+          keyPairs.forEach(([key, cachedJson]) => {
+            if (!cachedJson) {
+              keysToRemove.push(key);
+              return;
+            }
+
+            try {
+              const cached = JSON.parse(cachedJson) as CacheEntry;
+              const age = now - (typeof cached.timestamp === 'number' ? cached.timestamp : 0);
+
+              if (cached.version !== CACHE_VERSION || age >= CACHE_TTL_MS) {
+                keysToRemove.push(key);
+              }
+            } catch (parseError) {
+              keysToRemove.push(key);
+              console.warn('[GeminiClient] Failed to parse cache entry during cleanup:', parseError);
+            }
+          });
+
+          if (keysToRemove.length > 0) {
+            await AsyncStorage.multiRemove(keysToRemove);
+            console.log(
+              `[GeminiClient] Removed ${keysToRemove.length} expired or version-mismatched cache entries.`,
+            );
+          }
         }
 
         await AsyncStorage.setItem(STORAGE_KEY_LAST_CLEANUP, now.toString());
@@ -312,12 +519,315 @@ export class GeminiClient {
   }
 
   /**
+   * Shared helper for one-off content generation requests.
+   * Applies the centralized rate limit + retry policy.
+   */
+  private async generateContentWithRetry(
+    params:
+      | string
+      | (string | { inlineData: { data: string; mimeType: string } })[]
+      | GenerateContentRequest,
+    generationConfig?: { responseMimeType?: string },
+  ): Promise<string> {
+    let attempt = 0;
+
+    while (attempt < MAX_RETRIES) {
+      try {
+        await this.checkRateLimits();
+
+        const model = this.genAI.getGenerativeModel({
+          model: MODEL_NAME,
+          ...(generationConfig ? { generationConfig } : {}),
+        });
+
+        const result = await model.generateContent(params);
+        const response = await result.response;
+        return response.text();
+      } catch (error) {
+        const errMessage = (error as Error).message || 'Unknown error';
+
+        if (!this.isTransientFailure(error)) {
+          console.error('[GeminiClient] Non-retryable generation error:', errMessage);
+          throw error;
+        }
+
+        attempt += 1;
+        console.warn(`[GeminiClient] Generation attempt ${attempt} failed:`, errMessage);
+
+        if (attempt >= MAX_RETRIES) {
+          if (errMessage.includes('503')) {
+            throw new Error('The AI service is currently overloaded. Please try again in a moment.');
+          }
+          throw error;
+        }
+
+        const delay = this.getRetryDelay(attempt);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    throw new Error('Failed to connect to AI service after multiple attempts.');
+  }
+
+  /**
    * Calculates retry delay with jitter to prevent thundering herd.
    */
   private getRetryDelay(attempt: number): number {
     const baseDelay = Math.pow(2, attempt) * 1000;
     const jitter = Math.random() * 1000; // 0-1000ms random jitter
     return baseDelay + jitter;
+  }
+
+  /**
+   * Produces the initial assessment plan (Call #1) with caching.
+   */
+  public async generateAssessmentPlan(
+    initialSymptom: string,
+  ): Promise<{ questions: AssessmentQuestion[]; intro?: string }> {
+    const cacheKey = getAssessmentPlanCacheKey(initialSymptom);
+
+    try {
+      const cachedJson = await AsyncStorage.getItem(cacheKey);
+      if (cachedJson) {
+        const cached = JSON.parse(cachedJson) as AssessmentPlanCacheEntry;
+        if (
+          cached.version === PLAN_CACHE_VERSION &&
+          Date.now() - cached.timestamp < PLAN_CACHE_TTL_MS
+        ) {
+          console.log('[GeminiClient] Returning cached assessment plan');
+          return cached.data;
+        }
+
+        await AsyncStorage.removeItem(cacheKey);
+      }
+    } catch (cacheReadError) {
+      console.warn('[GeminiClient] Assessment plan cache read failed:', cacheReadError);
+    }
+
+    try {
+      const prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace(
+        '{{initialSymptom}}',
+        initialSymptom,
+      );
+      const responseText = await this.generateContentWithRetry(prompt);
+
+      const parsed = parseAndValidateLLMResponse<{ questions: AssessmentQuestion[]; intro?: string }>(
+        responseText,
+      );
+      const questions = parsed.questions || [];
+
+      let prioritizedQuestions: AssessmentQuestion[];
+      try {
+        prioritizedQuestions = prioritizeQuestions(questions);
+      } catch (prioritizationError) {
+        console.error('[GeminiClient] Prioritization failed:', prioritizationError);
+        console.log('[GeminiClient] Original Questions Data:', JSON.stringify(questions));
+        console.log('[GeminiClient] Fallback: Injecting default red flags into original list.');
+
+        const safeQuestions = Array.isArray(questions)
+          ? questions.filter((q) => q && q.id !== 'red_flags')
+          : [];
+        const insertIndex = safeQuestions.length > 0 ? 1 : 0;
+        safeQuestions.splice(insertIndex, 0, DEFAULT_RED_FLAG_QUESTION);
+
+        prioritizedQuestions = safeQuestions;
+      }
+
+      const plan = {
+        questions: prioritizedQuestions,
+        intro: parsed.intro,
+      };
+
+      AsyncStorage.setItem(
+        cacheKey,
+        JSON.stringify({
+          data: plan,
+          timestamp: Date.now(),
+          version: PLAN_CACHE_VERSION,
+        } as AssessmentPlanCacheEntry),
+      ).catch((cacheWriteError) =>
+        console.warn('[GeminiClient] Assessment plan cache write failed:', cacheWriteError),
+      );
+
+      return plan;
+    } catch (error) {
+      console.error('[GeminiClient] Failed to generate assessment plan:', error);
+      const fallbackContext = detectSafetyFallbackContext(initialSymptom);
+      return {
+        questions: SAFETY_GOLDEN_SET_BY_CONTEXT[fallbackContext],
+      };
+    }
+  }
+
+  /**
+   * Extracts the final clinical profile (Call #2) with caching and de-duplication.
+   */
+  public async extractClinicalProfile(
+    history: { role: 'assistant' | 'user'; text: string }[],
+    options?: {
+      userHistoryWindow?: number;
+    },
+  ): Promise<AssessmentProfile> {
+    const requestedWindow = options?.userHistoryWindow ?? DEFAULT_USER_HISTORY_WINDOW;
+    const historyWindow = Math.max(0, Math.floor(requestedWindow));
+
+    const userMessages = history.filter((msg) => msg.role === 'user');
+    const limitedMessages =
+      historyWindow > 0 ? userMessages.slice(-historyWindow) : userMessages;
+
+    const conversationText = limitedMessages.map((msg) => `USER: ${msg.text}`).join('\n');
+    const historyHash = getHistoryHash(conversationText);
+    const versionedHistoryKey = `${historyHash}|v${PROFILE_CACHE_VERSION}`;
+    const cacheKey = getProfileCacheKey(historyHash);
+
+    try {
+      const cachedJson = await AsyncStorage.getItem(cacheKey);
+      if (cachedJson) {
+        const cached = JSON.parse(cachedJson) as ClinicalProfileCacheEntry;
+        if (
+          cached.version === PROFILE_CACHE_VERSION &&
+          Date.now() - cached.timestamp < PROFILE_CACHE_TTL_MS
+        ) {
+          console.log('[GeminiClient] Returning cached clinical profile');
+          return cached.data;
+        }
+        await AsyncStorage.removeItem(cacheKey);
+      }
+    } catch (cacheReadError) {
+      console.warn('[GeminiClient] Clinical profile cache read failed:', cacheReadError);
+    }
+
+    const inflight = this.inFlightProfileExtractions.get(versionedHistoryKey);
+    if (inflight) {
+      return inflight;
+    }
+
+    const persistProfileToCache = (profile: AssessmentProfile) => {
+      this.profileCacheQueue = this.profileCacheQueue
+        .then(() =>
+          AsyncStorage.setItem(
+            cacheKey,
+            JSON.stringify({
+              data: profile,
+              timestamp: Date.now(),
+              version: PROFILE_CACHE_VERSION,
+            } as ClinicalProfileCacheEntry),
+          ),
+        )
+        .catch((error) => console.warn('[GeminiClient] Clinical profile cache write failed:', error));
+    };
+
+    const requestPromise = (async () => {
+      try {
+        const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace(
+          '{{conversationHistory}}',
+          conversationText,
+        );
+
+        const responseText = await this.generateContentWithRetry(prompt, {
+          responseMimeType: 'application/json',
+        });
+
+        const profile = JSON.parse(responseText) as AssessmentProfile;
+
+        profile.age = normalizeSlot(profile.age);
+        profile.duration = normalizeSlot(profile.duration);
+        profile.severity = normalizeSlot(profile.severity);
+        profile.progression = normalizeSlot(profile.progression);
+        profile.red_flag_denials = normalizeSlot(profile.red_flag_denials, { allowNone: true });
+
+        const correctedProfile = applyHedgingCorrections(profile);
+
+        const { score, escalated_category } = calculateTriageScore({
+          ...correctedProfile,
+          symptom_text: conversationText,
+        });
+
+        correctedProfile.triage_readiness_score = score;
+        correctedProfile.symptom_category = escalated_category;
+
+        if (escalated_category === 'complex' || escalated_category === 'critical') {
+          correctedProfile.is_complex_case = true;
+        }
+
+        persistProfileToCache(correctedProfile);
+        return correctedProfile;
+      } catch (error) {
+        console.error('[GeminiClient] Failed to extract profile:', error);
+
+        return {
+          age: null,
+          duration: null,
+          severity: null,
+          progression: null,
+          red_flag_denials: null,
+          uncertainty_accepted: false,
+          summary: conversationText,
+        };
+      }
+    })();
+
+    this.inFlightProfileExtractions.set(versionedHistoryKey, requestPromise);
+    requestPromise.finally(() => {
+      this.inFlightProfileExtractions.delete(versionedHistoryKey);
+    });
+
+    return requestPromise;
+  }
+
+  /**
+   * Simplified unary response generator for ad-hoc prompts (e.g., friction resolution).
+   */
+  public async getGeminiResponse(prompt: string): Promise<string> {
+    try {
+      const responseText = await this.generateContentWithRetry(prompt);
+      return responseText.trim();
+    } catch (error) {
+      console.error('[GeminiClient] getGeminiResponse failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Streams AI output similarly to the legacy approach while still respecting rate limits.
+   */
+  public async *streamGeminiResponse(
+    prompt: string | (string | { inlineData: { data: string; mimeType: string } })[],
+    options?: {
+      generationConfig?: { responseMimeType: string };
+      chunkSize?: number;
+    },
+  ): AsyncGenerator<string, void, unknown> {
+    try {
+      const responseText = await this.generateContentWithRetry(prompt, options?.generationConfig);
+      const chunkSize = options?.chunkSize ?? 20;
+
+      for (let i = 0; i < responseText.length; i += chunkSize) {
+        yield responseText.slice(i, i + chunkSize);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+    } catch (error) {
+      console.error('[GeminiClient] streamGeminiResponse failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Refines follow-up questions while leveraging centralized retry handling.
+   */
+  public async refineQuestion(questionText: string, userAnswer: string): Promise<string> {
+    try {
+      const prompt = REFINE_QUESTION_PROMPT.replace('{{questionText}}', questionText).replace(
+        '{{userAnswer}}',
+        userAnswer,
+      );
+
+      const responseText = await this.generateContentWithRetry(prompt);
+      return responseText.trim() || questionText;
+    } catch (error) {
+      console.error('[GeminiClient] Failed to refine question:', error);
+      return questionText;
+    }
   }
 
   /**
@@ -329,6 +839,10 @@ export class GeminiClient {
       final_level: original,
       adjustments: [],
     };
+  }
+
+  private isEmergencyLocalOnlyToggleEnabled(): boolean {
+    return Constants.expoConfig?.extra?.forceEmergencyLocalFallback === true;
   }
 
   /**
@@ -362,6 +876,31 @@ export class GeminiClient {
   }
 
   /**
+   * Only transient failures (5xx, network glitches, timeouts) can be retried.
+   * Any deterministic parse/schema error should surface immediately.
+   */
+  private isTransientFailure(error: unknown): boolean {
+    if (error instanceof NonRetryableError) {
+      return false;
+    }
+
+    const status = (error as { status?: number }).status;
+    if (typeof status === 'number' && status >= 500 && status < 600) {
+      return true;
+    }
+
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+      const transientMarkers = ['timeout', 'network', 'connection reset', 'temporarily unavailable'];
+      if (transientMarkers.some((marker) => message.includes(marker))) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
    * Main assessment function.
    * @param symptoms The clinical context for the LLM (may include history/questions)
    * @param history Optional conversation history
@@ -373,6 +912,7 @@ export class GeminiClient {
     history: ChatMessage[] = [],
     safetyContext?: string,
     profile?: AssessmentProfile,
+    cacheKeyInput?: string,
   ): Promise<AssessmentResponse> {
     // 0. Periodic Cleanup (non-blocking)
     this.performCacheCleanup().catch((e) => console.warn('Cleanup failed:', e));
@@ -452,8 +992,16 @@ export class GeminiClient {
       return response;
     }
 
+    if (this.isEmergencyLocalOnlyToggleEnabled() && emergencyFallback) {
+      console.warn(
+        '[GeminiClient] Emergency local-only toggle enabled; returning local emergency fallback without calling Gemini.',
+      );
+      this.logFinalResult(emergencyFallback, symptoms);
+      return emergencyFallback;
+    }
+
     // 2. Cache Check (non-blocking read)
-    const cacheKey = this.getCacheKey(symptoms, history);
+    const cacheKey = this.getCacheKey(symptoms, history, cacheKeyInput);
     const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
 
     // Skip cache if we have a pending emergency fallback to force fresh verification
@@ -756,8 +1304,19 @@ export class GeminiClient {
         this.logFinalResult(parsed, symptoms);
         return parsed;
       } catch (error) {
-        attempt++;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        if (error instanceof NonRetryableError) {
+          console.error('[GeminiClient] Non-retryable error encountered:', errorMessage);
+          throw error;
+        }
+
+        if (!this.isTransientFailure(error)) {
+          console.error('[GeminiClient] Non-transient failure; aborting retries:', errorMessage);
+          throw error instanceof Error ? error : new Error('Unexpected non-transient failure');
+        }
+
+        attempt++;
         console.error(`[GeminiClient] Request failed (Attempt ${attempt}):`, errorMessage);
 
         if (attempt >= MAX_RETRIES) {
