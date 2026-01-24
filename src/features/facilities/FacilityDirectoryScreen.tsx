@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Keyboard, KeyboardAvoidingView, Platform, Linking } from 'react-native';
-import { Searchbar, Chip, useTheme, Surface, Text } from 'react-native-paper';
+import { View, StyleSheet, Keyboard, KeyboardAvoidingView, Platform, Linking, Pressable } from 'react-native';
+import { Searchbar, Chip, useTheme, Text } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';
@@ -10,7 +10,6 @@ import { ScrollView } from 'react-native';
 import { AppDispatch } from '../../store';
 import { fetchFacilities, setFilters } from '../../store/facilitiesSlice';
 import { FacilityListView } from '../../components/features/facilities';
-import { Button } from '../../components/common/Button';
 import StandardHeader from '../../components/common/StandardHeader';
 import { FacilitiesStackParamList } from '../../navigation/types';
 import { useUserLocation } from '../../hooks';
@@ -167,33 +166,27 @@ export const FacilityDirectoryScreen = () => {
           <FacilityListView
             ListHeaderComponent={
               showLocationPermissionBanner ? (
-                <Surface
-                  style={[
+                <Pressable
+                  onPress={handlePermissionPress}
+                  style={({ pressed }) => [
                     styles.locationBanner,
                     {
-                      backgroundColor: theme.colors.surfaceVariant,
                       borderColor: theme.colors.outlineVariant,
+                      backgroundColor: pressed ? theme.colors.surfaceVariant : 'transparent',
                     },
                   ]}
-                  elevation={0}
                 >
-                  <View style={styles.locationBannerRow}>
-                    <Text
-                      variant="bodyMedium"
-                      style={{ color: theme.colors.onSurface, flex: 1, flexWrap: 'wrap' }}
-                    >
-                      Enable location to see the nearest facilities.
-                    </Text>
-                    <Button
-                      title={permissionStatus === 'undetermined' ? 'Enable' : 'Open Settings'}
-                      variant="text"
-                      onPress={handlePermissionPress}
-                      style={styles.locationBannerCta}
-                      contentStyle={styles.locationBannerCtaContent}
-                      labelStyle={styles.locationBannerCtaLabel}
-                    />
-                  </View>
-                </Surface>
+                  <Text
+                    variant="bodyMedium"
+                    style={{
+                      color: theme.colors.primary,
+                      textAlign: 'center',
+                      fontWeight: '500',
+                    }}
+                  >
+                    Find the nearest help by sharing your location.
+                  </Text>
+                </Pressable>
               ) : null
             }
           />
@@ -233,25 +226,12 @@ const styles = StyleSheet.create({
   },
   locationBanner: {
     borderWidth: 1,
+    borderStyle: 'dashed',
     borderRadius: 12,
-    padding: 12,
+    padding: 16,
     marginBottom: 12,
-  },
-  locationBannerRow: {
-    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  locationBannerCta: {
-    minHeight: 36,
-    marginVertical: 0,
-  },
-  locationBannerCtaContent: {
-    height: 36,
-  },
-  locationBannerCtaLabel: {
-    fontSize: 14,
   },
   center: {
     flex: 1,

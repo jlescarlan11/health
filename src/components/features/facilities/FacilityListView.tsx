@@ -11,6 +11,7 @@ import { Button } from '../../common/Button';
 import { FacilityCardSkeleton } from './FacilityCardSkeleton';
 import { FacilitiesStackScreenProps } from '../../../types/navigation';
 import { Facility } from '../../../types';
+import { resolveServiceAlias } from '../../../utils/facilityUtils';
 
 type FacilityListNavigationProp = FacilitiesStackScreenProps<'FacilityDirectory'>['navigation'];
 
@@ -23,7 +24,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
   const dispatch = useDispatch<AppDispatch>();
   const navigation = useNavigation<FacilityListNavigationProp>();
 
-  const { filteredFacilities, isLoading, error } = useSelector(
+  const { filteredFacilities, isLoading, error, filters } = useSelector(
     (state: RootState) => state.facilities,
   );
 
@@ -52,6 +53,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
       showDistance={true} // Assuming calculated distance is available or handled by parent/card
       onPress={() => handleFacilityPress(item)}
       style={styles.card}
+      simplified={true}
     />
   );
 
@@ -85,12 +87,30 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
       );
     }
 
+    const searchQuery = filters.searchQuery || '';
+    const hasAliasMatch =
+      searchQuery && resolveServiceAlias(searchQuery).toLowerCase() !== searchQuery.toLowerCase();
+
     return (
       <View style={styles.center}>
         <Text variant="bodyLarge">No facilities found.</Text>
-        <Text variant="bodySmall" style={{ color: theme.colors.secondary }}>
-          Try adjusting your search or filters.
-        </Text>
+        {!hasAliasMatch ? (
+          <View style={{ alignItems: 'center', marginTop: 8 }}>
+            <Text variant="bodySmall" style={{ color: theme.colors.secondary, textAlign: 'center' }}>
+              Try searching for something else, like:
+            </Text>
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.primary, fontWeight: '600', marginTop: 4 }}
+            >
+              Consultation, Emergency, or Dental
+            </Text>
+          </View>
+        ) : (
+          <Text variant="bodySmall" style={{ color: theme.colors.secondary, marginTop: 8 }}>
+            Try adjusting your search or filters.
+          </Text>
+        )}
       </View>
     );
   };
