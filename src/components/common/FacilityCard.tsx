@@ -63,6 +63,20 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   const displayServices = React.useMemo(() => {
     const allServices = [...facility.services, ...(facility.specialized_services || [])];
 
+    // In simplified/list view, we strictly limit to 3 and ignore showAllServices
+    if (simplified) {
+      if (relevantServices && relevantServices.length > 0) {
+        // Prioritize relevant services if they exist in facility services
+        const relevant = allServices.filter((s) =>
+          relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
+        );
+        // Combine relevant with others, then slice
+        const others = allServices.filter((s) => !relevant.includes(s));
+        return [...relevant, ...others].slice(0, 3);
+      }
+      return allServices.slice(0, 3);
+    }
+
     if (showAllServices) return allServices;
 
     if (relevantServices && relevantServices.length > 0) {
@@ -76,7 +90,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     }
 
     return allServices.slice(0, 3);
-  }, [facility.services, facility.specialized_services, relevantServices, showAllServices]);
+  }, [facility.services, facility.specialized_services, relevantServices, showAllServices, simplified]);
 
   const totalServicesCount =
     facility.services.length + (facility.specialized_services?.length || 0);
@@ -102,6 +116,8 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           shadowOpacity: 0.05,
           shadowRadius: 8,
           elevation: 2,
+          borderLeftWidth: 4,
+          borderLeftColor: statusColor,
         },
       ]}
       onPress={onPress}
@@ -113,16 +129,33 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       <View style={styles.cardInner}>
         <View style={styles.headerRow}>
           <View style={styles.titleContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <MaterialCommunityIcons
                 name={facility.type === 'hospital' ? 'hospital-building' : 'home-plus'}
                 size={20}
                 color={theme.colors.primary}
-                style={{ marginRight: 8 }}
+                style={{ marginRight: 8, marginTop: 4 }}
               />
-              <Text variant="titleMedium" style={styles.title}>
-                {facility.name}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text variant="titleMedium" style={styles.title}>
+                  {facility.name}
+                </Text>
+                {showDistance && distance !== undefined && (
+                  <View style={styles.distanceContainer}>
+                    <MaterialCommunityIcons
+                      name="map-marker-outline"
+                      size={12}
+                      color={theme.colors.outline}
+                    />
+                    <Text
+                      variant="labelSmall"
+                      style={[styles.distance, { color: theme.colors.outline }]}
+                    >
+                      {formatDistance(distance)}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
 
@@ -153,21 +186,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 </Text>
               </View>
             )}
-            {showDistance && distance !== undefined && (
-              <View style={styles.distanceContainer}>
-                <MaterialCommunityIcons
-                  name="map-marker-outline"
-                  size={10}
-                  color={theme.colors.outline}
-                />
-                <Text
-                  variant="labelSmall"
-                  style={[styles.distance, { color: theme.colors.outline }]}
-                >
-                  {formatDistance(distance)}
-                </Text>
-              </View>
-            )}
           </View>
         </View>
 
@@ -180,7 +198,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         <View style={styles.content}>
           <View style={styles.statusRow}>
-            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
             <Text
               variant="labelMedium"
               style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
@@ -217,7 +234,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 </Text>
               </View>
             ))}
-            {hasMoreServices && !showAllServices && (
+            {hasMoreServices && !showAllServices && !simplified && (
               <TouchableOpacity
                 style={styles.moreServices}
                 onPress={(e) => {
@@ -293,6 +310,7 @@ const styles = StyleSheet.create({
   distanceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 2,
   },
   distance: {
     fontSize: 10,
@@ -321,12 +339,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 6,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
   },
   address: {
     color: 'rgba(0,0,0,0.5)',
