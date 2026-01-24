@@ -8,59 +8,21 @@ import navigationSlice from '../src/store/navigationSlice';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { geminiClient } from '../src/api/geminiClient';
-import { streamGeminiResponse, generateAssessmentPlan, extractClinicalProfile } from '../src/services/gemini';
 import { detectEmergency } from '../src/services/emergencyDetector';
 
 // Mock Gemini Services
-jest.mock('../src/services/gemini', () => ({
-  generateAssessmentPlan: jest.fn(() => Promise.resolve({
-    questions: [
-      { id: 'q1', text: 'Tell me more.', type: 'text' }
-    ],
-    intro: 'Hi'
-  })),
-  extractClinicalProfile: jest.fn(() => Promise.resolve({
-    triage_readiness_score: 0.95, // High readiness to trigger termination
-    summary: 'Test summary',
-    is_recent_resolved: true,
-    resolved_keyword: 'chest pain'
-  })),
-  getGeminiResponse: jest.fn(() => Promise.resolve('Test response')),
-  streamGeminiResponse: jest.fn(() => ({
-    [Symbol.asyncIterator]: () => {
-      let done = false;
-      return {
-        next: () => {
-          if (done) return Promise.resolve({ value: undefined, done: true });
-          done = true;
-          return Promise.resolve({ value: 'chunk', done: false });
-        }
-      };
-    }
-  })),
-}));
-
-// Mock Gemini Client
-jest.mock('../src/api/geminiClient', () => ({
-  geminiClient: {
-    assessSymptoms: jest.fn(() => Promise.resolve({
-      recommended_level: 'hospital',
-      user_advice: 'Safety Note applied.',
-      clinical_soap: 'SOAP',
-      critical_warnings: [],
-      key_concerns: [],
-      relevant_services: [],
-      red_flags: []
-    })),
-    clearCache: jest.fn()
-  }
-}));
-
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(),
   isNegated: jest.fn(() => ({ negated: false })),
   COMBINATION_RISKS: []
 }));
+
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
+let streamSpy: jest.SpyInstance;
+let responseSpy: jest.SpyInstance;
+let assessSpy: jest.SpyInstance;
+let clearCacheSpy: jest.SpyInstance;
 
 const Stack = createNativeStackNavigator();
 
@@ -91,12 +53,50 @@ const renderAssessment = (initialParams = { initialSymptom: 'General Malaise' })
 describe('Resolved Symptom Prompt Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({
+        questions: [{ id: 'q1', text: 'Tell me more.' }],
+        intro: 'Hi',
+      });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({
+        triage_readiness_score: 0.95,
+        summary: 'Test summary',
+        is_recent_resolved: true,
+        resolved_keyword: 'chest pain',
+      } as any);
+    streamSpy = jest
+      .spyOn(geminiClient, 'streamGeminiResponse')
+      .mockImplementation(async function* () {
+        yield 'chunk';
+      });
+    responseSpy = jest
+      .spyOn(geminiClient, 'getGeminiResponse')
+      .mockResolvedValue('Test response');
+    assessSpy = jest
+      .spyOn(geminiClient, 'assessSymptoms')
+      .mockResolvedValue({
+        recommended_level: 'hospital',
+        user_advice: 'Safety Note applied.',
+        clinical_soap: 'SOAP',
+        critical_warnings: [],
+        key_concerns: [],
+        relevant_services: [],
+        red_flags: [],
+      } as any);
+    clearCacheSpy = jest.spyOn(geminiClient, 'clearCache').mockResolvedValue(undefined);
     (detectEmergency as jest.Mock).mockReturnValue({ isEmergency: false });
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('prepends [RECENT_RESOLVED] tag to followUpPrompt during expansion', async () => {
     // Force the arbiter/termination check to fail so it goes into expansion
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({
+    profileSpy.mockResolvedValue({
       triage_readiness_score: 0.5,
       is_recent_resolved: true,
       resolved_keyword: 'chest pain',
@@ -131,7 +131,7 @@ describe('Resolved Symptom Prompt Integration', () => {
 
     // 3. Wait for expansion (since readiness is 0.5 and plan is short)
     await waitFor(() => {
-      expect(streamGeminiResponse).toHaveBeenCalledWith(
+      expect(streamSpy).toHaveBeenCalledWith(
         expect.stringContaining('[RECENT_RESOLVED: chest pain]')
       );
     }, { timeout: 10000 });
@@ -139,7 +139,7 @@ describe('Resolved Symptom Prompt Integration', () => {
 
   it('prepends [RECENT_RESOLVED] tag to assessSymptoms context in RecommendationScreen', async () => {
     // Mock profile to trigger immediate termination
-    (extractClinicalProfile as jest.Mock).mockResolvedValue({
+    profileSpy.mockResolvedValue({
       triage_readiness_score: 1.0,
       is_recent_resolved: true,
       resolved_keyword: 'chest pain',
@@ -167,7 +167,8 @@ describe('Resolved Symptom Prompt Integration', () => {
         expect.stringContaining('[RECENT_RESOLVED: chest pain]'),
         expect.anything(),
         expect.anything(),
-        expect.objectContaining({ is_recent_resolved: true })
+        expect.objectContaining({ is_recent_resolved: true }),
+        expect.any(String),
       );
     }, { timeout: 10000 });
   }, 15000);

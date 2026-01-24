@@ -1,8 +1,9 @@
-import { generateAssessmentPlan } from '../../services/gemini';
 import { prioritizeQuestions } from '../../utils/aiUtils';
 import { DEFAULT_RED_FLAG_QUESTION } from '../../constants/clinical';
 
 let mockGenerateContent: jest.Mock;
+let geminiModule: typeof import('../geminiClient');
+let generateAssessmentPlan: (symptom: string) => Promise<{ questions: any[]; intro?: string }>;
 const createLLMResult = (
   payload = { questions: [{ id: 'q1', text: 'Test Q' }], intro: 'Test Intro' },
 ) => ({
@@ -39,6 +40,10 @@ describe('Gemini Service Fallback', () => {
     console.log = jest.fn();   // Suppress expected logs
     mockGenerateContent.mockReset();
     mockGenerateContent.mockResolvedValue(createLLMResult());
+    geminiModule = require('../geminiClient');
+    generateAssessmentPlan = geminiModule.geminiClient.generateAssessmentPlan.bind(
+      geminiModule.geminiClient,
+    );
   });
 
   it('should inject default red flags when prioritizeQuestions throws', async () => {

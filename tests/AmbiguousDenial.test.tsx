@@ -1,11 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
-import {
-  generateAssessmentPlan,
-  extractClinicalProfile,
-  streamGeminiResponse,
-} from '../src/services/gemini';
+import { geminiClient } from '../src/api/geminiClient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -18,8 +14,6 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini');
-
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),
 }));
@@ -27,6 +21,10 @@ jest.mock('../src/services/emergencyDetector', () => ({
 jest.mock('../src/services/mentalHealthDetector', () => ({
   detectMentalHealthCrisis: jest.fn(() => ({ isCrisis: false, matchedKeywords: [] })),
 }));
+
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
+let streamSpy: jest.SpyInstance;
 
 // Mock components
 jest.mock('../src/components/common', () => {
@@ -87,6 +85,17 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({ questions: [], intro: '' });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({ triage_readiness_score: 0.5 } as any);
+    streamSpy = jest
+      .spyOn(geminiClient, 'streamGeminiResponse')
+      .mockImplementation(async function* () {
+        yield 'Okay. ';
+      });
     jest.useFakeTimers();
     (useNavigation as jest.Mock).mockReturnValue({
       replace: mockNavigate,
@@ -104,9 +113,13 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test('Triggers re-verification when denial confidence is low', async () => {
     // 1. Plan: Red Flag Question
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({
+    planSpy.mockResolvedValue({
       questions: [
         { id: 'red_flags', text: 'Do you have vision loss?' },
         { id: 'duration', text: 'How long?' },
@@ -115,14 +128,14 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
     });
 
     // Mock streamGeminiResponse for the bridge
-    (streamGeminiResponse as jest.Mock).mockImplementation(async function* () {
+    streamSpy.mockImplementation(async function* () {
       yield 'Okay. ';
       yield 'How long?';
     });
 
     // 2. Profile Sequence
     // Call 1: Low confidence denial
-    (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
+    profileSpy.mockResolvedValueOnce({
       denial_confidence: 'low',
       red_flags_resolved: true,
       triage_readiness_score: 0.5,
@@ -131,7 +144,7 @@ describe('SymptomAssessmentScreen Ambiguous Denial', () => {
     });
 
     // Call 2: High confidence
-    (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
+    profileSpy.mockResolvedValueOnce({
       denial_confidence: 'high',
       red_flags_resolved: true,
       triage_readiness_score: 0.6,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
-import { generateAssessmentPlan, extractClinicalProfile } from '../src/services/gemini';
+import { geminiClient } from '../src/api/geminiClient';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
@@ -13,8 +13,6 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(),
   useFocusEffect: jest.fn(),
 }));
-
-jest.mock('../src/services/gemini');
 
 jest.mock('../src/utils/clinicalUtils', () => ({
   ...jest.requireActual('../src/utils/clinicalUtils'),
@@ -28,6 +26,9 @@ jest.mock('../src/services/emergencyDetector', () => ({
 jest.mock('../src/services/mentalHealthDetector', () => ({
   detectMentalHealthCrisis: jest.fn(() => ({ isCrisis: false, matchedKeywords: [] })),
 }));
+
+let planSpy: jest.SpyInstance;
+let profileSpy: jest.SpyInstance;
 
 // Mock components
 jest.mock('../src/components/common', () => {
@@ -87,6 +88,12 @@ describe('SymptomAssessmentScreen Dynamic Pruning', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({ questions: [], intro: '' });
+    profileSpy = jest
+      .spyOn(geminiClient, 'extractClinicalProfile')
+      .mockResolvedValue({ triage_readiness_score: 0.3 } as any);
     jest.useFakeTimers();
     (useNavigation as jest.Mock).mockReturnValue({
       replace: jest.fn(),
@@ -104,6 +111,10 @@ describe('SymptomAssessmentScreen Dynamic Pruning', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test('Dynamically prunes future Age question when Age is mentioned in early answer', async () => {
     const plan = [
       { id: 'location', text: 'Where does it hurt?', tier: 2 },
@@ -111,12 +122,12 @@ describe('SymptomAssessmentScreen Dynamic Pruning', () => {
       { id: 'duration', text: 'How long has it been?', tier: 1 }, // This should remain
     ];
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
+    planSpy.mockResolvedValue({ questions: plan, intro: 'Intro' });
     
     // Mock extraction for initial render (Call #1 in initializeAssessment - wait, that uses extractClinicalSlots)
     // Actually handleNext uses extractClinicalProfile.
     
-    (extractClinicalProfile as jest.Mock).mockResolvedValueOnce({
+    profileSpy.mockResolvedValueOnce({
       age: '30', // Populated slot!
       duration: null,
       severity: null,
@@ -145,7 +156,7 @@ describe('SymptomAssessmentScreen Dynamic Pruning', () => {
               fireEvent.press(submitBtn);
             });    
         // Wait for extractClinicalProfile to be called
-        await waitFor(() => expect(extractClinicalProfile).toHaveBeenCalled());
+        await waitFor(() => expect(profileSpy).toHaveBeenCalled());
     
         // Fast-forward timers for the UI transitions
         await act(async () => {

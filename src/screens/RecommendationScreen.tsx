@@ -37,7 +37,8 @@ import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
-import { AssessmentProfile, TriageLevel } from '../types/triage';
+import { AssessmentProfile, TriageLevel, TriageAdjustmentRule } from '../types/triage';
+import { formatEmpatheticResponse } from '../utils/empatheticResponses';
 
 import { TriageStatusCard } from '../components/features/triage/TriageStatusCard';
 import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
@@ -51,6 +52,26 @@ const SYSTEM_INSTRUCTIONS: Record<string, string> = {
   Neurological: 'Check breathing. Place in recovery position if unconscious.',
   Other: 'Keep patient comfortable. Monitor breathing.',
 };
+
+const TRIAGE_RULE_LABELS: Record<TriageAdjustmentRule, string> = {
+  RED_FLAG_UPGRADE: 'Red flag escalation',
+  READINESS_UPGRADE: 'Readiness/ambiguity upgrade',
+  RECENT_RESOLVED_FLOOR: 'Recently resolved safety floor',
+  AUTHORITY_DOWNGRADE: 'Authority downgrade',
+  SYSTEM_BASED_LOCK_CARDIAC: 'Cardiac system lock',
+  SYSTEM_BASED_LOCK_RESPIRATORY: 'Respiratory system lock',
+  SYSTEM_BASED_LOCK_NEUROLOGICAL: 'Neurological system lock',
+  SYSTEM_BASED_LOCK_TRAUMA: 'Trauma system lock',
+  SYSTEM_BASED_LOCK_ABDOMEN: 'Abdominal system lock',
+  CONSENSUS_CHECK: 'Consensus-based adjustment',
+  AGE_ESCALATION: 'Age-based escalation',
+  MENTAL_HEALTH_OVERRIDE: 'Mental health override',
+  OFFLINE_FALLBACK: 'Offline fallback',
+  MANUAL_OVERRIDE: 'Manual override',
+};
+
+const humanizeTriageRule = (rule: TriageAdjustmentRule) =>
+  TRIAGE_RULE_LABELS[rule] || rule.replace(/_/g, ' ').toLowerCase();
 
 const isFallbackProfile = (profile?: AssessmentProfile) => {
   if (!profile || !profile.summary) return false;
@@ -88,6 +109,21 @@ const mapCareLevelToTriageLevel = (
   return level;
 };
 
+const getNextActionForLevel = (level: AssessmentResponse['recommended_level']) => {
+  switch (level) {
+    case 'emergency':
+      return 'Please go to the nearest Emergency Room immediately and share this assessment with the staff.';
+    case 'hospital':
+      return 'Call or visit a hospital for further evaluation within the next few hours.';
+    case 'health_center':
+      return 'Schedule a visit at your health center soon and bring this information with you.';
+    case 'self_care':
+      return 'Monitor yourself closely and reach out if any concerning changes occur.';
+    default:
+      return 'Follow the recommended care level above and contact the appropriate service if things worsen.';
+  }
+};
+
 const applyOpacity = (hex: string, alpha: number) => {
   const sanitized = hex.replace('#', '');
   const parsed = parseInt(sanitized, 16);
@@ -117,6 +153,20 @@ const appendEllipsisIfNeeded = (text: string, wasTruncated: boolean) => {
   if (!wasTruncated) return trimmed;
   const withoutPunctuation = trimmed.replace(/[.,;:!?]+$/, '').trim();
   return withoutPunctuation ? `${withoutPunctuation}...` : '...';
+};
+
+const normalizeCacheSegment = (value: string) =>
+  collapseWhitespace(value).toLowerCase().trim();
+
+const buildStableCaseKey = (
+  initialSymptom?: string,
+  profileSummary?: string,
+  resolvedTag?: string,
+) => {
+  return [initialSymptom, profileSummary, resolvedTag]
+    .map((segment) => (segment ? normalizeCacheSegment(segment) : ''))
+    .filter(Boolean)
+    .join('|');
 };
 
 // Create a short, human-readable view of the initial report for safety UI.
@@ -336,7 +386,19 @@ const RecommendationScreen = () => {
       // **Safety Context for local scan (User-only content)**
       const safetyContext = `Initial Symptom: ${symptomsRef.current}. Answers: ${userAnswersOnly}.`;
 
-      const response = await geminiClient.assessSymptoms(triageContext, [], safetyContext, profile);
+      const caseCacheKey = buildStableCaseKey(
+        symptomsRef.current,
+        profileSummary,
+        resolvedTag,
+      );
+
+      const response = await geminiClient.assessSymptoms(
+        triageContext,
+        [],
+        safetyContext,
+        profile,
+        caseCacheKey,
+      );
       setRecommendation(response);
 
       // Save to Redux for persistence and offline access
@@ -636,6 +698,54 @@ const RecommendationScreen = () => {
     return recommendation.user_advice;
   })();
 
+  const guardAdjustments = recommendation.triage_logic?.adjustments ?? [];
+  const guardExplanation =
+    guardAdjustments.length > 0
+      ? guardAdjustments
+          .map(
+            (adjustment) =>
+              `${humanizeTriageRule(adjustment.rule)} (${adjustment.from} → ${
+                adjustment.to
+              }): ${adjustment.reason}`,
+          )
+          .join(' | ')
+      : null;
+  const guardrailInstruction = guardExplanation
+    ? `Based on the safety scanner, ${guardExplanation}`
+    : null;
+
+  const reasonForAdvice = (() => {
+    if (isEmergency && recommendation.medical_justification) {
+      return recommendation.medical_justification.replace(/^Potential concerns: /i, '');
+    }
+
+    if (guardAdjustments.length > 0) {
+      return guardAdjustments
+        .map((adjustment) => `${humanizeTriageRule(adjustment.rule)}: ${adjustment.reason}`)
+        .join(' | ');
+    }
+
+    return '';
+  })();
+
+  const reasonSource =
+    isEmergency && recommendation.medical_justification
+      ? 'medical-justification'
+      : guardAdjustments.length > 0
+        ? 'triage-logic'
+        : undefined;
+
+  const empatheticAdvice = formatEmpatheticResponse({
+    body: displayAdvice,
+    reason: reasonForAdvice,
+    reasonSource,
+    nextAction: getNextActionForLevel(recommendation.recommended_level),
+  }).text;
+
+  const instructionWithGuardrail = guardrailInstruction
+    ? `${guardrailInstruction}\n\n${empatheticAdvice}`
+    : empatheticAdvice;
+
   const outlinedButtonBorderRadius = Math.min(
     Math.max(theme.roundness ?? 10, 8),
     12,
@@ -687,10 +797,31 @@ const RecommendationScreen = () => {
         <View style={styles.statusCardWrapper}>
           <TriageStatusCard
             level={triageLevel}
-            instruction={displayAdvice}
+            instruction={instructionWithGuardrail}
             onEmergencyAction={isEmergency ? handleEmergencyAction : undefined}
           />
         </View>
+
+        {guardExplanation && (
+          <Surface
+            style={[
+              styles.guardrailCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outline,
+                borderWidth: 1,
+              },
+            ]}
+            elevation={2}
+          >
+            <Text variant="titleSmall" style={styles.guardrailTitle}>
+              Safety Guardrail Detail
+            </Text>
+            <Text variant="bodyMedium" style={styles.guardrailText}>
+              {guardExplanation}
+            </Text>
+          </Surface>
+        )}
 
         {/* Key Observations Section - Neutral/Informational */}
         {recommendation.key_concerns.length > 0 && (
@@ -864,6 +995,19 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingVertical: 12, paddingBottom: 40 },
   statusCardWrapper: {
     marginBottom: 24,
+  },
+  guardrailCard: {
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  guardrailTitle: {
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  guardrailText: {
+    fontWeight: '400',
+    lineHeight: 18,
   },
 
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react-native';
 import SymptomAssessmentScreen from '../src/screens/SymptomAssessmentScreen';
-import { generateAssessmentPlan } from '../src/services/gemini';
+import { geminiClient } from '../src/api/geminiClient';
 import { extractClinicalSlots } from '../src/utils/clinicalUtils';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -15,7 +15,7 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/services/gemini');
+let planSpy: jest.SpyInstance;
 
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [] })),
@@ -73,6 +73,9 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    planSpy = jest
+      .spyOn(geminiClient, 'generateAssessmentPlan')
+      .mockResolvedValue({ questions: [], intro: '' });
     jest.useFakeTimers();
     (useNavigation as jest.Mock).mockReturnValue({
       replace: jest.fn(),
@@ -90,6 +93,10 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
     });
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   test('Prunes severity question when extracted from initial symptom', async () => {
     const plan = [
       { id: 'basics', text: 'Age and duration?', tier: 1 },
@@ -97,7 +104,7 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
       { id: 'location', text: 'Where does it hurt?', tier: 2 }, // Should remain
     ];
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
+    planSpy.mockResolvedValue({ questions: plan, intro: 'Intro' });
     (extractClinicalSlots as jest.Mock).mockReturnValue({
       severity: 'High',
     });
@@ -127,7 +134,7 @@ describe('SymptomAssessmentScreen Pruning Logic', () => {
       { id: 'location', text: 'Where does it hurt?', tier: 2 },
     ];
 
-    (generateAssessmentPlan as jest.Mock).mockResolvedValue({ questions: plan, intro: 'Intro' });
+    planSpy.mockResolvedValue({ questions: plan, intro: 'Intro' });
     (extractClinicalSlots as jest.Mock).mockReturnValue({
       severity: undefined,
     });
