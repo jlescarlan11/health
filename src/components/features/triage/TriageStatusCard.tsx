@@ -11,7 +11,7 @@ interface TriageStatusCardProps {
   onEmergencyAction?: () => void;
 }
 
-type ThemeColors = ReturnType<typeof useTheme>['colors'];
+type ThemeColors = any;
 
 const LEVEL_LABELS: Record<TriageLevel, string> = {
   emergency: 'Emergency (Life-Threatening)',
@@ -29,7 +29,7 @@ export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
   instruction,
   onEmergencyAction,
 }) => {
-  const theme = useTheme() as ReturnType<typeof useTheme> & { spacing: ThemeSpacing };
+  const theme = useTheme() as any;
   const spacing = theme.spacing;
   const levelConfig = getLevelConfig(level, theme.colors);
   const showEmergencyButton = level === 'emergency' && Boolean(onEmergencyAction);
@@ -84,7 +84,7 @@ export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
             <Button
               title="Call Emergency Services"
               variant="danger"
-              onPress={onEmergencyAction}
+              onPress={onEmergencyAction || (() => {})}
               icon="phone"
               accessibilityHint="Calls emergency services."
             />

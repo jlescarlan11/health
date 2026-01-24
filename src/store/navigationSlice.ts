@@ -5,7 +5,7 @@ import { ClinicalSlots } from '../utils/clinicalUtils';
 interface Message {
   id: string;
   text: string;
-  sender: 'user' | 'ai';
+  sender: 'user' | 'ai' | 'assistant';
   timestamp: number;
   metadata?: Record<string, unknown>; // For additional context like facility IDs
 }

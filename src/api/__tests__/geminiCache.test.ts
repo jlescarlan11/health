@@ -61,7 +61,7 @@ describe('GeminiClient caching behavior', () => {
       }),
     });
 
-    const history = [{ role: 'user', text: 'Chest pain, radiating to the arm' }];
+    const history = [{ role: 'user' as const, text: 'Chest pain, radiating to the arm' }];
 
     const firstProfile = await client.extractClinicalProfile(history);
     await (client as any).profileCacheQueue;

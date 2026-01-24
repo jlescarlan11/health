@@ -564,7 +564,7 @@ class EmergencyDetector extends KeywordDetector {
 
     const medical_justification =
       matchedKeywords.length > 0
-        ? `Potential concerns: ${symptomsList}.${contextList ? ` Context: ${contextList}` : ''}`
+        ? `${symptomsList}${contextList ? `. ${contextList}` : ''}`
         : 'No specific emergency signs detected.';
 
     console.log(`\n--- FINAL RESULT ---`);
