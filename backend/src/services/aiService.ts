@@ -45,7 +45,7 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     ]
 
     Task:
-    1. Analyze the symptoms and severity to determine the appropriate level of care (Self-Care, Health Center, Hospital, or Emergency Room).
+    1. Analyze the symptoms and severity to determine the appropriate level of care (Self-Care, Health Center, Hospital, or Emergency).
     2. Provide 2-3 "relevant_services" that align with the VALID_SERVICES list.
     3. Optionally include "facility_type_constraints" if the case needs a specific facility type (for example, "Hospital with trauma services").
     4. Provide a clear reasoning for your recommendation.
@@ -75,6 +75,11 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   let parsedResponse: GeminiParsedResponse;
   try {
     parsedResponse = JSON.parse(cleanedText);
+
+    // Normalize "Emergency Room" to "Emergency" for internal consistency
+    if (parsedResponse.recommendation === 'Emergency Room') {
+      parsedResponse.recommendation = 'Emergency';
+    }
   } catch {
     console.error('Failed to parse Gemini response:', cleanedText);
     throw new Error('AI service unavailable');
@@ -120,6 +125,7 @@ const FACILITY_LEVEL_KEYWORDS: Record<string, string[]> = {
   'Health Center': ['Health Center', 'Center'],
   Hospital: ['Hospital'],
   Emergency: ['Emergency', 'Hospital'],
+  'Emergency Room': ['Emergency', 'Hospital'],
 };
 
 const resolveFacilityTypeKeywords = (
