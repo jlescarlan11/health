@@ -145,6 +145,122 @@ export const saveFacilities = async (facilities: Facility[]) => {
   }
 };
 
+const stableStringify = (value: unknown) =>
+  JSON.stringify(value, (_key, nested) => {
+    if (!nested || typeof nested !== 'object' || Array.isArray(nested)) return nested;
+
+    const record = nested as Record<string, unknown>;
+    const sorted: Record<string, unknown> = {};
+    for (const key of Object.keys(record).sort()) {
+      sorted[key] = record[key];
+    }
+    return sorted;
+  });
+
+export const saveFacilitiesFull = async (facilities: Facility[]) => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  const timestamp = Date.now();
+
+  const incomingIds = new Set<string>();
+  if (facilities.length > 0) {
+    for (const facility of facilities) {
+      if (!facility?.id) {
+        throw new Error('Invalid facilities dataset: missing facility.id');
+      }
+      incomingIds.add(facility.id);
+    }
+
+    if (incomingIds.size === 0) {
+      throw new Error('Invalid facilities dataset: no facility ids present');
+    }
+  }
+
+  try {
+    await db.execAsync('BEGIN TRANSACTION');
+
+    if (facilities.length === 0) {
+      await db.execAsync('DELETE FROM facilities');
+      await db.execAsync('COMMIT');
+      console.log('Cleared facilities offline storage (empty dataset)');
+      return;
+    }
+
+    const existing = await db.getAllAsync<{ id: string; data: string | null }>(
+      'SELECT id, data FROM facilities',
+    );
+    const existingDataById = new Map(existing.map((row) => [row.id, row.data ?? '']));
+
+    const deleteStatement = await db.prepareAsync('DELETE FROM facilities WHERE id = $id');
+    const upsertStatement = await db.prepareAsync(
+      `INSERT OR REPLACE INTO facilities (id, name, type, services, address, latitude, longitude, phone, yakapAccredited, hours, photoUrl, lastUpdated, specialized_services, is_24_7, data) VALUES ($id, $name, $type, $services, $address, $latitude, $longitude, $phone, $yakapAccredited, $hours, $photoUrl, $lastUpdated, $specialized_services, $is_24_7, $data)`,
+    );
+
+    let deletedCount = 0;
+    let upsertedCount = 0;
+    let skippedCount = 0;
+
+    try {
+      for (const [id] of existingDataById) {
+        if (!incomingIds.has(id)) {
+          await deleteStatement.executeAsync({ $id: id });
+          deletedCount += 1;
+        }
+      }
+
+      for (const facility of facilities) {
+        if (!facility?.id) continue;
+
+        const serialized = stableStringify(facility);
+        const existingSerialized = existingDataById.get(facility.id);
+        if (existingSerialized === serialized) {
+          skippedCount += 1;
+          continue;
+        }
+
+        await upsertStatement.executeAsync({
+          $id: facility.id,
+          $name: facility.name,
+          $type: facility.type,
+          $services: JSON.stringify(facility.services || []),
+          $address: facility.address,
+          $latitude: facility.latitude,
+          $longitude: facility.longitude,
+          $phone: facility.phone || null,
+          $yakapAccredited: facility.yakapAccredited ? 1 : 0,
+          $hours: facility.hours || null,
+          $photoUrl: facility.photoUrl || null,
+          $lastUpdated: timestamp,
+          $specialized_services: JSON.stringify(facility.specialized_services || []),
+          $is_24_7: facility.is_24_7 ? 1 : 0,
+          $data: serialized,
+        });
+        upsertedCount += 1;
+      }
+
+      await db.execAsync('COMMIT');
+      console.log(
+        `Synced facilities offline storage (upserted ${upsertedCount}, skipped ${skippedCount}, deleted ${deletedCount})`,
+      );
+    } catch (innerError) {
+      console.error('Error during full facilities sync:', innerError);
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Failed to rollback full facilities transaction:', rollbackError);
+      }
+      throw innerError;
+    } finally {
+      await deleteStatement.finalizeAsync();
+      await upsertStatement.finalizeAsync();
+    }
+  } catch (error) {
+    console.error('Error in saveFacilitiesFull:', error);
+    throw error;
+  }
+};
+
 interface FacilityRow {
   id: string;
   name: string;

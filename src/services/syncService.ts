@@ -1,9 +1,10 @@
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchFacilitiesFromApi } from './facilityService';
-import { saveFacilities } from './database';
+import { saveFacilitiesFull } from './database';
 import { store } from '../store';
 import { syncCompleted, setOfflineStatus } from '../store/offlineSlice';
+import { Facility } from '../types';
 
 export const syncFacilities = async () => {
   const state = await NetInfo.fetch();
@@ -17,7 +18,7 @@ export const syncFacilities = async () => {
     console.log('Starting facilities sync...');
     const data = await fetchFacilitiesFromApi();
 
-    let facilitiesToSave = [];
+    let facilitiesToSave: Facility[] = [];
     if (Array.isArray(data)) {
       facilitiesToSave = data;
     } else if (data.facilities && Array.isArray(data.facilities)) {
@@ -25,7 +26,7 @@ export const syncFacilities = async () => {
     }
 
     if (facilitiesToSave.length > 0) {
-      await saveFacilities(facilitiesToSave);
+      await saveFacilitiesFull(facilitiesToSave);
       const timestamp = Date.now();
       await AsyncStorage.setItem('last_sync_timestamp', timestamp.toString());
       store.dispatch(syncCompleted());

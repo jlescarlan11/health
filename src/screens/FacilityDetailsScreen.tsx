@@ -9,7 +9,6 @@ import {
   Linking,
   Share,
   Dimensions,
-  Platform,
   Alert,
 } from 'react-native';
 import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
@@ -26,6 +25,7 @@ import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus } from '../utils';
 import { useTheme } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
+import { openExternalMaps } from '../utils/linkingUtils';
 
 type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
@@ -104,30 +104,27 @@ export const FacilityDetailsScreen = () => {
     }
   };
 
-  const openExternalMaps = () => {
-    const scheme = Platform.select({ ios: 'maps:0,0?q=', android: 'geo:0,0?q=' });
-    const latLng = `${facility.latitude},${facility.longitude}`;
-    const label = facility.name;
-    const url = Platform.select({
-      ios: `${scheme}${label}@${latLng}`,
-      android: `${scheme}${latLng}(${label})`,
-    });
-
-    if (url) Linking.openURL(url).catch(() => Alert.alert('Error', 'Failed to open maps.'));
-  };
-
-  const handleDirections = () => {
-    openExternalMaps();
-  };
-
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `${facility.name}\nAddress: ${facility.address}\nView on map: https://www.google.com/maps/search/?api=1&query=${facility.latitude},${facility.longitude}`,
+        message: `${facility.name}\nAddress: ${facility.address}`,
         title: `Check out ${facility.name}`,
       });
     } catch {
       Alert.alert('Error', 'Failed to share.');
+    }
+  };
+
+  const handleDirections = async () => {
+    const opened = await openExternalMaps({
+      latitude: facility.latitude,
+      longitude: facility.longitude,
+      label: facility.name,
+      address: facility.address,
+    });
+
+    if (!opened) {
+      Alert.alert('Error', 'Failed to open maps for directions.');
     }
   };
 
@@ -204,13 +201,6 @@ export const FacilityDetailsScreen = () => {
               variant="primary"
             />
             <Button
-              icon="directions"
-              title="Directions"
-              onPress={handleDirections}
-              style={styles.actionButton}
-              variant="outline"
-            />
-            <Button
               icon="share"
               title="Share"
               onPress={handleShare}
@@ -233,32 +223,50 @@ export const FacilityDetailsScreen = () => {
               <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
                 {facility.address}
               </Text>
-              {distance !== null ? (
-                <View
-                  style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}
-                >
-                  <Ionicons
-                    name="navigate-circle-outline"
-                    size={14}
-                    color={theme.colors.onSurfaceVariant}
-                  />
-                  <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>
-                    {formatDistance(distance)} away
-                  </Text>
-                </View>
-              ) : (
-                (permissionStatus === 'denied' || errorMsg) && (
-                  <TouchableOpacity
-                    onPress={requestPermission}
-                    style={[styles.distanceBadge, { backgroundColor: theme.colors.errorContainer }]}
+              <View style={styles.locationActionsRow}>
+                {distance !== null ? (
+                  <View
+                    style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}
                   >
-                    <Ionicons name="location" size={14} color={theme.colors.error} />
-                    <Text style={[styles.distanceText, { color: theme.colors.error }]}>
-                      Enable location to see distance
+                    <Ionicons
+                      name="navigate-circle-outline"
+                      size={14}
+                      color={theme.colors.onSurfaceVariant}
+                    />
+                    <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>
+                      {formatDistance(distance)} away
                     </Text>
-                  </TouchableOpacity>
-                )
-              )}
+                  </View>
+                ) : (
+                  (permissionStatus === 'denied' || errorMsg) && (
+                    <TouchableOpacity
+                      onPress={requestPermission}
+                      style={[
+                        styles.distanceBadge,
+                        { backgroundColor: theme.colors.errorContainer },
+                      ]}
+                    >
+                      <Ionicons name="location" size={14} color={theme.colors.error} />
+                      <Text style={[styles.distanceText, { color: theme.colors.error }]}>
+                        Enable location to see distance
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                )}
+
+                <TouchableOpacity
+                  onPress={handleDirections}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Directions to ${facility.name}`}
+                  accessibilityHint="Opens your maps app with directions"
+                  style={[styles.distanceBadge, { backgroundColor: theme.colors.primaryContainer }]}
+                >
+                  <Ionicons name="navigate-outline" size={14} color={theme.colors.primary} />
+                  <Text style={[styles.distanceText, { color: theme.colors.primary }]}>
+                    Directions
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
 
@@ -494,6 +502,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+  },
+  locationActionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   distanceText: {
     fontSize: 13,

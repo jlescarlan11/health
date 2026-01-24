@@ -493,7 +493,7 @@ const RecommendationScreen = () => {
   useEffect(() => {
     // Load facilities if they aren't in the store
     if (facilities.length === 0) {
-      dispatch(fetchFacilities({ page: 1, refresh: true }));
+      dispatch(fetchFacilities());
     }
   }, [dispatch, facilities.length]);
 
@@ -583,10 +583,10 @@ const RecommendationScreen = () => {
       case 'self_care':
         return {
           label: 'SELF CARE (HOME)',
-          color: theme.colors.tertiary,
+          color: theme.colors.primary,
           icon: 'home-heart',
-          bgColor: theme.colors.tertiaryContainer,
-          borderColor: theme.colors.tertiary,
+          bgColor: theme.colors.secondaryContainer,
+          borderColor: theme.colors.primary,
         };
       default:
         return {
@@ -646,7 +646,6 @@ const RecommendationScreen = () => {
   const handoverButtonStyle = [
     styles.handoverButton,
     {
-      marginHorizontal: theme.spacing?.lg ?? 16,
       marginVertical: theme.spacing?.md ?? 12,
       borderRadius: handoverBorderRadius,
       alignSelf: 'stretch',
@@ -655,12 +654,21 @@ const RecommendationScreen = () => {
   const handoverButtonContentStyle = {
     paddingHorizontal: theme.spacing?.lg ?? 16,
     paddingVertical: theme.spacing?.sm ?? 8,
+    justifyContent: 'center',
   };
   const handoverButtonLabelText = 'View Handover Report';
   const handoverButtonLabelStyle = {
-    marginLeft: 0, // spacing already handled via icon margin
-    // Color handled by primary variant
+    marginLeft: 0,
   };
+  const restartButtonStyle = [
+    styles.restartButton,
+    {
+      marginVertical: theme.spacing?.md ?? 12,
+      borderRadius: handoverBorderRadius,
+      alignSelf: 'stretch',
+    },
+  ];
+  const restartButtonContentStyle = handoverButtonContentStyle;
   const selfCareToggleStyle = {
     marginHorizontal: theme.spacing.large,
     marginTop: theme.spacing.large,
@@ -793,7 +801,7 @@ const RecommendationScreen = () => {
                 </Text>
                 <Button
                   variant="text"
-                  onPress={() => dispatch(fetchFacilities({ page: 1, refresh: true }))}
+                  onPress={() => dispatch(fetchFacilities())}
                   title="Retry Loading"
                 />
               </Surface>
@@ -833,9 +841,9 @@ const RecommendationScreen = () => {
                 }),
               );
             }}
-            variant="primary"
-            style={styles.restartButton}
-            icon="refresh"
+            variant="outline"
+            style={restartButtonStyle}
+            contentStyle={restartButtonContentStyle}
           />
         </View>
       </ScrollView>

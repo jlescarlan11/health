@@ -143,6 +143,7 @@ jest.mock('@react-native-community/netinfo', () => ({
 // Mock expo-location
 jest.mock('expo-location', () => ({
   requestForegroundPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  getForegroundPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
   getCurrentPositionAsync: jest.fn(() =>
     Promise.resolve({
       coords: {

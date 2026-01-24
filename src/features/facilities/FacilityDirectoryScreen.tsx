@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
-import { Searchbar, Chip, useTheme } from 'react-native-paper';
+import { View, StyleSheet, Keyboard, KeyboardAvoidingView, Platform, Linking } from 'react-native';
+import { Searchbar, Chip, useTheme, Surface, Text } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';
@@ -10,6 +10,7 @@ import { ScrollView } from 'react-native';
 import { AppDispatch } from '../../store';
 import { fetchFacilities, setFilters } from '../../store/facilitiesSlice';
 import { FacilityListView } from '../../components/features/facilities';
+import { Button } from '../../components/common/Button';
 import StandardHeader from '../../components/common/StandardHeader';
 import { FacilitiesStackParamList } from '../../navigation/types';
 import { useUserLocation } from '../../hooks';
@@ -31,11 +32,15 @@ export const FacilityDirectoryScreen = () => {
 
   // Use the custom hook for location management
   // It will automatically update the Redux store with the user's location
-  useUserLocation({ watch: false });
+  const { permissionStatus, requestPermission, getCurrentLocation } = useUserLocation({
+    watch: false,
+    requestOnMount: false,
+    showDeniedAlert: false,
+  });
 
   // Load initial data
   useEffect(() => {
-    dispatch(fetchFacilities({ page: 1, refresh: true }));
+    dispatch(fetchFacilities());
   }, [dispatch]);
 
   // Debounce search dispatch
@@ -90,6 +95,17 @@ export const FacilityDirectoryScreen = () => {
       handleFilterPress(route.params.filter);
     }
   }, [route.params?.filter]);
+
+  const showLocationPermissionBanner =
+    permissionStatus === 'denied' || permissionStatus === 'undetermined';
+
+  const handlePermissionPress = () => {
+    if (permissionStatus === 'undetermined') {
+      getCurrentLocation();
+    } else {
+      Linking.openSettings().catch(() => {});
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -148,7 +164,39 @@ export const FacilityDirectoryScreen = () => {
             </ScrollView>
           </View>
 
-          <FacilityListView />
+          <FacilityListView
+            ListHeaderComponent={
+              showLocationPermissionBanner ? (
+                <Surface
+                  style={[
+                    styles.locationBanner,
+                    {
+                      backgroundColor: theme.colors.surfaceVariant,
+                      borderColor: theme.colors.outlineVariant,
+                    },
+                  ]}
+                  elevation={0}
+                >
+                  <View style={styles.locationBannerRow}>
+                    <Text
+                      variant="bodyMedium"
+                      style={{ color: theme.colors.onSurface, flex: 1, flexWrap: 'wrap' }}
+                    >
+                      Enable location to see the nearest facilities.
+                    </Text>
+                    <Button
+                      title={permissionStatus === 'undetermined' ? 'Enable' : 'Open Settings'}
+                      variant="text"
+                      onPress={handlePermissionPress}
+                      style={styles.locationBannerCta}
+                      contentStyle={styles.locationBannerCtaContent}
+                      labelStyle={styles.locationBannerCtaLabel}
+                    />
+                  </View>
+                </Surface>
+              ) : null
+            }
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -182,6 +230,28 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginRight: 8,
+  },
+  locationBanner: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  locationBannerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  locationBannerCta: {
+    minHeight: 36,
+    marginVertical: 0,
+  },
+  locationBannerCtaContent: {
+    height: 36,
+  },
+  locationBannerCtaLabel: {
+    fontSize: 14,
   },
   center: {
     flex: 1,

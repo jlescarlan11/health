@@ -72,7 +72,7 @@ The underlying cause is an **information gap** in healthcare navigation, which l
 - YAKAP accreditation status
 - Photos
 
-**Views:** Map view (color-coded pins) and list view (sorted by distance)
+**Views:** List view (sorted by distance)
 
 **Accessibility:** Screen reader support, high contrast mode, adjustable fonts, WCAG 2.1 Level AA compliant  
 **Offline Functionality:** Works without internet for facility directory, YAKAP info, and emergency hotlines
@@ -111,11 +111,9 @@ The underlying cause is an **information gap** in healthcare navigation, which l
 - **ORM**: Prisma 7.2.0 (latest, Dec 17, 2025\)
 - **Database**: Aiven PostgreSQL (Free tier: 50MB storage, 5 concurrent connections)
 
-### **AI & Maps**
+### **AI**
 
 - **AI API**: Google Gemini 2.5 Flash (Free tier: 15 RPM, 1M TPM, 1500 RPD)
-- **Maps**: @rnmapbox/maps 10.2.9 (latest)
-- **Mapbox SDK**: v11.x (Free tier: 50K requests/month)
 
 ### **Authentication & Storage**
 
