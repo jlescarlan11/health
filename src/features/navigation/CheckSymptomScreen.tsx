@@ -326,29 +326,30 @@ const CheckSymptomScreen = () => {
           </View>
 
           {assessmentState && (
-            <Pressable
-              onPress={() => navigation.navigate('SymptomAssessment', { initialSymptom: assessmentState.initialSymptom })}
-              style={({ pressed }) => [
-                styles.resumeBanner,
-                {
-                  backgroundColor: theme.colors.primaryContainer,
-                  opacity: pressed ? 0.8 : 1,
-                },
-              ]}
-            >
-              <View style={styles.resumeContent}>
-                <MaterialCommunityIcons name="play-circle-outline" size={24} color={theme.colors.primary} />
-                <View style={styles.resumeTextContainer}>
-                  <Text variant="titleMedium" style={{ color: theme.colors.onPrimaryContainer, fontWeight: 'bold' }}>
-                    Ongoing Assessment
-                  </Text>
-                  <Text variant="bodySmall" style={{ color: theme.colors.onPrimaryContainer }}>
-                    Continue your assessment for "{assessmentState.initialSymptom}"
-                  </Text>
+            <View>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Ongoing Assessment
+              </Text>
+              <Pressable
+                onPress={() => navigation.navigate('SymptomAssessment', { initialSymptom: assessmentState.initialSymptom })}
+                style={({ pressed }) => [
+                  styles.resumeBanner,
+                  {
+                    backgroundColor: theme.colors.secondaryContainer,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}
+              >
+                <View style={styles.resumeContent}>
+                  <View style={styles.resumeTextContainer}>
+                    <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>
+                      Continue your assessment for "{assessmentState.initialSymptom}"
+                    </Text>
+                  </View>
+                  <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.primary} />
                 </View>
-                <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.primary} />
-              </View>
-            </Pressable>
+              </Pressable>
+            </View>
           )}
 
           <View style={styles.quickActions}>
@@ -425,7 +426,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: 'rgba(55, 151, 119, 0.2)',
   },
   resumeContent: {
@@ -434,7 +435,6 @@ const styles = StyleSheet.create({
   },
   resumeTextContainer: {
     flex: 1,
-    marginLeft: 12,
   },
   anchoredInputContainer: {
     paddingHorizontal: 16,
