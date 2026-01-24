@@ -43,8 +43,6 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
         style,
         {
           backgroundColor: theme.colors.surface,
-          borderLeftWidth: 4,
-          borderLeftColor: theme.colors.surfaceVariant,
         },
       ]}
       mode="contained"

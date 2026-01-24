@@ -122,8 +122,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           shadowOpacity: 0.05,
           shadowRadius: 8,
           elevation: 2,
-          borderLeftWidth: 4,
-          borderLeftColor: statusColor,
         },
       ]}
       onPress={onPress}
