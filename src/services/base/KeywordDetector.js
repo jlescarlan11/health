@@ -97,7 +97,7 @@ var KeywordDetector = /** @class */ (function () {
     // 1. Remove JSON structures and technical metadata while preserving content
     var cleaned = text
       .replace(/{"question":".*?","answer":"(.*?)"}/g, '$1') // Extract answer from JSON pairs
-      .replace(/[\[\]\{\}]/g, ' ') // Remove brackets
+      .replace(/[[\]{}]/g, ' ') // Remove brackets
       .replace(/"answer":/g, ' ')
       .replace(/"question":/g, ' ')
       .replace(/"/g, ' ');

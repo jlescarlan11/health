@@ -23,7 +23,7 @@ describe('facilityUtils', () => {
     global.Date = class extends RealDate {
       constructor(...args: any[]) {
         if (args.length > 0) {
-          // @ts-ignore
+          // @ts-expect-error: RealDate constructor typing mismatch in mock
           return new RealDate(...args);
         }
         return fixedNow;
@@ -80,6 +80,30 @@ describe('facilityUtils', () => {
         },
       });
       expect(getOpenStatus(facility).text).toBe('Closed - Opens Monday at 8:00 AM');
+    });
+
+    it('returns Opens at [Time] when opening within 4 hours', () => {
+      // Current time is 10:00 AM
+      const facility = buildFacility({
+        operatingHours: {
+          schedule: {
+            5: { open: '13:00', close: '17:00' }, // Opens at 1:00 PM (3 hours away)
+          },
+        },
+      });
+      expect(getOpenStatus(facility).text).toBe('Opens at 1:00 PM');
+    });
+
+    it('returns Closed - Opens at [Time] when opening more than 4 hours away', () => {
+      // Current time is 10:00 AM
+      const facility = buildFacility({
+        operatingHours: {
+          schedule: {
+            5: { open: '15:00', close: '19:00' }, // Opens at 3:00 PM (5 hours away)
+          },
+        },
+      });
+      expect(getOpenStatus(facility).text).toBe('Closed - Opens at 3:00 PM');
     });
   });
 

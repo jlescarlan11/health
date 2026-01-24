@@ -35,19 +35,52 @@ const SkeletonItem = ({ style }: { style: ViewStyle }) => {
 };
 
 export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
+  const theme = useTheme();
   return (
-    <Card style={[styles.card, style]} mode="elevated">
-      <View style={styles.header}>
-        <View>
-          <SkeletonItem style={styles.title} />
-          <SkeletonItem style={styles.subtitle} />
+    <Card
+      style={[
+        styles.card,
+        style,
+        {
+          backgroundColor: theme.colors.surface,
+          borderLeftWidth: 4,
+          borderLeftColor: theme.colors.surfaceVariant,
+        },
+      ]}
+      mode="contained"
+    >
+      <View style={styles.cardInner}>
+        <View style={styles.headerRow}>
+          <View style={styles.titleContainer}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+              <SkeletonItem style={styles.icon} />
+              <View style={{ flex: 1 }}>
+                <SkeletonItem style={styles.titleLine} />
+                <SkeletonItem style={styles.distance} />
+              </View>
+            </View>
+          </View>
+          <View style={styles.rightHeader}>
+            <SkeletonItem style={styles.directionsButton} />
+            <SkeletonItem style={styles.yakapBadge} />
+          </View>
         </View>
-        <SkeletonItem style={styles.chip} />
+
+        <View style={styles.content}>
+          <View style={styles.statusRow}>
+            <SkeletonItem style={styles.statusIcon} />
+            <SkeletonItem style={styles.statusText} />
+          </View>
+
+          <SkeletonItem style={styles.addressLine} />
+
+          <View style={styles.servicesRow}>
+            <SkeletonItem style={styles.serviceChip} />
+            <SkeletonItem style={styles.serviceChip} />
+            <SkeletonItem style={styles.serviceChip} />
+          </View>
+        </View>
       </View>
-      <Card.Content>
-        <SkeletonItem style={styles.address} />
-        <SkeletonItem style={styles.services} />
-      </Card.Content>
     </Card>
   );
 };
@@ -55,41 +88,87 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
 const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
-    borderRadius: 12,
-    paddingVertical: 8,
+    borderRadius: 20,
+    elevation: 2,
   },
-  header: {
+  cardInner: {
+    padding: 16,
+  },
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    marginBottom: 8,
-  },
-  title: {
-    width: 150,
-    height: 20,
-    borderRadius: 4,
-    marginBottom: 8,
-  },
-  subtitle: {
-    width: 100,
-    height: 16,
-    borderRadius: 4,
-  },
-  chip: {
-    width: 60,
-    height: 24,
-    borderRadius: 12,
-  },
-  address: {
-    width: '90%',
-    height: 16,
-    borderRadius: 4,
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
-  services: {
+  titleContainer: {
+    flex: 1,
+    marginRight: 8,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    marginRight: 8,
+    marginTop: 4,
+  },
+  titleLine: {
     width: '80%',
     height: 20,
     borderRadius: 4,
+    marginBottom: 8,
+  },
+  distance: {
+    width: 60,
+    height: 12,
+    borderRadius: 4,
+  },
+  rightHeader: {
+    alignItems: 'flex-end',
+  },
+  directionsButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 16,
+    marginBottom: 8,
+  },
+  yakapBadge: {
+    width: 50,
+    height: 18,
+    borderRadius: 6,
+  },
+  content: {
+    marginTop: 0,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  statusIcon: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 6,
+  },
+  statusText: {
+    width: 100,
+    height: 14,
+    borderRadius: 4,
+  },
+  addressLine: {
+    width: '90%',
+    height: 13,
+    borderRadius: 4,
+    marginBottom: 16,
+  },
+  servicesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  serviceChip: {
+    width: 70,
+    height: 24,
+    borderRadius: 12,
   },
 });

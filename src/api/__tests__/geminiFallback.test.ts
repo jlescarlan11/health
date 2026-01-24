@@ -1,7 +1,7 @@
 import { prioritizeQuestions } from '../../utils/aiUtils';
 import { DEFAULT_RED_FLAG_QUESTION } from '../../constants/clinical';
 
-let mockGenerateContent = jest.fn();
+const mockGenerateContent = jest.fn();
 let geminiModule: typeof import('../geminiClient');
 let generateAssessmentPlan: (symptom: string) => Promise<{ questions: any[]; intro?: string }>;
 const createLLMResult = (

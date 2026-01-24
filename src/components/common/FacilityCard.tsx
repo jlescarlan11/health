@@ -42,9 +42,15 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 }) => {
   const theme = useTheme();
   const [showAllServices, setShowAllServices] = React.useState(false);
-  const { text: statusText, color: statusColor } = getOpenStatus(facility);
+  const { text: statusText, color: statusColor, isOpen } = getOpenStatus(facility);
 
-  const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${showDistance && distance !== undefined ? `, Distance: ${formatDistance(distance)}` : ''}`;
+  const has247Emergency = React.useMemo(() => {
+    const hasEmergency = facility.services.includes('Emergency');
+    const is247 = facility.is_24_7 || facility.operatingHours?.is24x7;
+    return !!(hasEmergency && is247);
+  }, [facility.services, facility.is_24_7, facility.operatingHours?.is24x7]);
+
+  const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${has247Emergency ? ', 24/7 Emergency Services Available' : ''}${showDistance ? `, Distance: ${typeof distance === 'number' && !isNaN(distance) ? formatDistance(distance) : 'unavailable'}` : ''}`;
 
   const handleDirectionsPress = async () => {
     const opened = await openExternalMaps({
@@ -140,7 +146,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 <Text variant="titleMedium" style={styles.title}>
                   {facility.name}
                 </Text>
-                {showDistance && distance !== undefined && (
+                {has247Emergency && (
+                  <View style={styles.emergencyBadge}>
+                    <MaterialCommunityIcons name="alert-decagram" size={12} color="#fff" />
+                    <Text style={styles.emergencyBadgeText}>24/7 EMERGENCY</Text>
+                  </View>
+                )}
+                {showDistance && (
                   <View style={styles.distanceContainer}>
                     <MaterialCommunityIcons
                       name="map-marker-outline"
@@ -151,7 +163,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                       variant="labelSmall"
                       style={[styles.distance, { color: theme.colors.outline }]}
                     >
-                      {formatDistance(distance)}
+                      {typeof distance === 'number' && !isNaN(distance)
+                        ? formatDistance(distance)
+                        : '—'}
                     </Text>
                   </View>
                 )}
@@ -198,6 +212,12 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         <View style={styles.content}>
           <View style={styles.statusRow}>
+            <MaterialCommunityIcons
+              name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
+              size={14}
+              color={statusColor}
+              style={{ marginRight: 6 }}
+            />
             <Text
               variant="labelMedium"
               style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
@@ -331,6 +351,24 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginLeft: 6,
     letterSpacing: 0.3,
+  },
+  emergencyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D32F2F',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 4,
+    marginBottom: 4,
+    alignSelf: 'flex-start',
+  },
+  emergencyBadgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '900',
+    marginLeft: 4,
+    letterSpacing: 0.5,
   },
   content: {
     marginTop: 0,

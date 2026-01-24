@@ -37,7 +37,7 @@ import {
   AssessmentTurnMeta,
 } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
-import { TriageArbiter, TriageSignal } from '../services/triageArbiter';
+import { TriageArbiter } from '../services/triageArbiter';
 import {
   TriageFlow,
   AssessmentQuestion,
@@ -187,13 +187,14 @@ const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[
     case 'red_flags':
       // Red flags explicitly implies symptoms
       return `I'm experiencing ${joined}.`;
-    default:
+    default: {
       // 3. Fallback based on question text content
       const lowerText = question.text.toLowerCase();
       if (lowerText.includes('symptom') || lowerText.includes('experiencing')) {
         return `I'm experiencing ${joined}.`;
       }
       return joined;
+    }
   }
 };
 
@@ -379,7 +380,6 @@ const SymptomAssessmentScreen = () => {
       ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers).length > 0
       : false,
   );
-  const [arbiterSignal, setArbiterSignal] = useState<TriageSignal | null>(null);
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
     (savedState?.symptomCategory as any) || null,
   );
@@ -1261,7 +1261,6 @@ const SymptomAssessmentScreen = () => {
 
           setPreviousProfile(profile);
 
-          setArbiterSignal(arbiterResult.signal);
           console.log(
             `[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`,
           );
@@ -1717,10 +1716,10 @@ const SymptomAssessmentScreen = () => {
             }, 600);
             return;
           }
-        } catch (e) {
+        } catch (_e) {
           console.warn(
             '[Assessment] Arbiter consultation or follow-up failed, continuing planned path...',
-            e,
+            _e,
           );
         }
       }
@@ -2039,7 +2038,7 @@ const SymptomAssessmentScreen = () => {
         },
         (vol) => setVolume(vol),
       );
-    } catch (e) {
+    } catch (_e) {
       setIsRecording(false);
     }
   };

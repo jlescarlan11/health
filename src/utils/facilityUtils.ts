@@ -169,9 +169,14 @@ export const getOpenStatus = (
               color: OPEN_COLOR,
             };
           } else if (currentTimeInMinutes < openTimeInMinutes) {
+            const minutesUntilOpen = openTimeInMinutes - currentTimeInMinutes;
+            const statusText =
+              minutesUntilOpen <= 240
+                ? `Opens at ${formatTime12h(todayHours.open)}`
+                : `Closed - Opens at ${formatTime12h(todayHours.open)}`;
             return {
               isOpen: false,
-              text: `Closed - Opens at ${formatTime12h(todayHours.open)}`,
+              text: statusText,
               color: CLOSED_COLOR,
             };
           } else {
@@ -213,9 +218,14 @@ export const getOpenStatus = (
       if (currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes) {
         return { isOpen: true, text: 'Open Now', color: OPEN_COLOR };
       } else if (currentTimeInMinutes < openTimeInMinutes) {
+        const minutesUntilOpen = openTimeInMinutes - currentTimeInMinutes;
+        const statusText =
+          minutesUntilOpen <= 240
+            ? `Opens at ${formatTime12h(operatingHours.open as string)}`
+            : `Closed - Opens at ${formatTime12h(operatingHours.open as string)}`;
         return {
           isOpen: false,
-          text: `Closed - Opens at ${formatTime12h(operatingHours.open)}`,
+          text: statusText,
           color: CLOSED_COLOR,
         };
       } else {
