@@ -56,7 +56,12 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
 
     // Find the nearest facility within 50 meters (0.05 km)
     for (const facility of currentFacilities) {
-      const distance = calculateDistance(latitude, longitude, facility.latitude, facility.longitude);
+      const distance = calculateDistance(
+        latitude,
+        longitude,
+        facility.latitude,
+        facility.longitude,
+      );
       if (distance <= 0.05 && distance < minDistance) {
         minDistance = distance;
         nearestFacilityId = facility.id;
@@ -204,7 +209,6 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watch, requestOnMount]); // Only re-run if core watch/mount options change
-
 
   return {
     location,

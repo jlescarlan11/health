@@ -44,7 +44,7 @@ describe('FacilityCard', () => {
 
   it('renders busyness indicator when facility is open', () => {
     const { getByText } = render(<FacilityCard facility={mockFacility} />);
-    expect(getByText('Quiet Now')).toBeTruthy();
+    expect(getByText('Not Busy')).toBeTruthy();
   });
 
   it('hides busyness indicator when facility is closed', () => {

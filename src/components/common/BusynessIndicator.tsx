@@ -37,7 +37,12 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
 
   if (variant === 'badge') {
     return (
-      <View style={[styles.badgeContainer, { backgroundColor: config.color + '15', borderColor: config.color + '30' }]}>
+      <View
+        style={[
+          styles.badgeContainer,
+          { backgroundColor: config.color + '15', borderColor: config.color + '30' },
+        ]}
+      >
         <MaterialCommunityIcons
           name={config.icon as any}
           size={16}

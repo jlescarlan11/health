@@ -61,7 +61,7 @@ const YakapHomeScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <StandardHeader title="YAKAP Guide" showBackButton />
+      <StandardHeader title="YAKAP" showBackButton />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View

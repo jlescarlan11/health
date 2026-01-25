@@ -106,7 +106,7 @@ describe('FacilityDetailsScreen', () => {
     (useSelector as unknown as jest.Mock).mockReturnValue(facilityWithBusyness);
 
     const { getByText } = render(<FacilityDetailsScreen />);
-    expect(getByText('Quiet Now')).toBeTruthy();
+    expect(getByText('Not Busy')).toBeTruthy();
   });
 
   it('hides live busyness status when facility is closed', () => {
@@ -115,19 +115,19 @@ describe('FacilityDetailsScreen', () => {
       operatingHours: { is24x7: false, open: '08:00', close: '17:00' }, // Assuming this will be closed depending on mock Date
       busyness: { status: 'quiet', score: 0.2 },
     };
-    
+
     // We need to ensure the facility is considered closed.
     // getOpenStatus uses new Date().
     // I might need to mock Date or just set operatingHours to something that is definitely closed.
     // Or just set is24x7: false and no schedule.
-    
+
     const definitelyClosedFacility = {
       ...mockFacility,
       is_24_7: false,
       operatingHours: { is24x7: false, schedule: { [new Date().getDay()]: null } },
       busyness: { status: 'quiet', score: 0.2 },
     };
-    
+
     (useSelector as unknown as jest.Mock).mockReturnValue(definitelyClosedFacility);
 
     const { queryByText } = render(<FacilityDetailsScreen />);

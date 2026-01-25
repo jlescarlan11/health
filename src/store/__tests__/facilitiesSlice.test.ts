@@ -72,7 +72,11 @@ describe('facilitiesSlice searchQuery matching', () => {
 });
 
 describe('facilitiesSlice quietNow filtering', () => {
-  const buildFacilityWithBusyness = (id: string, score: number, status: 'quiet' | 'moderate' | 'busy'): Facility =>
+  const buildFacilityWithBusyness = (
+    id: string,
+    score: number,
+    status: 'quiet' | 'moderate' | 'busy',
+  ): Facility =>
     buildFacility({
       id,
       busyness: { score, status },

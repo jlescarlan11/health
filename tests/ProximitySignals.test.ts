@@ -60,7 +60,7 @@ describe('useUserLocation Proximity Logic', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     jest.setSystemTime(1000);
-    
+
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
     (useSelector as jest.Mock).mockImplementation((selector) =>
       selector({
@@ -69,12 +69,14 @@ describe('useUserLocation Proximity Logic', () => {
         },
       }),
     );
-    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+    (Location.requestForegroundPermissionsAsync as jest.Mock).mockResolvedValue({
+      status: 'granted',
+    });
     (Location.getForegroundPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
-    
+
     // Default to far away
     (Location.getCurrentPositionAsync as jest.Mock).mockResolvedValue(farLocation);
-    
+
     (Location.watchPositionAsync as jest.Mock).mockResolvedValue({
       remove: jest.fn(),
     });
@@ -106,7 +108,7 @@ describe('useUserLocation Proximity Logic', () => {
 
     // Advance 4 minutes
     jest.advanceTimersByTime(4 * 60 * 1000);
-    
+
     await act(async () => {
       watchCallback({
         ...nearLocation,
@@ -115,10 +117,7 @@ describe('useUserLocation Proximity Logic', () => {
     });
 
     // Should HAVE signaled now
-    expect(sendFacilitySignal).toHaveBeenCalledWith(
-      'naga-city-hospital',
-      expect.any(String)
-    );
+    expect(sendFacilitySignal).toHaveBeenCalledWith('naga-city-hospital', expect.any(String));
   });
 
   it('resets dwell timer if user leaves proximity before threshold', async () => {

@@ -67,7 +67,7 @@ export const getAllFacilities = async (params: GetFacilitiesParams) => {
     facilities: enrichedFacilities,
     total,
     limit: fetchAll ? total : limit,
-    offset: fetchAll ? 0 : offset ?? 0,
+    offset: fetchAll ? 0 : (offset ?? 0),
   };
 };
 
@@ -122,7 +122,9 @@ export const updateLiveOccupancy = async (facilityId: string) => {
   });
 };
 
-export const getFacilityById = async (id: string): Promise<(Facility & { busyness_score: number }) | null> => {
+export const getFacilityById = async (
+  id: string,
+): Promise<(Facility & { busyness_score: number }) | null> => {
   const facility = await prisma.facility.findUnique({
     where: { id },
   });
