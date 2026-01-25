@@ -7,6 +7,11 @@ interface SettingsState {
   notificationsEnabled: boolean;
   language: 'en' | 'fil';
   hasPhilHealth: boolean | null;
+  specializedModes: {
+    isSenior: boolean;
+    isPWD: boolean;
+    isChronic: boolean;
+  };
 }
 
 const initialState: SettingsState = {
@@ -16,6 +21,11 @@ const initialState: SettingsState = {
   notificationsEnabled: true,
   language: 'en',
   hasPhilHealth: null,
+  specializedModes: {
+    isSenior: false,
+    isPWD: false,
+    isChronic: false,
+  },
 };
 
 const settingsSlice = createSlice({
@@ -40,6 +50,12 @@ const settingsSlice = createSlice({
     setHasPhilHealth: (state, action: PayloadAction<boolean | null>) => {
       state.hasPhilHealth = action.payload;
     },
+    toggleSpecializedMode: (
+      state,
+      action: PayloadAction<keyof SettingsState['specializedModes']>
+    ) => {
+      state.specializedModes[action.payload] = !state.specializedModes[action.payload];
+    },
   },
 });
 
@@ -50,5 +66,6 @@ export const {
   toggleNotifications,
   setLanguage,
   setHasPhilHealth,
+  toggleSpecializedMode,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;

@@ -476,3 +476,87 @@ export const getHistoryById = async (id: string): Promise<ClinicalHistoryRecord 
     throw error;
   }
 };
+
+export interface MedicationRecord {
+  id: string;
+  name: string;
+  dosage: string;
+  scheduled_time: string;
+  is_active: number;
+  days_of_week: string;
+}
+
+export const saveMedication = async (medication: MedicationRecord) => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    await db.execAsync('BEGIN TRANSACTION');
+
+    const statement = await db.prepareAsync(
+      `INSERT OR REPLACE INTO medications (id, name, dosage, scheduled_time, is_active, days_of_week) 
+       VALUES ($id, $name, $dosage, $scheduled_time, $is_active, $days_of_week)`,
+    );
+
+    try {
+      await statement.executeAsync({
+        $id: medication.id,
+        $name: medication.name,
+        $dosage: medication.dosage,
+        $scheduled_time: medication.scheduled_time,
+        $is_active: medication.is_active,
+        $days_of_week: medication.days_of_week,
+      });
+
+      await db.execAsync('COMMIT');
+      console.log(`Saved medication record: ${medication.id}`);
+    } catch (innerError) {
+      console.error('Error during medication save:', innerError);
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Failed to rollback medication transaction:', rollbackError);
+      }
+      throw innerError;
+    } finally {
+      await statement.finalizeAsync();
+    }
+  } catch (error) {
+    console.error('Error in saveMedication:', error);
+    throw error;
+  }
+};
+
+export const getMedications = async (): Promise<MedicationRecord[]> => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    const result = await db.getAllAsync<MedicationRecord>('SELECT * FROM medications');
+    return result;
+  } catch (error) {
+    console.error('Error getting medications:', error);
+    throw error;
+  }
+};
+
+export const deleteMedication = async (id: string) => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    await db.execAsync('BEGIN TRANSACTION');
+    try {
+      await db.runAsync('DELETE FROM medications WHERE id = ?', [id]);
+      await db.execAsync('COMMIT');
+      console.log(`Deleted medication record: ${id}`);
+    } catch (innerError) {
+      console.error('Error during medication deletion:', innerError);
+      await db.execAsync('ROLLBACK');
+      throw innerError;
+    }
+  } catch (error) {
+    console.error('Error in deleteMedication:', error);
+    throw error;
+  }
+};

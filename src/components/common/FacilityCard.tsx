@@ -20,6 +20,7 @@ import { BusynessIndicator } from './BusynessIndicator';
 import { ServiceChip } from './ServiceChip';
 import { CommunicationHub } from '../features/facilities';
 import { TeleconsultBadge } from './TeleconsultBadge';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -41,6 +42,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   simplified = false,
 }) => {
   const theme = useTheme();
+  const { scaleFactor } = useAdaptiveUI();
   const { text: statusText, color: statusColor, isOpen } = getOpenStatus(facility);
   const [showAllServices, setShowAllServices] = React.useState(false);
 
@@ -148,7 +150,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     >
       <View style={styles.cardInner}>
         {/* Header Row */}
-        <Text variant="titleMedium" style={styles.title}>
+        <Text
+          variant="titleMedium"
+          style={[
+            styles.title,
+            { fontSize: 20 * scaleFactor, lineHeight: 26 * scaleFactor },
+          ]}
+        >
           {facility.name}
         </Text>
 
@@ -166,11 +174,21 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             .filter(Boolean)
             .map((item, index, array) => (
               <React.Fragment key={index}>
-                <Text variant="labelSmall" style={styles.metaText}>
+                <Text
+                  variant="labelSmall"
+                  style={[styles.metaText, { fontSize: 12 * scaleFactor }]}
+                >
                   {item}
                 </Text>
                 {index < array.length - 1 && (
-                  <Text variant="labelSmall" style={[styles.metaText, styles.metaSeparator]}>
+                  <Text
+                    variant="labelSmall"
+                    style={[
+                      styles.metaText,
+                      styles.metaSeparator,
+                      { fontSize: 12 * scaleFactor },
+                    ]}
+                  >
                     •
                   </Text>
                 )}
@@ -180,7 +198,14 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           {hasMatches && (
             <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9', marginLeft: 4 }]}>
               <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
-              <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
+              <Text
+                style={[
+                  styles.matchText,
+                  { color: '#2E7D32', fontSize: 10 * scaleFactor },
+                ]}
+              >
+                Matches Needs
+              </Text>
             </View>
           )}
 
@@ -198,7 +223,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             />
             <Text
               variant="labelMedium"
-              style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
+              style={{
+                color: statusColor,
+                fontWeight: '700',
+                letterSpacing: 0.3,
+                fontSize: 12 * scaleFactor,
+                lineHeight: 16 * scaleFactor,
+              }}
             >
               {statusText}
             </Text>
@@ -221,7 +252,11 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             >
               <Text
                 variant="labelSmall"
-                style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10 }}
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: '800',
+                  fontSize: 10 * scaleFactor,
+                }}
               >
                 +{totalServicesCount - displayServices.length} MORE
               </Text>
