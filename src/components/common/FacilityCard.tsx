@@ -151,7 +151,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
         <View style={styles.metaRow}>
           {[
             formatFacilityType(facility.type),
-            facility.yakapAccredited ? 'Yakap Accredited' : null,
+            facility.yakapAccredited ? 'YAKAP Accredited' : null,
             showDistance
               ? typeof distance === 'number' && !isNaN(distance)
                 ? `${formatDistance(distance)}`

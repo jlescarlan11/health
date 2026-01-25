@@ -92,7 +92,7 @@ describe('FacilityDetailsScreen', () => {
 
     expect(getAllByText('Naga City Hospital').length).toBeGreaterThan(0);
     expect(getByText('Public Hospital')).toBeTruthy();
-    expect(getByText('Yakap Accredited')).toBeTruthy();
+    expect(getByText('YAKAP Accredited')).toBeTruthy();
     expect(getByText('Concepcion Pequeña, Naga City')).toBeTruthy();
     expect(getByText('Emergency')).toBeTruthy();
     expect(getByText('Consultation')).toBeTruthy();

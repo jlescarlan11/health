@@ -254,7 +254,7 @@ export const FacilityDetailsScreen = () => {
             <View style={styles.metaRow}>
               {[
                 formatFacilityType(facility.type),
-                facility.yakapAccredited ? 'Yakap Accredited' : null,
+                facility.yakapAccredited ? 'YAKAP Accredited' : null,
                 typeof distance === 'number' && !isNaN(distance)
                   ? `${formatDistance(distance)}`
                   : null,
