@@ -4,6 +4,7 @@ import { Facility } from '../../generated/prisma/client';
 
 interface FacilityWithDistance extends Facility {
   distance?: number;
+  busyness_score?: number;
 }
 
 // Helper to map DB model to Frontend Interface
@@ -30,6 +31,8 @@ const mapToFacility = (f: FacilityWithDistance) => {
     distance: f.distance, // Preserve if present
     specialized_services: f.specialized_services,
     is_24_7: f.is_24_7,
+    busyness_score: f.busyness_score || 0,
+    live_metrics: (f as any).live_metrics,
   };
 };
 

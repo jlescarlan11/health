@@ -67,6 +67,25 @@ const getApiUrl = () => {
 
 const API_URL = getApiUrl();
 
+/**
+ * Sends a privacy-preserving proximity signal for a facility.
+ * @param facilityId The ID of the facility visited.
+ * @param visitorHash The daily rotating visitor hash.
+ */
+export const sendFacilitySignal = async (facilityId: string, visitorHash: string) => {
+  try {
+    const timestamp = new Date().toISOString();
+    await axios.post(`${API_URL}/facilities/signal`, {
+      facilityId,
+      visitorHash,
+      timestamp,
+    });
+  } catch (error) {
+    // Fail silently to avoid interrupting user experience, but log for debugging
+    console.warn(`[FacilityService] Failed to send proximity signal for ${facilityId}:`, error);
+  }
+};
+
 import {
   getFacilities as getFacilitiesFromDb,
   saveFacilitiesFull as saveFacilitiesToDb,

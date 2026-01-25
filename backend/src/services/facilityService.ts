@@ -30,35 +30,112 @@ export const getAllFacilities = async (params: GetFacilitiesParams) => {
 
   const fetchAll = limit === undefined || limit === null || limit === -1;
 
+  let facilities;
+  let total;
+
   if (fetchAll) {
-    const facilities = await prisma.facility.findMany({
+    facilities = await prisma.facility.findMany({
       where,
       orderBy: { name: 'asc' },
     });
-
-    const total = facilities.length;
-    return { facilities, total, limit: total, offset: 0 };
+    total = facilities.length;
+  } else {
+    const normalizedOffset = offset ?? 0;
+    const [foundFacilities, count] = await Promise.all([
+      prisma.facility.findMany({
+        where,
+        take: limit,
+        skip: normalizedOffset,
+        orderBy: { name: 'asc' },
+      }),
+      prisma.facility.count({ where }),
+    ]);
+    facilities = foundFacilities;
+    total = count;
   }
 
-  const normalizedOffset = offset ?? 0;
+  // Inject busyness_score derived from live_metrics
+  const enrichedFacilities = facilities.map((f) => {
+    const metrics = (f.live_metrics as any) || {};
+    return {
+      ...f,
+      busyness_score: metrics.busyness_score || 0,
+    };
+  });
 
-  const [facilities, total] = await Promise.all([
-    prisma.facility.findMany({
-      where,
-      take: limit,
-      skip: normalizedOffset,
-      orderBy: { name: 'asc' },
-    }),
-    prisma.facility.count({ where }),
-  ]);
-
-  return { facilities, total, limit, offset: normalizedOffset };
+  return {
+    facilities: enrichedFacilities,
+    total,
+    limit: fetchAll ? total : limit,
+    offset: fetchAll ? 0 : (offset ?? 0),
+  };
 };
 
-export const getFacilityById = async (id: string): Promise<Facility | null> => {
-  return prisma.facility.findUnique({
+export const updateLiveOccupancy = async (facilityId: string) => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  // Count unique visitorHash records within a rolling 60-minute window
+  const uniqueVisitors = await prisma.facilitySignal.findMany({
+    where: {
+      facilityId,
+      timestamp: {
+        gte: oneHourAgo,
+      },
+    },
+    distinct: ['visitorHash'],
+    select: {
+      visitorHash: true,
+    },
+  });
+
+  const currentOccupancy = uniqueVisitors.length;
+
+  const facility = await prisma.facility.findUnique({
+    where: { id: facilityId },
+    select: { capacity: true, live_metrics: true },
+  });
+
+  if (!facility) return null;
+
+  const capacity = facility.capacity || 50;
+  const busynessScore = currentOccupancy / capacity;
+
+  const previousMetrics = (facility.live_metrics as any) || {};
+  const previousOccupancy = previousMetrics.current_occupancy || 0;
+
+  let trend = 'stable';
+  if (currentOccupancy > previousOccupancy) trend = 'increasing';
+  else if (currentOccupancy < previousOccupancy) trend = 'decreasing';
+
+  const newMetrics = {
+    current_occupancy: currentOccupancy,
+    last_update: new Date().toISOString(),
+    trend,
+    busyness_score: busynessScore,
+  };
+
+  return prisma.facility.update({
+    where: { id: facilityId },
+    data: {
+      live_metrics: newMetrics,
+    },
+  });
+};
+
+export const getFacilityById = async (
+  id: string,
+): Promise<(Facility & { busyness_score: number }) | null> => {
+  const facility = await prisma.facility.findUnique({
     where: { id },
   });
+
+  if (!facility) return null;
+
+  const metrics = (facility.live_metrics as any) || {};
+  return {
+    ...facility,
+    busyness_score: metrics.busyness_score || 0,
+  };
 };
 
 export const getFacilitiesByType = async (type: string, limit = 10, offset = 0) => {
@@ -72,7 +149,16 @@ export const getFacilitiesByType = async (type: string, limit = 10, offset = 0) 
     }),
     prisma.facility.count({ where }),
   ]);
-  return { facilities, total, limit, offset };
+
+  const enrichedFacilities = facilities.map((f) => {
+    const metrics = (f.live_metrics as any) || {};
+    return {
+      ...f,
+      busyness_score: metrics.busyness_score || 0,
+    };
+  });
+
+  return { facilities: enrichedFacilities, total, limit, offset };
 };
 
 export const getFacilitiesNearby = async (params: GetNearbyFacilitiesParams) => {
@@ -84,7 +170,7 @@ export const getFacilitiesNearby = async (params: GetNearbyFacilitiesParams) => 
 
   const typeFilter = type ? Prisma.sql`AND type = ${type}` : Prisma.sql``;
 
-  const facilities = await prisma.$queryRaw<Facility[]>`
+  const facilities = await prisma.$queryRaw<(Facility & { distance: number })[]>`
     SELECT *,
     (
       6371 * acos(
@@ -106,5 +192,11 @@ export const getFacilitiesNearby = async (params: GetNearbyFacilitiesParams) => 
     ORDER BY distance ASC
   `;
 
-  return facilities;
+  return facilities.map((f) => {
+    const metrics = (f.live_metrics as any) || {};
+    return {
+      ...f,
+      busyness_score: metrics.busyness_score || 0,
+    };
+  });
 };

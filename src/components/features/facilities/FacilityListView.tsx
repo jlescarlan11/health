@@ -69,7 +69,7 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
       return (
         <View>
           {[1, 2, 3].map((i) => (
-            <FacilityCardSkeleton key={i} />
+            <FacilityCardSkeleton key={i} style={styles.card} />
           ))}
         </View>
       );

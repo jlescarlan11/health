@@ -20,11 +20,12 @@ import ImageViewing from 'react-native-image-viewing';
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { Button } from '../components/common/Button';
+import { BusynessIndicator } from '../components/common/BusynessIndicator';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
 import { formatFacilityType } from '../utils';
-import { useTheme, Chip } from 'react-native-paper';
+import { useTheme, Chip, Text as PaperText } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 import { openExternalMaps } from '../utils/linkingUtils';
 
@@ -218,7 +219,11 @@ export const FacilityDetailsScreen = () => {
         title={facility.name}
         showBackButton
         rightActions={
-          <TouchableOpacity onPress={handleShare} style={styles.headerShareButton}>
+          <TouchableOpacity
+            onPress={handleShare}
+            style={styles.headerShareButton}
+            testID="header-share-button"
+          >
             <Ionicons name="share-outline" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
         }
@@ -267,7 +272,7 @@ export const FacilityDetailsScreen = () => {
                 formatFacilityType(facility.type),
                 facility.yakapAccredited ? 'Yakap Accredited' : null,
                 typeof distance === 'number' && !isNaN(distance)
-                  ? `${formatDistance(distance)} away`
+                  ? `${formatDistance(distance)}`
                   : null,
               ]
                 .filter(Boolean)
@@ -280,15 +285,21 @@ export const FacilityDetailsScreen = () => {
             </View>
 
             <View style={styles.statusRow}>
-              <MaterialCommunityIcons
-                name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-                size={14}
-                color={openStatusColor}
-                style={{ marginRight: 6 }}
-              />
-              <Text style={[styles.openStatusText, { color: openStatusColor }]}>
-                {openStatusText}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MaterialCommunityIcons
+                  name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
+                  size={14}
+                  color={openStatusColor}
+                  style={{ marginRight: 6 }}
+                />
+                <PaperText
+                  variant="labelMedium"
+                  style={{ color: openStatusColor, fontWeight: '700', letterSpacing: 0.3 }}
+                >
+                  {openStatusText}
+                </PaperText>
+              </View>
+              <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
             </View>
           </View>
 
@@ -394,9 +405,13 @@ export const FacilityDetailsScreen = () => {
                         { backgroundColor: theme.colors.secondaryContainer },
                       ]}
                       textStyle={[styles.serviceChipLabel, { color: theme.colors.primary }]}
-                                            icon={({ size }) => (
-                                              <ServiceIcon serviceName={service} size={size} color={theme.colors.primary} />
-                                            )}
+                      icon={({ size }) => (
+                        <ServiceIcon
+                          serviceName={service}
+                          size={size}
+                          color={theme.colors.primary}
+                        />
+                      )}
                     >
                       {service}
                     </Chip>
@@ -532,11 +547,7 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  openStatusText: {
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    marginBottom: 16,
   },
   servicesSection: {
     marginBottom: 24,

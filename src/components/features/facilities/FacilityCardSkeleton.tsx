@@ -43,6 +43,11 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
         style,
         {
           backgroundColor: theme.colors.surface,
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+          elevation: 2,
         },
       ]}
       mode="contained"
@@ -53,23 +58,31 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
 
         {/* Meta Row */}
         <View style={styles.metaRow}>
-          <SkeletonItem style={styles.metaText} />
-          <SkeletonItem style={[styles.metaText, { width: 80, marginLeft: 12 }]} />
-          <SkeletonItem style={[styles.metaText, { width: 80, marginLeft: 12 }]} />
-          <SkeletonItem style={[styles.matchBadge, { marginLeft: 12 }]} />
+          <SkeletonItem style={[styles.metaText, { width: 80 }]} />
+          <SkeletonItem style={styles.separatorDot} />
+          <SkeletonItem style={[styles.metaText, { width: 110 }]} />
+          <SkeletonItem style={styles.separatorDot} />
+          <SkeletonItem style={[styles.metaText, { width: 60 }]} />
         </View>
 
         {/* Status Row */}
         <View style={styles.statusRow}>
-          <SkeletonItem style={styles.statusIcon} />
-          <SkeletonItem style={styles.statusText} />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <SkeletonItem style={styles.statusIcon} />
+            <SkeletonItem style={styles.statusText} />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <SkeletonItem style={styles.separatorDot} />
+            <SkeletonItem style={styles.statusIcon} />
+            <SkeletonItem style={[styles.statusText, { width: 90 }]} />
+          </View>
         </View>
 
         {/* Services Row */}
         <View style={styles.servicesRow}>
-          <SkeletonItem style={styles.serviceChip} />
-          <SkeletonItem style={styles.serviceChip} />
-          <SkeletonItem style={styles.serviceChip} />
+          <SkeletonItem style={[styles.serviceChip, { width: 90 }]} />
+          <SkeletonItem style={[styles.serviceChip, { width: 120 }]} />
+          <SkeletonItem style={[styles.serviceChip, { width: 80 }]} />
         </View>
 
         {/* Action Buttons Row */}
@@ -86,31 +99,32 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
     borderRadius: 20,
-    elevation: 2,
+    borderWidth: 0,
   },
   cardInner: {
     padding: 16,
   },
   titleLine: {
-    width: '70%',
-    height: 20,
-    borderRadius: 4,
+    width: '75%',
+    height: 26,
+    borderRadius: 6,
     marginBottom: 8,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     marginBottom: 12,
   },
   metaText: {
-    width: 60,
     height: 12,
     borderRadius: 4,
   },
-  matchBadge: {
-    width: 70,
-    height: 18,
-    borderRadius: 6,
+  separatorDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginHorizontal: 6,
   },
   statusRow: {
     flexDirection: 'row',
@@ -124,18 +138,18 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   statusText: {
-    width: 100,
+    width: 60,
     height: 14,
     borderRadius: 4,
   },
   servicesRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: 8,
     marginBottom: 16,
   },
   serviceChip: {
-    width: 70,
     height: 24,
     borderRadius: 12,
   },

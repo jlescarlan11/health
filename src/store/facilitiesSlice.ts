@@ -10,6 +10,7 @@ interface FacilityFilters {
   yakapAccredited?: boolean;
   searchQuery?: string;
   openNow?: boolean;
+  quietNow?: boolean;
 }
 
 interface FacilitiesState {
@@ -32,6 +33,7 @@ const initialState: FacilitiesState = {
     services: [],
     yakapAccredited: false,
     openNow: false,
+    quietNow: false,
     searchQuery: '',
   },
   isLoading: false,
@@ -46,7 +48,7 @@ export const fetchFacilities = createAsyncThunk('facilities/fetchFacilities', as
 // Shared filtering logic
 const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facility[] => {
   if (!filters) return facilities;
-  const { type, services, yakapAccredited, searchQuery, openNow } = filters;
+  const { type, services, yakapAccredited, searchQuery, openNow, quietNow } = filters;
 
   return facilities.filter((facility) => {
     const matchesType = !type || type.length === 0 || type.includes(facility.type);
@@ -63,8 +65,11 @@ const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facilit
       );
 
     const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
+    const matchesQuiet = !quietNow || (facility.busyness && facility.busyness.score < 0.4);
 
-    return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
+    return (
+      matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen && matchesQuiet
+    );
   });
 };
 
@@ -199,6 +204,7 @@ const facilitiesSlice = createSlice({
         services: [],
         yakapAccredited: false,
         openNow: false,
+        quietNow: false,
         searchQuery: '',
       };
       state.filteredFacilities = [...state.facilities];
@@ -230,6 +236,22 @@ const facilitiesSlice = createSlice({
             distance: calculateDistance(latitude, longitude, f.latitude, f.longitude),
           }));
         }
+
+        // Normalize busyness data from API response
+        newFacilities = newFacilities.map((f) => {
+          const score = (f as any).busyness_score ?? (f.busyness?.score || 0);
+          let status: 'quiet' | 'moderate' | 'busy' = 'quiet';
+          if (score >= 0.7) status = 'busy';
+          else if (score >= 0.4) status = 'moderate';
+
+          return {
+            ...f,
+            busyness: {
+              score,
+              status,
+            },
+          };
+        });
 
         state.facilities = newFacilities;
         state.filteredFacilities = applyFilters(state.facilities, state.filters);

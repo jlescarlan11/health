@@ -219,6 +219,15 @@ export const normalizeFacility = (value: unknown): Facility | null => {
 
   const operatingHours = normalizeOperatingHours(record.operatingHours, is24x7Flag);
 
+  const busyness_score = coerceNumber(record.busyness_score);
+  let busyness: Facility['busyness'] = undefined;
+  if (busyness_score !== undefined) {
+    let status: 'quiet' | 'moderate' | 'busy' = 'quiet';
+    if (busyness_score >= 0.7) status = 'busy';
+    else if (busyness_score >= 0.4) status = 'moderate';
+    busyness = { score: busyness_score, status };
+  }
+
   return {
     id,
     name,
@@ -236,6 +245,7 @@ export const normalizeFacility = (value: unknown): Facility | null => {
     ...(lastUpdated === undefined ? {} : { lastUpdated }),
     specialized_services,
     is_24_7: is24x7Flag,
+    ...(busyness ? { busyness } : {}),
   };
 };
 

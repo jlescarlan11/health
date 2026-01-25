@@ -90,4 +90,13 @@ describe('FacilityDirectoryScreen Permission Banner', () => {
 
     expect(queryByText('Find the nearest help by sharing your location.')).toBeNull();
   });
+
+  it('renders the Quiet Now filter chip', () => {
+    (useUserLocation as jest.Mock).mockReturnValue({
+      permissionStatus: 'granted',
+    });
+
+    const { getByText } = render(<FacilityDirectoryScreen />);
+    expect(getByText('Quiet Now')).toBeTruthy();
+  });
 });

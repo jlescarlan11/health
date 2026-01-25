@@ -30,6 +30,7 @@ const FILTERS = [
   { id: 'hospital', label: 'Hospitals', facet: 'type' },
   { id: 'yakap', label: 'YAKAP Accredited', facet: 'yakapAccredited' },
   { id: 'open_now', label: 'Open Now', facet: 'openNow' },
+  { id: 'quiet_now', label: 'Quiet Now', facet: 'quietNow' },
 ];
 
 import { Menu, Button as PaperButton } from 'react-native-paper';
@@ -85,7 +86,7 @@ export const FacilityDirectoryScreen = () => {
 
   const handleFilterPress = (filterId: string) => {
     if (filterId === 'all') {
-      dispatch(setFilters({ type: [], yakapAccredited: false, openNow: false }));
+      dispatch(setFilters({ type: [], yakapAccredited: false, openNow: false, quietNow: false }));
       return;
     }
 
@@ -102,6 +103,8 @@ export const FacilityDirectoryScreen = () => {
       dispatch(setFilters({ yakapAccredited: !filters.yakapAccredited }));
     } else if (filterDef.facet === 'openNow') {
       dispatch(setFilters({ openNow: !filters.openNow }));
+    } else if (filterDef.facet === 'quietNow') {
+      dispatch(setFilters({ quietNow: !filters.quietNow }));
     }
   };
 
@@ -109,7 +112,10 @@ export const FacilityDirectoryScreen = () => {
     if (!filters) return filterId === 'all';
     if (filterId === 'all') {
       return (
-        (!filters.type || filters.type.length === 0) && !filters.yakapAccredited && !filters.openNow
+        (!filters.type || filters.type.length === 0) &&
+        !filters.yakapAccredited &&
+        !filters.openNow &&
+        !filters.quietNow
       );
     }
     const filterDef = FILTERS.find((f) => f.id === filterId);
@@ -146,7 +152,7 @@ export const FacilityDirectoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <StandardHeader title="Find Facilities" showBackButton />
+      <StandardHeader title="Facility Directory" showBackButton />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

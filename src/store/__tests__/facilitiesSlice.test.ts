@@ -70,3 +70,41 @@ describe('facilitiesSlice searchQuery matching', () => {
     expect(state.filteredFacilities.map((f) => f.id)).toEqual([]);
   });
 });
+
+describe('facilitiesSlice quietNow filtering', () => {
+  const buildFacilityWithBusyness = (
+    id: string,
+    score: number,
+    status: 'quiet' | 'moderate' | 'busy',
+  ): Facility =>
+    buildFacility({
+      id,
+      busyness: { score, status },
+    });
+
+  const facilities: Facility[] = [
+    buildFacilityWithBusyness('quiet', 0.2, 'quiet'),
+    buildFacilityWithBusyness('moderate', 0.5, 'moderate'),
+    buildFacilityWithBusyness('busy', 0.8, 'busy'),
+  ];
+
+  it('filters for quiet facilities when quietNow is true', () => {
+    let state = facilitiesReducer(undefined, { type: '@@INIT' });
+    state = facilitiesReducer(
+      state,
+      fetchFacilities.fulfilled({ data: facilities }, 'request-id', undefined),
+    );
+    state = facilitiesReducer(state, setFilters({ quietNow: true }));
+    expect(state.filteredFacilities.map((f) => f.id)).toEqual(['quiet']);
+  });
+
+  it('includes all facilities when quietNow is false', () => {
+    let state = facilitiesReducer(undefined, { type: '@@INIT' });
+    state = facilitiesReducer(
+      state,
+      fetchFacilities.fulfilled({ data: facilities }, 'request-id', undefined),
+    );
+    state = facilitiesReducer(state, setFilters({ quietNow: false }));
+    expect(state.filteredFacilities.length).toBe(3);
+  });
+});

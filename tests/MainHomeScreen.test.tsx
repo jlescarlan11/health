@@ -62,7 +62,7 @@ describe('MainHomeScreen', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Check', { screen: 'CheckSymptom' });
   });
 
-  it('navigates to FacilityDirectory when Find Facilities is pressed', () => {
+  it('navigates to FacilityDirectory when Facility Directory is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('Facility Directory'));
     expect(mockNavigate).toHaveBeenCalledWith(
@@ -71,7 +71,7 @@ describe('MainHomeScreen', () => {
     );
   });
 
-  it('navigates to YakapHome when YAKAP Enrollment is pressed', () => {
+  it('navigates to YakapHome when YAKAP Guide is pressed', () => {
     const { getByText } = render(component);
     fireEvent.press(getByText('YAKAP Guide'));
     expect(mockNavigate).toHaveBeenCalledWith('YAKAP', { screen: 'YakapHome' });
