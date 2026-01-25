@@ -28,7 +28,7 @@ export const ServiceChip: React.FC<ServiceChipProps> = ({ service }) => {
     <View
       style={[
         styles.serviceChip,
-        { backgroundColor: theme.colors.primaryContainer + '40' },
+        { backgroundColor: theme.colors.primaryContainer },
       ]}
     >
       <MaterialCommunityIcons
