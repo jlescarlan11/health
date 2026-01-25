@@ -10,12 +10,28 @@ interface UseUserLocationOptions {
   showDeniedAlert?: boolean;
 }
 
+import { NAGA_CITY_DISTRICTS } from '../constants/location';
+
 export const useUserLocation = (options: UseUserLocationOptions = { watch: false }) => {
   const { watch = false, requestOnMount = true, showDeniedAlert = true } = options;
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [manualDistrictId, setManualDistrictId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
   const dispatch = useDispatch();
+
+  const setManualLocation = useCallback((districtId: string) => {
+    const district = NAGA_CITY_DISTRICTS.find(d => d.id === districtId);
+    if (district) {
+      setManualDistrictId(districtId);
+      dispatch(
+        setUserLocation({
+          latitude: district.latitude,
+          longitude: district.longitude,
+        }),
+      );
+    }
+  }, [dispatch]);
 
   const requestPermission = useCallback(async () => {
     try {
@@ -113,5 +129,13 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
     };
   }, [dispatch, requestPermission, watch, getCurrentLocation, requestOnMount]);
 
-  return { location, errorMsg, permissionStatus, requestPermission, getCurrentLocation };
+  return { 
+    location, 
+    errorMsg, 
+    permissionStatus, 
+    manualDistrictId,
+    requestPermission, 
+    getCurrentLocation,
+    setManualLocation 
+  };
 };

@@ -307,6 +307,7 @@ export const getFacilities = async (): Promise<Facility[]> => {
               ? JSON.parse(row.specialized_services)
               : [],
             is_24_7: Boolean(row.is_24_7),
+            lastUpdated: row.lastUpdated,
           };
         } catch (e) {
           console.error('Error parsing facility row:', e);
@@ -345,6 +346,7 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
       photoUrl: row.photoUrl,
       specialized_services: row.specialized_services ? JSON.parse(row.specialized_services) : [],
       is_24_7: Boolean(row.is_24_7),
+      lastUpdated: row.lastUpdated,
     };
   } catch (error) {
     console.error('Error getting facility by ID:', error);

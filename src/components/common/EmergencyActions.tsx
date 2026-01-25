@@ -29,10 +29,8 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
   };
 
   const isDark = variant === 'dark';
-  const textColor = isDark ? theme.colors.onError : theme.colors.onSurface;
   const subtextColor = isDark ? theme.colors.onError : theme.colors.onSurfaceVariant;
   const dividerLineColor = isDark ? 'rgba(255,255,255,0.2)' : theme.colors.outlineVariant;
-  const cardBgColor = isDark ? 'rgba(255,255,255,0.2)' : theme.colors.surfaceVariant;
 
   return (
     <View style={styles.container}>

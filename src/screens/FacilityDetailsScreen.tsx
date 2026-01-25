@@ -23,6 +23,7 @@ import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus, formatOperatingHours, OPEN_COLOR, WARNING_COLOR } from '../utils/facilityUtils';
+import { formatFacilityType } from '../utils';
 import { useTheme } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 import { openExternalMaps } from '../utils/linkingUtils';
@@ -32,22 +33,63 @@ type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route']
 const { width } = Dimensions.get('window');
 const IMAGE_HEIGHT = 250;
 
+const CATEGORIES = {
+  'Primary Care': [
+    'Consultation',
+    'General Medicine',
+    'Pediatrics',
+    'Internal Medicine',
+    'Family Planning',
+    'Immunization',
+    'Nutrition Services',
+    'Maternal Care',
+    'Adolescent Health',
+    'Dental',
+    'Primary Care',
+  ],
+  'Emergency & Urgent Care': ['Emergency', 'Trauma Care', 'Animal Bite Clinic'],
+  'Specialized Services': [
+    'OB-GYN',
+    'ENT',
+    'Dermatology',
+    'Surgery',
+    'Mental Health',
+    'Dialysis',
+    'Eye Center',
+    'Stroke Unit',
+    'HIV Treatment',
+  ],
+  'Diagnostics & Support': [
+    'Laboratory',
+    'Radiology',
+    'X-ray',
+    'Clinical Chemistry',
+    'Clinical Microscopy',
+    'Hematology',
+    'Blood Bank',
+    'ECG',
+  ],
+};
+
 const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
   const theme = useTheme();
   const getIconName = (service: string) => {
     const s = service.toLowerCase();
-    if (s.includes('consultation')) return 'healing';
-    if (s.includes('laboratory')) return 'science';
-    if (s.includes('family planning')) return 'family-restroom';
-    if (s.includes('maternal')) return 'pregnant-woman';
+    if (s.includes('consultation') || s.includes('medicine')) return 'healing';
+    if (s.includes('laboratory') || s.includes('chemistry') || s.includes('microscopy')) return 'science';
+    if (s.includes('family planning') || s.includes('maternal')) return 'family-restroom';
     if (s.includes('dental')) return 'medical-services';
+    if (s.includes('emergency') || s.includes('trauma')) return 'notification-important';
+    if (s.includes('pediatrics')) return 'child-care';
+    if (s.includes('x-ray') || s.includes('radiology')) return 'settings-overscan';
+    if (s.includes('blood') || s.includes('hematology')) return 'bloodtype';
     return 'local-hospital';
   };
 
   return (
     <MaterialIcons
       name={getIconName(serviceName) as keyof (typeof MaterialIcons)['glyphMap']}
-      size={24}
+      size={20}
       color={theme.colors.primary}
       style={styles.serviceIcon}
     />
@@ -77,6 +119,39 @@ export const FacilityDetailsScreen = () => {
     if (!facility || !userLat || !userLon) return null;
     return calculateDistance(userLat, userLon, facility.latitude, facility.longitude);
   }, [facility, userLat, userLon]);
+
+  const groupedServices = useMemo(() => {
+    if (!facility) return {};
+
+    const grouped: Record<string, string[]> = {};
+    const allServices = [...facility.services];
+    
+    // Add specialized_services to Specialized Services category if they exist
+    if (facility.specialized_services) {
+      facility.specialized_services.forEach(s => {
+        if (!allServices.includes(s as any)) {
+          allServices.push(s as any);
+        }
+      });
+    }
+
+    Object.entries(CATEGORIES).forEach(([category, services]) => {
+      const found = allServices.filter(s => services.includes(s));
+      if (found.length > 0) {
+        grouped[category] = found;
+      }
+    });
+
+    // Catch any remaining services
+    const categorizedServices = Object.values(CATEGORIES).flat();
+    const uncategorized = allServices.filter(s => !categorizedServices.includes(s));
+    
+    if (uncategorized.length > 0) {
+      grouped['Other Services'] = uncategorized;
+    }
+
+    return grouped;
+  }, [facility]);
 
   if (!facility) {
     return (
@@ -181,13 +256,13 @@ export const FacilityDetailsScreen = () => {
                 {facility.name}
               </Text>
               {facility.yakapAccredited && (
-                <View style={[styles.yakapBadge, { backgroundColor: theme.colors.primary }]}>
-                  <Text style={styles.yakapText}>YAKAP</Text>
-                </View>
+                <Text style={[styles.yakapText, { color: theme.colors.onSurfaceVariant }]}>
+                  • Yakap Accredited
+                </Text>
               )}
             </View>
             <Text style={[styles.facilityType, { color: theme.colors.onSurfaceVariant }]}>
-              {facility.type}
+              {formatFacilityType(facility.type)}
             </Text>
           </View>
 
@@ -201,11 +276,11 @@ export const FacilityDetailsScreen = () => {
               variant="primary"
             />
             <Button
-              icon="share"
-              title="Share"
-              onPress={handleShare}
+              icon="directions"
+              title="Directions"
+              onPress={handleDirections}
               style={styles.actionButton}
-              variant="outline"
+              variant="primary"
             />
           </View>
 
@@ -224,10 +299,8 @@ export const FacilityDetailsScreen = () => {
                 {facility.address}
               </Text>
               <View style={styles.locationActionsRow}>
-                {distance !== null ? (
-                  <View
-                    style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}
-                  >
+                {typeof distance === 'number' && !isNaN(distance) ? (
+                  <View style={styles.distanceContainer}>
                     <Ionicons
                       name="navigate-circle-outline"
                       size={14}
@@ -238,34 +311,29 @@ export const FacilityDetailsScreen = () => {
                     </Text>
                   </View>
                 ) : (
-                  (permissionStatus === 'denied' || errorMsg) && (
+                  permissionStatus === 'denied' || errorMsg ? (
                     <TouchableOpacity
                       onPress={requestPermission}
-                      style={[
-                        styles.distanceBadge,
-                        { backgroundColor: theme.colors.errorContainer },
-                      ]}
+                      style={styles.distanceContainer}
                     >
                       <Ionicons name="location" size={14} color={theme.colors.error} />
                       <Text style={[styles.distanceText, { color: theme.colors.error }]}>
                         Enable location to see distance
                       </Text>
                     </TouchableOpacity>
+                  ) : (
+                    <View style={styles.distanceContainer}>
+                      <Ionicons
+                        name="navigate-circle-outline"
+                        size={14}
+                        color={theme.colors.onSurfaceVariant}
+                      />
+                      <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>
+                        Distance unavailable
+                      </Text>
+                    </View>
                   )
                 )}
-
-                <TouchableOpacity
-                  onPress={handleDirections}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Directions to ${facility.name}`}
-                  accessibilityHint="Opens your maps app with directions"
-                  style={[styles.distanceBadge, { backgroundColor: theme.colors.primaryContainer }]}
-                >
-                  <Ionicons name="navigate-outline" size={14} color={theme.colors.primary} />
-                  <Text style={[styles.distanceText, { color: theme.colors.primary }]}>
-                    Directions
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </View>
@@ -286,32 +354,20 @@ export const FacilityDetailsScreen = () => {
                 </Text>
               ))}
 
-              <View
+              <Text
                 style={[
-                  styles.openStatus,
+                  styles.openStatusText,
                   {
-                    backgroundColor:
+                    color:
                       openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
-                        ? theme.colors.primaryContainer
-                        : theme.colors.surfaceVariant,
-                    marginTop: 8,
+                        ? theme.colors.primary
+                        : theme.colors.onSurfaceVariant,
+                    marginTop: 4,
                   },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.openStatusText,
-                    {
-                      color:
-                        openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
-                          ? theme.colors.primary
-                          : theme.colors.onSurfaceVariant,
-                    },
-                  ]}
-                >
-                  {openStatusText}
-                </Text>
-              </View>
+                {openStatusText}
+              </Text>
             </View>
           </View>
 
@@ -332,50 +388,35 @@ export const FacilityDetailsScreen = () => {
 
           <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
-          {/* Services */}
+          {/* Grouped Services */}
           <View style={styles.servicesSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Services</Text>
-            <View style={styles.servicesGrid}>
-              {facility.services.map((service, index) => (
-                <View
-                  key={index}
-                  style={[styles.serviceItem, { backgroundColor: theme.colors.surfaceVariant }]}
-                >
-                  <ServiceIcon serviceName={service} />
-                  <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
-                    {service}
-                  </Text>
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Services & Capabilities</Text>
+            
+            {Object.entries(groupedServices).map(([category, services]) => (
+              <View key={category} style={styles.categoryContainer}>
+                <Text style={[styles.categoryTitle, { color: theme.colors.primary }]}>{category}</Text>
+                <View style={styles.servicesGrid}>
+                  {services.map((service, index) => (
+                    <View
+                      key={index}
+                      style={[styles.serviceItem, { backgroundColor: theme.colors.surfaceVariant }]}
+                    >
+                      <ServiceIcon serviceName={service} />
+                      <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
+                        {service}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
+              </View>
+            ))}
           </View>
 
-          {facility.specialized_services && facility.specialized_services.length > 0 && (
-            <View style={styles.servicesSection}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-                Specialized Capabilities
+          {facility.lastUpdated && (
+            <View style={styles.verificationContainer}>
+              <Text style={[styles.verificationText, { color: theme.colors.outline }]}>
+                Data verified as of {new Date(facility.lastUpdated).toLocaleDateString()}
               </Text>
-              <View style={styles.servicesGrid}>
-                {facility.specialized_services.map((service, index) => (
-                  <View
-                    key={index}
-                    style={[
-                      styles.serviceItem,
-                      { backgroundColor: theme.colors.primaryContainer + '30' },
-                    ]}
-                  >
-                    <MaterialIcons
-                      name="stars"
-                      size={24}
-                      color={theme.colors.primary}
-                      style={styles.serviceIcon}
-                    />
-                    <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
-                      {service}
-                    </Text>
-                  </View>
-                ))}
-              </View>
             </View>
           )}
         </View>
@@ -445,16 +486,9 @@ const styles = StyleSheet.create({
     marginRight: 10,
     flexShrink: 1,
   },
-  yakapBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
   yakapText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 10,
-    textTransform: 'uppercase',
+    fontSize: 14,
+    fontWeight: '600',
   },
   facilityType: {
     fontSize: 16,
@@ -499,14 +533,11 @@ const styles = StyleSheet.create({
   linkText: {
     fontWeight: '500',
   },
-  distanceBadge: {
+  distanceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
   locationActionsRow: {
     flexDirection: 'row',
@@ -514,18 +545,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   distanceText: {
-    fontSize: 13,
+    fontSize: 14,
     marginLeft: 4,
-  },
-  openStatus: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
+    fontWeight: '500',
   },
   openStatusText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   servicesSection: {
@@ -536,6 +561,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
   },
+  categoryContainer: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -545,15 +580,28 @@ const styles = StyleSheet.create({
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 10,
     borderRadius: 8,
   },
   serviceIcon: {
-    marginRight: 10,
+    marginRight: 8,
   },
   serviceText: {
-    fontSize: 14,
+    fontSize: 13,
     flex: 1,
+    lineHeight: 18,
+  },
+  verificationContainer: {
+    marginTop: 24,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    alignItems: 'center',
+  },
+  verificationText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
   },
 });
 

@@ -12,7 +12,6 @@ import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
 import { OfflineBanner, SafetyRecheckModal } from './src/components/common';
 import { setOfflineStatus, setLastSync, checkAssessmentTTL } from './src/store/offlineSlice';
-import { setHighRisk } from './src/store/navigationSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';

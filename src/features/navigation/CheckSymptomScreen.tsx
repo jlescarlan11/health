@@ -10,7 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Chip, useTheme, Card, Surface } from 'react-native-paper';
+import { Text, Chip, useTheme, Card } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
@@ -54,7 +54,7 @@ const SymptomItem = ({
       onPress={onPress}
       mode="flat"
       showSelectedCheck={false}
-      icon={({ size, color }) => (
+      icon={({ size, color: _color }) => (
         <MaterialCommunityIcons
           name={(isSelected ? 'check' : icon) as any}
           size={size}

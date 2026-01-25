@@ -56,6 +56,7 @@ export interface Facility {
   distance?: number; // Optional calculated field
   specialized_services?: string[];
   is_24_7?: boolean;
+  lastUpdated?: number; // Timestamp of last verification
 }
 
 export interface EmergencyContact {
