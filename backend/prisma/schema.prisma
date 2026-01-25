@@ -14,7 +14,6 @@ model Facility {
   address          String
   latitude         Float
   longitude        Float
-  phone            String?
   yakap_accredited Boolean  @default(false)
   services         String[]
   operating_hours  Json
@@ -28,9 +27,21 @@ model Facility {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   signals          FacilitySignal[]
+  contacts         FacilityContact[]
 
   @@index([latitude, longitude])
   @@index([type])
+}
+
+model FacilityContact {
+  id          String   @id @default(cuid())
+  phoneNumber String
+  contactName String?
+  role        String?
+  facilityId  String
+  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId])
 }
 
 model FacilitySignal {

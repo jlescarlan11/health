@@ -121,6 +121,7 @@ const FacilityInputSchema = z
     latitude: z.unknown(),
     longitude: z.unknown(),
     phone: z.unknown().optional(),
+    contacts: z.unknown().optional(),
     yakapAccredited: z.unknown().optional(),
     hours: z.unknown().optional(),
     operatingHours: z.unknown().optional(),
@@ -209,6 +210,17 @@ export const normalizeFacility = (value: unknown): Facility | null => {
   const yakapAccredited = coerceBoolean(record.yakapAccredited);
 
   const phone = typeof record.phone === 'string' ? record.phone.trim() : undefined;
+  
+  const contacts = Array.isArray(record.contacts) 
+    ? (record.contacts as any[]).map(c => ({
+        id: c.id,
+        phoneNumber: c.phoneNumber,
+        contactName: c.contactName,
+        role: c.role,
+        facilityId: c.facilityId
+      }))
+    : undefined;
+
   const hours = typeof record.hours === 'string' ? record.hours : undefined;
   const photoUrl = typeof record.photoUrl === 'string' ? record.photoUrl : undefined;
   const distance = coerceNumber(record.distance);
@@ -237,6 +249,7 @@ export const normalizeFacility = (value: unknown): Facility | null => {
     latitude,
     longitude,
     ...(phone ? { phone } : {}),
+    ...(contacts ? { contacts } : {}),
     yakapAccredited,
     ...(hours ? { hours } : {}),
     ...(operatingHours ? { operatingHours } : {}),

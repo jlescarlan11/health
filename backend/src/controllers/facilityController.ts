@@ -5,6 +5,7 @@ import { Facility } from '../../generated/prisma/client';
 interface FacilityWithDistance extends Facility {
   distance?: number;
   busyness_score?: number;
+  contacts?: { phoneNumber: string; contactName: string | null; role: string | null }[];
 }
 
 // Helper to map DB model to Frontend Interface
@@ -15,6 +16,9 @@ const mapToFacility = (f: FacilityWithDistance) => {
       ? (operatingHours.description as string) || ''
       : '';
 
+  // Legacy support: use first contact as the main phone
+  const primaryPhone = f.contacts && f.contacts.length > 0 ? f.contacts[0].phoneNumber : null;
+
   return {
     id: f.id,
     name: f.name,
@@ -23,7 +27,8 @@ const mapToFacility = (f: FacilityWithDistance) => {
     address: f.address,
     latitude: f.latitude,
     longitude: f.longitude,
-    phone: f.phone,
+    phone: primaryPhone, // Map first contact to legacy phone field
+    contacts: f.contacts || [], // Expose full contacts list
     yakapAccredited: f.yakap_accredited,
     hours: hours,
     operatingHours: f.operating_hours, // Expose full structured data

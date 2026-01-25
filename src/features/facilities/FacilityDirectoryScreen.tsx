@@ -165,8 +165,8 @@ export const FacilityDirectoryScreen = () => {
               onChangeText={handleSearchChange}
               value={searchQuery}
               style={[styles.searchBar, { borderColor: theme.colors.outline }]}
-              icon={searchQuery ? 'close' : 'magnify'}
-              onIconPress={searchQuery ? handleClearSearch : undefined}
+              icon="magnify"
+              onClearIconPress={handleClearSearch}
             />
           </View>
 

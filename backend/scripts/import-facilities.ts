@@ -266,7 +266,6 @@ async function main() {
         address: record.address,
         latitude,
         longitude,
-        phone: record.phone || null,
         yakap_accredited: record.yakap_accredited === 'true',
         services,
         specialized_services,
@@ -281,10 +280,39 @@ async function main() {
           where: { id: existing.id },
           data,
         });
+        
+        // Handle contact update (ensure the CSV phone number exists)
+        if (record.phone) {
+          const existingContact = await prisma.facilityContact.findFirst({
+            where: { facilityId: existing.id, phoneNumber: record.phone },
+          });
+          
+          if (!existingContact) {
+            await prisma.facilityContact.create({
+              data: {
+                facilityId: existing.id,
+                phoneNumber: record.phone,
+                role: 'Primary',
+              },
+            });
+          }
+        }
         console.log(`Updated: ${record.name}`);
       } else {
         await prisma.facility.create({
-          data,
+          data: {
+            ...data,
+            contacts: record.phone
+              ? {
+                  create: [
+                    {
+                      phoneNumber: record.phone,
+                      role: 'Primary',
+                    },
+                  ],
+                }
+              : undefined,
+          },
         });
         console.log(`Created: ${record.name}`);
       }
