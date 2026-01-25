@@ -85,7 +85,7 @@ describe('Safety interceptor stress tests', () => {
   });
 
   it('bubbles only once for a mental health crisis keyword that builds over streaming chunks', () => {
-    const mentalChunks = ['I feel', 'I feel like', 'I feel like dying'];
+    const mentalChunks = ['I want', 'I want to', 'I want to die'];
     let pendingKeywords: string[] = [];
     const triggers: boolean[] = [];
 
@@ -102,7 +102,7 @@ describe('Safety interceptor stress tests', () => {
 
     expect(triggers).toEqual([false, false, true]);
 
-    const repeatedAlert = runMentalHealthGuardLike('I still feel like dying', {
+    const repeatedAlert = runMentalHealthGuardLike('I still want to die', {
       suppressedKeywords: pendingKeywords,
     });
     expect(repeatedAlert.triggered).toBe(false);

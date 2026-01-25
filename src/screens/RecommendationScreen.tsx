@@ -29,6 +29,7 @@ import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient } from '../api/geminiClient';
 import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
 import { FacilityCard } from '../components/common/FacilityCard';
+import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
 import { Button, SafetyRecheckModal } from '../components/common';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
@@ -869,7 +870,11 @@ const RecommendationScreen = () => {
             )}
 
             {isFacilitiesLoading && recommendedFacilities.length === 0 && (
-              <ActivityIndicator style={{ marginTop: 20 }} />
+              <View>
+                {[1, 2].map((i) => (
+                  <FacilityCardSkeleton key={i} />
+                ))}
+              </View>
             )}
           </View>
         )}

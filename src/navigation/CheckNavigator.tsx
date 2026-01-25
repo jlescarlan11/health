@@ -20,7 +20,7 @@ const CheckNavigator = () => {
         component={CheckSymptomScreen}
         options={{
           headerShown: true,
-          header: () => <StandardHeader title="Check Symptom" showBackButton />,
+          header: () => <StandardHeader title="Check Symptoms" showBackButton />,
         }}
       />
     </Stack.Navigator>
