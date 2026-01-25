@@ -108,3 +108,44 @@ describe('facilitiesSlice quietNow filtering', () => {
     expect(state.filteredFacilities.length).toBe(3);
   });
 });
+
+describe('facilitiesSlice telemedicine filtering', () => {
+  const buildFacilityWithContacts = (id: string, contacts: any[]): Facility =>
+    buildFacility({
+      id,
+      contacts,
+    });
+
+  const facilities: Facility[] = [
+    buildFacilityWithContacts('only-phone', [{ platform: 'phone', phoneNumber: '123' }]),
+    buildFacilityWithContacts('messenger', [{ platform: 'messenger', phoneNumber: '456' }]),
+    buildFacilityWithContacts('viber', [{ platform: 'viber', phoneNumber: '789' }]),
+    buildFacilityWithContacts('mixed', [
+      { platform: 'phone', phoneNumber: '111' },
+      { platform: 'messenger', phoneNumber: '222' },
+    ]),
+    buildFacilityWithContacts('no-contacts', []),
+    buildFacilityWithContacts('undefined-contacts', undefined as any),
+  ];
+
+  it('filters for facilities with non-phone contacts when telemedicine is true', () => {
+    let state = facilitiesReducer(undefined, { type: '@@INIT' });
+    state = facilitiesReducer(
+      state,
+      fetchFacilities.fulfilled({ data: facilities }, 'request-id', undefined),
+    );
+    state = facilitiesReducer(state, setFilters({ telemedicine: true }));
+    const resultIds = state.filteredFacilities.map((f) => f.id).sort();
+    expect(resultIds).toEqual(['messenger', 'mixed', 'viber']);
+  });
+
+  it('includes all facilities when telemedicine is false', () => {
+    let state = facilitiesReducer(undefined, { type: '@@INIT' });
+    state = facilitiesReducer(
+      state,
+      fetchFacilities.fulfilled({ data: facilities }, 'request-id', undefined),
+    );
+    state = facilitiesReducer(state, setFilters({ telemedicine: false }));
+    expect(state.filteredFacilities.length).toBe(6);
+  });
+});
