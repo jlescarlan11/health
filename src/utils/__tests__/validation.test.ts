@@ -1,4 +1,4 @@
-import { normalizeFacilitiesApiResponse } from '../validation';
+import { normalizeFacilitiesApiResponse, normalizeMedication } from '../validation';
 
 describe('normalizeFacilitiesApiResponse', () => {
   it('normalizes schedule arrays and coerces scalar types', () => {
@@ -74,5 +74,52 @@ describe('normalizeFacilitiesApiResponse', () => {
     const normalized = normalizeFacilitiesApiResponse(input);
     expect(normalized.facilities).toHaveLength(1);
     expect(normalized.rejectedCount).toBe(2);
+  });
+});
+
+describe('normalizeMedication', () => {
+  it('validates and normalizes valid medication data', () => {
+    const input = {
+      id: 'med-123',
+      name: 'Paracetamol',
+      dosage: '500mg',
+      scheduled_time: '08:00',
+      is_active: true,
+      days_of_week: ['Monday', 'Wednesday'],
+    };
+
+    const result = normalizeMedication(input);
+    expect(result).toEqual({
+      id: 'med-123',
+      name: 'Paracetamol',
+      dosage: '500mg',
+      scheduled_time: '08:00',
+      is_active: true,
+      days_of_week: ['Monday', 'Wednesday'],
+    });
+  });
+
+  it('handles optional fields and scalar coercion', () => {
+    const input = {
+      id: 123, // should coerce to string '123'
+      name: '  Aspirin  ', // should trim
+      is_active: 'false', // should coerce to boolean false
+      scheduled_time: ' 9:30 ', // should normalize to 09:30
+    };
+
+    const result = normalizeMedication(input);
+    expect(result).toEqual({
+      id: '123',
+      name: 'Aspirin',
+      dosage: '',
+      scheduled_time: '09:30',
+      is_active: false,
+      days_of_week: [],
+    });
+  });
+
+  it('returns null for missing required fields (id, name)', () => {
+    expect(normalizeMedication({ name: 'No ID' })).toBeNull();
+    expect(normalizeMedication({ id: 'No Name' })).toBeNull();
   });
 });
