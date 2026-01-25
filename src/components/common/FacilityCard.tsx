@@ -202,7 +202,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
         {/* Services Row */}
         <View style={styles.servicesRow}>
           {displayServices.map((service, index) => (
-            <ServiceChip key={index} service={service} />
+            <ServiceChip key={index} service={service} transparent />
           ))}
           {hasMoreServices && !showAllServices && !simplified && (
             <TouchableOpacity

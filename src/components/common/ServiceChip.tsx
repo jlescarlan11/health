@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface ServiceChipProps {
   service: string;
+  transparent?: boolean;
 }
 
 export const getServiceIcon = (service: string): string => {
@@ -21,14 +22,14 @@ export const getServiceIcon = (service: string): string => {
   return 'medical-bag';
 };
 
-export const ServiceChip: React.FC<ServiceChipProps> = ({ service }) => {
+export const ServiceChip: React.FC<ServiceChipProps> = ({ service, transparent = false }) => {
   const theme = useTheme();
 
   return (
     <View
       style={[
         styles.serviceChip,
-        { backgroundColor: theme.colors.primaryContainer },
+        { backgroundColor: theme.colors.primaryContainer + (transparent ? '40' : '') },
       ]}
     >
       <MaterialCommunityIcons
