@@ -22,27 +22,23 @@ export const MainHomeScreen = () => {
   const FeatureCard = ({
     title,
     subtitle,
-    icon,
     customIcon,
     color,
     onPress,
     testID,
-    compact = false,
   }: {
     title: string;
     subtitle?: string;
-    icon?: keyof (typeof MaterialCommunityIcons)['glyphMap'];
-    customIcon?: React.ReactNode;
+    customIcon: React.ReactNode;
     color: string;
     onPress: () => void;
     testID?: string;
-    compact?: boolean;
   }) => {
     return (
       <Card
         style={[
           styles.card,
-          compact ? styles.cardCompact : styles.cardWide,
+          styles.cardWide,
           {
             backgroundColor: theme.colors.surface,
             shadowColor: '#000000',
@@ -61,19 +57,14 @@ export const MainHomeScreen = () => {
         accessibilityRole="button"
         accessibilityHint={`Double tap to navigate to ${title}`}
       >
-        <Card.Content style={[styles.cardContent, compact && styles.cardContentCompact]}>
+        <Card.Content style={styles.cardContent}>
           <View
             style={[
               styles.iconContainer,
               { backgroundColor: color },
-              compact && styles.iconContainerCompact,
             ]}
           >
-            {customIcon ? (
-              customIcon
-            ) : (
-              <MaterialCommunityIcons name={icon as any} size={compact ? 20 : 28} color="#FFFFFF" />
-            )}
+            {customIcon}
           </View>
 
           <View style={styles.textContainer}>
@@ -81,9 +72,8 @@ export const MainHomeScreen = () => {
               numberOfLines={2}
               style={[
                 styles.cardTitle,
-                compact && styles.cardTitleCompact,
                 { color: theme.colors.onSurface },
-                subtitle ? { marginBottom: compact ? 4 : 2 } : { marginBottom: 0 },
+                subtitle ? { marginBottom: 2 } : { marginBottom: 0 },
               ]}
             >
               {title}
@@ -93,7 +83,6 @@ export const MainHomeScreen = () => {
                 numberOfLines={2}
                 style={[
                   styles.cardSubtitle,
-                  compact && styles.cardSubtitleCompact,
                   { color: theme.colors.onSurfaceVariant },
                 ]}
               >
@@ -102,14 +91,12 @@ export const MainHomeScreen = () => {
             )}
           </View>
 
-          {!compact && (
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={24}
-              color={theme.colors.primary}
-              style={{ opacity: 0.8 }}
-            />
-          )}
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={theme.colors.primary}
+            style={{ opacity: 0.8 }}
+          />
         </Card.Content>
       </Card>
     );
@@ -157,15 +144,6 @@ export const MainHomeScreen = () => {
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
               />
             </View>
-            <View style={styles.bottomStackItem}>
-              <FeatureCard
-                title="My Health Records"
-                subtitle="View and share your previous assessments"
-                icon="folder-account-outline"
-                color={theme.colors.primary}
-                onPress={() => navigation.navigate('ClinicalHistory')}
-              />
-            </View>
           </View>
         </View>
       </ScrollView>
@@ -192,13 +170,6 @@ const styles = StyleSheet.create({
   bottomStackItem: {
     width: '100%',
   },
-  gridRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  gridItem: {
-    flex: 1,
-  },
   card: {
     borderRadius: 24,
     borderWidth: 0,
@@ -207,18 +178,10 @@ const styles = StyleSheet.create({
   cardWide: {
     width: '100%',
   },
-  cardCompact: {
-    flex: 1,
-  },
   cardContent: {
     padding: 20,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  cardContentCompact: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
   },
   iconContainer: {
     width: 56,
@@ -227,13 +190,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-  },
-  iconContainerCompact: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    marginBottom: 0,
-    marginRight: 10,
   },
   textContainer: {
     flex: 1,
@@ -244,19 +200,9 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
     lineHeight: 24,
   },
-  cardTitleCompact: {
-    fontSize: 15,
-    fontWeight: '600',
-    lineHeight: 20,
-  },
   cardSubtitle: {
     fontSize: 14,
     opacity: 0.7,
     marginTop: 0,
-  },
-  cardSubtitleCompact: {
-    fontSize: 12,
-    lineHeight: 16,
-    opacity: 0.7,
   },
 });
