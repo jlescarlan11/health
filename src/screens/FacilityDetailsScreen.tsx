@@ -14,7 +14,7 @@ import {
 import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { RootStackScreenProps } from '../types/navigation';
@@ -25,9 +25,10 @@ import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
 import { formatFacilityType } from '../utils';
-import { useTheme, Chip, Text as PaperText } from 'react-native-paper';
+import { useTheme, Text as PaperText } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 import { openExternalMaps } from '../utils/linkingUtils';
+import { ServiceChip } from '../components/common/ServiceChip';
 
 type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
@@ -70,38 +71,6 @@ const CATEGORIES = {
     'Blood Bank',
     'ECG',
   ],
-};
-
-const ServiceIcon = ({
-  serviceName,
-  size,
-  color,
-}: {
-  serviceName: string;
-  size: number;
-  color: string;
-}) => {
-  const getIconName = (service: string) => {
-    const s = service.toLowerCase();
-    if (s.includes('consultation') || s.includes('medicine')) return 'healing';
-    if (s.includes('laboratory') || s.includes('chemistry') || s.includes('microscopy'))
-      return 'science';
-    if (s.includes('family planning') || s.includes('maternal')) return 'family-restroom';
-    if (s.includes('dental')) return 'medical-services';
-    if (s.includes('emergency') || s.includes('trauma')) return 'notification-important';
-    if (s.includes('pediatrics')) return 'child-care';
-    if (s.includes('x-ray') || s.includes('radiology')) return 'settings-overscan';
-    if (s.includes('blood') || s.includes('hematology')) return 'bloodtype';
-    return 'local-hospital';
-  };
-
-  return (
-    <MaterialIcons
-      name={getIconName(serviceName) as keyof (typeof MaterialIcons)['glyphMap']}
-      size={size}
-      color={color}
-    />
-  );
 };
 
 export const FacilityDetailsScreen = () => {
@@ -397,24 +366,7 @@ export const FacilityDetailsScreen = () => {
                 </Text>
                 <View style={styles.servicesGrid}>
                   {services.map((service, index) => (
-                    <Chip
-                      key={index}
-                      mode="flat"
-                      style={[
-                        styles.serviceChip,
-                        { backgroundColor: theme.colors.secondaryContainer },
-                      ]}
-                      textStyle={[styles.serviceChipLabel, { color: theme.colors.primary }]}
-                      icon={({ size }) => (
-                        <ServiceIcon
-                          serviceName={service}
-                          size={size}
-                          color={theme.colors.primary}
-                        />
-                      )}
-                    >
-                      {service}
-                    </Chip>
+                    <ServiceChip key={index} service={service} />
                   ))}
                 </View>
               </View>
@@ -571,14 +523,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  serviceChip: {
-    marginBottom: 4,
-    borderRadius: 8,
-  },
-  serviceChipLabel: {
-    fontWeight: '500',
-    fontSize: 14,
   },
   verificationContainer: {
     marginTop: 24,
