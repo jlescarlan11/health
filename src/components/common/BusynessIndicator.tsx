@@ -7,13 +7,15 @@ import { FacilityBusyness } from '../../types';
 interface BusynessIndicatorProps {
   busyness?: FacilityBusyness;
   showSeparator?: boolean;
+  isVisible?: boolean;
 }
 
 export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
   busyness,
   showSeparator = true,
+  isVisible = true,
 }) => {
-  if (!busyness || !busyness.status) return null;
+  if (!isVisible || !busyness || !busyness.status) return null;
 
   const getBusynessConfig = (status: string) => {
     switch (status) {

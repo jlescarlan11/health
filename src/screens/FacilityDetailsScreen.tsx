@@ -20,6 +20,7 @@ import ImageViewing from 'react-native-image-viewing';
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { Button } from '../components/common/Button';
+import { BusynessIndicator } from '../components/common/BusynessIndicator';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
@@ -284,15 +285,18 @@ export const FacilityDetailsScreen = () => {
             </View>
 
             <View style={styles.statusRow}>
-              <MaterialCommunityIcons
-                name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-                size={14}
-                color={openStatusColor}
-                style={{ marginRight: 6 }}
-              />
-              <Text style={[styles.openStatusText, { color: openStatusColor }]}>
-                {openStatusText}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <MaterialCommunityIcons
+                  name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
+                  size={14}
+                  color={openStatusColor}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={[styles.openStatusText, { color: openStatusColor }]}>
+                  {openStatusText}
+                </Text>
+              </View>
+              <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
             </View>
           </View>
 

@@ -209,7 +209,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               {statusText}
             </Text>
           </View>
-          <BusynessIndicator busyness={facility.busyness} />
+          <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
         </View>
 
         {/* Services Row */}
