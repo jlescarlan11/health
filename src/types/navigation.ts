@@ -1,5 +1,6 @@
 import { CompositeScreenProps, NavigatorScreenParams } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { AssessmentData } from './triage';
 
@@ -16,9 +17,17 @@ export type YakapStackParamList = {
   YakapHome: undefined;
 };
 
+// Define the parameters for the main tab navigator
+export type MainTabParamList = {
+  HomeFeed: undefined;
+  HealthFeed: undefined;
+  Profile: undefined;
+  Settings: undefined;
+};
+
 // Define the parameters for the root stack
 export type RootStackParamList = {
-  Home: undefined;
+  Home: NavigatorScreenParams<MainTabParamList>;
   Check: NavigatorScreenParams<CheckStackParamList>;
   Find: NavigatorScreenParams<FacilitiesStackParamList>;
   YAKAP: NavigatorScreenParams<YakapStackParamList>;
@@ -63,5 +72,10 @@ export type FacilitiesStackScreenProps<T extends keyof FacilitiesStackParamList>
 
 export type YakapStackScreenProps<T extends keyof YakapStackParamList> = CompositeScreenProps<
   StackScreenProps<YakapStackParamList, T>,
+  RootStackScreenProps<keyof RootStackParamList>
+>;
+
+export type MainTabScreenProps<T extends keyof MainTabParamList> = CompositeScreenProps<
+  BottomTabScreenProps<MainTabParamList, T>,
   RootStackScreenProps<keyof RootStackParamList>
 >;

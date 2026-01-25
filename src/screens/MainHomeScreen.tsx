@@ -1,13 +1,14 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Paragraph, Title, useTheme } from 'react-native-paper';
+import { Card, Paragraph, Title, useTheme, Text } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
 import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo } from '../components/common';
+import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
@@ -92,6 +93,25 @@ export const MainHomeScreen = () => {
     );
   };
 
+  const PREVIEW_DATA: FeedItemData[] = [
+    {
+      id: '1',
+      title: 'Naga City Health Tips',
+      category: 'Prevention',
+      description: 'Protect yourself from seasonal illnesses with these local health guidelines.',
+      icon: 'shield-check-outline',
+      timestamp: '2 hours ago',
+    },
+    {
+      id: '2',
+      title: 'Upcoming Vaccination Drive',
+      category: 'Community',
+      description: 'Free vaccinations available at the Naga City People\'s Hall this Friday.',
+      icon: 'needle',
+      timestamp: '5 hours ago',
+    },
+  ];
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -104,6 +124,23 @@ export const MainHomeScreen = () => {
         />
 
         <View style={styles.cardsContainer}>
+          <View style={styles.sectionHeader}>
+            <Title style={styles.sectionTitle}>Health Tips</Title>
+            <TouchableOpacity onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}>
+              <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                View All
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {PREVIEW_DATA.map((item) => (
+            <FeedItem
+              key={item.id}
+              item={item}
+              onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
+            />
+          ))}
+
           <View style={styles.bottomStack}>
             <View style={styles.bottomStackItem}>
               <FeatureCard
@@ -152,6 +189,19 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingHorizontal: 24,
     gap: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 4,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1F2937',
+    letterSpacing: -0.5,
   },
   bottomStack: {
     flexDirection: 'column',

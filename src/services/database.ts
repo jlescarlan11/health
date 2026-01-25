@@ -253,7 +253,7 @@ export const saveFacilitiesFull = async (facilities: Facility[]) => {
     let skippedCount = 0;
 
     try {
-      for (const [id] of existingDataById) {
+      for (const id of Array.from(existingDataById.keys())) {
         if (!incomingIds.has(id)) {
           await deleteStatement.executeAsync({ $id: id });
           deletedCount += 1;

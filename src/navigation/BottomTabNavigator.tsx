@@ -2,12 +2,17 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MainHomeScreen } from '../screens/MainHomeScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import {
+  MainHomeScreen,
+  HealthFeedScreen,
+  ProfileScreen,
+  SettingsScreen,
+} from '../screens';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MainTabParamList } from '../types/navigation';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const BottomTabNavigator = () => {
   const theme = useTheme();
@@ -43,8 +48,28 @@ export const BottomTabNavigator = () => {
         component={MainHomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="home-variant" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="HealthFeed"
+        component={HealthFeedScreen}
+        options={{
+          tabBarLabel: 'Feed',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="newspaper-variant" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'ID',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="card-account-details-outline" size={28} color={color} />
           ),
         }}
       />
@@ -53,7 +78,7 @@ export const BottomTabNavigator = () => {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="cog" size={28} color={color} />
           ),
         }}

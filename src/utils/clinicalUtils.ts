@@ -14,10 +14,10 @@ export interface SoapSections {
  */
 export const parseSoap = (text: string): SoapSections => {
   // Basic regex to capture content between markers
-  const sMatch = text.match(/S:\s*(.*?)(?=\s*O:|$)/s);
-  const oMatch = text.match(/O:\s*(.*?)(?=\s*A:|$)/s);
-  const aMatch = text.match(/A:\s*(.*?)(?=\s*P:|$)/s);
-  const pMatch = text.match(/P:\s*(.*?)$/s);
+  const sMatch = text.match(/S:\s*([\s\S]*?)(?=\s*O:|$)/);
+  const oMatch = text.match(/O:\s*([\s\S]*?)(?=\s*A:|$)/);
+  const aMatch = text.match(/A:\s*([\s\S]*?)(?=\s*P:|$)/);
+  const pMatch = text.match(/P:\s*([\s\S]*?)$/);
 
   // If regex parsing fails, try parsing as JSON
   if (!sMatch && !oMatch && !aMatch && !pMatch) {
