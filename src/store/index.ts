@@ -16,18 +16,21 @@ import facilitiesReducer from './facilitiesSlice';
 import navigationReducer from './navigationSlice';
 import offlineReducer from './offlineSlice';
 import settingsReducer from './settingsSlice';
+import medicationReducer from './medicationSlice';
 
 // Re-export reducers for convenience
 export { default as facilitiesReducer } from './facilitiesSlice';
 export { default as navigationReducer } from './navigationSlice';
 export { default as offlineReducer } from './offlineSlice';
 export { default as settingsReducer } from './settingsSlice';
+export { default as medicationReducer } from './medicationSlice';
 
 const rootReducer = combineReducers({
   facilities: facilitiesReducer,
   navigation: navigationReducer,
   offline: offlineReducer,
   settings: settingsReducer,
+  medication: medicationReducer,
 });
 
 const migrations = {
@@ -55,7 +58,7 @@ const persistConfig = {
   key: 'root',
   version: 2,
   storage: AsyncStorage,
-  whitelist: ['settings', 'navigation', 'offline'],
+  whitelist: ['settings', 'navigation', 'offline', 'medication'],
   migrate: createMigrate(migrations, { debug: false }),
 };
 
