@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { Facility } from '../types';
+import type { Facility, Medication } from '../types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -215,6 +215,8 @@ export const normalizeFacility = (value: unknown): Facility | null => {
     ? (record.contacts as any[]).map(c => ({
         id: c.id,
         phoneNumber: c.phoneNumber,
+        platform: (c.platform === 'viber' || c.platform === 'messenger') ? c.platform : 'phone',
+        teleconsultUrl: c.teleconsultUrl,
         contactName: c.contactName,
         role: c.role,
         facilityId: c.facilityId
@@ -283,3 +285,42 @@ export const normalizeFacilitiesApiResponse = (data: unknown) => {
 
   return { data: facilities, facilities, rejectedCount };
 };
+
+const MedicationInputSchema = z.object({
+  id: z.unknown(),
+  name: z.unknown(),
+  dosage: z.unknown().optional(),
+  scheduled_time: z.unknown().optional(),
+  is_active: z.unknown().optional(),
+  days_of_week: z.unknown().optional(),
+});
+
+export const normalizeMedication = (value: unknown): Medication | null => {
+  const parsed = MedicationInputSchema.safeParse(value);
+  if (!parsed.success) return null;
+
+  const record = parsed.data;
+  const id = typeof record.id === 'string' ? record.id.trim() : String(record.id ?? '').trim();
+  const name =
+    typeof record.name === 'string' ? record.name.trim() : String(record.name ?? '').trim();
+
+  if (!id || !name) return null;
+
+  const dosage = typeof record.dosage === 'string' ? record.dosage.trim() : '';
+  const scheduled_time =
+    typeof record.scheduled_time === 'string'
+      ? normalizeTime(record.scheduled_time) || ''
+      : '';
+  const is_active = coerceBoolean(record.is_active ?? true);
+  const days_of_week = normalizeStringArray(record.days_of_week);
+
+  return {
+    id,
+    name,
+    dosage,
+    scheduled_time,
+    is_active,
+    days_of_week,
+  };
+};
+
