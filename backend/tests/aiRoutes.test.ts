@@ -58,6 +58,9 @@ describe('AI Routes', () => {
         barangay: null,
         specialized_services: [],
         is_24_7: false,
+        capacity: 50,
+        live_metrics: {},
+        busy_patterns: {},
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -111,6 +114,9 @@ describe('AI Routes', () => {
         barangay: null,
         specialized_services: [],
         is_24_7: false,
+        capacity: 50,
+        live_metrics: {},
+        busy_patterns: {},
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -130,6 +136,9 @@ describe('AI Routes', () => {
         barangay: null,
         specialized_services: [],
         is_24_7: true,
+        capacity: 50,
+        live_metrics: {},
+        busy_patterns: {},
         createdAt: new Date(),
         updatedAt: new Date(),
       };

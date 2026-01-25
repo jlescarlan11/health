@@ -42,6 +42,8 @@ export interface FacilityBusyness {
 export interface FacilityContact {
   id: string;
   phoneNumber: string;
+  platform: 'phone' | 'viber' | 'messenger';
+  teleconsultUrl?: string;
   contactName?: string | null;
   role?: string | null;
   facilityId: string;
@@ -140,3 +142,13 @@ export interface AssessmentResponse {
   triage_logic?: TriageLogic;
 }
 import type { TriageLogic } from './triage';
+
+export interface Medication {
+  id: string;
+  name: string;
+  dosage: string;
+  scheduled_time: string;
+  is_active: boolean;
+  days_of_week: string[];
+}
+

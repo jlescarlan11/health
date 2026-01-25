@@ -110,6 +110,27 @@ export const initDatabase = async () => {
         { name: 'medical_justification', type: 'TEXT' },
       ]);
 
+      // Create Medications Table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS medications (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          dosage TEXT,
+          scheduled_time TEXT,
+          is_active INTEGER DEFAULT 1,
+          days_of_week TEXT
+        );
+      `);
+
+      // Migrate medications table schema
+      await migrateTableSchema('medications', [
+        { name: 'name', type: 'TEXT' },
+        { name: 'dosage', type: 'TEXT' },
+        { name: 'scheduled_time', type: 'TEXT' },
+        { name: 'is_active', type: 'INTEGER' },
+        { name: 'days_of_week', type: 'TEXT' },
+      ]);
+
       console.log('Database initialized successfully');
     } catch (error) {
       console.error('Error initializing database:', error);

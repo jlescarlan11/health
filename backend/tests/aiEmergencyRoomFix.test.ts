@@ -56,6 +56,9 @@ describe('AI Emergency Room Normalization', () => {
       barangay: null,
       specialized_services: [],
       is_24_7: true,
+      capacity: 50,
+      live_metrics: {},
+      busy_patterns: {},
       createdAt: new Date(),
       updatedAt: new Date(),
     };

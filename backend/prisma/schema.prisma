@@ -34,12 +34,14 @@ model Facility {
 }
 
 model FacilityContact {
-  id          String   @id @default(cuid())
-  phoneNumber String
-  contactName String?
-  role        String?
-  facilityId  String
-  facility    Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  phoneNumber    String
+  platform       String   @default("phone")
+  teleconsultUrl String?
+  contactName    String?
+  role           String?
+  facilityId     String
+  facility       Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
 
   @@index([facilityId])
 }
@@ -91,4 +93,17 @@ model EmergencyContact {
   available24x7 Boolean  @default(true)
   description   String?
   createdAt     DateTime @default(now())
+}
+
+model Medication {
+  id             String   @id @default(cuid())
+  name           String
+  dosage         String?
+  scheduled_time String?
+  is_active      Boolean  @default(true)
+  days_of_week   String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([name])
 }

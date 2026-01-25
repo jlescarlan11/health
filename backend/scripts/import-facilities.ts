@@ -79,11 +79,13 @@ function parseContacts(phoneStr: string) {
       return {
         contactName: nameAndRole,
         phoneNumber: number,
+        platform: 'phone',
         role: 'Personnel'
       };
     }
     return { 
       phoneNumber: part.trim(), 
+      platform: 'phone',
       role: 'Primary',
       contactName: null
     };
