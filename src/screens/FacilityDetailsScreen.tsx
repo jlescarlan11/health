@@ -10,6 +10,9 @@ import {
   Share,
   Dimensions,
   Alert,
+  Modal,
+  FlatList,
+  Platform,
 } from 'react-native';
 import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -91,6 +94,7 @@ export const FacilityDetailsScreen = () => {
   const userLon = location?.coords.longitude || reduxLocation?.longitude;
 
   const [isImageViewerVisible, setImageViewerVisible] = useState(false);
+  const [contactsModalVisible, setContactsModalVisible] = useState(false);
 
   const distance = useMemo(() => {
     if (!facility || !userLat || !userLon) return null;
@@ -147,8 +151,19 @@ export const FacilityDetailsScreen = () => {
   const images = facility.photoUrl ? [{ uri: facility.photoUrl }] : [];
 
   const handleCall = () => {
-    if (facility.phone) {
-      Linking.openURL(`tel:${facility.phone}`).catch(() =>
+    const hasMultipleContacts = facility.contacts && facility.contacts.length > 1;
+    
+    if (hasMultipleContacts) {
+      setContactsModalVisible(true);
+      return;
+    }
+
+    const numberToCall = (facility.contacts && facility.contacts.length > 0) 
+      ? facility.contacts[0].phoneNumber 
+      : facility.phone;
+
+    if (numberToCall) {
+      Linking.openURL(`tel:${numberToCall}`).catch(() =>
         Alert.alert('Error', 'Failed to open dialer.'),
       );
     } else {
@@ -330,25 +345,52 @@ export const FacilityDetailsScreen = () => {
               <Ionicons
                 name="call-outline"
                 size={24}
-                color={facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                color={(facility.contacts?.length || facility.phone) ? theme.colors.primary : theme.colors.onSurfaceVariant}
               />
             </View>
-            <TouchableOpacity
-              onPress={handleCall}
-              style={styles.infoTextContainer}
-              disabled={!facility.phone}
-            >
+            <View style={styles.infoTextContainer}>
               <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Phone</Text>
-              <Text
-                style={[
-                  styles.infoText,
-                  styles.linkText,
-                  { color: facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant },
-                ]}
-              >
-                {facility.phone || 'Not available'}
-              </Text>
-            </TouchableOpacity>
+              
+              {facility.contacts && facility.contacts.length > 0 ? (
+                facility.contacts.map((contact, index) => (
+                  <TouchableOpacity
+                    key={contact.id || index}
+                    onPress={() => Linking.openURL(`tel:${contact.phoneNumber}`)}
+                    style={{ marginBottom: 8 }}
+                  >
+                    <Text
+                      style={[
+                        styles.infoText,
+                        styles.linkText,
+                        { color: theme.colors.primary },
+                      ]}
+                    >
+                      {contact.phoneNumber}
+                    </Text>
+                    {contact.role && (
+                      <Text style={[styles.metaItem, { fontSize: 14 }]}>
+                        {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                ))
+              ) : (
+                <TouchableOpacity
+                  onPress={handleCall}
+                  disabled={!facility.phone}
+                >
+                  <Text
+                    style={[
+                      styles.infoText,
+                      styles.linkText,
+                      { color: facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant },
+                    ]}
+                  >
+                    {facility.phone || 'Not available'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
@@ -382,6 +424,53 @@ export const FacilityDetailsScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Contact Selection Modal */}
+      <Modal
+        visible={contactsModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setContactsModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPress={() => setContactsModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Select Number</Text>
+            <FlatList
+              data={facility.contacts}
+              keyExtractor={(item, index) => item.id || index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.contactOption, { borderBottomColor: theme.colors.outlineVariant }]}
+                  onPress={() => {
+                    setContactsModalVisible(false);
+                    Linking.openURL(`tel:${item.phoneNumber}`);
+                  }}
+                >
+                  <View>
+                    <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>{item.phoneNumber}</Text>
+                    {item.role && (
+                      <Text style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}>
+                        {item.role} {item.contactName ? `• ${item.contactName}` : ''}
+                      </Text>
+                    )}
+                  </View>
+                  <Ionicons name="call" size={20} color={theme.colors.primary} />
+                </TouchableOpacity>
+              )}
+            />
+            <Button 
+              title="Cancel" 
+              variant="outline" 
+              onPress={() => setContactsModalVisible(false)} 
+              style={{ marginTop: 16 }}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -535,6 +624,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     letterSpacing: 0.2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    borderRadius: 16,
+    padding: 24,
+    maxHeight: '60%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  contactOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  contactNumber: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  contactRole: {
+    fontSize: 14,
   },
 });
 

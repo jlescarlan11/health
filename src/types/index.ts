@@ -39,6 +39,14 @@ export interface FacilityBusyness {
   status: 'quiet' | 'moderate' | 'busy';
 }
 
+export interface FacilityContact {
+  id: string;
+  phoneNumber: string;
+  contactName?: string | null;
+  role?: string | null;
+  facilityId: string;
+}
+
 export interface Facility {
   id: string;
   name: string;
@@ -48,6 +56,7 @@ export interface Facility {
   latitude: number;
   longitude: number;
   phone?: string;
+  contacts?: FacilityContact[];
   yakapAccredited: boolean;
   hours?: string;
   operatingHours?: {
