@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity, Linking } from 'react-native';
+import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity, Linking, Modal, FlatList } from 'react-native';
 import { Card, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility, FacilityService, FacilityBusyness } from '../../types';
@@ -31,6 +31,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 }) => {
   const theme = useTheme();
   const [showAllServices, setShowAllServices] = React.useState(false);
+  const [contactsModalVisible, setContactsModalVisible] = React.useState(false);
   const { text: statusText, color: statusColor, isOpen } = getOpenStatus(facility);
 
   const hasMatches = React.useMemo(() => {
@@ -69,8 +70,20 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   };
 
   const handleCallPress = () => {
-    if (facility.phone) {
-      Linking.openURL(`tel:${facility.phone}`).catch(() =>
+    const hasMultipleContacts = facility.contacts && facility.contacts.length > 1;
+
+    if (hasMultipleContacts) {
+      setContactsModalVisible(true);
+      return;
+    }
+
+    const numberToCall =
+      facility.contacts && facility.contacts.length > 0
+        ? facility.contacts[0].phoneNumber
+        : facility.phone;
+
+    if (numberToCall) {
+      Linking.openURL(`tel:${numberToCall}`).catch(() =>
         Alert.alert('Error', 'Failed to open dialer.'),
       );
     } else {
@@ -230,7 +243,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             variant="primary"
             onPress={handleCallPress}
             style={styles.actionButton}
-            disabled={!facility.phone}
+            disabled={!facility.phone && (!facility.contacts || facility.contacts.length === 0)}
           />
           <Button
             title="Directions"
@@ -241,6 +254,63 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           />
         </View>
       </View>
+
+      {/* Contact Selection Modal */}
+      <Modal
+        visible={contactsModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setContactsModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setContactsModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.modalHandle} />
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
+              Select Number
+            </Text>
+            <FlatList
+              data={facility.contacts}
+              keyExtractor={(item, index) => item.id || index.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.contactOption}
+                  activeOpacity={0.6}
+                  onPress={() => {
+                    setContactsModalVisible(false);
+                    Linking.openURL(`tel:${item.phoneNumber}`);
+                  }}
+                >
+                  <View style={styles.contactOptionContent}>
+                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '15' }]}>
+                      <MaterialCommunityIcons name="phone" size={18} color={theme.colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>
+                        {item.phoneNumber}
+                      </Text>
+                      {item.role && (
+                        <Text style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}>
+                          {item.role} {item.contactName ? `• ${item.contactName}` : ''}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+            <TouchableOpacity 
+              onPress={() => setContactsModalVisible(false)} 
+              style={{ marginTop: 16, paddingVertical: 12, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.onSurface }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </Card>
   );
 };
@@ -315,5 +385,64 @@ const styles = StyleSheet.create({
     flex: 1,
     marginVertical: 0,
     minHeight: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    width: '100%',
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  contactOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#F3F4F6', // Subtle tint
+    borderRadius: 12,
+    marginVertical: 6,
+  },
+  contactOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  contactNumber: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  contactRole: {
+    fontSize: 14,
   },
 });

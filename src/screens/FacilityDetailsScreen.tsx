@@ -95,6 +95,7 @@ export const FacilityDetailsScreen = () => {
 
   const [isImageViewerVisible, setImageViewerVisible] = useState(false);
   const [contactsModalVisible, setContactsModalVisible] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   const distance = useMemo(() => {
     if (!facility || !userLat || !userLon) return null;
@@ -268,17 +269,17 @@ export const FacilityDetailsScreen = () => {
                 ))}
             </View>
 
-            <View style={styles.statusRow}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={styles.statusPillContainer}>
+              <View style={[styles.statusPill, { backgroundColor: isOpen ? '#D1E7DD' : '#FAD9D9' }]}>
                 <MaterialCommunityIcons
                   name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
                   size={14}
-                  color={openStatusColor}
+                  color={isOpen ? '#164032' : '#852D2D'}
                   style={{ marginRight: 6 }}
                 />
                 <PaperText
                   variant="labelMedium"
-                  style={{ color: openStatusColor, fontWeight: '700', letterSpacing: 0.3 }}
+                  style={{ color: isOpen ? '#164032' : '#852D2D', fontWeight: '700', letterSpacing: 0.3 }}
                 >
                   {openStatusText}
                 </PaperText>
@@ -356,22 +357,24 @@ export const FacilityDetailsScreen = () => {
                   <TouchableOpacity
                     key={contact.id || index}
                     onPress={() => Linking.openURL(`tel:${contact.phoneNumber}`)}
-                    style={{ marginBottom: 8 }}
+                    style={styles.contactItem}
                   >
-                    <Text
-                      style={[
-                        styles.infoText,
-                        styles.linkText,
-                        { color: theme.colors.primary },
-                      ]}
-                    >
-                      {contact.phoneNumber}
-                    </Text>
-                    {contact.role && (
-                      <Text style={[styles.metaItem, { fontSize: 14 }]}>
-                        {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
+                    <View style={styles.contactInfo}>
+                      <Text
+                        style={[
+                          styles.infoText,
+                          styles.linkText,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
+                        {contact.phoneNumber}
                       </Text>
-                    )}
+                      {contact.role && (
+                        <Text style={[styles.metaItem, { fontSize: 14 }]}>
+                          {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
+                        </Text>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))
               ) : (
@@ -401,18 +404,39 @@ export const FacilityDetailsScreen = () => {
               Services & Capabilities
             </Text>
 
-            {Object.entries(groupedServices).map(([category, services]) => (
-              <View key={category} style={styles.categoryContainer}>
-                <Text style={[styles.categoryTitle, { color: theme.colors.onSurface }]}>
-                  {category}
-                </Text>
-                <View style={styles.servicesGrid}>
-                  {services.map((service, index) => (
-                    <ServiceChip key={index} service={service} />
-                  ))}
+            {Object.entries(groupedServices).map(([category, services]) => {
+              const isExpanded = expandedCategories[category];
+              const visibleServices = isExpanded ? services : services.slice(0, 6);
+              const hasMore = services.length > 6;
+
+              return (
+                <View key={category} style={styles.categoryContainer}>
+                  <Text style={[styles.categoryTitle, { color: '#164032' }]}>{category}</Text>
+                  <View style={styles.servicesGrid}>
+                    {visibleServices.map((service, index) => (
+                      <ServiceChip key={index} service={service} />
+                    ))}
+                  </View>
+                  {hasMore && (
+                    <TouchableOpacity
+                      onPress={() =>
+                        setExpandedCategories((prev) => ({ ...prev, [category]: !prev[category] }))
+                      }
+                      style={styles.seeAllButton}
+                    >
+                      <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
+                        {isExpanded ? 'Show Less' : `See All (${services.length})`}
+                      </Text>
+                      <Ionicons
+                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                        size={16}
+                        color={theme.colors.primary}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
 
           {facility.lastUpdated && (
@@ -437,37 +461,45 @@ export const FacilityDetailsScreen = () => {
           activeOpacity={1} 
           onPress={() => setContactsModalVisible(false)}
         >
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.modalHandle} />
             <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Select Number</Text>
             <FlatList
               data={facility.contacts}
               keyExtractor={(item, index) => item.id || index.toString()}
               renderItem={({ item }) => (
                 <TouchableOpacity
-                  style={[styles.contactOption, { borderBottomColor: theme.colors.outlineVariant }]}
+                  style={styles.contactOption}
+                  activeOpacity={0.6}
                   onPress={() => {
                     setContactsModalVisible(false);
                     Linking.openURL(`tel:${item.phoneNumber}`);
                   }}
                 >
-                  <View>
-                    <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>{item.phoneNumber}</Text>
-                    {item.role && (
-                      <Text style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}>
-                        {item.role} {item.contactName ? `• ${item.contactName}` : ''}
+                  <View style={styles.contactOptionContent}>
+                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '15' }]}>
+                      <Ionicons name="call" size={18} color={theme.colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>
+                        {item.phoneNumber}
                       </Text>
-                    )}
+                      {item.role && (
+                        <Text style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}>
+                          {item.role} {item.contactName ? `• ${item.contactName}` : ''}
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                  <Ionicons name="call" size={20} color={theme.colors.primary} />
                 </TouchableOpacity>
               )}
             />
-            <Button 
-              title="Cancel" 
-              variant="outline" 
+            <TouchableOpacity 
               onPress={() => setContactsModalVisible(false)} 
-              style={{ marginTop: 16 }}
-            />
+              style={{ marginTop: 16, paddingVertical: 12, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.onSurface }}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -561,7 +593,7 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     flexDirection: 'row',
-    marginBottom: 24,
+    marginBottom: 32, // Increased spacing
   },
   iconContainer: {
     width: 40,
@@ -577,18 +609,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textTransform: 'uppercase',
     fontWeight: '600',
+    color: '#6B7280', // Lighter muted gray
   },
   infoText: {
     fontSize: 16,
     lineHeight: 24,
+    color: '#111827', // Darker text
+    fontWeight: '700', // Bolder content
   },
   linkText: {
     fontWeight: '500',
   },
-  statusRow: {
+  statusPillContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+    gap: 8,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
   },
   servicesSection: {
     marginBottom: 24,
@@ -599,19 +643,42 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   categoryContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    // Subtle shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 1,
+    elevation: 1,
   },
   categoryTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
-    marginBottom: 10,
+    marginBottom: 16,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    color: '#164032',
   },
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 12, // Increased gap for better vertical separation
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    paddingVertical: 4,
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
   },
   verificationContainer: {
     marginTop: 24,
@@ -628,18 +695,28 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 24,
+    justifyContent: 'flex-end',
   },
   modalContent: {
-    borderRadius: 16,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 24,
-    maxHeight: '60%',
+    paddingBottom: 40, // Extra padding for bottom safe area
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    width: '100%',
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 24,
   },
   modalTitle: {
     fontSize: 20,
@@ -648,11 +725,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   contactOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     paddingVertical: 16,
-    borderBottomWidth: 1,
+    paddingHorizontal: 16,
+    backgroundColor: '#F3F4F6', // Subtle tint
+    borderRadius: 12,
+    marginVertical: 6,
+  },
+  contactOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
   },
   contactNumber: {
     fontSize: 18,
@@ -661,6 +750,17 @@ const styles = StyleSheet.create({
   },
   contactRole: {
     fontSize: 14,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingVertical: 4,
+  },
+  contactInfo: {
+    flex: 1,
+    marginRight: 16,
   },
 });
 

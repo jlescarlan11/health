@@ -90,25 +90,43 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
 
     return (
       <View style={styles.center}>
-        <Text variant="bodyLarge">No facilities found.</Text>
+        <Text variant="headlineSmall" style={{ color: theme.colors.onSurface, fontWeight: '700' }}>
+          No facilities found
+        </Text>
         {!hasAliasMatch ? (
-          <View style={{ alignItems: 'center', marginTop: 8 }}>
+          <View style={{ alignItems: 'center', marginTop: 12 }}>
             <Text
-              variant="bodySmall"
-              style={{ color: theme.colors.secondary, textAlign: 'center' }}
+              variant="bodyMedium"
+              style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}
             >
               Try searching for something else, like:
             </Text>
-            <Text
-              variant="bodySmall"
-              style={{ color: theme.colors.primary, fontWeight: '600', marginTop: 4 }}
-            >
-              Consultation, Emergency, or Dental
-            </Text>
+            <View style={{ flexDirection: 'row', marginTop: 8, gap: 8 }}>
+              <Text
+                variant="bodyMedium"
+                style={{ color: theme.colors.primary, fontWeight: '700' }}
+              >
+                Emergency
+              </Text>
+              <Text style={{ color: theme.colors.outline }}>•</Text>
+              <Text
+                variant="bodyMedium"
+                style={{ color: theme.colors.primary, fontWeight: '700' }}
+              >
+                Dental
+              </Text>
+              <Text style={{ color: theme.colors.outline }}>•</Text>
+              <Text
+                variant="bodyMedium"
+                style={{ color: theme.colors.primary, fontWeight: '700' }}
+              >
+                X-ray
+              </Text>
+            </View>
           </View>
         ) : (
-          <Text variant="bodySmall" style={{ color: theme.colors.secondary, marginTop: 8 }}>
-            Try adjusting your search or filters.
+          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12, textAlign: 'center' }}>
+            Try adjusting your search or filters to find what you're looking for.
           </Text>
         )}
       </View>
