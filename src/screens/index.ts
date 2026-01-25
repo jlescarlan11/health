@@ -7,3 +7,4 @@ export * from './PrivacyPolicyScreen';
 export * from './RecommendationScreen';
 export * from './SymptomAssessmentScreen';
 export * from './TermsOfServiceScreen';
+export { default as MedicationTrackerScreen } from './MedicationTrackerScreen';

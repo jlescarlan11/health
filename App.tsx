@@ -15,6 +15,7 @@ import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
+import { registerForPushNotificationsAsync, configureNotifications } from './src/services/notificationService';
 import { theme, navigationTheme } from './src/theme';
 import { useAppDispatch, useAppSelector } from './src/hooks';
 
@@ -65,6 +66,10 @@ const AppContent = () => {
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
   useEffect(() => {
+    // Configure notifications
+    configureNotifications();
+    registerForPushNotificationsAsync().catch(err => console.log('Notification permission init failed:', err));
+
     // Check for high risk status on mount
     if (isHighRisk) {
       setSafetyModalVisible(true);

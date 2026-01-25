@@ -40,6 +40,7 @@ export type RootStackParamList = {
   NotFound: undefined;
   PrivacyPolicy: undefined;
   TermsOfService: undefined;
+  MedicationTracker: undefined;
 };
 
 // Define the props for each screen in the navigators

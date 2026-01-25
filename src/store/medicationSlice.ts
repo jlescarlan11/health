@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import * as DB from '../services/database';
 import { Medication } from '../types';
+import * as NotificationService from '../services/notificationService';
 
 interface MedicationState {
   items: Medication[];
@@ -52,6 +53,15 @@ export const addMedication = createAsyncThunk(
     try {
       const record = mapMedicationToRecord(medication);
       await DB.saveMedication(record);
+      
+      // Schedule notification side effect
+      try {
+        await NotificationService.scheduleMedicationReminder(medication);
+      } catch (notifyErr) {
+        console.warn('Failed to schedule reminder:', notifyErr);
+        // We don't fail the whole action if notification fails, just warn
+      }
+
       return medication;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to add medication');
@@ -64,6 +74,14 @@ export const deleteMedication = createAsyncThunk(
   async (id: string, { rejectWithValue }) => {
     try {
       await DB.deleteMedication(id);
+
+      // Cancel notification side effect
+      try {
+        await NotificationService.cancelMedicationReminder(id);
+      } catch (notifyErr) {
+        console.warn('Failed to cancel reminder:', notifyErr);
+      }
+
       return id;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to delete medication');
