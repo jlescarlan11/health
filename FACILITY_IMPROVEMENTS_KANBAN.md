@@ -1,6 +1,7 @@
 # Facility UI/UX Improvement Kanban
 
 ## Column 1: High Priority (Trust & Access)
+
 - [ ] **Task 1: Optimize Action Hierarchy for Thumb Zone**
   - **Ref:** `src/screens/FacilityDetailsScreen.tsx`
   - **Principle:** Thumb Zone / Fitts's Law.
@@ -15,6 +16,7 @@
   - **Action:** Add high-contrast "24/7 EMERGENCY" badge for relevant facilities.
 
 ## Column 2: Medium Priority (Navigation & Discovery)
+
 - [ ] **Task 4: Enable Multi-Facet Filtering**
   - **Ref:** `src/store/facilitiesSlice.ts` & `FacilityDirectoryScreen.tsx`
   - **Principle:** ISO 9241-110 (Controllability).
@@ -29,6 +31,7 @@
   - **Action:** Group services into semantic sub-sections.
 
 ## Column 3: Low Priority (Polish & Reassurance)
+
 - [ ] **Task 7: Refine Skeleton Loading for Trust**
   - **Ref:** `src/components/features/facilities/FacilityCardSkeleton.tsx`
   - **Principle:** Perceived Latency Anxiety.

@@ -947,7 +947,9 @@ const SymptomAssessmentScreen = () => {
     if (isClarifyingDenial) setIsClarifyingDenial(false);
 
     const currentQ = questions[currentQuestionIndex];
-    console.log(`[DEBUG_TEST] currentQ: ${currentQ?.text}, questions.length: ${questions.length}, index: ${currentQuestionIndex}, isOffline: ${isOfflineMode}`);
+    console.log(
+      `[DEBUG_TEST] currentQ: ${currentQ?.text}, questions.length: ${questions.length}, index: ${currentQuestionIndex}, isOffline: ${isOfflineMode}`,
+    );
     let slotSnapshot: ClinicalSlots | undefined;
     if (!currentQ && !isOfflineMode) {
       console.log('[DEBUG_TEST] Aborting: No currentQ and not offline.');

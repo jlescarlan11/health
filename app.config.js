@@ -35,12 +35,7 @@ module.exports = {
     web: {
       favicon: './assets/favicon.png',
     },
-    plugins: [
-      'expo-router',
-      'expo-sqlite',
-      '@react-native-firebase/app',
-      'expo-system-ui',
-    ],
+    plugins: ['expo-router', 'expo-sqlite', '@react-native-firebase/app', 'expo-system-ui'],
     extra: {
       apiUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
       backendUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',

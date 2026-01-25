@@ -20,7 +20,9 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('../src/components/features/facilities', () => ({
-  FacilityListView: ({ ListHeaderComponent }: { ListHeaderComponent: React.ReactNode }) => <>{ListHeaderComponent}</>,
+  FacilityListView: ({ ListHeaderComponent }: { ListHeaderComponent: React.ReactNode }) => (
+    <>{ListHeaderComponent}</>
+  ),
 }));
 
 jest.mock('../src/components/common/StandardHeader', () => {

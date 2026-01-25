@@ -14,7 +14,11 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('../src/services/emergencyDetector', () => ({
-  detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [], affectedSystems: [] })),
+  detectEmergency: jest.fn(() => ({
+    isEmergency: false,
+    matchedKeywords: [],
+    affectedSystems: [],
+  })),
 }));
 
 jest.mock('../src/services/mentalHealthDetector', () => ({
@@ -77,16 +81,14 @@ describe('Adaptive Empathy Engine', () => {
     planSpy = jest
       .spyOn(geminiClient, 'generateAssessmentPlan')
       .mockResolvedValue({ questions: [], intro: '' });
-    
+
     // Ensure readiness is high enough (> 0.4) to trigger local bridging
-    profileSpy = jest
-      .spyOn(geminiClient, 'extractClinicalProfile')
-      .mockResolvedValue({
-        triage_readiness_score: 0.8,
-        symptom_category: 'simple',
-        ambiguity_detected: false,
-        clinical_friction_detected: false,
-      } as any);
+    profileSpy = jest.spyOn(geminiClient, 'extractClinicalProfile').mockResolvedValue({
+      triage_readiness_score: 0.8,
+      symptom_category: 'simple',
+      ambiguity_detected: false,
+      clinical_friction_detected: false,
+    } as any);
 
     (useNavigation as jest.Mock).mockReturnValue({
       replace: jest.fn(),
@@ -125,11 +127,11 @@ describe('Adaptive Empathy Engine', () => {
   const submitAnswer = async (utils: any, answer: string) => {
     const input = utils.getByTestId('input-field');
     const submit = utils.getByTestId('submit-button');
-    
+
     await act(async () => {
       fireEvent.changeText(input, answer);
     });
-    
+
     await act(async () => {
       fireEvent.press(submit);
     });
@@ -141,13 +143,17 @@ describe('Adaptive Empathy Engine', () => {
       { id: 'q2', text: 'Next Question?', tier: 1 },
     ];
     const utils = await setupTest(plan);
-    
+
     await submitAnswer(utils, 'I have severe pain');
     // Wait for user message to render first to ensure state flow
     await waitFor(() => expect(utils.getByText(/I have severe pain/)).toBeTruthy());
 
     const expected = "I'm sorry you're going through this... Next Question?";
-    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+    await waitFor(() =>
+      expect(
+        utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+      ).toBeTruthy(),
+    );
   });
 
   it('responds with Denial empathy for "no" keyword', async () => {
@@ -156,12 +162,16 @@ describe('Adaptive Empathy Engine', () => {
       { id: 'q2', text: 'Next Question?', tier: 1 },
     ];
     const utils = await setupTest(plan);
-    
+
     await submitAnswer(utils, 'No');
     await waitFor(() => expect(utils.getByText(/No/)).toBeTruthy());
 
     const expected = "That's good to know... Next Question?";
-    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+    await waitFor(() =>
+      expect(
+        utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+      ).toBeTruthy(),
+    );
   });
 
   it('responds with Uncertainty empathy for "not sure" keyword', async () => {
@@ -170,12 +180,16 @@ describe('Adaptive Empathy Engine', () => {
       { id: 'q2', text: 'Next Question?', tier: 1 },
     ];
     const utils = await setupTest(plan);
-    
+
     await submitAnswer(utils, 'I am not sure');
     await waitFor(() => expect(utils.getByText(/I am not sure/)).toBeTruthy());
 
     const expected = "That's okay, we can work with that... Next Question?";
-    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+    await waitFor(() =>
+      expect(
+        utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+      ).toBeTruthy(),
+    );
   });
 
   it('responds with Neutral fallback for unmatched input', async () => {
@@ -184,11 +198,15 @@ describe('Adaptive Empathy Engine', () => {
       { id: 'q2', text: 'Next Question?', tier: 1 },
     ];
     const utils = await setupTest(plan);
-    
+
     await submitAnswer(utils, 'It started yesterday');
     await waitFor(() => expect(utils.getByText(/It started yesterday/)).toBeTruthy());
 
-    const expected = "Got it. Next Question?";
-    await waitFor(() => expect(utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeTruthy());
+    const expected = 'Got it. Next Question?';
+    await waitFor(() =>
+      expect(
+        utils.getByText(new RegExp(expected.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))),
+      ).toBeTruthy(),
+    );
   });
 });

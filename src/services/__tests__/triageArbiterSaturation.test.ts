@@ -35,8 +35,7 @@ describe('TriageArbiter saturation & semantic comparison', () => {
   });
 
   describe('semanticNumericCompare', () => {
-    const semanticNumericCompare = (TriageArbiter as any)
-      .semanticNumericCompare as (
+    const semanticNumericCompare = (TriageArbiter as any).semanticNumericCompare as (
       field: string,
       a?: string | null,
       b?: string | null,
@@ -44,7 +43,9 @@ describe('TriageArbiter saturation & semantic comparison', () => {
 
     it('should treat both null/undefined as a match', () => {
       expect(semanticNumericCompare.call(TriageArbiter, 'age', null, undefined)).toBe(true);
-      expect(semanticNumericCompare.call(TriageArbiter, 'severity', undefined, undefined)).toBe(true);
+      expect(semanticNumericCompare.call(TriageArbiter, 'severity', undefined, undefined)).toBe(
+        true,
+      );
     });
 
     it('should treat one null/undefined as a mismatch', () => {
@@ -61,15 +62,21 @@ describe('TriageArbiter saturation & semantic comparison', () => {
     });
 
     it('should fall back to case-insensitive text when normalization fails', () => {
-      expect(semanticNumericCompare.call(TriageArbiter, 'severity', 'moderate', 'moderate')).toBe(true);
-      expect(semanticNumericCompare.call(TriageArbiter, 'severity', 'moderate', 'severe')).toBe(false);
+      expect(semanticNumericCompare.call(TriageArbiter, 'severity', 'moderate', 'moderate')).toBe(
+        true,
+      );
+      expect(semanticNumericCompare.call(TriageArbiter, 'severity', 'moderate', 'severe')).toBe(
+        false,
+      );
       expect(semanticNumericCompare.call(TriageArbiter, 'severity', 'moderate', '7')).toBe(false);
     });
   });
 
   describe('areClinicalSlotsIdentical', () => {
-    const areClinicalSlotsIdentical = (TriageArbiter as any)
-      .areClinicalSlotsIdentical as (a: AssessmentProfile, b: AssessmentProfile) => boolean;
+    const areClinicalSlotsIdentical = (TriageArbiter as any).areClinicalSlotsIdentical as (
+      a: AssessmentProfile,
+      b: AssessmentProfile,
+    ) => boolean;
 
     it('should treat semantically equivalent age/severity as identical', () => {
       const a = baseProfile({ severity: '7/10', age: '45' });
@@ -109,12 +116,11 @@ describe('TriageArbiter saturation & semantic comparison', () => {
   });
 
   describe('calculateSaturation', () => {
-    const calculateSaturation = (TriageArbiter as any)
-      .calculateSaturation as (
-        current: AssessmentProfile,
-        previous: AssessmentProfile | undefined,
-        readinessScore: number,
-      ) => boolean;
+    const calculateSaturation = (TriageArbiter as any).calculateSaturation as (
+      current: AssessmentProfile,
+      previous: AssessmentProfile | undefined,
+      readinessScore: number,
+    ) => boolean;
 
     it('should not saturate without a previous profile', () => {
       const result = calculateSaturation.call(TriageArbiter, baseProfile(), undefined, 1.0);
@@ -193,25 +199,11 @@ describe('TriageArbiter saturation & semantic comparison', () => {
       expect(result1.signal).toBe('CONTINUE');
 
       const profile2 = baseProfile({ severity: "it's a 7", age: '45' });
-      const result2 = TriageArbiter.evaluateAssessmentState(
-        history,
-        profile2,
-        2,
-        5,
-        [],
-        profile1,
-      );
+      const result2 = TriageArbiter.evaluateAssessmentState(history, profile2, 2, 5, [], profile1);
       expect(result2.signal).toBe('CONTINUE');
 
       const profile3 = baseProfile({ severity: 'seven out of ten', age: '45' });
-      const result3 = TriageArbiter.evaluateAssessmentState(
-        history,
-        profile3,
-        3,
-        5,
-        [],
-        profile2,
-      );
+      const result3 = TriageArbiter.evaluateAssessmentState(history, profile3, 3, 5, [], profile2);
       expect(result3.signal).toBe('TERMINATE');
       expect(result3.reason).toContain('CLINICAL SATURATION');
     });
@@ -222,25 +214,11 @@ describe('TriageArbiter saturation & semantic comparison', () => {
       expect(result1.signal).toBe('CONTINUE');
 
       const profile2 = baseProfile({ severity: "it's a 7", duration: '2 days' });
-      const result2 = TriageArbiter.evaluateAssessmentState(
-        history,
-        profile2,
-        2,
-        5,
-        [],
-        profile1,
-      );
+      const result2 = TriageArbiter.evaluateAssessmentState(history, profile2, 2, 5, [], profile1);
       expect(result2.signal).toBe('CONTINUE');
 
       const profile3 = baseProfile({ severity: 'seven', duration: '48 hours' });
-      const result3 = TriageArbiter.evaluateAssessmentState(
-        history,
-        profile3,
-        3,
-        5,
-        [],
-        profile2,
-      );
+      const result3 = TriageArbiter.evaluateAssessmentState(history, profile3, 3, 5, [], profile2);
       expect(result3.signal).toBe('CONTINUE');
     });
   });
@@ -344,8 +322,9 @@ describe('TriageArbiter saturation & semantic comparison', () => {
         triage_readiness_score: 1.0,
       });
 
-      const evaluateDataCompleteness = (TriageArbiter as any)
-        .evaluateDataCompleteness as (profile: AssessmentProfile) => { signal: string; reason?: string };
+      const evaluateDataCompleteness = (TriageArbiter as any).evaluateDataCompleteness as (
+        profile: AssessmentProfile,
+      ) => { signal: string; reason?: string };
       const result = evaluateDataCompleteness.call(TriageArbiter, profile);
 
       expect(result.signal).toBe('CONTINUE');

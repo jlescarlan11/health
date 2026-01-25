@@ -76,4 +76,3 @@ describe('normalizeFacilitiesApiResponse', () => {
     expect(normalized.rejectedCount).toBe(2);
   });
 });
-

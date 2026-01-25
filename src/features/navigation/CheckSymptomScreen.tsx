@@ -331,7 +331,11 @@ const CheckSymptomScreen = () => {
                 Ongoing Assessment
               </Text>
               <Pressable
-                onPress={() => navigation.navigate('SymptomAssessment', { initialSymptom: assessmentState.initialSymptom })}
+                onPress={() =>
+                  navigation.navigate('SymptomAssessment', {
+                    initialSymptom: assessmentState.initialSymptom,
+                  })
+                }
                 style={({ pressed }) => [
                   styles.resumeBanner,
                   {
@@ -342,11 +346,18 @@ const CheckSymptomScreen = () => {
               >
                 <View style={styles.resumeContent}>
                   <View style={styles.resumeTextContainer}>
-                    <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '600' }}>
+                    <Text
+                      variant="bodyMedium"
+                      style={{ color: theme.colors.primary, fontWeight: '600' }}
+                    >
                       Continue your assessment for "{assessmentState.initialSymptom}"
                     </Text>
                   </View>
-                  <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.primary} />
+                  <MaterialCommunityIcons
+                    name="chevron-right"
+                    size={24}
+                    color={theme.colors.primary}
+                  />
                 </View>
               </Pressable>
             </View>

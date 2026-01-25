@@ -24,7 +24,7 @@ export class SystemLockDetector extends KeywordDetector {
     affectedSystems: SystemCategory[];
   } {
     const result = this.detect(text, true);
-    
+
     if (result.matchedKeywords.length === 0) {
       return { escalationCategory: null, affectedSystems: [] };
     }
@@ -33,8 +33,8 @@ export class SystemLockDetector extends KeywordDetector {
     let maxEscalation: 'complex' | 'critical' | null = null;
 
     for (const keyword of result.matchedKeywords) {
-      const config = SYSTEM_LOCK_CONFIGS.find((c) => 
-        c.keywords.some((k) => k.toLowerCase() === keyword.toLowerCase())
+      const config = SYSTEM_LOCK_CONFIGS.find((c) =>
+        c.keywords.some((k) => k.toLowerCase() === keyword.toLowerCase()),
       );
 
       if (config) {
@@ -56,20 +56,25 @@ export class SystemLockDetector extends KeywordDetector {
   /**
    * Applies overrides to the assessment profile based on detected system locks
    */
-  public static applySystemOverrides(profile: AssessmentProfile, conversationText: string): AssessmentProfile {
+  public static applySystemOverrides(
+    profile: AssessmentProfile,
+    conversationText: string,
+  ): AssessmentProfile {
     const detector = new SystemLockDetector();
     const { escalationCategory, affectedSystems } = detector.detectSystemLock(conversationText);
 
     if (escalationCategory) {
       const currentCategory = profile.symptom_category || 'simple';
-      
+
       // Category Hierarchy: simple < complex < critical
       const hierarchy = { simple: 0, complex: 1, critical: 2 };
-      
+
       if (hierarchy[escalationCategory] > hierarchy[currentCategory]) {
-        console.log(`[SystemLock] Overriding category: ${currentCategory} -> ${escalationCategory} (Systems: ${affectedSystems.join(', ')})`);
+        console.log(
+          `[SystemLock] Overriding category: ${currentCategory} -> ${escalationCategory} (Systems: ${affectedSystems.join(', ')})`,
+        );
         profile.symptom_category = escalationCategory;
-        
+
         // Also force is_complex_case if we've escalated
         if (escalationCategory === 'complex' || escalationCategory === 'critical') {
           profile.is_complex_case = true;

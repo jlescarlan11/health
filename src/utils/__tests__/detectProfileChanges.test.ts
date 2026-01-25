@@ -69,8 +69,8 @@ describe('detectProfileChanges', () => {
   });
 
   it('ignores additions (null -> value) as they are not corrections', () => {
-      const prev = { ...baseProfile, age: null };
-      const next = { ...baseProfile, age: '25' };
-      expect(detectProfileChanges(prev, next)).toBeNull();
+    const prev = { ...baseProfile, age: null };
+    const next = { ...baseProfile, age: '25' };
+    expect(detectProfileChanges(prev, next)).toBeNull();
   });
 });

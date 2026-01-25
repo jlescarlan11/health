@@ -42,7 +42,11 @@ describe('facilityUtils', () => {
   describe('getOpenStatus', () => {
     it('returns Hours N/A when operatingHours is null and legacy hours missing', () => {
       const facility = buildFacility({ operatingHours: null, hours: undefined });
-      expect(getOpenStatus(facility)).toEqual({ isOpen: false, text: 'Hours N/A', color: '#6B7280' });
+      expect(getOpenStatus(facility)).toEqual({
+        isOpen: false,
+        text: 'Hours N/A',
+        color: '#6B7280',
+      });
     });
 
     it('falls back to legacy hours parsing when operatingHours is malformed', () => {
@@ -51,7 +55,11 @@ describe('facilityUtils', () => {
         hours: '24/7',
       });
 
-      expect(getOpenStatus(facility)).toEqual({ isOpen: true, text: 'Open 24/7', color: '#379777' });
+      expect(getOpenStatus(facility)).toEqual({
+        isOpen: true,
+        text: 'Open 24/7',
+        color: '#379777',
+      });
     });
 
     it('returns Opens Tomorrow when currently closed and has schedule for tomorrow', () => {

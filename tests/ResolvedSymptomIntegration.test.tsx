@@ -14,7 +14,7 @@ import { detectEmergency } from '../src/services/emergencyDetector';
 jest.mock('../src/services/emergencyDetector', () => ({
   detectEmergency: jest.fn(),
   isNegated: jest.fn(() => ({ negated: false })),
-  COMBINATION_RISKS: []
+  COMBINATION_RISKS: [],
 }));
 
 let planSpy: jest.SpyInstance;
@@ -38,54 +38,46 @@ const renderAssessment = (initialParams = { initialSymptom: 'General Malaise' })
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator>
-          <Stack.Screen 
-            name="SymptomAssessment" 
-            component={SymptomAssessmentScreen} 
+          <Stack.Screen
+            name="SymptomAssessment"
+            component={SymptomAssessmentScreen}
             initialParams={initialParams}
           />
           <Stack.Screen name="Recommendation" component={RecommendationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
-    </Provider>
+    </Provider>,
   );
 };
 
 describe('Resolved Symptom Prompt Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    planSpy = jest
-      .spyOn(geminiClient, 'generateAssessmentPlan')
-      .mockResolvedValue({
-        questions: [{ id: 'q1', text: 'Tell me more.' }],
-        intro: 'Hi',
-      });
-    profileSpy = jest
-      .spyOn(geminiClient, 'extractClinicalProfile')
-      .mockResolvedValue({
-        triage_readiness_score: 0.95,
-        summary: 'Test summary',
-        is_recent_resolved: true,
-        resolved_keyword: 'chest pain',
-      } as any);
+    planSpy = jest.spyOn(geminiClient, 'generateAssessmentPlan').mockResolvedValue({
+      questions: [{ id: 'q1', text: 'Tell me more.' }],
+      intro: 'Hi',
+    });
+    profileSpy = jest.spyOn(geminiClient, 'extractClinicalProfile').mockResolvedValue({
+      triage_readiness_score: 0.95,
+      summary: 'Test summary',
+      is_recent_resolved: true,
+      resolved_keyword: 'chest pain',
+    } as any);
     streamSpy = jest
       .spyOn(geminiClient, 'streamGeminiResponse')
       .mockImplementation(async function* () {
         yield 'chunk';
       });
-    responseSpy = jest
-      .spyOn(geminiClient, 'getGeminiResponse')
-      .mockResolvedValue('Test response');
-    assessSpy = jest
-      .spyOn(geminiClient, 'assessSymptoms')
-      .mockResolvedValue({
-        recommended_level: 'hospital',
-        user_advice: 'Safety Note applied.',
-        clinical_soap: 'SOAP',
-        critical_warnings: [],
-        key_concerns: [],
-        relevant_services: [],
-        red_flags: [],
-      } as any);
+    responseSpy = jest.spyOn(geminiClient, 'getGeminiResponse').mockResolvedValue('Test response');
+    assessSpy = jest.spyOn(geminiClient, 'assessSymptoms').mockResolvedValue({
+      recommended_level: 'hospital',
+      user_advice: 'Safety Note applied.',
+      clinical_soap: 'SOAP',
+      critical_warnings: [],
+      key_concerns: [],
+      relevant_services: [],
+      red_flags: [],
+    } as any);
     clearCacheSpy = jest.spyOn(geminiClient, 'clearCache').mockResolvedValue(undefined);
     (detectEmergency as jest.Mock).mockReturnValue({ isEmergency: false });
   });
@@ -100,7 +92,7 @@ describe('Resolved Symptom Prompt Integration', () => {
       triage_readiness_score: 0.5,
       is_recent_resolved: true,
       resolved_keyword: 'chest pain',
-      summary: 'Chest pain resolved'
+      summary: 'Chest pain resolved',
     });
 
     const { getByText, getByTestId, queryByText } = renderAssessment();
@@ -108,10 +100,10 @@ describe('Resolved Symptom Prompt Integration', () => {
     await waitFor(() => expect(queryByText('Preparing your assessment...')).toBeNull());
 
     // 1. Trigger verification by typing a keyword that triggers emergency check
-    (detectEmergency as jest.Mock).mockReturnValue({ 
-      isEmergency: true, 
+    (detectEmergency as jest.Mock).mockReturnValue({
+      isEmergency: true,
       matchedKeywords: ['chest pain'],
-      score: 10
+      score: 10,
     });
 
     await act(async () => {
@@ -123,18 +115,21 @@ describe('Resolved Symptom Prompt Integration', () => {
 
     // 2. Select "Recent"
     await waitFor(() => expect(getByText('Happened recently but has stopped')).toBeTruthy());
-    
+
     (detectEmergency as jest.Mock).mockReturnValue({ isEmergency: false });
     await act(async () => {
       fireEvent.press(getByText('Happened recently but has stopped'));
     });
 
     // 3. Wait for expansion (since readiness is 0.5 and plan is short)
-    await waitFor(() => {
-      expect(streamSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[RECENT_RESOLVED: chest pain]')
-      );
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(streamSpy).toHaveBeenCalledWith(
+          expect.stringContaining('[RECENT_RESOLVED: chest pain]'),
+        );
+      },
+      { timeout: 10000 },
+    );
   }, 15000);
 
   it('prepends [RECENT_RESOLVED] tag to assessSymptoms context in RecommendationScreen', async () => {
@@ -143,7 +138,7 @@ describe('Resolved Symptom Prompt Integration', () => {
       triage_readiness_score: 1.0,
       is_recent_resolved: true,
       resolved_keyword: 'chest pain',
-      summary: 'Chest pain resolved'
+      summary: 'Chest pain resolved',
     });
 
     const { getByText, getByTestId, queryByText } = renderAssessment();
@@ -156,20 +151,23 @@ describe('Resolved Symptom Prompt Integration', () => {
     await act(async () => {
       fireEvent.changeText(getByTestId('text-input-outlined'), 'Happened 10 mins ago');
     });
-    
+
     await act(async () => {
       fireEvent.press(getByTestId('send-button'));
     });
 
     // 2. Wait for transition to RecommendationScreen
-    await waitFor(() => {
-      expect(geminiClient.assessSymptoms).toHaveBeenCalledWith(
-        expect.stringContaining('[RECENT_RESOLVED: chest pain]'),
-        expect.anything(),
-        expect.anything(),
-        expect.objectContaining({ is_recent_resolved: true }),
-        expect.any(String),
-      );
-    }, { timeout: 10000 });
+    await waitFor(
+      () => {
+        expect(geminiClient.assessSymptoms).toHaveBeenCalledWith(
+          expect.stringContaining('[RECENT_RESOLVED: chest pain]'),
+          expect.anything(),
+          expect.anything(),
+          expect.objectContaining({ is_recent_resolved: true }),
+          expect.any(String),
+        );
+      },
+      { timeout: 10000 },
+    );
   }, 15000);
 });

@@ -68,7 +68,9 @@ export class TriageArbiter {
           saturation_count: newSaturationCount,
         };
       } else {
-        console.warn('[TriageArbiter] Clarification attempts exhausted. Treating ambiguity as potential risk.');
+        console.warn(
+          '[TriageArbiter] Clarification attempts exhausted. Treating ambiguity as potential risk.',
+        );
         // Fallback: Proceed, but the low confidence score will likely force a conservative recommendation later.
       }
     }

@@ -72,11 +72,7 @@ export const MainHomeScreen = () => {
             {customIcon ? (
               customIcon
             ) : (
-              <MaterialCommunityIcons
-                name={icon as any}
-                size={compact ? 20 : 28}
-                color="#FFFFFF"
-              />
+              <MaterialCommunityIcons name={icon as any} size={compact ? 20 : 28} color="#FFFFFF" />
             )}
           </View>
 
@@ -125,7 +121,7 @@ export const MainHomeScreen = () => {
       edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <HomeHero 
+        <HomeHero
           hasClinicalReport={!!lastNote}
           onClinicalReportPress={() => navigation.navigate('ClinicalNote')}
         />

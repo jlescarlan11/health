@@ -321,9 +321,7 @@ const getFirstNonNegativeNumber = (text: string): number | null => {
  * - No clamping; callers decide range suitability.
  * - Negative numbers are not normalized.
  */
-export const normalizeNumericValue = (
-  text: string | null | undefined,
-): number | null => {
+export const normalizeNumericValue = (text: string | null | undefined): number | null => {
   if (text === null || text === undefined) return null;
   const trimmed = text.trim();
   if (!trimmed) return null;
@@ -351,9 +349,7 @@ export const normalizeNumericValue = (
     }
   }
 
-  const dashRangeMatch = lowerText.match(
-    /\b(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\b/i,
-  );
+  const dashRangeMatch = lowerText.match(/\b(\d+(?:\.\d+)?)\s*(?:-|to)\s*(\d+(?:\.\d+)?)\b/i);
   if (dashRangeMatch?.[1] && dashRangeMatch?.[2]) {
     const start = Number(dashRangeMatch[1]);
     const end = Number(dashRangeMatch[2]);
