@@ -11,7 +11,7 @@ const NotFoundScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>This screen doesn't exist.</Text>
-      <Button onPress={() => navigation.replace('Home')} title="Go to home screen" />
+      <Button onPress={() => navigation.replace('Home', { screen: 'HomeFeed' })} title="Go to home screen" />
     </SafeAreaView>
   );
 };

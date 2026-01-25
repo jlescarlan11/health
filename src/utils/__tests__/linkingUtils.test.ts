@@ -18,7 +18,7 @@ describe('openExternalMaps', () => {
     setPlatformOS('ios');
 
     const canOpenURL = jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue();
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
 
     const opened = await openExternalMaps({ latitude: 14.1, longitude: 121.2, label: 'Test' });
 
@@ -35,7 +35,7 @@ describe('openExternalMaps', () => {
     jest
       .spyOn(Linking, 'openURL')
       .mockRejectedValueOnce(new Error('no handler'))
-      .mockResolvedValueOnce();
+      .mockResolvedValueOnce(undefined);
 
     const opened = await openExternalMaps({ latitude: 1, longitude: 2 });
 
@@ -50,7 +50,7 @@ describe('openExternalMaps', () => {
     setPlatformOS('ios');
 
     jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue();
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
 
     const opened = await openExternalMaps({ address: '123 Main St', label: 'Clinic' });
 

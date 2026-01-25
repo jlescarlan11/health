@@ -22,6 +22,8 @@ describe('facilityUtils', () => {
   beforeEach(() => {
     global.Date = class extends RealDate {
       constructor(...args: any[]) {
+        // @ts-expect-error - super spread requires tuple or rest
+        super(...args);
         if (args.length > 0) {
           // @ts-expect-error: RealDate constructor typing mismatch in mock
           return new RealDate(...args);

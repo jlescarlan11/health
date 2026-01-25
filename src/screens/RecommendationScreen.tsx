@@ -799,7 +799,7 @@ const RecommendationScreen = () => {
             </Text>
             <Button
               title={handoverButtonLabelText}
-              onPress={() => navigation.navigate('ClinicalNote')}
+              onPress={() => navigation.navigate('ClinicalNote', {})}
               variant="primary"
               style={handoverButtonStyle}
               contentStyle={handoverButtonContentStyle}

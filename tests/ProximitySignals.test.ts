@@ -61,8 +61,8 @@ describe('useUserLocation Proximity Logic', () => {
     jest.useFakeTimers();
     jest.setSystemTime(1000);
 
-    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
-    (useSelector as jest.Mock).mockImplementation((selector) =>
+    (useDispatch as unknown as jest.Mock).mockReturnValue(mockDispatch);
+    (useSelector as unknown as jest.Mock).mockImplementation((selector) =>
       selector({
         facilities: {
           facilities: mockFacilities,

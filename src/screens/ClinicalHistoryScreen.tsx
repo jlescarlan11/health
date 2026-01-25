@@ -78,7 +78,7 @@ export const ClinicalHistoryScreen = () => {
             <Avatar.Icon
               size={48}
               icon={levelInfo.icon}
-              backgroundColor={levelInfo.color + '20'} // 20% opacity
+              style={{ backgroundColor: levelInfo.color + '20' }} // 20% opacity
               color={levelInfo.color}
             />
           </View>

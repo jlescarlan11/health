@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { FacilityCard } from '../FacilityCard';
 import { useTheme } from 'react-native-paper';
+import type { Facility, FacilityService } from '../../../types';
 
 // Mock theme
 jest.mock('react-native-paper', () => {
@@ -28,11 +29,11 @@ jest.mock('@expo/vector-icons', () => ({
 }));
 
 describe('FacilityCard', () => {
-  const mockFacility = {
+  const mockFacility: Facility = {
     id: '1',
     name: 'Test Clinic',
     type: 'Health Center',
-    services: ['General Medicine'],
+    services: ['General Medicine' as FacilityService],
     address: '123 Test St',
     latitude: 13.62,
     longitude: 123.19,
@@ -48,7 +49,7 @@ describe('FacilityCard', () => {
   });
 
   it('hides busyness indicator when facility is closed', () => {
-    const closedFacility = {
+    const closedFacility: Facility = {
       ...mockFacility,
       is_24_7: false,
       operatingHours: { is24x7: false, schedule: { [new Date().getDay()]: null } },
@@ -58,7 +59,7 @@ describe('FacilityCard', () => {
   });
 
   it('renders teleconsult badge when facility has teleconsult contact', () => {
-    const teleconsultFacility = {
+    const teleconsultFacility: Facility = {
       ...mockFacility,
       contacts: [
         {

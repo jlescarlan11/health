@@ -71,7 +71,9 @@ describe('Gemini Service Fallback', () => {
 
   it('should handle critically malformed input data gracefully', async () => {
     // 1. Mock AI to return empty questions
-    mockGenerateContent.mockResolvedValue(createLLMResult({ questions: [] as any[] }));
+    mockGenerateContent.mockResolvedValue(
+      createLLMResult({ questions: [] as any[], intro: 'fallback' }),
+    );
 
     // 2. Mock prioritizeQuestions to throw (simulating a crash on bad data)
     (prioritizeQuestions as jest.Mock).mockImplementation(() => {

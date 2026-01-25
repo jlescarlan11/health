@@ -45,6 +45,8 @@ export function configureNotifications() {
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
     }),
   });
 }
@@ -106,6 +108,7 @@ export async function scheduleMedicationReminder(medication: Medication) {
           data: { medicationId: medication.id },
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
           weekday,
           hour,
           minute,
