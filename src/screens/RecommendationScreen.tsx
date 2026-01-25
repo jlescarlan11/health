@@ -195,7 +195,7 @@ const summarizeInitialSymptom = (symptom?: string) => {
 const RecommendationScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
   const navigation = useNavigation<ScreenProps['navigation']>();
-  const theme = useTheme();
+  const theme = useTheme() as any;
   const { width: screenWidth } = useWindowDimensions();
   const dispatch = useDispatch<AppDispatch>();
 
@@ -675,44 +675,10 @@ const RecommendationScreen = () => {
   const isEmergency = recommendation.recommended_level === 'emergency';
   const triageLevel = mapCareLevelToTriageLevel(recommendation.recommended_level);
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
-  const displayAdvice = (() => {
-    if (isEmergency && recommendation.medical_justification) {
-      const cleanAdvice = recommendation.user_advice
-        .replace(
-          /CRITICAL: Potential life-threatening condition detected( based on your symptoms)?\./,
-          '',
-        )
-        .replace(/CRITICAL: High risk combination detected \(.*?\)\./, '')
-        .replace('Your symptoms indicate a mental health crisis.', '')
-        .trim();
-
-      const justification = recommendation.medical_justification.replace(
-        /^Potential concerns: /i,
-        '',
-      );
-      
-      return cleanAdvice
-        ? `${cleanAdvice}\n\nCritical factors: ${justification}`
-        : `Seek medical help immediately.\n\nCritical factors: ${justification}`;
-    }
-    return recommendation.user_advice;
-  })();
+  const displayAdvice = recommendation.user_advice;
 
   const guardAdjustments = recommendation.triage_logic?.adjustments ?? [];
-  const guardExplanation =
-    guardAdjustments.length > 0
-      ? guardAdjustments
-          .map(
-            (adjustment) =>
-              `${humanizeTriageRule(adjustment.rule)} (${adjustment.from} → ${
-                adjustment.to
-              }): ${adjustment.reason}`,
-          )
-          .join(' | ')
-      : null;
-  const guardrailInstruction = guardExplanation
-    ? `Based on the safety scanner, ${guardExplanation}`
-    : null;
+
 
   const reasonForAdvice = (() => {
     if (isEmergency && recommendation.medical_justification) {
@@ -742,9 +708,7 @@ const RecommendationScreen = () => {
     nextAction: getNextActionForLevel(recommendation.recommended_level),
   }).text;
 
-  const instructionWithGuardrail = guardrailInstruction
-    ? `${guardrailInstruction}\n\n${empatheticAdvice}`
-    : empatheticAdvice;
+  const instructionWithGuardrail = empatheticAdvice;
 
   const outlinedButtonBorderRadius = Math.min(
     Math.max(theme.roundness ?? 10, 8),
@@ -756,15 +720,13 @@ const RecommendationScreen = () => {
   const handoverButtonStyle = [
     styles.handoverButton,
     {
-      marginVertical: theme.spacing?.md ?? 12,
+      marginVertical: theme.spacing?.sm ?? 8,
       borderRadius: handoverBorderRadius,
-      alignSelf: 'stretch',
+      alignSelf: 'stretch' as const,
     },
   ];
   const handoverButtonContentStyle = {
-    paddingHorizontal: theme.spacing?.lg ?? 16,
-    paddingVertical: theme.spacing?.sm ?? 8,
-    justifyContent: 'center',
+    justifyContent: 'center' as const,
   };
   const handoverButtonLabelText = 'View Handover Report';
   const handoverButtonLabelStyle = {
@@ -773,19 +735,18 @@ const RecommendationScreen = () => {
   const restartButtonStyle = [
     styles.restartButton,
     {
-      marginVertical: theme.spacing?.md ?? 12,
+      marginVertical: theme.spacing?.sm ?? 8,
       borderRadius: handoverBorderRadius,
-      alignSelf: 'stretch',
+      alignSelf: 'stretch' as const,
     },
   ];
   const restartButtonContentStyle = handoverButtonContentStyle;
   const selfCareToggleStyle = {
-    marginHorizontal: theme.spacing.large,
-    marginTop: theme.spacing.large,
-    marginBottom: theme.spacing.large,
+    marginTop: theme.spacing?.md ?? 12,
+    marginBottom: theme.spacing?.md ?? 12,
   };
   const selfCareToggleContentStyle = {
-    paddingVertical: theme.spacing.medium,
+    justifyContent: 'center' as const,
   };
 
   return (
@@ -802,26 +763,7 @@ const RecommendationScreen = () => {
           />
         </View>
 
-        {guardExplanation && (
-          <Surface
-            style={[
-              styles.guardrailCard,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outline,
-                borderWidth: 1,
-              },
-            ]}
-            elevation={2}
-          >
-            <Text variant="titleSmall" style={styles.guardrailTitle}>
-              Safety Guardrail Detail
-            </Text>
-            <Text variant="bodyMedium" style={styles.guardrailText}>
-              {guardExplanation}
-            </Text>
-          </Surface>
-        )}
+
 
         {/* Key Observations Section - Neutral/Informational */}
         {recommendation.key_concerns.length > 0 && (
@@ -1084,10 +1026,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontWeight: '600',
   },
-  restartButton: {
-    width: '100%',
-  },
-
-});
+    restartButton: {
+    },
+  });
 
 export default RecommendationScreen;

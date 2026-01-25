@@ -193,6 +193,7 @@ var DANGER_INDICATORS = {
  * Critical symptom combinations that indicate high risk when occurring together.
  * These are used to upgrade severity when multiple symptoms are present simultaneously.
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 var COMBINATION_RISKS = [
   {
     symptoms: ['headache', 'blurred vision'],
@@ -294,6 +295,7 @@ var EmergencyDetector = /** @class */ (function (_super) {
     });
   };
   EmergencyDetector.prototype.evaluate = function (text, options) {
+    /* eslint-disable @typescript-eslint/no-this-alias */
     var _this = this;
     if (options === void 0) {
       options = {};

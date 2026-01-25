@@ -1,8 +1,8 @@
 import { Facility } from '../types';
 
-const OPEN_COLOR = '#379777';
-const WARNING_COLOR = '#F97316';
-const CLOSED_COLOR = '#6B7280';
+export const OPEN_COLOR = '#379777';
+export const WARNING_COLOR = '#F97316';
+export const CLOSED_COLOR = '#6B7280';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -34,84 +34,175 @@ const parseClockTime = (value: unknown): { hours: number; minutes: number } | nu
   return { hours, minutes };
 };
 
+const formatTime12h = (timeStr: string): string => {
+  const parsed = parseClockTime(timeStr);
+  if (!parsed) return timeStr;
+  const { hours, minutes } = parsed;
+  const h12 = hours % 12 || 12;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  return `${h12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+};
+
+export const formatOperatingHours = (facility: Facility): string[] => {
+  const { is_24_7, operatingHours, hours } = facility;
+
+  if (is_24_7 || operatingHours?.is24x7) {
+    return ['Open 24/7'];
+  }
+
+  if (operatingHours?.schedule) {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const lines: string[] = [];
+
+    // Group consecutive days with same hours
+    let startDay = 0;
+    while (startDay < 7) {
+      const currentHours = operatingHours.schedule[startDay];
+      let endDay = startDay;
+
+      while (endDay < 6) {
+        const nextHours = operatingHours.schedule[endDay + 1];
+        if (JSON.stringify(currentHours) === JSON.stringify(nextHours)) {
+          endDay++;
+        } else {
+          break;
+        }
+      }
+
+      const dayRange = startDay === endDay ? days[startDay] : `${days[startDay]} - ${days[endDay]}`;
+      const hoursStr = currentHours
+        ? `${formatTime12h(currentHours.open)} - ${formatTime12h(currentHours.close)}`
+        : 'Closed';
+
+      lines.push(`${dayRange}: ${hoursStr}`);
+      startDay = endDay + 1;
+    }
+    return lines;
+  }
+
+  if (operatingHours?.description) {
+    return [operatingHours.description];
+  }
+
+  if (operatingHours?.open && operatingHours?.close) {
+    return [`Daily: ${formatTime12h(operatingHours.open)} - ${formatTime12h(operatingHours.close)}`];
+  }
+
+  if (hours) {
+    return [hours];
+  }
+
+  return ['Hours not available'];
+};
+
 export const getOpenStatus = (
   facility: Facility,
 ): { isOpen: boolean; text: string; color: string } => {
-  const { hours, is_24_7 } = facility;
-  const operatingHours: unknown = (facility as unknown as { operatingHours?: unknown })
-    .operatingHours;
+  const { hours, is_24_7, operatingHours } = facility;
 
   // 0. Check explicit 24/7 flag first
-  if (is_24_7) {
+  if (is_24_7 || (operatingHours && coerceBoolean(operatingHours.is24x7))) {
     return { isOpen: true, text: 'Open 24/7', color: OPEN_COLOR };
   }
 
   // 1. Check structured data next
   if (isRecord(operatingHours)) {
-    if (coerceBoolean(operatingHours.is24x7)) {
-      return { isOpen: true, text: 'Open 24/7', color: OPEN_COLOR };
-    }
-
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0 = Sun, 6 = Sat
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+    const currentTimeInMinutes = currentHours * 60 + currentMinutes;
 
     // Check specific schedule for today
     if (isRecord(operatingHours.schedule)) {
       const todayHours = operatingHours.schedule[dayOfWeek];
 
       if (todayHours === null) {
-        // Null entry means closed today
-        return { isOpen: false, text: 'Closed Today', color: CLOSED_COLOR }; // Muted Gray
+        // Find when it opens next
+        for (let i = 1; i <= 7; i++) {
+          const nextDay = (dayOfWeek + i) % 7;
+          const nextDayHours = operatingHours.schedule[nextDay];
+          if (nextDayHours && isRecord(nextDayHours)) {
+            const dayNames = [
+              'Sunday',
+              'Monday',
+              'Tuesday',
+              'Wednesday',
+              'Thursday',
+              'Friday',
+              'Saturday',
+            ];
+            const prefix = i === 1 ? 'Tomorrow' : dayNames[nextDay];
+            return {
+              isOpen: false,
+              text: `Closed - Opens ${prefix} at ${formatTime12h(nextDayHours.open)}`,
+              color: CLOSED_COLOR,
+            };
+          }
+        }
+        return { isOpen: false, text: 'Closed Today', color: CLOSED_COLOR };
       }
 
       if (isRecord(todayHours)) {
         const parsedOpen = parseClockTime(todayHours.open);
         const parsedClose = parseClockTime(todayHours.close);
 
-        if (!parsedOpen || !parsedClose) {
-          // Malformed schedule entry; fall back to other sources.
-          // (Do not treat this as "Closed Today", since we can't trust the data.)
-        } else {
-          // Adjust to PH time if needed, but assuming device time is local for now
-          const currentHours = now.getHours();
-          const currentMinutes = now.getMinutes();
-          const currentTimeInMinutes = currentHours * 60 + currentMinutes;
-
-          const openH = parsedOpen.hours;
-          const openM = parsedOpen.minutes;
-          const closeH = parsedClose.hours;
-          const closeM = parsedClose.minutes;
-
-          const openTimeInMinutes = openH * 60 + openM;
-          let closeTimeInMinutes = closeH * 60 + closeM;
-
-          // Handle midnight closing (00:00) as end of day (24:00)
-          if (closeTimeInMinutes === 0) {
-            closeTimeInMinutes = 24 * 60;
-          }
+        if (parsedOpen && parsedClose) {
+          const openTimeInMinutes = parsedOpen.hours * 60 + parsedOpen.minutes;
+          let closeTimeInMinutes = parsedClose.hours * 60 + parsedClose.minutes;
+          if (closeTimeInMinutes === 0) closeTimeInMinutes = 24 * 60;
 
           if (
             currentTimeInMinutes >= openTimeInMinutes &&
             currentTimeInMinutes < closeTimeInMinutes
           ) {
-            // Check if closing within 30 minutes
             if (closeTimeInMinutes - currentTimeInMinutes <= 30) {
-              const closeH12 = closeH % 12 || 12;
-              const closeAmPm = closeH >= 12 ? 'PM' : 'AM';
               return {
                 isOpen: true,
-                text: `Closes at ${closeH12}:${closeM.toString().padStart(2, '0')} ${closeAmPm}`,
-                color: WARNING_COLOR, // Soft Warning Orange
+                text: `Closes at ${formatTime12h(todayHours.close)}`,
+                color: WARNING_COLOR,
               };
             }
-
-            // Format close time to 12h for display
-            const closeH12 = closeH % 12 || 12;
-            const closeAmPm = closeH >= 12 ? 'PM' : 'AM';
-            const closeTimeDisplay = `${closeH12}:${closeM.toString().padStart(2, '0')} ${closeAmPm}`;
-            return { isOpen: true, text: `Open until ${closeTimeDisplay}`, color: OPEN_COLOR };
+            return {
+              isOpen: true,
+              text: `Open until ${formatTime12h(todayHours.close)}`,
+              color: OPEN_COLOR,
+            };
+          } else if (currentTimeInMinutes < openTimeInMinutes) {
+            const minutesUntilOpen = openTimeInMinutes - currentTimeInMinutes;
+            const statusText =
+              minutesUntilOpen <= 240
+                ? `Opens at ${formatTime12h(todayHours.open)}`
+                : `Closed - Opens at ${formatTime12h(todayHours.open)}`;
+            return {
+              isOpen: false,
+              text: statusText,
+              color: CLOSED_COLOR,
+            };
           } else {
-            return { isOpen: false, text: 'Closed', color: CLOSED_COLOR }; // Muted Gray
+            // Closed for today, find next opening
+            for (let i = 1; i <= 7; i++) {
+              const nextDay = (dayOfWeek + i) % 7;
+              const nextDayHours = operatingHours.schedule[nextDay];
+              if (nextDayHours && isRecord(nextDayHours)) {
+                const dayNames = [
+                  'Sunday',
+                  'Monday',
+                  'Tuesday',
+                  'Wednesday',
+                  'Thursday',
+                  'Friday',
+                  'Saturday',
+                ];
+                const prefix = i === 1 ? 'Tomorrow' : dayNames[nextDay];
+                return {
+                  isOpen: false,
+                  text: `Closed - Opens ${prefix} at ${formatTime12h(nextDayHours.open)}`,
+                  color: CLOSED_COLOR,
+                };
+              }
+            }
+            return { isOpen: false, text: 'Closed', color: CLOSED_COLOR };
           }
         }
       }
@@ -121,44 +212,44 @@ export const getOpenStatus = (
     const parsedOpen = parseClockTime(operatingHours.open);
     const parsedClose = parseClockTime(operatingHours.close);
     if (parsedOpen && parsedClose) {
-      const currentHours = now.getHours();
-      const currentMinutes = now.getMinutes();
-      const currentTimeInMinutes = currentHours * 60 + currentMinutes;
-
-      const openH = parsedOpen.hours;
-      const openM = parsedOpen.minutes;
-      const closeH = parsedClose.hours;
-      const closeM = parsedClose.minutes;
-
-      const openTimeInMinutes = openH * 60 + openM;
-      const closeTimeInMinutes = closeH * 60 + closeM;
+      const openTimeInMinutes = parsedOpen.hours * 60 + parsedOpen.minutes;
+      const closeTimeInMinutes = parsedClose.hours * 60 + parsedClose.minutes;
 
       if (currentTimeInMinutes >= openTimeInMinutes && currentTimeInMinutes < closeTimeInMinutes) {
         return { isOpen: true, text: 'Open Now', color: OPEN_COLOR };
+      } else if (currentTimeInMinutes < openTimeInMinutes) {
+        const minutesUntilOpen = openTimeInMinutes - currentTimeInMinutes;
+        const statusText =
+          minutesUntilOpen <= 240
+            ? `Opens at ${formatTime12h(operatingHours.open as string)}`
+            : `Closed - Opens at ${formatTime12h(operatingHours.open as string)}`;
+        return {
+          isOpen: false,
+          text: statusText,
+          color: CLOSED_COLOR,
+        };
       } else {
-        return { isOpen: false, text: 'Closed', color: CLOSED_COLOR }; // Muted Gray
+        return { isOpen: false, text: 'Closed', color: CLOSED_COLOR };
       }
     }
   }
 
   // 2. Fallback to legacy string parsing
-  if (!hours) return { isOpen: false, text: 'Hours N/A', color: 'gray' };
+  if (!hours) return { isOpen: false, text: 'Hours N/A', color: CLOSED_COLOR };
 
   if (hours.toLowerCase().includes('24/7') || hours.toLowerCase().includes('24 hours')) {
     return { isOpen: true, text: 'Open 24/7', color: OPEN_COLOR };
   }
 
-  // Basic heuristic fallback
   const now = new Date();
   const currentHour = now.getHours();
-  const isBusinessHours = currentHour >= 8 && currentHour < 17;
-
-  if (isBusinessHours) {
+  if (currentHour >= 8 && currentHour < 17) {
     return { isOpen: true, text: 'Open Now', color: OPEN_COLOR };
   }
 
-  return { isOpen: false, text: 'Closed', color: CLOSED_COLOR }; // Muted Gray
+  return { isOpen: false, text: 'Closed', color: CLOSED_COLOR };
 };
+
 
 /**
  * Maps colloquial medical terms or AI-recommended services to canonical VALID_SERVICES.

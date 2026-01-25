@@ -1,5 +1,5 @@
 import { AssessmentProfile, AssessmentResponse } from '../types';
-import { KeywordDetector, KeywordMatch, SegmentAnalysis } from './base/KeywordDetector';
+import { KeywordDetector, SYSTEM_INDICATORS, KeywordMatch as _KeywordMatch, SegmentAnalysis } from './base/KeywordDetector';
 
 // --- KEYWORD CATEGORIES ---
 
@@ -389,7 +389,7 @@ class EmergencyDetector extends KeywordDetector {
 
     // --- CONTEXT-AWARE SCORE ADJUSTMENT ---
     let finalScore = score;
-    let reasoningParts: string[] = [];
+    const reasoningParts: string[] = [];
 
     // Check if we have an absolute emergency (10/10)
     const hasAbsoluteEmergency = matchedKeywords.some((k) => ALL_EMERGENCY_KEYWORDS[k] === 10);
@@ -564,7 +564,7 @@ class EmergencyDetector extends KeywordDetector {
 
     const medical_justification =
       matchedKeywords.length > 0
-        ? `Potential concerns: ${symptomsList}.${contextList ? ` Context: ${contextList}` : ''}`
+        ? `${symptomsList}${contextList ? `. ${contextList}` : ''}`
         : 'No specific emergency signs detected.';
 
     console.log(`\n--- FINAL RESULT ---`);

@@ -37,7 +37,7 @@ import {
   AssessmentTurnMeta,
 } from '../store/navigationSlice';
 import { TriageEngine } from '../services/triageEngine';
-import { TriageArbiter, TriageSignal } from '../services/triageArbiter';
+import { TriageArbiter } from '../services/triageArbiter';
 import {
   TriageFlow,
   AssessmentQuestion,
@@ -98,7 +98,7 @@ const composeAssistantMessage = ({
   nextAction?: string;
   timestamp: number;
   extra?: Partial<Omit<Message, 'id' | 'sender' | 'text' | 'timestamp'>>;
-}) => {
+}): Message => {
   const { metadata: extraMetadata, ...extraRest } = extra;
   const formatted = formatEmpatheticResponse({
     header,
@@ -187,13 +187,14 @@ const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[
     case 'red_flags':
       // Red flags explicitly implies symptoms
       return `I'm experiencing ${joined}.`;
-    default:
+    default: {
       // 3. Fallback based on question text content
       const lowerText = question.text.toLowerCase();
       if (lowerText.includes('symptom') || lowerText.includes('experiencing')) {
         return `I'm experiencing ${joined}.`;
       }
       return joined;
+    }
   }
 };
 
@@ -379,7 +380,6 @@ const SymptomAssessmentScreen = () => {
       ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers).length > 0
       : false,
   );
-  const [arbiterSignal, setArbiterSignal] = useState<TriageSignal | null>(null);
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
     (savedState?.symptomCategory as any) || null,
   );
@@ -467,6 +467,85 @@ const SymptomAssessmentScreen = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [streamingText, setStreamingText] = useState<string | null>(null);
+
+  interface SafetyGuardParams {
+    text: string;
+    sender: 'user' | 'assistant';
+    question?: AssessmentQuestion;
+    questionId?: string;
+    extraHistory?: string;
+  }
+
+  interface EmergencyGuardResult {
+    safetyCheck: EmergencyDetectionResult;
+    triggered: boolean;
+  }
+
+  const runEmergencyGuard = useCallback(
+    (params: SafetyGuardParams): EmergencyGuardResult | null => {
+      const trimmedText = params.text?.trim();
+      if (!trimmedText || isOfflineMode) return null;
+
+      const historyParts: string[] = [];
+      const baseHistory = getHistoryContext();
+      if (baseHistory) historyParts.push(baseHistory);
+      if (params.extraHistory) {
+        historyParts.push(params.extraHistory);
+      } else {
+        historyParts.push(trimmedText);
+      }
+      const historyContext = historyParts.join('. ');
+
+      const questionId =
+        params.question?.id ||
+        params.questionId ||
+        questions[currentQuestionIndex]?.id ||
+        'streaming_safety_scan';
+
+      const safetyCheck = detectEmergency(trimmedText, {
+        isUserInput: params.sender === 'user',
+        historyContext,
+        questionId,
+      });
+
+      const activeKeywords =
+        (safetyCheck.matchedKeywords || []).filter((keyword) => {
+          if (!keyword) return false;
+          if (suppressedKeywords.includes(keyword)) return false;
+          const pending = pendingRedFlagRef.current;
+          if (pending && pending === keyword) return false;
+          return true;
+        }) || [];
+
+      const triggered = activeKeywords.length > 0;
+
+      if (triggered) {
+        const keyword = activeKeywords[0];
+        console.log(
+          `[Assessment] POTENTIAL EMERGENCY DETECTED: ${activeKeywords.join(', ')}. Triggering verification.`,
+        );
+        const targetQuestion =
+          params.question ||
+          questions[currentQuestionIndex] ||
+          ({
+            id: 'conversation-default',
+            text: 'Current assessment turn',
+          } as AssessmentQuestion);
+
+        setPendingRedFlag(keyword);
+        setIsVerifyingEmergency(true);
+        setEmergencyVerificationData({
+          keyword,
+          answer: trimmedText,
+          currentQ: targetQuestion,
+          safetyCheck,
+        });
+      }
+
+      return { safetyCheck, triggered };
+    },
+    [getHistoryContext, isOfflineMode, questions, currentQuestionIndex, suppressedKeywords],
+  );
 
   const appendMessagesToConversation = useCallback(
     (newMessages: Message[]) => {
@@ -567,85 +646,6 @@ const SymptomAssessmentScreen = () => {
     if (question?.type === 'number') return 'numeric';
     return 'text';
   }, []);
-
-  interface SafetyGuardParams {
-    text: string;
-    sender: 'user' | 'assistant';
-    question?: AssessmentQuestion;
-    questionId?: string;
-    extraHistory?: string;
-  }
-
-  interface EmergencyGuardResult {
-    safetyCheck: EmergencyDetectionResult;
-    triggered: boolean;
-  }
-
-  const runEmergencyGuard = useCallback(
-    (params: SafetyGuardParams): EmergencyGuardResult | null => {
-      const trimmedText = params.text?.trim();
-      if (!trimmedText || isOfflineMode) return null;
-
-      const historyParts: string[] = [];
-      const baseHistory = getHistoryContext();
-      if (baseHistory) historyParts.push(baseHistory);
-      if (params.extraHistory) {
-        historyParts.push(params.extraHistory);
-      } else {
-        historyParts.push(trimmedText);
-      }
-      const historyContext = historyParts.join('. ');
-
-      const questionId =
-        params.question?.id ||
-        params.questionId ||
-        questions[currentQuestionIndex]?.id ||
-        'streaming_safety_scan';
-
-      const safetyCheck = detectEmergency(trimmedText, {
-        isUserInput: params.sender === 'user',
-        historyContext,
-        questionId,
-      });
-
-      const activeKeywords =
-        (safetyCheck.matchedKeywords || []).filter((keyword) => {
-          if (!keyword) return false;
-          if (suppressedKeywords.includes(keyword)) return false;
-          const pending = pendingRedFlagRef.current;
-          if (pending && pending === keyword) return false;
-          return true;
-        }) || [];
-
-      const triggered = activeKeywords.length > 0;
-
-      if (triggered) {
-        const keyword = activeKeywords[0];
-        console.log(
-          `[Assessment] POTENTIAL EMERGENCY DETECTED: ${activeKeywords.join(', ')}. Triggering verification.`,
-        );
-        const targetQuestion =
-          params.question ||
-          questions[currentQuestionIndex] ||
-          ({
-            id: 'conversation-default',
-            text: 'Current assessment turn',
-          } as AssessmentQuestion);
-
-        setPendingRedFlag(keyword);
-        setIsVerifyingEmergency(true);
-        setEmergencyVerificationData({
-          keyword,
-          answer: trimmedText,
-          currentQ: targetQuestion,
-          safetyCheck,
-        });
-      }
-
-      return { safetyCheck, triggered };
-    },
-    [getHistoryContext, isOfflineMode, questions, currentQuestionIndex, suppressedKeywords],
-  );
 
   // Sync state to Redux for persistence
   useEffect(() => {
@@ -1031,6 +1031,7 @@ const SymptomAssessmentScreen = () => {
       // The Arbiter now has authority over whether we continue or stop.
       // We check this starting at Turn 0 (every turn) to allow for early interventions.
       if (nextIdx >= 0 || isAtEnd) {
+        let effectiveIsAtEnd = nextIdx >= questions.length;
         console.log(`[Assessment] Turn ${nextIdx} reached. Consulting Arbiter...`);
         try {
           let activeQuestions = questions;
@@ -1182,7 +1183,7 @@ const SymptomAssessmentScreen = () => {
           console.log(
             `[DEBUG_NEXT_LOGIC] nextIdx: ${nextIdx}, activeQuestions.length: ${activeQuestions.length}`,
           );
-          let effectiveIsAtEnd = nextIdx >= activeQuestions.length;
+          effectiveIsAtEnd = nextIdx >= activeQuestions.length;
 
           // Update Readiness Visualization
           if (profile.triage_readiness_score !== undefined) {
@@ -1260,7 +1261,6 @@ const SymptomAssessmentScreen = () => {
 
           setPreviousProfile(profile);
 
-          setArbiterSignal(arbiterResult.signal);
           console.log(
             `[Assessment] Arbiter Signal: ${arbiterResult.signal}. Reason: ${arbiterResult.reason}`,
           );
@@ -1716,10 +1716,10 @@ const SymptomAssessmentScreen = () => {
             }, 600);
             return;
           }
-        } catch (e) {
+        } catch (_e) {
           console.warn(
             '[Assessment] Arbiter consultation or follow-up failed, continuing planned path...',
-            e,
+            _e,
           );
         }
       }
@@ -2038,7 +2038,7 @@ const SymptomAssessmentScreen = () => {
         },
         (vol) => setVolume(vol),
       );
-    } catch (e) {
+    } catch (_e) {
       setIsRecording(false);
     }
   };

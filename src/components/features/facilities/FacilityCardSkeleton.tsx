@@ -35,19 +35,49 @@ const SkeletonItem = ({ style }: { style: ViewStyle }) => {
 };
 
 export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
+  const theme = useTheme();
   return (
-    <Card style={[styles.card, style]} mode="elevated">
-      <View style={styles.header}>
-        <View>
-          <SkeletonItem style={styles.title} />
-          <SkeletonItem style={styles.subtitle} />
+    <Card
+      style={[
+        styles.card,
+        style,
+        {
+          backgroundColor: theme.colors.surface,
+        },
+      ]}
+      mode="contained"
+    >
+      <View style={styles.cardInner}>
+        {/* Header Row */}
+        <SkeletonItem style={styles.titleLine} />
+
+        {/* Meta Row */}
+        <View style={styles.metaRow}>
+          <SkeletonItem style={styles.metaText} />
+          <SkeletonItem style={styles.yakapBadge} />
+          <SkeletonItem style={styles.matchBadge} />
+          <SkeletonItem style={styles.distance} />
         </View>
-        <SkeletonItem style={styles.chip} />
+
+        {/* Status Row */}
+        <View style={styles.statusRow}>
+          <SkeletonItem style={styles.statusIcon} />
+          <SkeletonItem style={styles.statusText} />
+        </View>
+
+        {/* Services Row */}
+        <View style={styles.servicesRow}>
+          <SkeletonItem style={styles.serviceChip} />
+          <SkeletonItem style={styles.serviceChip} />
+          <SkeletonItem style={styles.serviceChip} />
+        </View>
+
+        {/* Action Buttons Row */}
+        <View style={styles.actionsRow}>
+          <SkeletonItem style={styles.actionButton} />
+          <SkeletonItem style={styles.actionButton} />
+        </View>
       </View>
-      <Card.Content>
-        <SkeletonItem style={styles.address} />
-        <SkeletonItem style={styles.services} />
-      </Card.Content>
     </Card>
   );
 };
@@ -55,41 +85,79 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
 const styles = StyleSheet.create({
   card: {
     marginVertical: 8,
-    borderRadius: 12,
-    paddingVertical: 8,
+    borderRadius: 20,
+    elevation: 2,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    marginBottom: 8,
+  cardInner: {
+    padding: 16,
   },
-  title: {
-    width: 150,
+  titleLine: {
+    width: '70%',
     height: 20,
     borderRadius: 4,
     marginBottom: 8,
   },
-  subtitle: {
-    width: 100,
-    height: 16,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  metaText: {
+    width: 60,
+    height: 12,
     borderRadius: 4,
   },
-  chip: {
-    width: 60,
+  yakapBadge: {
+    width: 80,
+    height: 18,
+    borderRadius: 6,
+  },
+  matchBadge: {
+    width: 70,
+    height: 18,
+    borderRadius: 6,
+  },
+  distance: {
+    width: 50,
+    height: 12,
+    borderRadius: 4,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statusIcon: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    marginRight: 6,
+  },
+  statusText: {
+    width: 100,
+    height: 14,
+    borderRadius: 4,
+  },
+  servicesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  serviceChip: {
+    width: 70,
     height: 24,
     borderRadius: 12,
   },
-  address: {
-    width: '90%',
-    height: 16,
-    borderRadius: 4,
-    marginBottom: 16,
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
   },
-  services: {
-    width: '80%',
-    height: 20,
-    borderRadius: 4,
+  actionButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: 8,
   },
 });

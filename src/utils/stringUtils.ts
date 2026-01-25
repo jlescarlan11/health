@@ -370,3 +370,14 @@ export const normalizeNumericValue = (
   const wordNumber = parseNumberWords(lowerText);
   return wordNumber !== null && !Number.isNaN(wordNumber) ? wordNumber : null;
 };
+
+/**
+ * Formats a raw facility type (e.g., "health_center") into a title-cased string (e.g., "Health Center").
+ */
+export const formatFacilityType = (type: string): string => {
+  if (!type) return '';
+  return type
+    .split(/[_\s]/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};

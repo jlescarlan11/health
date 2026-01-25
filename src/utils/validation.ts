@@ -128,6 +128,7 @@ const FacilityInputSchema = z
     distance: z.unknown().optional(),
     specialized_services: z.unknown().optional(),
     is_24_7: z.unknown().optional(),
+    lastUpdated: z.unknown().optional(),
   })
   .passthrough();
 
@@ -210,6 +211,7 @@ export const normalizeFacility = (value: unknown): Facility | null => {
   const hours = typeof record.hours === 'string' ? record.hours : undefined;
   const photoUrl = typeof record.photoUrl === 'string' ? record.photoUrl : undefined;
   const distance = coerceNumber(record.distance);
+  const lastUpdated = coerceNumber(record.lastUpdated);
 
   const services = normalizeStringArray(record.services) as Facility['services'];
   const specialized_services = normalizeStringArray(record.specialized_services);
@@ -230,6 +232,7 @@ export const normalizeFacility = (value: unknown): Facility | null => {
     ...(operatingHours ? { operatingHours } : {}),
     ...(photoUrl ? { photoUrl } : {}),
     ...(distance === undefined ? {} : { distance }),
+    ...(lastUpdated === undefined ? {} : { lastUpdated }),
     specialized_services,
     is_24_7: is24x7Flag,
   };

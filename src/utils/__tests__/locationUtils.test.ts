@@ -91,4 +91,19 @@ describe('locationUtils', () => {
       expect(distance).toBeLessThan(0.6);
     });
   });
+
+  describe('formatDistance', () => {
+    it('should format distances less than 1km in meters', () => {
+      const { formatDistance } = require('../locationUtils');
+      expect(formatDistance(0.5)).toBe('500m');
+      expect(formatDistance(0.01)).toBe('10m');
+    });
+
+    it('should format distances greater than or equal to 1km in kilometers', () => {
+      const { formatDistance } = require('../locationUtils');
+      expect(formatDistance(1.0)).toBe('1.0km');
+      expect(formatDistance(12.34)).toBe('12.3km');
+      expect(formatDistance(375.0)).toBe('375.0km');
+    });
+  });
 });

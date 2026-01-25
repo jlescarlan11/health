@@ -5,7 +5,7 @@ import { calculateDistance } from '../utils/locationUtils';
 import { getOpenStatus, resolveServiceAlias } from '../utils/facilityUtils';
 
 interface FacilityFilters {
-  type?: string;
+  type?: string[];
   services?: FacilityService[];
   yakapAccredited?: boolean;
   searchQuery?: string;
@@ -27,7 +27,13 @@ const initialState: FacilitiesState = {
   filteredFacilities: [],
   selectedFacilityId: null,
   userLocation: null,
-  filters: {},
+  filters: {
+    type: [],
+    services: [],
+    yakapAccredited: false,
+    openNow: false,
+    searchQuery: '',
+  },
   isLoading: false,
   error: null,
 };
@@ -39,6 +45,32 @@ export const fetchFacilities = createAsyncThunk(
     return { data };
   },
 );
+
+// Shared filtering logic
+const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facility[] => {
+  if (!filters) return facilities;
+  const { type, services, yakapAccredited, searchQuery, openNow } = filters;
+
+  return facilities.filter((facility) => {
+    const matchesType = !type || type.length === 0 || type.includes(facility.type);
+    const matchesYakap = !yakapAccredited || facility.yakapAccredited;
+    const matchesSearch = matchesSearchQuery(facility, searchQuery);
+
+    const matchesServices =
+      !services ||
+      services.length === 0 ||
+      services.some(
+        (s) =>
+          facility.services.includes(s) ||
+          (facility.specialized_services &&
+            facility.specialized_services.includes(s as string)),
+      );
+
+    const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
+
+    return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
+  });
+};
 
 // Helper for consistent sorting
 const sortFacilities = (a: Facility, b: Facility) => {
@@ -169,42 +201,20 @@ const facilitiesSlice = createSlice({
         state.filteredFacilities.sort(sortFacilities);
       }
     },
-    setFilters: (state, action: PayloadAction<FacilityFilters>) => {
-      state.filters = { ...(state.filters || {}), ...action.payload };
-      // Apply filters logic here or in a selector/separate effect
-      // For simple state management, we can re-filter here
-      const { type, services, yakapAccredited, searchQuery, openNow } = state.filters || {};
-
-      state.filteredFacilities = state.facilities.filter((facility) => {
-        const matchesType = !type || facility.type === type;
-        const matchesYakap =
-          yakapAccredited === undefined || facility.yakapAccredited === yakapAccredited;
-        const matchesSearch = matchesSearchQuery(facility, searchQuery);
-
-        // Simple service match (has at least one of the filtered services)
-        // Adjust logic as needed (e.g., must have ALL)
-        const matchesServices =
-          !services ||
-          services.length === 0 ||
-          services.some(
-            (s) =>
-              facility.services.includes(s) ||
-              (facility.specialized_services &&
-                facility.specialized_services.includes(s as string)),
-          );
-
-        const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
-
-        return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
-      });
-
-      // Always apply sorting
+    setFilters: (state, action: PayloadAction<Partial<FacilityFilters>>) => {
+      state.filters = { ...state.filters, ...action.payload };
+      state.filteredFacilities = applyFilters(state.facilities, state.filters);
       state.filteredFacilities.sort(sortFacilities);
     },
     clearFilters: (state) => {
-      state.filters = {};
-      state.filteredFacilities = state.facilities;
-      // Always apply sorting
+      state.filters = {
+        type: [],
+        services: [],
+        yakapAccredited: false,
+        openNow: false,
+        searchQuery: '',
+      };
+      state.filteredFacilities = [...state.facilities];
       state.filteredFacilities.sort(sortFacilities);
     },
   },
@@ -225,32 +235,17 @@ const facilitiesSlice = createSlice({
           newFacilities = data.facilities || [];
         }
 
+        // Calculate distances if location is already known
+        if (state.userLocation) {
+          const { latitude, longitude } = state.userLocation;
+          newFacilities = newFacilities.map(f => ({
+            ...f,
+            distance: calculateDistance(latitude, longitude, f.latitude, f.longitude)
+          }));
+        }
+
         state.facilities = newFacilities;
-
-        // Re-apply filters on the updated list
-        const { type, services, yakapAccredited, searchQuery, openNow } = state.filters || {};
-        state.filteredFacilities = state.facilities.filter((facility) => {
-          const matchesType = !type || facility.type === type;
-          const matchesYakap =
-            yakapAccredited === undefined || facility.yakapAccredited === yakapAccredited;
-          const matchesSearch = matchesSearchQuery(facility, searchQuery);
-
-          const matchesServices =
-            !services ||
-            services.length === 0 ||
-            services.some(
-              (s) =>
-                facility.services.includes(s) ||
-                (facility.specialized_services &&
-                  facility.specialized_services.includes(s as string)),
-            );
-
-          const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
-
-          return matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen;
-        });
-
-        // Apply sorting to the freshly fetched/filtered list
+        state.filteredFacilities = applyFilters(state.facilities, state.filters);
         state.filteredFacilities.sort(sortFacilities);
       })
       .addCase(fetchFacilities.rejected, (state, action) => {
