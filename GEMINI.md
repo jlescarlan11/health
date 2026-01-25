@@ -305,3 +305,8 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     - Enhanced `ClinicalNoteScreen.tsx` to fetch historical data when a `recordId` is provided in navigation parameters, otherwise defaulting to the latest live assessment from Redux.
     - Verified functionality with `tests/ClinicalHistoryScreen.test.tsx`.
   - **Verification:** Verified all functionality with new test suites in `src/services/__tests__/clinical_database.test.ts` and `src/store/__tests__/offlineSlice.test.ts`.
+
+- **Facility Details Font Scaling Fix (Jan 26, 2026):**
+  - **Issue:** Text elements in `FacilityDetailsScreen` were not responding to Senior Mode's font scaling settings.
+  - **Fix:** Integrated `useAdaptiveUI` hook into `FacilityDetailsScreen.tsx`. Applied the `scaleFactor` to all text components including headers, body text, service chips, meta info, and action buttons (Directions/Call).
+  - **Verification:** Created and passed a reproduction test suite `tests/FacilityDetailsScreen_Adaptive.test.tsx` ensuring 1.25x scaling is applied when Senior Mode is enabled.
