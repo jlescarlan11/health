@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import * as facilityService from '../services/facilityService';
-import { Facility } from '../../generated/prisma/client';
+import { Facility, FacilityContact } from '../../generated/prisma/client';
 
 interface FacilityWithDistance extends Facility {
   distance?: number;
   busyness_score?: number;
-  contacts?: { phoneNumber: string; contactName: string | null; role: string | null }[];
+  contacts?: FacilityContact[];
 }
 
 // Helper to map DB model to Frontend Interface

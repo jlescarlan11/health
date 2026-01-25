@@ -20,7 +20,7 @@ describe('Facility Routes', () => {
     capacity: 50,
     live_metrics: {},
     busy_patterns: {},
-    contacts: [{ phoneNumber: '123-456-7890', role: 'Reception', contactName: null }],
+    contacts: [{ phoneNumber: '123-456-7890', platform: 'phone', role: 'Reception', contactName: null }],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
