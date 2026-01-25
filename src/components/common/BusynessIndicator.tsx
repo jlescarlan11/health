@@ -22,7 +22,7 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
   const getBusynessConfig = (status: string) => {
     switch (status) {
       case 'quiet':
-        return { label: 'Not Busy', color: '#379777', icon: 'account-outline' };
+        return { label: 'Not Busy', color: '#379777', icon: undefined };
       case 'moderate':
         return { label: 'Moderately Busy', color: '#F4CE14', icon: 'account-group-outline' };
       case 'busy':
@@ -43,12 +43,14 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
           { backgroundColor: config.color + '15', borderColor: config.color + '30' },
         ]}
       >
-        <MaterialCommunityIcons
-          name={config.icon as any}
-          size={16}
-          color={config.color}
-          style={{ marginRight: 6 }}
-        />
+        {config.icon && (
+          <MaterialCommunityIcons
+            name={config.icon as any}
+            size={16}
+            color={config.color}
+            style={{ marginRight: 6 }}
+          />
+        )}
         <Text
           variant="labelLarge"
           style={{ color: config.color, fontWeight: '800', letterSpacing: 0.3 }}
@@ -66,12 +68,14 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
           •
         </Text>
       )}
-      <MaterialCommunityIcons
-        name={config.icon as any}
-        size={14}
-        color={config.color}
-        style={{ marginRight: 4 }}
-      />
+      {config.icon && (
+        <MaterialCommunityIcons
+          name={config.icon as any}
+          size={14}
+          color={config.color}
+          style={{ marginRight: 4 }}
+        />
+      )}
       <Text
         variant="labelMedium"
         style={{ color: config.color, fontWeight: '700', letterSpacing: 0.3 }}
