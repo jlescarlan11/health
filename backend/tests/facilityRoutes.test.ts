@@ -10,7 +10,6 @@ describe('Facility Routes', () => {
     address: '123 Test St',
     latitude: 12.34,
     longitude: 56.78,
-    phone: '123-456-7890',
     yakap_accredited: true,
     services: ['Checkup'],
     operating_hours: { description: 'Mon-Fri: 8am-5pm' },
@@ -18,6 +17,10 @@ describe('Facility Routes', () => {
     barangay: 'Test Barangay',
     specialized_services: [],
     is_24_7: false,
+    capacity: 50,
+    live_metrics: {},
+    busy_patterns: {},
+    contacts: [{ phoneNumber: '123-456-7890', role: 'Reception', contactName: null }],
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -122,14 +125,17 @@ describe('Facility Routes', () => {
   describe('GET /api/facilities/nearby', () => {
     it('should return nearby facilities', async () => {
       // Mock raw query response
-      prismaMock.$queryRaw.mockResolvedValue([mockFacility]);
+      prismaMock.$queryRaw.mockResolvedValue([{ id: '1', distance: 1.5 }]);
+      prismaMock.facility.findMany.mockResolvedValue([mockFacility]);
 
       const response = await request(app).get('/api/facilities/nearby?lat=12.34&lng=56.78');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(1);
       expect(response.body[0].yakapAccredited).toBe(true);
+      expect(response.body[0].distance).toBe(1.5);
       expect(prismaMock.$queryRaw).toHaveBeenCalled();
+      expect(prismaMock.facility.findMany).toHaveBeenCalled();
     });
 
     it('should validate params', async () => {
