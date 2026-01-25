@@ -151,4 +151,3 @@ export interface Medication {
   is_active: boolean;
   days_of_week: string[];
 }
-

@@ -40,13 +40,15 @@ describe('clinical history database service', () => {
 
   it('should initialize database with clinical_history table', async () => {
     await initDatabase();
-    
+
     // Check if CREATE TABLE for clinical_history was called
-    const execCalls = mockDb.execAsync.mock.calls.map(call => call[0]);
-    expect(execCalls.some(sql => sql.includes('CREATE TABLE IF NOT EXISTS clinical_history'))).toBe(true);
-    
+    const execCalls = mockDb.execAsync.mock.calls.map((call) => call[0]);
+    expect(
+      execCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS clinical_history')),
+    ).toBe(true);
+
     // Check if migration was called
-    expect(mockDb.getAllAsync).toHaveBeenCalledWith("PRAGMA table_info(clinical_history)");
+    expect(mockDb.getAllAsync).toHaveBeenCalledWith('PRAGMA table_info(clinical_history)');
   });
 
   describe('saveClinicalHistory', () => {
@@ -54,7 +56,9 @@ describe('clinical history database service', () => {
       await saveClinicalHistory(sampleRecord);
 
       expect(mockDb.execAsync).toHaveBeenCalledWith('BEGIN TRANSACTION');
-      expect(mockDb.prepareAsync).toHaveBeenCalledWith(expect.stringContaining('INSERT OR REPLACE INTO clinical_history'));
+      expect(mockDb.prepareAsync).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT OR REPLACE INTO clinical_history'),
+      );
       expect(mockStatement.executeAsync).toHaveBeenCalledWith({
         $id: sampleRecord.id,
         $timestamp: sampleRecord.timestamp,
@@ -81,7 +85,9 @@ describe('clinical history database service', () => {
 
       const results = await getClinicalHistory();
 
-      expect(mockDb.getAllAsync).toHaveBeenCalledWith(expect.stringContaining('SELECT * FROM clinical_history ORDER BY timestamp DESC'));
+      expect(mockDb.getAllAsync).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT * FROM clinical_history ORDER BY timestamp DESC'),
+      );
       expect(results).toEqual([sampleRecord]);
     });
   });
@@ -94,7 +100,7 @@ describe('clinical history database service', () => {
 
       expect(mockDb.getFirstAsync).toHaveBeenCalledWith(
         expect.stringContaining('SELECT * FROM clinical_history WHERE id = ?'),
-        ['test-123']
+        ['test-123'],
       );
       expect(result).toEqual(sampleRecord);
     });

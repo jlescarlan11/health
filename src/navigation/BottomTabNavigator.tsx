@@ -15,7 +15,7 @@ export const BottomTabNavigator = () => {
 
   // Dynamic height calculation: Base height (60) + safe area inset
   // For devices without insets, we provide a reasonable default padding
-  const paddingBottom = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 12);
+  const paddingBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === 'ios' ? 20 : 12;
   const tabHeight = 60 + paddingBottom;
 
   return (

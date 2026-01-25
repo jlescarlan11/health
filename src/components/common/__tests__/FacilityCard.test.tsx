@@ -56,4 +56,21 @@ describe('FacilityCard', () => {
     const { queryByText } = render(<FacilityCard facility={closedFacility} />);
     expect(queryByText('Quiet Now')).toBeNull();
   });
+
+  it('renders teleconsult badge when facility has teleconsult contact', () => {
+    const teleconsultFacility = {
+      ...mockFacility,
+      contacts: [
+        {
+          id: 'c1',
+          phoneNumber: '123',
+          platform: 'phone',
+          facilityId: '1',
+          teleconsultUrl: 'https://meet.google.com/abc-defg-hij',
+        },
+      ],
+    };
+    const { getByText } = render(<FacilityCard facility={teleconsultFacility} />);
+    expect(getByText('Teleconsult')).toBeTruthy();
+  });
 });

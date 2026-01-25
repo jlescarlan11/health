@@ -130,4 +130,3 @@ describe('openMessenger', () => {
     expect(openURL).toHaveBeenCalledWith('https://m.me/user123');
   });
 });
-

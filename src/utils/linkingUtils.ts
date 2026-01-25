@@ -41,7 +41,7 @@ export const openViber = async (phone: string): Promise<boolean> => {
       }
     }
   }
-  
+
   // Web fallback isn't standard for Viber mobile, but we can return false
   // to let the caller handle the "App not found" state.
   return false;

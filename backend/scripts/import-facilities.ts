@@ -66,12 +66,13 @@ function parseCapacity(capacityStr: string): number {
  */
 function parseContacts(phoneStr: string) {
   if (
-    !phoneStr || 
-    phoneStr.toLowerCase().includes('to be updated') || 
+    !phoneStr ||
+    phoneStr.toLowerCase().includes('to be updated') ||
     phoneStr.toLowerCase().includes('to be filled')
-  ) return [];
-  
-  return phoneStr.split(';').map(part => {
+  )
+    return [];
+
+  return phoneStr.split(';').map((part) => {
     const colonIndex = part.indexOf(':');
     if (colonIndex !== -1) {
       const nameAndRole = part.substring(0, colonIndex).trim();
@@ -80,14 +81,14 @@ function parseContacts(phoneStr: string) {
         contactName: nameAndRole,
         phoneNumber: number,
         platform: 'phone',
-        role: 'Personnel'
+        role: 'Personnel',
       };
     }
-    return { 
-      phoneNumber: part.trim(), 
+    return {
+      phoneNumber: part.trim(),
       platform: 'phone',
       role: 'Primary',
-      contactName: null
+      contactName: null,
     };
   });
 }
@@ -97,7 +98,7 @@ function parseContacts(phoneStr: string) {
  */
 function parseJson(jsonStr: string, defaultValue: any = {}) {
   try {
-    return jsonStr && jsonStr.trim() !== "" ? JSON.parse(jsonStr) : defaultValue;
+    return jsonStr && jsonStr.trim() !== '' ? JSON.parse(jsonStr) : defaultValue;
   } catch (e) {
     return defaultValue;
   }
@@ -108,7 +109,13 @@ function parseJson(jsonStr: string, defaultValue: any = {}) {
  */
 function parseOperatingHours(hoursStr: string) {
   const schedule: Record<number, { open: string; close: string } | null> = {
-    0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null,
+    0: null,
+    1: null,
+    2: null,
+    3: null,
+    4: null,
+    5: null,
+    6: null,
   };
 
   if (!hoursStr) return { description: 'Not Available', is24x7: false, schedule };
@@ -129,11 +136,15 @@ function parseOperatingHours(hoursStr: string) {
     const dayPart = trimmed.substring(0, colonIndex).trim();
     const timePart = trimmed.substring(colonIndex + 1).trim();
 
-    let open = '', close = '';
+    let open = '',
+      close = '';
     if (/24\s*hours?|24\/7/i.test(timePart)) {
-      open = '00:00'; close = '23:59';
+      open = '00:00';
+      close = '23:59';
     } else {
-      const timeMatch = timePart.match(/(\d{1,2}(?::\d{2})?)\s*(AM|PM)\s*-\s*(\d{1,2}(?::\d{2})?)\s*(AM|PM)/i);
+      const timeMatch = timePart.match(
+        /(\d{1,2}(?::\d{2})?)\s*(AM|PM)\s*-\s*(\d{1,2}(?::\d{2})?)\s*(AM|PM)/i,
+      );
       if (timeMatch) {
         const convertTo24Hour = (time: string, modifier: string): string => {
           const parts = time.split(':');
@@ -149,29 +160,43 @@ function parseOperatingHours(hoursStr: string) {
       } else continue;
     }
 
-    const dayMap: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
-    dayPart.toLowerCase().split(',').map(d => d.trim()).forEach(token => {
-      if (token.includes('-')) {
-        const [start, end] = token.split('-').map(s => s.trim().substring(0, 3));
-        const startIdx = dayMap[start];
-        const endIdx = dayMap[end];
-        if (startIdx !== undefined && endIdx !== undefined) {
-          // Correct range handling including wrap-around
-          let curr = startIdx;
-          while (curr !== (endIdx + 1) % 7) {
-            schedule[curr] = { open, close };
-            curr = (curr + 1) % 7;
-            if (curr === startIdx) break; // Safety break
+    const dayMap: Record<string, number> = {
+      sun: 0,
+      mon: 1,
+      tue: 2,
+      wed: 3,
+      thu: 4,
+      fri: 5,
+      sat: 6,
+    };
+    dayPart
+      .toLowerCase()
+      .split(',')
+      .map((d) => d.trim())
+      .forEach((token) => {
+        if (token.includes('-')) {
+          const [start, end] = token.split('-').map((s) => s.trim().substring(0, 3));
+          const startIdx = dayMap[start];
+          const endIdx = dayMap[end];
+          if (startIdx !== undefined && endIdx !== undefined) {
+            // Correct range handling including wrap-around
+            let curr = startIdx;
+            while (curr !== (endIdx + 1) % 7) {
+              schedule[curr] = { open, close };
+              curr = (curr + 1) % 7;
+              if (curr === startIdx) break; // Safety break
+            }
           }
+        } else {
+          const idx = dayMap[token.substring(0, 3)];
+          if (idx !== undefined) schedule[idx] = { open, close };
         }
-      } else {
-        const idx = dayMap[token.substring(0, 3)];
-        if (idx !== undefined) schedule[idx] = { open, close };
-      }
-    });
+      });
   }
 
-  const is24x7 = Object.values(schedule).every(s => s !== null && s.open === '00:00' && s.close === '23:59');
+  const is24x7 = Object.values(schedule).every(
+    (s) => s !== null && s.open === '00:00' && s.close === '23:59',
+  );
   return { description: hoursStr, is24x7, schedule };
 }
 
@@ -197,31 +222,38 @@ async function main() {
 
   for (const record of records) {
     try {
-      // Skip records with missing coordinates
-      if (
-        !record.latitude || record.latitude.includes('to be filled') || 
-        !record.longitude || record.longitude.includes('to be filled')
-      ) {
-        console.warn(`Skipping ${record.name}: Invalid coordinates`);
-        continue;
-      }
+      // Process coordinates, defaulting to 0.0 if "to be filled" or missing
+      const lat = record.latitude && !record.latitude.includes('to be filled') 
+        ? parseFloat(record.latitude) 
+        : 0.0;
+      const lng = record.longitude && !record.longitude.includes('to be filled') 
+        ? parseFloat(record.longitude) 
+        : 0.0;
 
       const operatingHours = parseOperatingHours(record.operating_hours);
-      
+
       const data = {
         name: record.name,
         type: record.type,
         address: record.address,
-        latitude: parseFloat(record.latitude),
-        longitude: parseFloat(record.longitude),
+        latitude: lat,
+        longitude: lng,
         yakap_accredited: record.yakap_accredited.toLowerCase() === 'true',
-        services: record.services ? record.services.split(';').map(s => s.trim()) : [],
-        specialized_services: record.specialized_services ? record.specialized_services.split(';').map(s => s.trim()) : [],
-        photos: record.photos ? record.photos.split(';').map(p => p.trim()).filter(p => p.length > 0) : [],
+        services: record.services ? record.services.split(';').map((s) => s.trim()) : [],
+        specialized_services: record.specialized_services
+          ? record.specialized_services.split(';').map((s) => s.trim())
+          : [],
+        photos: record.photos
+          ? record.photos
+              .split(';')
+              .map((p) => p.trim())
+              .filter((p) => p.length > 0)
+          : [],
         operating_hours: operatingHours,
         is_24_7: record.is_24_7.toLowerCase() === 'true' || operatingHours.is24x7,
         capacity: parseCapacity(record.capacity),
-        barangay: record.barangay && !record.barangay.includes('to be filled') ? record.barangay : null,
+        barangay:
+          record.barangay && !record.barangay.includes('to be filled') ? record.barangay : null,
         live_metrics: parseJson(record.live_metrics),
         busy_patterns: parseJson(record.busy_patterns),
       };
@@ -239,12 +271,12 @@ async function main() {
           data,
         });
         facilityId = existing.id;
-        
+
         // Clear old contacts before re-syncing
         await prisma.facilityContact.deleteMany({
-          where: { facilityId }
+          where: { facilityId },
         });
-        
+
         console.log(`Updated: ${record.name}`);
       } else {
         const created = await prisma.facility.create({
@@ -258,10 +290,10 @@ async function main() {
       const contacts = parseContacts(record.phone);
       if (contacts.length > 0) {
         await prisma.facilityContact.createMany({
-          data: contacts.map(c => ({
+          data: contacts.map((c) => ({
             ...c,
-            facilityId
-          }))
+            facilityId,
+          })),
         });
       }
     } catch (err) {

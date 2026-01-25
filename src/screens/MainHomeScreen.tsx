@@ -58,14 +58,7 @@ export const MainHomeScreen = () => {
         accessibilityHint={`Double tap to navigate to ${title}`}
       >
         <Card.Content style={styles.cardContent}>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: color },
-            ]}
-          >
-            {customIcon}
-          </View>
+          <View style={[styles.iconContainer, { backgroundColor: color }]}>{customIcon}</View>
 
           <View style={styles.textContainer}>
             <Title
@@ -81,10 +74,7 @@ export const MainHomeScreen = () => {
             {subtitle && (
               <Paragraph
                 numberOfLines={2}
-                style={[
-                  styles.cardSubtitle,
-                  { color: theme.colors.onSurfaceVariant },
-                ]}
+                style={[styles.cardSubtitle, { color: theme.colors.onSurfaceVariant }]}
               >
                 {subtitle}
               </Paragraph>

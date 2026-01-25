@@ -19,6 +19,7 @@ import { Button } from './Button';
 import { BusynessIndicator } from './BusynessIndicator';
 import { ServiceChip } from './ServiceChip';
 import { CommunicationHub } from '../features/facilities';
+import { TeleconsultBadge } from './TeleconsultBadge';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -50,6 +51,10 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
     );
   }, [facility.services, facility.specialized_services, relevantServices]);
+
+  const hasTeleconsult = React.useMemo(() => {
+    return facility.contacts?.some((c) => !!c.teleconsultUrl);
+  }, [facility.contacts]);
 
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${
     facility.type
@@ -178,6 +183,8 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
             </View>
           )}
+
+          {hasTeleconsult && <TeleconsultBadge style={{ marginLeft: 4, marginTop: 2 }} />}
         </View>
 
         {/* Status Row */}

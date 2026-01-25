@@ -10,8 +10,8 @@ export const SettingsScreen = () => {
   const navigation = useNavigation<any>();
 
   return (
-    <SafeAreaView 
-      style={[styles.container, { backgroundColor: theme.colors.background }]} 
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right']}
     >
       <StandardHeader title="Settings" showBackButton={false} />
@@ -22,8 +22,10 @@ export const SettingsScreen = () => {
             <List.Item
               title="My Health Records"
               description="View your assessment history"
-              left={props => <List.Icon {...props} icon="folder-account-outline" color={theme.colors.primary} />}
-              right={props => <List.Icon {...props} icon="chevron-right" />}
+              left={(props) => (
+                <List.Icon {...props} icon="folder-account-outline" color={theme.colors.primary} />
+              )}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
               onPress={() => navigation.navigate('ClinicalHistory')}
               titleStyle={styles.itemTitle}
             />
@@ -31,24 +33,24 @@ export const SettingsScreen = () => {
         </List.Section>
 
         <List.Section>
-            <List.Subheader style={styles.subheader}>About</List.Subheader>
-            <Surface style={styles.surface} elevation={1}>
-                <List.Item
-                    title="Privacy Policy"
-                    left={props => <List.Icon {...props} icon="shield-account-outline" />}
-                    right={props => <List.Icon {...props} icon="chevron-right" />}
-                    onPress={() => navigation.navigate('PrivacyPolicy')}
-                    titleStyle={styles.itemTitle}
-                />
-                <Divider />
-                <List.Item
-                    title="Terms of Service"
-                    left={props => <List.Icon {...props} icon="file-document-outline" />}
-                    right={props => <List.Icon {...props} icon="chevron-right" />}
-                    onPress={() => navigation.navigate('TermsOfService')}
-                    titleStyle={styles.itemTitle}
-                />
-            </Surface>
+          <List.Subheader style={styles.subheader}>About</List.Subheader>
+          <Surface style={styles.surface} elevation={1}>
+            <List.Item
+              title="Privacy Policy"
+              left={(props) => <List.Icon {...props} icon="shield-account-outline" />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => navigation.navigate('PrivacyPolicy')}
+              titleStyle={styles.itemTitle}
+            />
+            <Divider />
+            <List.Item
+              title="Terms of Service"
+              left={(props) => <List.Icon {...props} icon="file-document-outline" />}
+              right={(props) => <List.Icon {...props} icon="chevron-right" />}
+              onPress={() => navigation.navigate('TermsOfService')}
+              titleStyle={styles.itemTitle}
+            />
+          </Surface>
         </List.Section>
       </ScrollView>
     </SafeAreaView>
@@ -77,5 +79,5 @@ const styles = StyleSheet.create({
   },
   itemTitle: {
     fontSize: 16,
-  }
+  },
 });

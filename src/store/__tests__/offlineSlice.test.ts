@@ -39,7 +39,7 @@ describe('offlineSlice', () => {
           recommended_level: samplePayload.recommended_level,
           clinical_soap: samplePayload.clinical_soap,
           medical_justification: samplePayload.medical_justification,
-        })
+        }),
       );
 
       // Verify state update
@@ -56,8 +56,11 @@ describe('offlineSlice', () => {
 
       await store.dispatch(saveClinicalNote(samplePayload));
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to persist'), expect.any(Error));
-      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Failed to persist'),
+        expect.any(Error),
+      );
+
       const latest = selectLatestClinicalNote(store.getState());
       expect(latest).not.toBeNull();
       expect(latest?.clinical_soap).toBe(samplePayload.clinical_soap);
