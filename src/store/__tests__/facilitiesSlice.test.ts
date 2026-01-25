@@ -70,4 +70,3 @@ describe('facilitiesSlice searchQuery matching', () => {
     expect(state.filteredFacilities.map((f) => f.id)).toEqual([]);
   });
 });
-

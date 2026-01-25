@@ -29,12 +29,10 @@ const en = {
       'Recommended this care level after a safety review, to make sure you get the right help.',
     authority_block:
       'Adjusted the care level because you clearly said you do not have key emergency warning signs.',
-    fallback:
-      'Recommended this care level to keep you safe based on the information you shared.',
+    fallback: 'Recommended this care level to keep you safe based on the information you shared.',
     legacy_recent_resolved:
       'Recommended higher care level because the symptom you recently experienced requires professional evaluation, even if it has currently stopped.',
-    legacy_missing_fields:
-      'Recommended higher care level because {{list}} {{verb}} unclear.',
+    legacy_missing_fields: 'Recommended higher care level because {{list}} {{verb}} unclear.',
     legacy_complex_or_vague:
       'Recommended higher care level because your symptoms are complex or vague.',
   },

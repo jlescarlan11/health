@@ -60,7 +60,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   }${
     showDistance
       ? `, Distance: ${
-          typeof distance === 'number' && !isNaN(distance) ? formatDistance(distance) : 'unavailable'
+          typeof distance === 'number' && !isNaN(distance)
+            ? formatDistance(distance)
+            : 'unavailable'
         }`
       : ''
   }`;
@@ -119,7 +121,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     }
 
     return allServices.slice(0, 3);
-  }, [facility.services, facility.specialized_services, relevantServices, showAllServices, simplified]);
+  }, [
+    facility.services,
+    facility.specialized_services,
+    relevantServices,
+    showAllServices,
+    simplified,
+  ]);
 
   const totalServicesCount =
     facility.services.length + (facility.specialized_services?.length || 0);
@@ -153,26 +161,31 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         {/* Meta Row */}
         <View style={styles.metaRow}>
-          <Text variant="labelSmall" style={styles.metaText}>
-            {formatFacilityType(facility.type)}
-          </Text>
-
-          {facility.yakapAccredited && (
-            <Text variant="labelSmall" style={styles.metaText}>
-              Yakap Accredited
-            </Text>
-          )}
-
-          {showDistance && (
-            <Text variant="labelSmall" style={styles.metaText}>
-              {typeof distance === 'number' && !isNaN(distance)
-                ? formatDistance(distance)
-                : 'Distance unavailable'}
-            </Text>
-          )}
+          {[
+            formatFacilityType(facility.type),
+            facility.yakapAccredited ? 'Yakap Accredited' : null,
+            showDistance
+              ? typeof distance === 'number' && !isNaN(distance)
+                ? `${formatDistance(distance)} away`
+                : 'Distance unavailable'
+              : null,
+          ]
+            .filter(Boolean)
+            .map((item, index, array) => (
+              <React.Fragment key={index}>
+                <Text variant="labelSmall" style={styles.metaText}>
+                  {item}
+                </Text>
+                {index < array.length - 1 && (
+                  <Text variant="labelSmall" style={[styles.metaText, styles.metaSeparator]}>
+                    •
+                  </Text>
+                )}
+              </React.Fragment>
+            ))}
 
           {hasMatches && (
-            <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9' }]}>
+            <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9', marginLeft: 4 }]}>
               <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
               <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
             </View>
@@ -200,7 +213,10 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           {displayServices.map((service, index) => (
             <View
               key={index}
-              style={[styles.serviceChip, { backgroundColor: theme.colors.primaryContainer + '40' }]}
+              style={[
+                styles.serviceChip,
+                { backgroundColor: theme.colors.primaryContainer + '40' },
+              ]}
             >
               <MaterialCommunityIcons
                 name={getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']}
@@ -277,13 +293,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    gap: 8,
     marginBottom: 12,
   },
   metaText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
+  },
+  metaSeparator: {
+    marginHorizontal: 6,
+    color: '#94A3B8',
   },
   matchBadge: {
     flexDirection: 'row',

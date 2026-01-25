@@ -80,12 +80,11 @@ describe('TriageStatusCard', () => {
 
   it('renders correct colors, icons, and layout per level', () => {
     levelFixtures.forEach((fixture) => {
-      const { getByLabelText, getByText, queryByText, UNSAFE_getByType, rerender } =
-        renderCard({
-          level: fixture.level,
-          instruction: 'Follow these instructions.',
-          onEmergencyAction: jest.fn(),
-        });
+      const { getByLabelText, getByText, queryByText, UNSAFE_getByType, rerender } = renderCard({
+        level: fixture.level,
+        instruction: 'Follow these instructions.',
+        onEmergencyAction: jest.fn(),
+      });
 
       const icon = getByLabelText(`${fixture.level} triage level icon`);
       expect(icon).toHaveProp('name', fixture.icon);

@@ -14,7 +14,7 @@ import {
 import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 
 import { RootStackScreenProps } from '../types/navigation';
@@ -22,9 +22,9 @@ import { RootState } from '../store';
 import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
-import { getOpenStatus, formatOperatingHours, OPEN_COLOR, WARNING_COLOR } from '../utils/facilityUtils';
+import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
 import { formatFacilityType } from '../utils';
-import { useTheme } from 'react-native-paper';
+import { useTheme, Chip } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 import { openExternalMaps } from '../utils/linkingUtils';
 
@@ -71,12 +71,20 @@ const CATEGORIES = {
   ],
 };
 
-const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
-  const theme = useTheme();
+const ServiceIcon = ({
+  serviceName,
+  size,
+  color,
+}: {
+  serviceName: string;
+  size: number;
+  color: string;
+}) => {
   const getIconName = (service: string) => {
     const s = service.toLowerCase();
     if (s.includes('consultation') || s.includes('medicine')) return 'healing';
-    if (s.includes('laboratory') || s.includes('chemistry') || s.includes('microscopy')) return 'science';
+    if (s.includes('laboratory') || s.includes('chemistry') || s.includes('microscopy'))
+      return 'science';
     if (s.includes('family planning') || s.includes('maternal')) return 'family-restroom';
     if (s.includes('dental')) return 'medical-services';
     if (s.includes('emergency') || s.includes('trauma')) return 'notification-important';
@@ -89,9 +97,8 @@ const ServiceIcon = ({ serviceName }: { serviceName: string }) => {
   return (
     <MaterialIcons
       name={getIconName(serviceName) as keyof (typeof MaterialIcons)['glyphMap']}
-      size={20}
-      color={theme.colors.primary}
-      style={styles.serviceIcon}
+      size={size}
+      color={color}
     />
   );
 };
@@ -107,7 +114,7 @@ export const FacilityDetailsScreen = () => {
     state.facilities.facilities.find((f) => f.id === facilityId),
   );
 
-  const { location, errorMsg, permissionStatus, requestPermission } = useUserLocation();
+  const { location } = useUserLocation();
   const reduxLocation = useSelector((state: RootState) => state.facilities.userLocation);
 
   const userLat = location?.coords.latitude || reduxLocation?.latitude;
@@ -125,10 +132,10 @@ export const FacilityDetailsScreen = () => {
 
     const grouped: Record<string, string[]> = {};
     const allServices = [...facility.services];
-    
+
     // Add specialized_services to Specialized Services category if they exist
     if (facility.specialized_services) {
-      facility.specialized_services.forEach(s => {
+      facility.specialized_services.forEach((s) => {
         if (!allServices.includes(s as any)) {
           allServices.push(s as any);
         }
@@ -136,7 +143,7 @@ export const FacilityDetailsScreen = () => {
     }
 
     Object.entries(CATEGORIES).forEach(([category, services]) => {
-      const found = allServices.filter(s => services.includes(s));
+      const found = allServices.filter((s) => services.includes(s));
       if (found.length > 0) {
         grouped[category] = found;
       }
@@ -144,8 +151,8 @@ export const FacilityDetailsScreen = () => {
 
     // Catch any remaining services
     const categorizedServices = Object.values(CATEGORIES).flat();
-    const uncategorized = allServices.filter(s => !categorizedServices.includes(s));
-    
+    const uncategorized = allServices.filter((s) => !categorizedServices.includes(s));
+
     if (uncategorized.length > 0) {
       grouped['Other Services'] = uncategorized;
     }
@@ -203,7 +210,7 @@ export const FacilityDetailsScreen = () => {
     }
   };
 
-  const { text: openStatusText, color: openStatusColor } = getOpenStatus(facility);
+  const { text: openStatusText, color: openStatusColor, isOpen } = getOpenStatus(facility);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -251,19 +258,38 @@ export const FacilityDetailsScreen = () => {
         <View style={styles.contentContainer}>
           {/* Header Info */}
           <View style={styles.headerSection}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>
-                {facility.name}
-              </Text>
-              {facility.yakapAccredited && (
-                <Text style={[styles.yakapText, { color: theme.colors.onSurfaceVariant }]}>
-                  • Yakap Accredited
-                </Text>
-              )}
-            </View>
-            <Text style={[styles.facilityType, { color: theme.colors.onSurfaceVariant }]}>
-              {formatFacilityType(facility.type)}
+            <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>
+              {facility.name}
             </Text>
+
+            <View style={styles.metaRow}>
+              {[
+                formatFacilityType(facility.type),
+                facility.yakapAccredited ? 'Yakap Accredited' : null,
+                typeof distance === 'number' && !isNaN(distance)
+                  ? `${formatDistance(distance)} away`
+                  : null,
+              ]
+                .filter(Boolean)
+                .map((item, index, array) => (
+                  <React.Fragment key={index}>
+                    <Text style={styles.metaItem}>{item}</Text>
+                    {index < array.length - 1 && <Text style={styles.metaSeparator}>•</Text>}
+                  </React.Fragment>
+                ))}
+            </View>
+
+            <View style={styles.statusRow}>
+              <MaterialCommunityIcons
+                name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
+                size={14}
+                color={openStatusColor}
+                style={{ marginRight: 6 }}
+              />
+              <Text style={[styles.openStatusText, { color: openStatusColor }]}>
+                {openStatusText}
+              </Text>
+            </View>
           </View>
 
           {/* Quick Actions */}
@@ -274,6 +300,7 @@ export const FacilityDetailsScreen = () => {
               onPress={handleCall}
               style={styles.actionButton}
               variant="primary"
+              disabled={!facility.phone}
             />
             <Button
               icon="directions"
@@ -292,49 +319,10 @@ export const FacilityDetailsScreen = () => {
               <Ionicons name="location-outline" size={24} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
-                Address
-              </Text>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Address</Text>
               <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
                 {facility.address}
               </Text>
-              <View style={styles.locationActionsRow}>
-                {typeof distance === 'number' && !isNaN(distance) ? (
-                  <View style={styles.distanceContainer}>
-                    <Ionicons
-                      name="navigate-circle-outline"
-                      size={14}
-                      color={theme.colors.onSurfaceVariant}
-                    />
-                    <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>
-                      {formatDistance(distance)} away
-                    </Text>
-                  </View>
-                ) : (
-                  permissionStatus === 'denied' || errorMsg ? (
-                    <TouchableOpacity
-                      onPress={requestPermission}
-                      style={styles.distanceContainer}
-                    >
-                      <Ionicons name="location" size={14} color={theme.colors.error} />
-                      <Text style={[styles.distanceText, { color: theme.colors.error }]}>
-                        Enable location to see distance
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <View style={styles.distanceContainer}>
-                      <Ionicons
-                        name="navigate-circle-outline"
-                        size={14}
-                        color={theme.colors.onSurfaceVariant}
-                      />
-                      <Text style={[styles.distanceText, { color: theme.colors.onSurfaceVariant }]}>
-                        Distance unavailable
-                      </Text>
-                    </View>
-                  )
-                )}
-              </View>
             </View>
           </View>
 
@@ -344,43 +332,40 @@ export const FacilityDetailsScreen = () => {
               <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>
                 Operating Hours
               </Text>
-              
+
               {formatOperatingHours(facility).map((line, idx) => (
                 <Text key={idx} style={[styles.infoText, { color: theme.colors.onSurface }]}>
                   {line}
                 </Text>
               ))}
-
-              <Text
-                style={[
-                  styles.openStatusText,
-                  {
-                    color:
-                      openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
-                        ? theme.colors.primary
-                        : theme.colors.onSurfaceVariant,
-                    marginTop: 4,
-                  },
-                ]}
-              >
-                {openStatusText}
-              </Text>
             </View>
           </View>
 
           {/* Phone */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="call-outline" size={24} color={theme.colors.primary} />
+              <Ionicons
+                name="call-outline"
+                size={24}
+                color={facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant}
+              />
             </View>
-            <TouchableOpacity onPress={handleCall} style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurfaceVariant }]}>
-                Phone
-              </Text>
-              <Text style={[styles.infoText, styles.linkText, { color: theme.colors.primary }]}>
+            <TouchableOpacity
+              onPress={handleCall}
+              style={styles.infoTextContainer}
+              disabled={!facility.phone}
+            >
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Phone</Text>
+              <Text
+                style={[
+                  styles.infoText,
+                  styles.linkText,
+                  { color: facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant },
+                ]}
+              >
                 {facility.phone || 'Not available'}
               </Text>
             </TouchableOpacity>
@@ -390,22 +375,31 @@ export const FacilityDetailsScreen = () => {
 
           {/* Grouped Services */}
           <View style={styles.servicesSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Services & Capabilities</Text>
-            
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+              Services & Capabilities
+            </Text>
+
             {Object.entries(groupedServices).map(([category, services]) => (
               <View key={category} style={styles.categoryContainer}>
-                <Text style={[styles.categoryTitle, { color: theme.colors.primary }]}>{category}</Text>
+                <Text style={[styles.categoryTitle, { color: theme.colors.onSurface }]}>
+                  {category}
+                </Text>
                 <View style={styles.servicesGrid}>
                   {services.map((service, index) => (
-                    <View
+                    <Chip
                       key={index}
-                      style={[styles.serviceItem, { backgroundColor: theme.colors.surfaceVariant }]}
+                      mode="flat"
+                      style={[
+                        styles.serviceChip,
+                        { backgroundColor: theme.colors.secondaryContainer },
+                      ]}
+                      textStyle={[styles.serviceChipLabel, { color: theme.colors.primary }]}
+                                            icon={({ size }) => (
+                                              <ServiceIcon serviceName={service} size={size} color={theme.colors.primary} />
+                                            )}
                     >
-                      <ServiceIcon serviceName={service} />
-                      <Text style={[styles.serviceText, { color: theme.colors.onSurface }]}>
-                        {service}
-                      </Text>
-                    </View>
+                      {service}
+                    </Chip>
                   ))}
                 </View>
               </View>
@@ -474,25 +468,27 @@ const styles = StyleSheet.create({
   headerSection: {
     marginBottom: 24,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginBottom: 8,
-  },
   facilityName: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginRight: 10,
-    flexShrink: 1,
+    marginBottom: 8,
   },
-  yakapText: {
-    fontSize: 14,
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 12,
+  },
+  metaItem: {
+    fontSize: 12,
     fontWeight: '600',
+    color: '#64748B',
   },
-  facilityType: {
-    fontSize: 16,
-    fontWeight: '500',
+  metaSeparator: {
+    marginHorizontal: 6,
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '600',
   },
   actionButtons: {
     flexDirection: 'row',
@@ -533,40 +529,29 @@ const styles = StyleSheet.create({
   linkText: {
     fontWeight: '500',
   },
-  distanceContainer: {
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
-    alignSelf: 'flex-start',
-  },
-  locationActionsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  distanceText: {
-    fontSize: 14,
-    marginLeft: 4,
-    fontWeight: '500',
   },
   openStatusText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
   servicesSection: {
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     marginBottom: 16,
   },
   categoryContainer: {
     marginBottom: 20,
   },
   categoryTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -574,22 +559,15 @@ const styles = StyleSheet.create({
   servicesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 8,
   },
-  serviceItem: {
-    width: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
+  serviceChip: {
+    marginBottom: 4,
     borderRadius: 8,
   },
-  serviceIcon: {
-    marginRight: 8,
-  },
-  serviceText: {
-    fontSize: 13,
-    flex: 1,
-    lineHeight: 18,
+  serviceChipLabel: {
+    fontWeight: '500',
+    fontSize: 14,
   },
   verificationContainer: {
     marginTop: 24,

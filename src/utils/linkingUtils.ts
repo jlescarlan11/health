@@ -55,4 +55,3 @@ export const openExternalMaps = async ({
 
   return false;
 };
-

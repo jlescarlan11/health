@@ -107,7 +107,11 @@ describe('Offline Self-Care Logic (T-005)', () => {
     });
   });
 
-  const setupOfflineScenario = (score: number, matchedKeywords: string[] = [], profileOverride = {}) => {
+  const setupOfflineScenario = (
+    score: number,
+    matchedKeywords: string[] = [],
+    profileOverride = {},
+  ) => {
     (geminiClient.assessSymptoms as jest.Mock).mockRejectedValue(new Error('Network Error'));
     (detectEmergency as jest.Mock).mockReturnValue({
       score,
@@ -115,14 +119,14 @@ describe('Offline Self-Care Logic (T-005)', () => {
       affectedSystems: [],
       debugLog: { reasoning: 'Test Reasoning' },
     });
-    
+
     if (Object.keys(profileOverride).length > 0) {
       (useRoute as jest.Mock).mockReturnValue({
-        params: { 
-          assessmentData: { 
-            ...mockAssessmentData, 
-            extractedProfile: { ...mockAssessmentData.extractedProfile, ...profileOverride } 
-          } 
+        params: {
+          assessmentData: {
+            ...mockAssessmentData,
+            extractedProfile: { ...mockAssessmentData.extractedProfile, ...profileOverride },
+          },
         },
       });
     }

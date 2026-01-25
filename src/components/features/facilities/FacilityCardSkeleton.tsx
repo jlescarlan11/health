@@ -1,12 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, ViewStyle } from 'react-native';
+import { View, StyleSheet, Animated, ViewStyle, StyleProp } from 'react-native';
 import { Card, useTheme } from 'react-native-paper';
 
 interface SkeletonProps {
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
-const SkeletonItem = ({ style }: { style: ViewStyle }) => {
+const SkeletonItem = ({ style }: { style: StyleProp<ViewStyle> }) => {
   const theme = useTheme();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
@@ -54,9 +54,9 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
         {/* Meta Row */}
         <View style={styles.metaRow}>
           <SkeletonItem style={styles.metaText} />
-          <SkeletonItem style={styles.yakapBadge} />
-          <SkeletonItem style={styles.matchBadge} />
-          <SkeletonItem style={styles.distance} />
+          <SkeletonItem style={[styles.metaText, { width: 80, marginLeft: 12 }]} />
+          <SkeletonItem style={[styles.metaText, { width: 80, marginLeft: 12 }]} />
+          <SkeletonItem style={[styles.matchBadge, { marginLeft: 12 }]} />
         </View>
 
         {/* Status Row */}
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     marginBottom: 12,
   },
   metaText: {
@@ -108,20 +107,10 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 4,
   },
-  yakapBadge: {
-    width: 80,
-    height: 18,
-    borderRadius: 6,
-  },
   matchBadge: {
     width: 70,
     height: 18,
     borderRadius: 6,
-  },
-  distance: {
-    width: 50,
-    height: 12,
-    borderRadius: 4,
   },
   statusRow: {
     flexDirection: 'row',

@@ -65,9 +65,9 @@ describe('SystemLockDetector', () => {
         symptom_category: 'simple',
       };
       const conversation = 'USER: I have crushing chest pain.';
-      
+
       const updated = SystemLockDetector.applySystemOverrides(profile, conversation);
-      
+
       expect(updated.symptom_category).toBe('critical');
       expect(updated.is_complex_case).toBe(true);
       expect(updated.affected_systems).toContain('Cardiac');
@@ -84,9 +84,9 @@ describe('SystemLockDetector', () => {
         symptom_category: 'critical',
       };
       const conversation = 'USER: I have severe stomach pain.'; // complex lock
-      
+
       const updated = SystemLockDetector.applySystemOverrides(profile, conversation);
-      
+
       expect(updated.symptom_category).toBe('critical'); // Remains critical
       expect(updated.affected_systems).toContain('Acute Abdomen');
     });

@@ -37,10 +37,7 @@ export const SafetyRecheckModal: React.FC<SafetyRecheckModalProps> = ({
 
       {initialSymptomSummary ? (
         <View style={styles.summaryContainer}>
-          <Text
-            style={[styles.summaryLabel, { color: theme.colors.primary }]}
-            variant="labelSmall"
-          >
+          <Text style={[styles.summaryLabel, { color: theme.colors.primary }]} variant="labelSmall">
             Reported symptom (summary)
           </Text>
           <Text style={[styles.summaryText, { color: theme.colors.onSurface }]} variant="bodySmall">

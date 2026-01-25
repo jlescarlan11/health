@@ -37,7 +37,7 @@ export const formatEmpatheticResponse = ({
 
   // Reason is intentionally excluded from the user-facing text
   // but preserved in metadata for debugging context.
-  
+
   const actionSentence = ensureSentenceEnding(
     nextAction ?? 'Please follow the guidance above so I can continue helping safely',
   );

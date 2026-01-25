@@ -30,10 +30,7 @@ describe('openExternalMaps', () => {
   it('falls back to Google Maps directions when native deep link fails', async () => {
     setPlatformOS('android');
 
-    jest
-      .spyOn(Linking, 'canOpenURL')
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(true);
+    jest.spyOn(Linking, 'canOpenURL').mockResolvedValueOnce(true).mockResolvedValueOnce(true);
 
     jest
       .spyOn(Linking, 'openURL')

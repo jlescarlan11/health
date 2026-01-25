@@ -26,7 +26,7 @@ export const DEFAULT_RED_FLAG_QUESTION: AssessmentQuestion = {
 
 /**
  * Safety-Critical Systems Configuration for Deterministic Overrides.
- * Used by the SystemLockDetector to force clinical categories when specific 
+ * Used by the SystemLockDetector to force clinical categories when specific
  * high-stakes symptoms are detected in the conversation.
  */
 export const SYSTEM_LOCK_CONFIGS: SystemLockConfig[] = [

@@ -14,7 +14,11 @@ jest.mock('@react-navigation/native', () => ({
 }));
 
 jest.mock('../src/services/emergencyDetector', () => ({
-  detectEmergency: jest.fn(() => ({ isEmergency: false, matchedKeywords: [], affectedSystems: [] })),
+  detectEmergency: jest.fn(() => ({
+    isEmergency: false,
+    matchedKeywords: [],
+    affectedSystems: [],
+  })),
 }));
 
 jest.mock('../src/services/mentalHealthDetector', () => ({
@@ -79,14 +83,12 @@ describe('SymptomAssessmentScreen bridge path', () => {
     planSpy = jest
       .spyOn(geminiClient, 'generateAssessmentPlan')
       .mockResolvedValue({ questions: [], intro: '' });
-    profileSpy = jest
-      .spyOn(geminiClient, 'extractClinicalProfile')
-      .mockResolvedValue({
-        triage_readiness_score: 0.7,
-        symptom_category: 'simple',
-        ambiguity_detected: false,
-        clinical_friction_detected: false,
-      } as any);
+    profileSpy = jest.spyOn(geminiClient, 'extractClinicalProfile').mockResolvedValue({
+      triage_readiness_score: 0.7,
+      symptom_category: 'simple',
+      ambiguity_detected: false,
+      clinical_friction_detected: false,
+    } as any);
     streamSpy = jest.spyOn(geminiClient, 'streamGeminiResponse');
     responseSpy = jest.spyOn(geminiClient, 'getGeminiResponse');
 
@@ -131,7 +133,7 @@ describe('SymptomAssessmentScreen bridge path', () => {
     await act(async () => {
       fireEvent.changeText(input, '25');
     });
-    
+
     await act(async () => {
       fireEvent.press(submit);
     });

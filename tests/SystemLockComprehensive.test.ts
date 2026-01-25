@@ -46,7 +46,9 @@ describe('System-Based Lock (SBL) Comprehensive Test Suite', () => {
     });
 
     test('Respiratory (critical) wins over Abdomen (complex)', () => {
-      expect(checkCriticalSystemKeywords('difficulty breathing and rigid abdomen')).toBe('critical');
+      expect(checkCriticalSystemKeywords('difficulty breathing and rigid abdomen')).toBe(
+        'critical',
+      );
     });
   });
 

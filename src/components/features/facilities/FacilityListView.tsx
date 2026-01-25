@@ -28,12 +28,9 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
     (state: RootState) => state.facilities,
   );
 
-  const loadFacilities = useCallback(
-    () => {
-      dispatch(fetchFacilities());
-    },
-    [dispatch],
-  );
+  const loadFacilities = useCallback(() => {
+    dispatch(fetchFacilities());
+  }, [dispatch]);
 
   // Removed useEffect for initial load to avoid double fetching if parent handles it.
   // Parent component should dispatch fetchFacilities() on mount if needed.
@@ -96,7 +93,10 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
         <Text variant="bodyLarge">No facilities found.</Text>
         {!hasAliasMatch ? (
           <View style={{ alignItems: 'center', marginTop: 8 }}>
-            <Text variant="bodySmall" style={{ color: theme.colors.secondary, textAlign: 'center' }}>
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.secondary, textAlign: 'center' }}
+            >
               Try searching for something else, like:
             </Text>
             <Text

@@ -35,32 +35,32 @@ interface NavigationState {
   isHighRisk: boolean;
   lastRiskTimestamp: number;
   symptomDraft: string;
-    assessmentState: {
-      messages: any[];
-      questions: any[];
-      fullPlan: any[];
-      currentQuestionIndex: number;
-      answers: Record<string, string>;
-      expansionCount: number;
-      readiness: number;
-      assessmentStage: string;
-      symptomCategory: string | null;
-      previousProfile: any | undefined;
-      clarificationCount: number;
-      suppressedKeywords: string[];
-      isRecentResolved: boolean;
-      resolvedKeyword: string | null;
-      initialSymptom: string;
-      isOfflineMode: boolean;
-      currentOfflineNodeId: string | null;
-      isVerifyingEmergency: boolean;
-      emergencyVerificationData: any | null;
-      pendingRedFlag: string | null;
-      sessionBuffer: Message[];
-      outOfScopeBuffer: string[];
-      triageSnapshot: TriageSnapshot | null;
-      currentTurnMeta?: AssessmentTurnMeta | null;
-      incrementalSlots: ClinicalSlots;
+  assessmentState: {
+    messages: any[];
+    questions: any[];
+    fullPlan: any[];
+    currentQuestionIndex: number;
+    answers: Record<string, string>;
+    expansionCount: number;
+    readiness: number;
+    assessmentStage: string;
+    symptomCategory: string | null;
+    previousProfile: any | undefined;
+    clarificationCount: number;
+    suppressedKeywords: string[];
+    isRecentResolved: boolean;
+    resolvedKeyword: string | null;
+    initialSymptom: string;
+    isOfflineMode: boolean;
+    currentOfflineNodeId: string | null;
+    isVerifyingEmergency: boolean;
+    emergencyVerificationData: any | null;
+    pendingRedFlag: string | null;
+    sessionBuffer: Message[];
+    outOfScopeBuffer: string[];
+    triageSnapshot: TriageSnapshot | null;
+    currentTurnMeta?: AssessmentTurnMeta | null;
+    incrementalSlots: ClinicalSlots;
   } | null;
 }
 
@@ -106,7 +106,10 @@ const navigationSlice = createSlice({
     setSymptomDraft: (state, action: PayloadAction<string>) => {
       state.symptomDraft = action.payload;
     },
-    updateAssessmentState: (state, action: PayloadAction<Partial<NavigationState['assessmentState']>>) => {
+    updateAssessmentState: (
+      state,
+      action: PayloadAction<Partial<NavigationState['assessmentState']>>,
+    ) => {
       if (!state.assessmentState && action.payload) {
         state.assessmentState = action.payload as any;
       } else if (state.assessmentState && action.payload) {

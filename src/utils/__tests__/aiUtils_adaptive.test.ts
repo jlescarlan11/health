@@ -75,16 +75,16 @@ describe('calculateTriageScore - Adaptive Strategy', () => {
       symptom_category: 'simple',
     });
     // 5/10 is not low risk. Penalties apply.
-    expect(score).toBeCloseTo(0.60);
+    expect(score).toBeCloseTo(0.6);
   });
 
   it('should yield higher score for simple vs complex case with identical missing data', () => {
     const commonSlots = {
-       ...baseSlots,
-       age: null,
-       progression: null,
-       severity: 'mild 2/10', // Low risk consensus
-       turn_count: 5
+      ...baseSlots,
+      age: null,
+      progression: null,
+      severity: 'mild 2/10', // Low risk consensus
+      turn_count: 5,
     };
 
     const { score: simpleScore } = calculateTriageScore({

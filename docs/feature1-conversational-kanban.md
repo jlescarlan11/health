@@ -44,7 +44,6 @@
     2. Before displaying any AI message, compare its recommendation level with the deterministic guards (red flag upgrades, readiness thresholds, recent resolved floor) and surface mismatches in the UI so the agent can mention the guardrail (e.g., “Based on the safety scanner….”).
     3. Persist `triage_logic` metadata and ensure it is referenced when translating raw data into empathetic user text (see next column).
 
-
 ## In Progress
 
 - **Empathetic Response Mapping: Translate system status**
@@ -53,7 +52,6 @@
     1. Add a response formatter that takes `arbiterResult.reason`, `emergency.medical_justification`, or `clarificationHeader` and returns natural, empathetic strings before `setMessages`.
     2. Attach the formatter to the streaming prompt logic (`SymptomAssessmentScreen.tsx:924-980`) so JSON responses are never emitted raw.
     3. Ensure each empathetic version also includes the actionable next step (e.g., “I’m asking for clarification because…”) while still preserving the underlying data for audits.
-
 
 ## Testing
 
@@ -71,7 +69,6 @@
     2. Ensure hitting the second clarification returns to a forced question without skipping `currentQuestionIndex`.
     3. Monitor that `setIsTyping(false)`/`setProcessing(false)` are always called after a clarification cycle.
 
-
 ## Done
 
 - **Offline Emergency Tree**
@@ -80,4 +77,3 @@
     1. Triggered when network fetch fails (`initializeAssessment` catch at `SymptomAssessmentScreen.tsx:492`), setting `isOfflineMode`.
     2. Walks deterministic nodes, adds offline messages, and concludes with an offline recommendation (calls `navigation.replace('Recommendation', …)`).
     3. Maintains state via `currentOfflineNodeId` so users can pick up where they left off after reconnecting.
-

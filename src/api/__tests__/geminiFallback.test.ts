@@ -38,7 +38,7 @@ describe('Gemini Service Fallback', () => {
     const AsyncStorage = require('@react-native-async-storage/async-storage');
     await AsyncStorage.clear();
     console.error = jest.fn(); // Suppress expected error logs
-    console.log = jest.fn();   // Suppress expected logs
+    console.log = jest.fn(); // Suppress expected logs
     mockGenerateContent.mockReset();
     mockGenerateContent.mockResolvedValue(createLLMResult());
     geminiModule = require('../geminiClient');
@@ -60,22 +60,22 @@ describe('Gemini Service Fallback', () => {
     expect(result.questions).toBeDefined();
     // Should have 2 questions: 'q1' (recovered) + 'red_flags' (injected)
     expect(result.questions.length).toBe(2);
-    
-    const redFlagQ = result.questions.find(q => q.id === 'red_flags');
+
+    const redFlagQ = result.questions.find((q) => q.id === 'red_flags');
     expect(redFlagQ).toBeDefined();
     expect(redFlagQ).toEqual(DEFAULT_RED_FLAG_QUESTION);
-    
+
     // Original question should be preserved
-    expect(result.questions.find(q => q.id === 'q1')).toBeDefined();
+    expect(result.questions.find((q) => q.id === 'q1')).toBeDefined();
   });
 
   it('should handle critically malformed input data gracefully', async () => {
     // 1. Mock AI to return empty questions
     mockGenerateContent.mockResolvedValue(createLLMResult({ questions: [] as any[] }));
-    
+
     // 2. Mock prioritizeQuestions to throw (simulating a crash on bad data)
     (prioritizeQuestions as jest.Mock).mockImplementation(() => {
-        throw new TypeError('Cannot read properties of null');
+      throw new TypeError('Cannot read properties of null');
     });
 
     const result = await generateAssessmentPlan('headache');
@@ -93,7 +93,9 @@ describe('Gemini Service Fallback', () => {
 
     expect(result.questions).toBeDefined();
     expect(result.questions.some((q) => q.text.includes('bear weight'))).toBe(true);
-    expect(result.questions.some((q) => q.text.toLowerCase().includes('active bleeding'))).toBe(true);
+    expect(result.questions.some((q) => q.text.toLowerCase().includes('active bleeding'))).toBe(
+      true,
+    );
     expect(result.questions.some((q) => q.id === 'trauma_mechanism')).toBe(true);
     expect(result.questions.some((q) => q.id === 'general_age')).toBe(false);
   }, 15000);

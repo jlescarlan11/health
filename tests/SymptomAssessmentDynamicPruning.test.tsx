@@ -34,26 +34,24 @@ let profileSpy: jest.SpyInstance;
 jest.mock('../src/components/common', () => {
   const React = require('react');
   const { View, TextInput, TouchableOpacity } = require('react-native');
-  
-  const MockInputCard = React.forwardRef(({ onSubmit, onChangeText, value, disabled }: any, ref: any) => {
-    React.useImperativeHandle(ref, () => ({
-      focus: jest.fn(),
-      blur: jest.fn(),
-      isFocused: jest.fn(),
-    }));
-    return (
-      <View testID="input-card">
-        <TextInput testID="input-field" onChangeText={onChangeText} value={value} />
-        {value.length > 0 && (
-          <TouchableOpacity 
-            testID="send-button" 
-            onPress={onSubmit} 
-            disabled={disabled}
-          />
-        )}
-      </View>
-    );
-  });
+
+  const MockInputCard = React.forwardRef(
+    ({ onSubmit, onChangeText, value, disabled }: any, ref: any) => {
+      React.useImperativeHandle(ref, () => ({
+        focus: jest.fn(),
+        blur: jest.fn(),
+        isFocused: jest.fn(),
+      }));
+      return (
+        <View testID="input-card">
+          <TextInput testID="input-field" onChangeText={onChangeText} value={value} />
+          {value.length > 0 && (
+            <TouchableOpacity testID="send-button" onPress={onSubmit} disabled={disabled} />
+          )}
+        </View>
+      );
+    },
+  );
 
   return {
     InputCard: MockInputCard,
@@ -123,10 +121,10 @@ describe('SymptomAssessmentScreen Dynamic Pruning', () => {
     ];
 
     planSpy.mockResolvedValue({ questions: plan, intro: 'Intro' });
-    
+
     // Mock extraction for initial render (Call #1 in initializeAssessment - wait, that uses extractClinicalSlots)
     // Actually handleNext uses extractClinicalProfile.
-    
+
     profileSpy.mockResolvedValueOnce({
       age: '30', // Populated slot!
       duration: null,
@@ -134,44 +132,48 @@ describe('SymptomAssessmentScreen Dynamic Pruning', () => {
       progression: 'Stable', // Added to avoid missing slot continue
       red_flags_resolved: true, // Added to avoid safety gate continue
       triage_readiness_score: 0.3,
-      symptom_category: 'simple'
+      symptom_category: 'simple',
     });
 
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     // 1. Initial render shows first question
     await waitFor(() => expect(screen.getByText(/Where does it hurt\?/)).toBeTruthy());
 
-            // 2. Submit answer that triggers extraction
-            const inputField = screen.getByTestId('input-field');
-            fireEvent.changeText(inputField, 'It is in my head and I am 30 years old');
-            
-            const submitBtn = screen.getByTestId('send-button');
-            
-            await act(async () => {
-              fireEvent.press(submitBtn);
-            });    
-        // Wait for extractClinicalProfile to be called
-        await waitFor(() => expect(profileSpy).toHaveBeenCalled());
-    
-        // Fast-forward timers for the UI transitions
-        await act(async () => {
-          jest.advanceTimersByTime(1000); 
-        });
-    
-        // 3. Verify that 'How old are you?' was SKIPPED and 'How long has it been?' is shown next
-        await waitFor(() => {
-          const messages = screen.toJSON();
-          // Use queryByText to check for presence of next question
-          return screen.queryByText(/How long has it been\?/) !== null;
-        }, { timeout: 4000 });
-    
-        expect(screen.getByText(/How long has it been\?/)).toBeTruthy();
-        
-        // Ensure 'How old are you?' is not in the messages
-        expect(screen.queryByText(/How old are you\?/)).toBeNull();  });
+    // 2. Submit answer that triggers extraction
+    const inputField = screen.getByTestId('input-field');
+    fireEvent.changeText(inputField, 'It is in my head and I am 30 years old');
+
+    const submitBtn = screen.getByTestId('send-button');
+
+    await act(async () => {
+      fireEvent.press(submitBtn);
+    });
+    // Wait for extractClinicalProfile to be called
+    await waitFor(() => expect(profileSpy).toHaveBeenCalled());
+
+    // Fast-forward timers for the UI transitions
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    // 3. Verify that 'How old are you?' was SKIPPED and 'How long has it been?' is shown next
+    await waitFor(
+      () => {
+        const messages = screen.toJSON();
+        // Use queryByText to check for presence of next question
+        return screen.queryByText(/How long has it been\?/) !== null;
+      },
+      { timeout: 4000 },
+    );
+
+    expect(screen.getByText(/How long has it been\?/)).toBeTruthy();
+
+    // Ensure 'How old are you?' is not in the messages
+    expect(screen.queryByText(/How old are you\?/)).toBeNull();
+  });
 });

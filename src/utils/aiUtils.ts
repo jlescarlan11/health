@@ -25,7 +25,7 @@ export function normalizeSlot(
 
   const lower = trimmed.toLowerCase();
   const nullIndicators = ['null', 'n/a', 'unknown', 'not mentioned', 'unsure'];
-  
+
   if (!options.allowNone) {
     nullIndicators.push('none');
   }
@@ -39,11 +39,11 @@ export function normalizeSlot(
 
 /**
  * DETERMINISTIC SYSTEM LOCK CHECK
- * 
+ *
  * Scans the provided text for keywords associated with high-risk anatomical systems.
  * Returns the highest applicable category escalation based on the severity hierarchy:
  * simple (0) < complex (1) < critical (2).
- * 
+ *
  * @param input - The raw symptom description or conversation history.
  * @returns 'critical', 'complex', or null if no keywords are matched.
  */
@@ -57,20 +57,20 @@ export function checkCriticalSystemKeywords(input: string): 'critical' | 'comple
 
   for (const systemKey in SYSTEM_LOCK_KEYWORD_MAP) {
     const config = SYSTEM_LOCK_KEYWORD_MAP[systemKey as keyof typeof SYSTEM_LOCK_KEYWORD_MAP];
-    
-    const hasMatch = config.keywords.some(keyword => {
-      // Natural language flexibility: 
+
+    const hasMatch = config.keywords.some((keyword) => {
+      // Natural language flexibility:
       // If keyword is multi-word like "chest pain", we allow them to appear in any order
       // with reasonable proximity (order-independent matching).
       const words = keyword.toLowerCase().split(' ');
       if (words.length > 1) {
         // Use positive lookahead to ensure all words exist in the string
         // while maintaining word boundaries.
-        const pattern = words.map(w => `(?=.*\\b${w}\\b)`).join('');
+        const pattern = words.map((w) => `(?=.*\\b${w}\\b)`).join('');
         const regex = new RegExp(`^${pattern}.*$`, 'i');
         return regex.test(lowerInput);
       }
-      
+
       const regex = new RegExp(`\\b${keyword.toLowerCase()}\\b`, 'i');
       return regex.test(lowerInput);
     });
@@ -89,7 +89,7 @@ export function checkCriticalSystemKeywords(input: string): 'critical' | 'comple
 /**
  * Calculates the triage readiness score based on extracted clinical data.
  * This is a deterministic algorithm that should be used after slot extraction.
- * 
+ *
  * Includes the System-Based Lock (SBL) override logic to prevent AI under-triage
  * of critical system symptoms.
  */
@@ -122,7 +122,7 @@ export function calculateTriageScore(slots: {
   // Adaptive Strategy: Waive penalties for simple, low-risk cases
   if (currentCategory === 'simple') {
     const severityVal = normalizeSlot(slots.severity) || '';
-    
+
     // Qualitative: Professional or patient-reported descriptors for low urgency.
     const descriptorRegex = /\b(mild|minor|slight|minimal)\b/i;
     // Quantitative: Numeric score in the lower threshold (1-4 out of 10).
@@ -184,21 +184,23 @@ export function calculateTriageScore(slots: {
 
   /**
    * SYSTEM-BASED LOCK (SBL) OVERRIDE
-   * 
-   * This is the final safety gate. It performs case-insensitive detection of 
+   *
+   * This is the final safety gate. It performs case-insensitive detection of
    * critical anatomical system keywords (Cardiac, Respiratory, Neuro, Acute Abdomen).
-   * 
-   * If a critical system is detected, the category is ESCALATED regardless of LLM 
-   * assignment or scoring status. This ensures that symptoms like "minor chest pain" 
+   *
+   * If a critical system is detected, the category is ESCALATED regardless of LLM
+   * assignment or scoring status. This ensures that symptoms like "minor chest pain"
    * are treated with the rigor of a 'critical' case rather than a 'simple' one.
    */
   const escalatedCategory = checkCriticalSystemKeywords(slots.symptom_text || '');
   if (escalatedCategory) {
     const hierarchy = { simple: 0, complex: 1, critical: 2 };
     if (hierarchy[escalatedCategory] > hierarchy[currentCategory]) {
-      console.log(`[SBL Override] Escalating ${currentCategory} -> ${escalatedCategory} based on system keywords.`);
+      console.log(
+        `[SBL Override] Escalating ${currentCategory} -> ${escalatedCategory} based on system keywords.`,
+      );
       currentCategory = escalatedCategory;
-      
+
       // If escalated to critical/complex, re-apply the score penalty if turns are low
       if (currentCategory === 'complex' && (slots.turn_count || 0) < 7) {
         score = Math.min(score, 0.85);

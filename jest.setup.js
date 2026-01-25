@@ -93,11 +93,7 @@ console.warn = (...args) => {
 
 const originalError = console.error;
 console.error = (...args) => {
-  if (
-    args[0] &&
-    typeof args[0] === 'string' &&
-    args[0].includes('not wrapped in act')
-  ) {
+  if (args[0] && typeof args[0] === 'string' && args[0].includes('not wrapped in act')) {
     return;
   }
   originalError(...args);
@@ -125,9 +121,11 @@ jest.mock('expo-sqlite', () => ({
           finalizeAsync: jest.fn(() => Promise.resolve()),
         }),
       ),
-      transactionAsync: jest.fn((callback) => callback({
-        execAsync: jest.fn(() => Promise.resolve()),
-      })),
+      transactionAsync: jest.fn((callback) =>
+        callback({
+          execAsync: jest.fn(() => Promise.resolve()),
+        }),
+      ),
       closeAsync: jest.fn(() => Promise.resolve()),
     }),
   ),

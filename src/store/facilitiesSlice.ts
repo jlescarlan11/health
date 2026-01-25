@@ -38,13 +38,10 @@ const initialState: FacilitiesState = {
   error: null,
 };
 
-export const fetchFacilities = createAsyncThunk(
-  'facilities/fetchFacilities',
-  async () => {
-    const data = await getFacilities();
-    return { data };
-  },
-);
+export const fetchFacilities = createAsyncThunk('facilities/fetchFacilities', async () => {
+  const data = await getFacilities();
+  return { data };
+});
 
 // Shared filtering logic
 const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facility[] => {
@@ -62,8 +59,7 @@ const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facilit
       services.some(
         (s) =>
           facility.services.includes(s) ||
-          (facility.specialized_services &&
-            facility.specialized_services.includes(s as string)),
+          (facility.specialized_services && facility.specialized_services.includes(s as string)),
       );
 
     const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
@@ -94,11 +90,7 @@ const sortFacilities = (a: Facility, b: Facility) => {
   return (a.distance || Infinity) - (b.distance || Infinity);
 };
 
-const normalizeSearchText = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, ' ');
+const normalizeSearchText = (value: string) => value.toLowerCase().trim().replace(/\s+/g, ' ');
 
 const toSearchableText = (value: unknown) => normalizeSearchText(String(value ?? ''));
 
@@ -119,9 +111,7 @@ const getResolvedSearchQuery = (searchQuery: string) => {
 
   if (resolved === 'ob-gyn') {
     const hasObGynToken =
-      /\bob\b/.test(normalized) ||
-      normalized.includes('gyne') ||
-      normalized.includes('women');
+      /\bob\b/.test(normalized) || normalized.includes('gyne') || normalized.includes('women');
     return hasObGynToken ? resolved : normalized;
   }
 
@@ -146,10 +136,7 @@ const matchesSearchQuery = (facility: Facility, searchQuery?: string) => {
   const normalizedName = toSearchableText(facility.name);
   const normalizedAddress = toSearchableText(facility.address);
 
-  if (
-    normalizedName.includes(query) ||
-    normalizedAddress.includes(query)
-  ) {
+  if (normalizedName.includes(query) || normalizedAddress.includes(query)) {
     return true;
   }
 
@@ -238,9 +225,9 @@ const facilitiesSlice = createSlice({
         // Calculate distances if location is already known
         if (state.userLocation) {
           const { latitude, longitude } = state.userLocation;
-          newFacilities = newFacilities.map(f => ({
+          newFacilities = newFacilities.map((f) => ({
             ...f,
-            distance: calculateDistance(latitude, longitude, f.latitude, f.longitude)
+            distance: calculateDistance(latitude, longitude, f.latitude, f.longitude),
           }));
         }
 

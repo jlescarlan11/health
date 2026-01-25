@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -26,7 +20,11 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { RootStackParamList, RootStackScreenProps } from '../types/navigation';
-import { setHighRisk, setRecommendation as setReduxRecommendation, clearAssessmentState } from '../store/navigationSlice';
+import {
+  setHighRisk,
+  setRecommendation as setReduxRecommendation,
+  clearAssessmentState,
+} from '../store/navigationSlice';
 import { saveClinicalNote } from '../store/offlineSlice';
 import { geminiClient } from '../api/geminiClient';
 import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
@@ -101,9 +99,7 @@ const formatClinicalSummary = (profile?: AssessmentProfile) => {
   return parts.join('. ');
 };
 
-const mapCareLevelToTriageLevel = (
-  level: AssessmentResponse['recommended_level'],
-): TriageLevel => {
+const mapCareLevelToTriageLevel = (level: AssessmentResponse['recommended_level']): TriageLevel => {
   if (level === 'self_care') return 'self-care';
   if (level === 'health_center') return 'health-center';
   return level;
@@ -142,8 +138,7 @@ const truncateToWordBoundary = (value: string, limit: number) => {
   if (value.length <= limit) return value;
   const truncated = value.slice(0, limit);
   const lastSpace = truncated.lastIndexOf(' ');
-  const safeSlice =
-    lastSpace > Math.floor(limit / 2) ? truncated.slice(0, lastSpace) : truncated;
+  const safeSlice = lastSpace > Math.floor(limit / 2) ? truncated.slice(0, lastSpace) : truncated;
   return safeSlice.trim().replace(/[.,;:!?]+$/, '');
 };
 
@@ -155,8 +150,7 @@ const appendEllipsisIfNeeded = (text: string, wasTruncated: boolean) => {
   return withoutPunctuation ? `${withoutPunctuation}...` : '...';
 };
 
-const normalizeCacheSegment = (value: string) =>
-  collapseWhitespace(value).toLowerCase().trim();
+const normalizeCacheSegment = (value: string) => collapseWhitespace(value).toLowerCase().trim();
 
 const buildStableCaseKey = (
   initialSymptom?: string,
@@ -218,9 +212,10 @@ const RecommendationScreen = () => {
     ? mapCareLevelToTriageLevel(recommendation.recommended_level)
     : 'self-care';
   const [showFacilities, setShowFacilities] = useState<boolean>(level !== 'self-care');
-  const handleEmergencyAction = useCallback(() => setSafetyModalVisible(true), [setSafetyModalVisible]);
-
-
+  const handleEmergencyAction = useCallback(
+    () => setSafetyModalVisible(true),
+    [setSafetyModalVisible],
+  );
 
   const initialSymptomSummary = useMemo(
     () => summarizeInitialSymptom(assessmentData.symptoms),
@@ -386,11 +381,7 @@ const RecommendationScreen = () => {
       // **Safety Context for local scan (User-only content)**
       const safetyContext = `Initial Symptom: ${symptomsRef.current}. Answers: ${userAnswersOnly}.`;
 
-      const caseCacheKey = buildStableCaseKey(
-        symptomsRef.current,
-        profileSummary,
-        resolvedTag,
-      );
+      const caseCacheKey = buildStableCaseKey(symptomsRef.current, profileSummary, resolvedTag);
 
       const response = await geminiClient.assessSymptoms(
         triageContext,
@@ -455,23 +446,23 @@ const RecommendationScreen = () => {
       }
 
       const isHighRiskFallback = localResult.score >= 5 || !!specificRiskMatch;
-      
+
       // Safety Guards for Self-Care eligibility
       const profile = profileRef.current;
       const isVulnerable = profile?.is_vulnerable === true;
       const hasMatchedKeywords = localResult.matchedKeywords.length > 0;
-      
+
       // Determine fallback level based on score and safety constraints
       let fallbackLevel: TriageLevel;
-      
+
       if (specificRiskMatch) {
         fallbackLevel = 'emergency';
       } else if (isHighRiskFallback) {
         fallbackLevel = 'hospital';
       } else if (
-        localResult.score !== null && 
-        localResult.score <= OFFLINE_SELF_CARE_THRESHOLD && 
-        !isVulnerable && 
+        localResult.score !== null &&
+        localResult.score <= OFFLINE_SELF_CARE_THRESHOLD &&
+        !isVulnerable &&
         !hasMatchedKeywords
       ) {
         // Only allow self-care if score is low, not vulnerable, and NO keywords matched at all
@@ -489,14 +480,17 @@ const RecommendationScreen = () => {
         fallbackAdvice =
           'Based on the complexity or potential severity of your symptoms, we recommend a medical check-up at a Hospital. While no immediate life-threatening signs were definitively confirmed, professional diagnostics are advised. (Note: Fallback care level determined by local safety analysis).';
       } else if (fallbackLevel === 'self-care') {
-        fallbackAdvice = 
+        fallbackAdvice =
           'Based on your reported symptoms and current offline status, your condition appears manageable at home. Please monitor for any worsening signs and consult a doctor if symptoms persist. (Note: Fallback care level determined by local safety analysis).';
       } else {
         fallbackAdvice =
           'Based on your reported symptoms, we suggest a professional evaluation at your local Health Center. This is the appropriate next step for non-emergency medical consultation and routine screening. (Note: Fallback care level determined by local safety analysis).';
       }
 
-      const normalizedFallbackLevel = fallbackLevel.replace(/-/g, '_') as AssessmentResponse['recommended_level'];
+      const normalizedFallbackLevel = fallbackLevel.replace(
+        /-/g,
+        '_',
+      ) as AssessmentResponse['recommended_level'];
 
       const fallbackResponse: AssessmentResponse = {
         recommended_level: normalizedFallbackLevel,
@@ -613,53 +607,56 @@ const RecommendationScreen = () => {
     navigation.navigate('FacilityDetails', { facilityId });
   };
 
-  const getCareLevelInfo = useCallback((level: string) => {
-    // Normalize level string to handle both hyphenated and underscored versions
-    const normalizedLevel = level.toLowerCase().replace('-', '_');
+  const getCareLevelInfo = useCallback(
+    (level: string) => {
+      // Normalize level string to handle both hyphenated and underscored versions
+      const normalizedLevel = level.toLowerCase().replace('-', '_');
 
-    switch (normalizedLevel) {
-      case 'emergency':
-        return {
-          label: 'EMERGENCY (LIFE-THREATENING)',
-          color: theme.colors.error,
-          icon: 'alert-decagram',
-          bgColor: theme.colors.errorContainer,
-          borderColor: theme.colors.error,
-        };
-      case 'hospital':
-        return {
-          label: 'HOSPITAL (SPECIALIZED CARE)',
-          color: theme.colors.secondary,
-          icon: 'hospital-building',
-          bgColor: theme.colors.secondaryContainer,
-          borderColor: theme.colors.secondary,
-        };
-      case 'health_center':
-        return {
-          label: 'HEALTH CENTER (PRIMARY CARE)',
-          color: theme.colors.primary,
-          icon: 'hospital-marker',
-          bgColor: theme.colors.primaryContainer,
-          borderColor: theme.colors.primary,
-        };
-      case 'self_care':
-        return {
-          label: 'SELF CARE (HOME)',
-          color: theme.colors.primary,
-          icon: 'home-heart',
-          bgColor: theme.colors.secondaryContainer,
-          borderColor: theme.colors.primary,
-        };
-      default:
-        return {
-          label: level.toUpperCase().replace('_', ' '),
-          color: theme.colors.primary,
-          icon: 'hospital-building',
-          bgColor: theme.colors.primaryContainer,
-          borderColor: theme.colors.primary,
-        };
-    }
-  }, [theme]);
+      switch (normalizedLevel) {
+        case 'emergency':
+          return {
+            label: 'EMERGENCY (LIFE-THREATENING)',
+            color: theme.colors.error,
+            icon: 'alert-decagram',
+            bgColor: theme.colors.errorContainer,
+            borderColor: theme.colors.error,
+          };
+        case 'hospital':
+          return {
+            label: 'HOSPITAL (SPECIALIZED CARE)',
+            color: theme.colors.secondary,
+            icon: 'hospital-building',
+            bgColor: theme.colors.secondaryContainer,
+            borderColor: theme.colors.secondary,
+          };
+        case 'health_center':
+          return {
+            label: 'HEALTH CENTER (PRIMARY CARE)',
+            color: theme.colors.primary,
+            icon: 'hospital-marker',
+            bgColor: theme.colors.primaryContainer,
+            borderColor: theme.colors.primary,
+          };
+        case 'self_care':
+          return {
+            label: 'SELF CARE (HOME)',
+            color: theme.colors.primary,
+            icon: 'home-heart',
+            bgColor: theme.colors.secondaryContainer,
+            borderColor: theme.colors.primary,
+          };
+        default:
+          return {
+            label: level.toUpperCase().replace('_', ' '),
+            color: theme.colors.primary,
+            icon: 'hospital-building',
+            bgColor: theme.colors.primaryContainer,
+            borderColor: theme.colors.primary,
+          };
+      }
+    },
+    [theme],
+  );
 
   if (loading) {
     return (
@@ -678,7 +675,6 @@ const RecommendationScreen = () => {
   const displayAdvice = recommendation.user_advice;
 
   const guardAdjustments = recommendation.triage_logic?.adjustments ?? [];
-
 
   const reasonForAdvice = (() => {
     if (isEmergency && recommendation.medical_justification) {
@@ -710,10 +706,7 @@ const RecommendationScreen = () => {
 
   const instructionWithGuardrail = empatheticAdvice;
 
-  const outlinedButtonBorderRadius = Math.min(
-    Math.max(theme.roundness ?? 10, 8),
-    12,
-  );
+  const outlinedButtonBorderRadius = Math.min(Math.max(theme.roundness ?? 10, 8), 12);
   const handoverBorderRadius =
     (theme as { borderRadius?: { medium?: number } }).borderRadius?.medium ??
     outlinedButtonBorderRadius;
@@ -763,17 +756,12 @@ const RecommendationScreen = () => {
           />
         </View>
 
-
-
         {/* Key Observations Section - Neutral/Informational */}
         {recommendation.key_concerns.length > 0 && (
           <View style={styles.observationsSection}>
             <Divider style={styles.restartDivider} />
             <View style={styles.sectionHeaderRow}>
-              <Text
-                variant="titleLarge"
-                style={styles.sectionTitle}
-              >
+              <Text variant="titleLarge" style={styles.sectionTitle}>
                 Key Observation
               </Text>
             </View>
@@ -952,7 +940,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 
-
   observationsSection: {
     marginBottom: 24,
   },
@@ -968,7 +955,6 @@ const styles = StyleSheet.create({
     color: '#333',
     letterSpacing: 0.5,
   },
-
 
   concernsList: { paddingLeft: 0, marginTop: 4 },
   concernRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 },
@@ -1026,8 +1012,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontWeight: '600',
   },
-    restartButton: {
-    },
-  });
+  restartButton: {},
+});
 
 export default RecommendationScreen;

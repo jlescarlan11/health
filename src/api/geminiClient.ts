@@ -481,7 +481,10 @@ export class GeminiClient {
               }
             } catch (parseError) {
               keysToRemove.push(key);
-              console.warn('[GeminiClient] Failed to parse cache entry during cleanup:', parseError);
+              console.warn(
+                '[GeminiClient] Failed to parse cache entry during cleanup:',
+                parseError,
+              );
             }
           });
 
@@ -557,7 +560,9 @@ export class GeminiClient {
 
         if (attempt >= MAX_RETRIES) {
           if (errMessage.includes('503')) {
-            throw new Error('The AI service is currently overloaded. Please try again in a moment.');
+            throw new Error(
+              'The AI service is currently overloaded. Please try again in a moment.',
+            );
           }
           throw error;
         }
@@ -612,9 +617,10 @@ export class GeminiClient {
       );
       const responseText = await this.generateContentWithRetry(prompt);
 
-      const parsed = parseAndValidateLLMResponse<{ questions: AssessmentQuestion[]; intro?: string }>(
-        responseText,
-      );
+      const parsed = parseAndValidateLLMResponse<{
+        questions: AssessmentQuestion[];
+        intro?: string;
+      }>(responseText);
       const questions = parsed.questions || [];
 
       let prioritizedQuestions: AssessmentQuestion[];
@@ -708,8 +714,7 @@ export class GeminiClient {
     const historyWindow = Math.max(0, Math.floor(requestedWindow));
 
     const userMessages = history.filter((msg) => msg.role === 'user');
-    const limitedMessages =
-      historyWindow > 0 ? userMessages.slice(-historyWindow) : userMessages;
+    const limitedMessages = historyWindow > 0 ? userMessages.slice(-historyWindow) : userMessages;
 
     const conversationText = limitedMessages.map((msg) => `USER: ${msg.text}`).join('\n');
     const historyHash = getHistoryHash(conversationText);
@@ -750,7 +755,9 @@ export class GeminiClient {
             } as ClinicalProfileCacheEntry),
           ),
         )
-        .catch((error) => console.warn('[GeminiClient] Clinical profile cache write failed:', error));
+        .catch((error) =>
+          console.warn('[GeminiClient] Clinical profile cache write failed:', error),
+        );
     };
 
     const requestPromise = (async () => {
@@ -953,9 +960,9 @@ export class GeminiClient {
     // 0. Periodic Cleanup (non-blocking)
     this.performCacheCleanup().catch((e) => console.warn('Cleanup failed:', e));
 
-  /**
-   * Refines a triage response from the LLM based on clinical context and safety rules.
-   */
+    /**
+     * Refines a triage response from the LLM based on clinical context and safety rules.
+     */
 
     // 1. Safety Overrides (Local Logic)
     const scanInput = safetyContext || symptoms;
@@ -974,15 +981,22 @@ export class GeminiClient {
       console.log(
         `[GeminiClient] Emergency detected locally (${emergency.matchedKeywords.join(', ')}). Preparing fallback and attempting AI enrichment.`,
       );
-      
-      let advice = 'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room or call emergency services immediately.';
-      
+
+      let advice =
+        'CRITICAL: Potential life-threatening condition detected based on your symptoms. Go to the nearest emergency room or call emergency services immediately.';
+
       if (emergency.affectedSystems.includes('Trauma')) {
-        advice = 'CRITICAL: Severe injury detected. Please go to the nearest emergency room immediately for urgent trauma care.';
-      } else if (emergency.affectedSystems.includes('Cardiac') || emergency.affectedSystems.includes('Respiratory')) {
-        advice = 'CRITICAL: Potential life-threatening cardiovascular or respiratory distress detected. Seek emergency medical care immediately.';
+        advice =
+          'CRITICAL: Severe injury detected. Please go to the nearest emergency room immediately for urgent trauma care.';
+      } else if (
+        emergency.affectedSystems.includes('Cardiac') ||
+        emergency.affectedSystems.includes('Respiratory')
+      ) {
+        advice =
+          'CRITICAL: Potential life-threatening cardiovascular or respiratory distress detected. Seek emergency medical care immediately.';
       } else if (emergency.affectedSystems.includes('Neurological')) {
-        advice = 'CRITICAL: Potential neurological emergency detected. Please go to the nearest emergency room immediately.';
+        advice =
+          'CRITICAL: Potential neurological emergency detected. Please go to the nearest emergency room immediately.';
       }
 
       emergencyFallback = {
@@ -1118,13 +1132,15 @@ export class GeminiClient {
           console.log('[GeminiClient] Applying Emergency System Lock to AI Response.');
           parsed.recommended_level = 'emergency';
           parsed.triage_logic = emergencyFallback.triage_logic; // Preserve the system lock reason
-          
+
           // Ensure red flags are merged
-          parsed.red_flags = Array.from(new Set([...(parsed.red_flags || []), ...emergencyFallback.red_flags]));
-          
+          parsed.red_flags = Array.from(
+            new Set([...(parsed.red_flags || []), ...emergencyFallback.red_flags]),
+          );
+
           // Ensure readiness score reflects urgency
           parsed.triage_readiness_score = 1.0;
-          
+
           // Fallback services if AI missed them
           if (!parsed.relevant_services || parsed.relevant_services.length === 0) {
             parsed.relevant_services = ['Emergency'];
@@ -1199,13 +1215,13 @@ export class GeminiClient {
         // --- CONSERVATIVE TRIAGE: TRANSIENT SYMPTOM LOGIC (RECENTLY RESOLVED) ---
         /**
          * CLINICAL RATIONALE:
-         * For symptoms involving high-risk keywords (Chest Pain, Slurred Speech, etc.) that have 
+         * For symptoms involving high-risk keywords (Chest Pain, Slurred Speech, etc.) that have
          * since resolved, we apply a "Hospital Floor" safety protocol.
-         * 
-         * 1. Downgrade from Emergency (911): If symptoms are currently gone, an ambulance 
-         *    is likely not required for transport, but the patient STILL needs immediate 
+         *
+         * 1. Downgrade from Emergency (911): If symptoms are currently gone, an ambulance
+         *    is likely not required for transport, but the patient STILL needs immediate
          *    ER evaluation to rule out TIA, unstable angina, or other intermittent crises.
-         * 2. Upgrade from Primary Care: Even if the AI suggests "Self-Care" because symptoms 
+         * 2. Upgrade from Primary Care: Even if the AI suggests "Self-Care" because symptoms
          *    are absent now, the history of a high-risk event mandates professional diagnostics.
          */
         if (profile?.is_recent_resolved) {
