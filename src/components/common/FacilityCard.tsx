@@ -1,11 +1,12 @@
 import React from 'react';
-import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity, Linking } from 'react-native';
 import { Card, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility, FacilityService } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
-import { getOpenStatus } from '../../utils';
+import { getOpenStatus, formatFacilityType } from '../../utils';
 import { openExternalMaps } from '../../utils/linkingUtils';
+import { Button } from './Button';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -44,13 +45,25 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   const [showAllServices, setShowAllServices] = React.useState(false);
   const { text: statusText, color: statusColor, isOpen } = getOpenStatus(facility);
 
-  const has247Emergency = React.useMemo(() => {
-    const hasEmergency = facility.services.includes('Emergency');
-    const is247 = facility.is_24_7 || facility.operatingHours?.is24x7;
-    return !!(hasEmergency && is247);
-  }, [facility.services, facility.is_24_7, facility.operatingHours?.is24x7]);
+  const hasMatches = React.useMemo(() => {
+    if (!relevantServices || relevantServices.length === 0) return false;
+    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+    return relevantServices.some((rs) =>
+      allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
+    );
+  }, [facility.services, facility.specialized_services, relevantServices]);
 
-  const accessibilityLabel = `Facility: ${facility.name}, Type: ${facility.type}, Status: ${statusText}, Address: ${facility.address}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${has247Emergency ? ', 24/7 Emergency Services Available' : ''}${showDistance ? `, Distance: ${typeof distance === 'number' && !isNaN(distance) ? formatDistance(distance) : 'unavailable'}` : ''}`;
+  const accessibilityLabel = `Facility: ${facility.name}, Type: ${
+    facility.type
+  }, Status: ${statusText}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${
+    hasMatches ? ', Matches Your Needs' : ''
+  }${
+    showDistance
+      ? `, Distance: ${
+          typeof distance === 'number' && !isNaN(distance) ? formatDistance(distance) : 'unavailable'
+        }`
+      : ''
+  }`;
 
   const handleDirectionsPress = async () => {
     const opened = await openExternalMaps({
@@ -62,6 +75,16 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
     if (!opened) {
       Alert.alert('Error', 'Failed to open maps for directions.');
+    }
+  };
+
+  const handleCallPress = () => {
+    if (facility.phone) {
+      Linking.openURL(`tel:${facility.phone}`).catch(() =>
+        Alert.alert('Error', 'Failed to open dialer.'),
+      );
+    } else {
+      Alert.alert('Not Available', 'Phone number is not available.');
     }
   };
 
@@ -102,14 +125,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     facility.services.length + (facility.specialized_services?.length || 0);
   const hasMoreServices = totalServicesCount > displayServices.length;
 
-  const hasMatches = React.useMemo(() => {
-    if (!relevantServices || relevantServices.length === 0) return false;
-    const allServices = [...facility.services, ...(facility.specialized_services || [])];
-    return relevantServices.some((rs) =>
-      allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
-    );
-  }, [facility.services, facility.specialized_services, relevantServices]);
-
   return (
     <Card
       style={[
@@ -131,144 +146,110 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       accessibilityLabel={accessibilityLabel}
     >
       <View style={styles.cardInner}>
-        <View style={styles.headerRow}>
-          <View style={styles.titleContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-              <MaterialCommunityIcons
-                name={facility.type === 'hospital' ? 'hospital-building' : 'home-plus'}
-                size={20}
-                color={theme.colors.primary}
-                style={{ marginRight: 8, marginTop: 4 }}
-              />
-              <View style={{ flex: 1 }}>
-                <Text variant="titleMedium" style={styles.title}>
-                  {facility.name}
-                </Text>
-                {has247Emergency && (
-                  <View style={styles.emergencyBadge}>
-                    <MaterialCommunityIcons name="alert-decagram" size={12} color="#fff" />
-                    <Text style={styles.emergencyBadgeText}>24/7 EMERGENCY</Text>
-                  </View>
-                )}
-                {showDistance && (
-                  <View style={styles.distanceContainer}>
-                    <MaterialCommunityIcons
-                      name="map-marker-outline"
-                      size={12}
-                      color={theme.colors.outline}
-                    />
-                    <Text
-                      variant="labelSmall"
-                      style={[styles.distance, { color: theme.colors.outline }]}
-                    >
-                      {typeof distance === 'number' && !isNaN(distance)
-                        ? formatDistance(distance)
-                        : '—'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
+        {/* Header Row */}
+        <Text variant="titleMedium" style={styles.title}>
+          {facility.name}
+        </Text>
 
-          <View style={styles.rightHeader}>
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={`Directions to ${facility.name}`}
-              accessibilityHint="Opens your maps app with directions"
-              style={[styles.directionsButton, { backgroundColor: theme.colors.surfaceVariant }]}
-              onPress={(e) => {
-                e.stopPropagation();
-                handleDirectionsPress();
-              }}
-            >
-              <MaterialCommunityIcons name="directions" size={18} color={theme.colors.primary} />
-            </TouchableOpacity>
-            {facility.yakapAccredited && (
-              <View
-                style={[styles.yakapBadge, { backgroundColor: theme.colors.secondaryContainer }]}
-              >
-                <MaterialCommunityIcons
-                  name="check-decagram"
-                  size={12}
-                  color={theme.colors.onSecondaryContainer}
-                />
-                <Text style={[styles.yakapText, { color: theme.colors.onSecondaryContainer }]}>
-                  YAKAP
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {hasMatches && (
-          <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9' }]}>
-            <MaterialCommunityIcons name="check-circle" size={14} color="#2E7D32" />
-            <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Your Needs</Text>
-          </View>
-        )}
-
-        <View style={styles.content}>
-          <View style={styles.statusRow}>
-            <MaterialCommunityIcons
-              name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-              size={14}
-              color={statusColor}
-              style={{ marginRight: 6 }}
-            />
-            <Text
-              variant="labelMedium"
-              style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
-            >
-              {statusText}
-            </Text>
-          </View>
-
-          <Text variant="bodySmall" numberOfLines={1} style={styles.address}>
-            {facility.address}
+        {/* Meta Row */}
+        <View style={styles.metaRow}>
+          <Text variant="labelSmall" style={styles.metaText}>
+            {formatFacilityType(facility.type)}
           </Text>
 
-          <View style={styles.servicesRow}>
-            {displayServices.map((service, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.serviceChip,
-                  { backgroundColor: theme.colors.primaryContainer + '40' },
-                ]}
+          {facility.yakapAccredited && (
+            <Text variant="labelSmall" style={styles.metaText}>
+              Yakap Accredited
+            </Text>
+          )}
+
+          {showDistance && (
+            <Text variant="labelSmall" style={styles.metaText}>
+              {typeof distance === 'number' && !isNaN(distance)
+                ? formatDistance(distance)
+                : 'Distance unavailable'}
+            </Text>
+          )}
+
+          {hasMatches && (
+            <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9' }]}>
+              <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
+              <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Status Row */}
+        <View style={styles.statusRow}>
+          <MaterialCommunityIcons
+            name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
+            size={14}
+            color={statusColor}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            variant="labelMedium"
+            style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
+          >
+            {statusText}
+          </Text>
+        </View>
+
+        {/* Services Row */}
+        <View style={styles.servicesRow}>
+          {displayServices.map((service, index) => (
+            <View
+              key={index}
+              style={[styles.serviceChip, { backgroundColor: theme.colors.primaryContainer + '40' }]}
+            >
+              <MaterialCommunityIcons
+                name={getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']}
+                size={12}
+                color={theme.colors.primary}
+              />
+              <Text
+                variant="labelSmall"
+                style={[styles.serviceText, { color: theme.colors.onPrimaryContainer }]}
               >
-                <MaterialCommunityIcons
-                  name={
-                    getServiceIcon(service) as keyof (typeof MaterialCommunityIcons)['glyphMap']
-                  }
-                  size={12}
-                  color={theme.colors.primary}
-                />
-                <Text
-                  variant="labelSmall"
-                  style={[styles.serviceText, { color: theme.colors.onPrimaryContainer }]}
-                >
-                  {service}
-                </Text>
-              </View>
-            ))}
-            {hasMoreServices && !showAllServices && !simplified && (
-              <TouchableOpacity
-                style={styles.moreServices}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setShowAllServices(true);
-                }}
+                {service}
+              </Text>
+            </View>
+          ))}
+          {hasMoreServices && !showAllServices && !simplified && (
+            <TouchableOpacity
+              style={styles.moreServices}
+              onPress={(e) => {
+                e.stopPropagation();
+                setShowAllServices(true);
+              }}
+            >
+              <Text
+                variant="labelSmall"
+                style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10 }}
               >
-                <Text
-                  variant="labelSmall"
-                  style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10 }}
-                >
-                  +{totalServicesCount - displayServices.length} MORE
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+                +{totalServicesCount - displayServices.length} MORE
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Action Buttons Row */}
+        <View style={styles.actionsRow}>
+          <Button
+            title="Call"
+            icon="phone"
+            variant="primary"
+            onPress={handleCallPress}
+            style={styles.actionButton}
+            disabled={!facility.phone}
+          />
+          <Button
+            title="Directions"
+            icon="directions"
+            variant="primary"
+            onPress={handleDirectionsPress}
+            style={styles.actionButton}
+          />
         </View>
       </View>
     </Card>
@@ -284,109 +265,50 @@ const styles = StyleSheet.create({
   cardInner: {
     padding: 16,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  titleContainer: {
-    flex: 1,
-    marginRight: 8,
-  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
     lineHeight: 26,
     letterSpacing: -0.2,
-    flex: 1, // allow title to take available space
-  },
-
-  rightHeader: {
-    alignItems: 'flex-end',
-  },
-  directionsButton: {
-    padding: 8,
-    borderRadius: 16,
     marginBottom: 8,
   },
-  yakapBadge: {
+  metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
   },
-  yakapText: {
-    fontSize: 9,
-    fontWeight: '900',
-    marginLeft: 4,
-    letterSpacing: 0.5,
-  },
-  distanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  distance: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginLeft: 4,
+  metaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
   },
   matchBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    marginBottom: 16,
-    alignSelf: 'flex-start',
-  },
-  matchText: {
-    fontSize: 12,
-    fontWeight: '800',
-    marginLeft: 6,
-    letterSpacing: 0.3,
-  },
-  emergencyBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#D32F2F',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    marginTop: 4,
-    marginBottom: 4,
-    alignSelf: 'flex-start',
   },
-  emergencyBadgeText: {
-    color: '#fff',
-    fontSize: 9,
-    fontWeight: '900',
+  matchText: {
+    fontSize: 10,
+    fontWeight: '800',
     marginLeft: 4,
-    letterSpacing: 0.5,
-  },
-  content: {
-    marginTop: 0,
+    letterSpacing: 0.3,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
-  },
-  address: {
-    color: 'rgba(0,0,0,0.5)',
     marginBottom: 16,
-    fontWeight: '600',
-    fontSize: 13,
   },
   servicesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     gap: 8,
+    marginBottom: 16,
   },
   serviceChip: {
     flexDirection: 'row',
@@ -404,5 +326,15 @@ const styles = StyleSheet.create({
   moreServices: {
     paddingHorizontal: 4,
     paddingVertical: 4,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  actionButton: {
+    flex: 1,
+    marginVertical: 0,
+    minHeight: 40,
   },
 });

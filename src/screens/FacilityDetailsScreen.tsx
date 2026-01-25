@@ -23,6 +23,7 @@ import { Button } from '../components/common/Button';
 import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus, formatOperatingHours, OPEN_COLOR, WARNING_COLOR } from '../utils/facilityUtils';
+import { formatFacilityType } from '../utils';
 import { useTheme } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
 import { openExternalMaps } from '../utils/linkingUtils';
@@ -255,13 +256,13 @@ export const FacilityDetailsScreen = () => {
                 {facility.name}
               </Text>
               {facility.yakapAccredited && (
-                <View style={[styles.yakapBadge, { backgroundColor: theme.colors.primary }]}>
-                  <Text style={styles.yakapText}>YAKAP</Text>
-                </View>
+                <Text style={[styles.yakapText, { color: theme.colors.onSurfaceVariant }]}>
+                  • Yakap Accredited
+                </Text>
               )}
             </View>
             <Text style={[styles.facilityType, { color: theme.colors.onSurfaceVariant }]}>
-              {facility.type}
+              {formatFacilityType(facility.type)}
             </Text>
           </View>
 
@@ -279,14 +280,7 @@ export const FacilityDetailsScreen = () => {
               title="Directions"
               onPress={handleDirections}
               style={styles.actionButton}
-              variant="outline"
-            />
-            <Button
-              icon="share"
-              title="Share"
-              onPress={handleShare}
-              style={styles.actionButton}
-              variant="outline"
+              variant="primary"
             />
           </View>
 
@@ -306,9 +300,7 @@ export const FacilityDetailsScreen = () => {
               </Text>
               <View style={styles.locationActionsRow}>
                 {typeof distance === 'number' && !isNaN(distance) ? (
-                  <View
-                    style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}
-                  >
+                  <View style={styles.distanceContainer}>
                     <Ionicons
                       name="navigate-circle-outline"
                       size={14}
@@ -322,10 +314,7 @@ export const FacilityDetailsScreen = () => {
                   permissionStatus === 'denied' || errorMsg ? (
                     <TouchableOpacity
                       onPress={requestPermission}
-                      style={[
-                        styles.distanceBadge,
-                        { backgroundColor: theme.colors.errorContainer },
-                      ]}
+                      style={styles.distanceContainer}
                     >
                       <Ionicons name="location" size={14} color={theme.colors.error} />
                       <Text style={[styles.distanceText, { color: theme.colors.error }]}>
@@ -333,9 +322,7 @@ export const FacilityDetailsScreen = () => {
                       </Text>
                     </TouchableOpacity>
                   ) : (
-                    <View
-                      style={[styles.distanceBadge, { backgroundColor: theme.colors.surfaceVariant }]}
-                    >
+                    <View style={styles.distanceContainer}>
                       <Ionicons
                         name="navigate-circle-outline"
                         size={14}
@@ -367,32 +354,20 @@ export const FacilityDetailsScreen = () => {
                 </Text>
               ))}
 
-              <View
+              <Text
                 style={[
-                  styles.openStatus,
+                  styles.openStatusText,
                   {
-                    backgroundColor:
+                    color:
                       openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
-                        ? theme.colors.primaryContainer
-                        : theme.colors.surfaceVariant,
-                    marginTop: 8,
+                        ? theme.colors.primary
+                        : theme.colors.onSurfaceVariant,
+                    marginTop: 4,
                   },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.openStatusText,
-                    {
-                      color:
-                        openStatusColor === WARNING_COLOR || openStatusColor === OPEN_COLOR
-                          ? theme.colors.primary
-                          : theme.colors.onSurfaceVariant,
-                    },
-                  ]}
-                >
-                  {openStatusText}
-                </Text>
-              </View>
+                {openStatusText}
+              </Text>
             </View>
           </View>
 
@@ -511,16 +486,9 @@ const styles = StyleSheet.create({
     marginRight: 10,
     flexShrink: 1,
   },
-  yakapBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
   yakapText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 10,
-    textTransform: 'uppercase',
+    fontSize: 14,
+    fontWeight: '600',
   },
   facilityType: {
     fontSize: 16,
@@ -565,14 +533,11 @@ const styles = StyleSheet.create({
   linkText: {
     fontWeight: '500',
   },
-  distanceBadge: {
+  distanceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 6,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
   locationActionsRow: {
     flexDirection: 'row',
@@ -580,18 +545,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   distanceText: {
-    fontSize: 13,
+    fontSize: 14,
     marginLeft: 4,
-  },
-  openStatus: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
+    fontWeight: '500',
   },
   openStatusText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   servicesSection: {

@@ -48,35 +48,34 @@ export const FacilityCardSkeleton: React.FC<SkeletonProps> = ({ style }) => {
       mode="contained"
     >
       <View style={styles.cardInner}>
-        <View style={styles.headerRow}>
-          <View style={styles.titleContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-              <SkeletonItem style={styles.icon} />
-              <View style={{ flex: 1 }}>
-                <SkeletonItem style={styles.titleLine} />
-                <SkeletonItem style={styles.distance} />
-              </View>
-            </View>
-          </View>
-          <View style={styles.rightHeader}>
-            <SkeletonItem style={styles.directionsButton} />
-            <SkeletonItem style={styles.yakapBadge} />
-          </View>
+        {/* Header Row */}
+        <SkeletonItem style={styles.titleLine} />
+
+        {/* Meta Row */}
+        <View style={styles.metaRow}>
+          <SkeletonItem style={styles.metaText} />
+          <SkeletonItem style={styles.yakapBadge} />
+          <SkeletonItem style={styles.matchBadge} />
+          <SkeletonItem style={styles.distance} />
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.statusRow}>
-            <SkeletonItem style={styles.statusIcon} />
-            <SkeletonItem style={styles.statusText} />
-          </View>
+        {/* Status Row */}
+        <View style={styles.statusRow}>
+          <SkeletonItem style={styles.statusIcon} />
+          <SkeletonItem style={styles.statusText} />
+        </View>
 
-          <SkeletonItem style={styles.addressLine} />
+        {/* Services Row */}
+        <View style={styles.servicesRow}>
+          <SkeletonItem style={styles.serviceChip} />
+          <SkeletonItem style={styles.serviceChip} />
+          <SkeletonItem style={styles.serviceChip} />
+        </View>
 
-          <View style={styles.servicesRow}>
-            <SkeletonItem style={styles.serviceChip} />
-            <SkeletonItem style={styles.serviceChip} />
-            <SkeletonItem style={styles.serviceChip} />
-          </View>
+        {/* Action Buttons Row */}
+        <View style={styles.actionsRow}>
+          <SkeletonItem style={styles.actionButton} />
+          <SkeletonItem style={styles.actionButton} />
         </View>
       </View>
     </Card>
@@ -92,55 +91,42 @@ const styles = StyleSheet.create({
   cardInner: {
     padding: 16,
   },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  titleContainer: {
-    flex: 1,
-    marginRight: 8,
-  },
-  icon: {
-    width: 20,
-    height: 20,
-    borderRadius: 4,
-    marginRight: 8,
-    marginTop: 4,
-  },
   titleLine: {
-    width: '80%',
+    width: '70%',
     height: 20,
     borderRadius: 4,
     marginBottom: 8,
   },
-  distance: {
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  metaText: {
     width: 60,
     height: 12,
     borderRadius: 4,
   },
-  rightHeader: {
-    alignItems: 'flex-end',
-  },
-  directionsButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 16,
-    marginBottom: 8,
-  },
   yakapBadge: {
-    width: 50,
+    width: 80,
     height: 18,
     borderRadius: 6,
   },
-  content: {
-    marginTop: 0,
+  matchBadge: {
+    width: 70,
+    height: 18,
+    borderRadius: 6,
+  },
+  distance: {
+    width: 50,
+    height: 12,
+    borderRadius: 4,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
   },
   statusIcon: {
     width: 14,
@@ -153,20 +139,25 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 4,
   },
-  addressLine: {
-    width: '90%',
-    height: 13,
-    borderRadius: 4,
-    marginBottom: 16,
-  },
   servicesRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginBottom: 16,
   },
   serviceChip: {
     width: 70,
     height: 24,
     borderRadius: 12,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  actionButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: 8,
   },
 });
