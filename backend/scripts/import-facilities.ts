@@ -6,7 +6,7 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import dotenv from 'dotenv';
 
-// Define interface for CSV record
+// Define interface for CSV record matching the template headers
 interface FacilityRecord {
   name: string;
   type: string;
@@ -17,10 +17,14 @@ interface FacilityRecord {
   yakap_accredited: string;
   services: string;
   operating_hours: string;
-  photos: string;
   barangay: string;
-  specialized_services?: string;
-  is_24_7?: string;
+  photos: string;
+  specialized_services: string;
+  is_24_7: string;
+  capacity: string;
+  live_metrics: string;
+  busy_patterns: string;
+  signals: string;
 }
 
 // Load environment variables
@@ -28,7 +32,6 @@ const envPath = path.resolve(__dirname, '../../.env');
 if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
 } else {
-  // Fallback to local .env if root one not found (though unlikely in this structure)
   dotenv.config();
 }
 
@@ -46,160 +49,128 @@ const pool = new Pool({
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// --- Parser Logic (from requirements) ---
+// --- Parser Helpers ---
 
+/**
+ * Extracts numeric capacity from strings like "1000 Bed Capacity"
+ */
+function parseCapacity(capacityStr: string): number {
+  if (!capacityStr || capacityStr.toLowerCase().includes('to be added')) return 50;
+  const match = capacityStr.match(/\d+/);
+  return match ? parseInt(match[0], 10) : 50;
+}
+
+/**
+ * Parses complex phone strings into structured contact records
+ * Handles formats like: "Person Name: 09123456789; Other Name: 09123456789"
+ */
+function parseContacts(phoneStr: string) {
+  if (
+    !phoneStr || 
+    phoneStr.toLowerCase().includes('to be updated') || 
+    phoneStr.toLowerCase().includes('to be filled')
+  ) return [];
+  
+  return phoneStr.split(';').map(part => {
+    const colonIndex = part.indexOf(':');
+    if (colonIndex !== -1) {
+      const nameAndRole = part.substring(0, colonIndex).trim();
+      const number = part.substring(colonIndex + 1).trim();
+      return {
+        contactName: nameAndRole,
+        phoneNumber: number,
+        role: 'Personnel'
+      };
+    }
+    return { 
+      phoneNumber: part.trim(), 
+      role: 'Primary',
+      contactName: null
+    };
+  });
+}
+
+/**
+ * Safely parses JSON strings with a default fallback
+ */
+function parseJson(jsonStr: string, defaultValue: any = {}) {
+  try {
+    return jsonStr && jsonStr.trim() !== "" ? JSON.parse(jsonStr) : defaultValue;
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
+/**
+ * Parses operating hours strings into a structured JSON schedule
+ */
 function parseOperatingHours(hoursStr: string) {
   const schedule: Record<number, { open: string; close: string } | null> = {
-    0: null, // Sunday
-    1: null, // Monday
-    2: null, // Tuesday
-    3: null, // Wednesday
-    4: null, // Thursday
-    5: null, // Friday
-    6: null, // Saturday
+    0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null,
   };
 
-  if (!hoursStr) {
-    return {
-      description: 'Not Available',
-      is24x7: false,
-      schedule,
-    };
-  }
+  if (!hoursStr) return { description: 'Not Available', is24x7: false, schedule };
 
-  // 1. Check for simple "24/7" that applies to ALL days
   const simple247 = /^(open\s*)?(24\s*hours?|24\/7)$/i.test(hoursStr.trim());
-
   if (simple247) {
-    for (let i = 0; i <= 6; i++) {
-      schedule[i] = { open: '00:00', close: '23:59' };
-    }
+    for (let i = 0; i <= 6; i++) schedule[i] = { open: '00:00', close: '23:59' };
     return { description: hoursStr, is24x7: true, schedule };
   }
 
-  // 2. Parse segments (e.g., "Mon-Fri: 8AM-12AM; Sat: 24 Hours")
   const segments = hoursStr.split(';');
-
   for (const segment of segments) {
     const trimmed = segment.trim();
     if (!trimmed) continue;
-
-    // Split "Mon-Fri: 8AM-12AM" into ["Mon-Fri", "8AM-12AM"]
     const colonIndex = trimmed.indexOf(':');
     if (colonIndex === -1) continue;
 
     const dayPart = trimmed.substring(0, colonIndex).trim();
     const timePart = trimmed.substring(colonIndex + 1).trim();
 
-    if (!dayPart || !timePart) continue;
-
-    let open = '',
-      close = '';
-
-    // Handle "24 Hours" in this specific segment
+    let open = '', close = '';
     if (/24\s*hours?|24\/7/i.test(timePart)) {
-      open = '00:00';
-      close = '23:59';
+      open = '00:00'; close = '23:59';
     } else {
-      // Parse standard time format (e.g., "8AM-12AM" or "8:30AM-5:30PM")
-      const timeMatch = timePart.match(
-        /(\d{1,2}(?::\d{2})?)\s*(AM|PM)\s*-\s*(\d{1,2}(?::\d{2})?)\s*(AM|PM)/i,
-      );
-
+      const timeMatch = timePart.match(/(\d{1,2}(?::\d{2})?)\s*(AM|PM)\s*-\s*(\d{1,2}(?::\d{2})?)\s*(AM|PM)/i);
       if (timeMatch) {
         const convertTo24Hour = (time: string, modifier: string): string => {
           const parts = time.split(':');
           let hours = parseInt(parts[0], 10);
           const minutes = parts[1] ? parseInt(parts[1], 10) : 0;
-
           const mod = modifier.toUpperCase();
-
-          // Handle 12-hour to 24-hour conversion
-          if (mod === 'AM') {
-            if (hours === 12) {
-              hours = 0; // 12AM is 00:00 (midnight)
-            }
-            // 1AM-11AM stay as is (1-11)
-          } else if (mod === 'PM') {
-            if (hours !== 12) {
-              hours += 12; // 1PM-11PM become 13-23
-            }
-            // 12PM stays as 12 (noon)
-          }
-
+          if (mod === 'AM' && hours === 12) hours = 0;
+          else if (mod === 'PM' && hours !== 12) hours += 12;
           return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         };
-
         open = convertTo24Hour(timeMatch[1], timeMatch[2]);
         close = convertTo24Hour(timeMatch[3], timeMatch[4]);
-      } else {
-        // If time format doesn't match, warn but continue
-        console.warn(`Warning: Could not parse time format: "${timePart}" in segment "${segment}"`);
-        continue;
-      }
+      } else continue;
     }
 
-    const hoursObj = { open, close };
-
-    // Parse day ranges (e.g., "Mon-Fri" or "Sat" or "Mon,Wed,Fri")
-    const dayMap: Record<string, number> = {
-      sun: 0,
-      mon: 1,
-      tue: 2,
-      wed: 3,
-      thu: 4,
-      fri: 5,
-      sat: 6,
-    };
-
-    const dayTokens = dayPart
-      .toLowerCase()
-      .split(',')
-      .map((d) => d.trim());
-
-    for (const token of dayTokens) {
+    const dayMap: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+    dayPart.toLowerCase().split(',').map(d => d.trim()).forEach(token => {
       if (token.includes('-')) {
-        // Handle range like "Mon-Fri"
-        const [start, end] = token.split('-').map((s) => s.trim());
-        const startIdx = dayMap[start.substring(0, 3)];
-        const endIdx = dayMap[end.substring(0, 3)];
-
+        const [start, end] = token.split('-').map(s => s.trim().substring(0, 3));
+        const startIdx = dayMap[start];
+        const endIdx = dayMap[end];
         if (startIdx !== undefined && endIdx !== undefined) {
-          // Apply hours to all days in range
-          if (startIdx <= endIdx) {
-            for (let i = startIdx; i <= endIdx; i++) {
-              schedule[i] = hoursObj;
-            }
-          } else {
-            // Handle wrap-around (e.g., "Sat-Mon")
-            for (let i = startIdx; i <= 6; i++) {
-              schedule[i] = hoursObj;
-            }
-            for (let i = 0; i <= endIdx; i++) {
-              schedule[i] = hoursObj;
-            }
+          // Correct range handling including wrap-around
+          let curr = startIdx;
+          while (curr !== (endIdx + 1) % 7) {
+            schedule[curr] = { open, close };
+            curr = (curr + 1) % 7;
+            if (curr === startIdx) break; // Safety break
           }
         }
       } else {
-        // Handle single day like "Sat"
         const idx = dayMap[token.substring(0, 3)];
-        if (idx !== undefined) {
-          schedule[idx] = hoursObj;
-        }
+        if (idx !== undefined) schedule[idx] = { open, close };
       }
-    }
+    });
   }
 
-  // 3. Calculate is24x7 flag - true ONLY if ALL 7 days are 00:00-23:59
-  const is24x7 = Object.values(schedule).every(
-    (s) => s !== null && s.open === '00:00' && s.close === '23:59',
-  );
-
-  return {
-    description: hoursStr,
-    is24x7,
-    schedule,
-  };
+  const is24x7 = Object.values(schedule).every(s => s !== null && s.open === '00:00' && s.close === '23:59');
+  return { description: hoursStr, is24x7, schedule };
 }
 
 // --- Import Logic ---
@@ -214,7 +185,6 @@ async function main() {
   }
 
   const fileContent = fs.readFileSync(csvPath, 'utf-8');
-
   const records = parse(fileContent, {
     columns: true,
     skip_empty_lines: true,
@@ -225,68 +195,72 @@ async function main() {
 
   for (const record of records) {
     try {
-      const operatingHours = parseOperatingHours(record.operating_hours);
-
-      // Convert comma/semicolon separated strings to arrays
-      const services = record.services
-        ? record.services.split(';').map((s: string) => s.trim())
-        : [];
-      const specialized_services = record.specialized_services
-        ? record.specialized_services.split(';').map((s: string) => s.trim())
-        : [];
-      const photos = record.photos
-        ? record.photos
-            .split(';')
-            .map((p: string) => p.trim())
-            .filter((p: string) => p.length > 0)
-        : [];
-
-      // Clean lat/long
-      const latitude = parseFloat(record.latitude);
-      const longitude = parseFloat(record.longitude);
-
-      if (isNaN(latitude) || isNaN(longitude)) {
+      // Skip records with missing coordinates
+      if (
+        !record.latitude || record.latitude.includes('to be filled') || 
+        !record.longitude || record.longitude.includes('to be filled')
+      ) {
         console.warn(`Skipping ${record.name}: Invalid coordinates`);
         continue;
       }
 
-      // Upsert facility
-      // We use name as the unique identifier for upsert here, but schema might not have unique on name.
-      // If name is not unique, we should check if it exists first.
-      // Schema: id String @id, name String. No unique on name.
-      // So we use findFirst.
-
-      const existing = await prisma.facility.findFirst({
-        where: { name: record.name },
-      });
-
+      const operatingHours = parseOperatingHours(record.operating_hours);
+      
       const data = {
         name: record.name,
         type: record.type,
         address: record.address,
-        latitude,
-        longitude,
-        phone: record.phone || null,
-        yakap_accredited: record.yakap_accredited === 'true',
-        services,
-        specialized_services,
+        latitude: parseFloat(record.latitude),
+        longitude: parseFloat(record.longitude),
+        yakap_accredited: record.yakap_accredited.toLowerCase() === 'true',
+        services: record.services ? record.services.split(';').map(s => s.trim()) : [],
+        specialized_services: record.specialized_services ? record.specialized_services.split(';').map(s => s.trim()) : [],
+        photos: record.photos ? record.photos.split(';').map(p => p.trim()).filter(p => p.length > 0) : [],
         operating_hours: operatingHours,
-        is_24_7: record.is_24_7 === 'true' || operatingHours.is24x7,
-        photos,
-        barangay: record.barangay || null,
+        is_24_7: record.is_24_7.toLowerCase() === 'true' || operatingHours.is24x7,
+        capacity: parseCapacity(record.capacity),
+        barangay: record.barangay && !record.barangay.includes('to be filled') ? record.barangay : null,
+        live_metrics: parseJson(record.live_metrics),
+        busy_patterns: parseJson(record.busy_patterns),
       };
+
+      // Search by name for upsert
+      const existing = await prisma.facility.findFirst({
+        where: { name: record.name },
+      });
+
+      let facilityId: string;
 
       if (existing) {
         await prisma.facility.update({
           where: { id: existing.id },
           data,
         });
+        facilityId = existing.id;
+        
+        // Clear old contacts before re-syncing
+        await prisma.facilityContact.deleteMany({
+          where: { facilityId }
+        });
+        
         console.log(`Updated: ${record.name}`);
       } else {
-        await prisma.facility.create({
+        const created = await prisma.facility.create({
           data,
         });
+        facilityId = created.id;
         console.log(`Created: ${record.name}`);
+      }
+
+      // Add contacts
+      const contacts = parseContacts(record.phone);
+      if (contacts.length > 0) {
+        await prisma.facilityContact.createMany({
+          data: contacts.map(c => ({
+            ...c,
+            facilityId
+          }))
+        });
       }
     } catch (err) {
       console.error(`Error processing ${record.name}:`, err);

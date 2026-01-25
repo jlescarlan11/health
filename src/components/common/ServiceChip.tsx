@@ -14,12 +14,12 @@ export const ServiceChip: React.FC<ServiceChipProps> = ({ service, transparent =
     <View
       style={[
         styles.serviceChip,
-        { backgroundColor: theme.colors.primaryContainer + (transparent ? '40' : '') },
+        { backgroundColor: transparent ? theme.colors.primaryContainer : '#D1E7DD' },
       ]}
     >
       <Text
         variant="labelSmall"
-        style={[styles.serviceText, { color: theme.colors.onPrimaryContainer }]}
+        style={[styles.serviceText, { color: '#164032' }]} // Deep green for high contrast
       >
         {service}
       </Text>
