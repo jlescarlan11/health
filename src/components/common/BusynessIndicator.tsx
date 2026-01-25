@@ -8,23 +8,25 @@ interface BusynessIndicatorProps {
   busyness?: FacilityBusyness;
   showSeparator?: boolean;
   isVisible?: boolean;
+  variant?: 'text' | 'badge';
 }
 
 export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
   busyness,
   showSeparator = true,
   isVisible = true,
+  variant = 'text',
 }) => {
   if (!isVisible || !busyness || !busyness.status) return null;
 
   const getBusynessConfig = (status: string) => {
     switch (status) {
       case 'quiet':
-        return { label: 'Quiet Now', color: '#379777', icon: 'account-outline' };
+        return { label: 'Not Busy', color: '#379777', icon: 'account-outline' };
       case 'moderate':
-        return { label: 'Moderate', color: '#F4CE14', icon: 'account-group-outline' };
+        return { label: 'Moderately Busy', color: '#F4CE14', icon: 'account-group-outline' };
       case 'busy':
-        return { label: 'Busy', color: '#F97316', icon: 'account-multiple' };
+        return { label: 'Very Busy', color: '#F97316', icon: 'account-multiple' };
       default:
         return null;
     }
@@ -32,6 +34,25 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
 
   const config = getBusynessConfig(busyness.status);
   if (!config) return null;
+
+  if (variant === 'badge') {
+    return (
+      <View style={[styles.badgeContainer, { backgroundColor: config.color + '15', borderColor: config.color + '30' }]}>
+        <MaterialCommunityIcons
+          name={config.icon as any}
+          size={16}
+          color={config.color}
+          style={{ marginRight: 6 }}
+        />
+        <Text
+          variant="labelLarge"
+          style={{ color: config.color, fontWeight: '800', letterSpacing: 0.3 }}
+        >
+          {config.label}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -60,6 +81,16 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  badgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 8,
+    alignSelf: 'flex-start',
   },
   separator: {
     marginHorizontal: 6,

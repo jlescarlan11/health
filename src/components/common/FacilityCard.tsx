@@ -167,7 +167,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             facility.yakapAccredited ? 'Yakap Accredited' : null,
             showDistance
               ? typeof distance === 'number' && !isNaN(distance)
-                ? `${formatDistance(distance)} away`
+                ? `${formatDistance(distance)}`
                 : 'Distance unavailable'
               : null,
           ]

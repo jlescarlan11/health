@@ -272,7 +272,7 @@ export const FacilityDetailsScreen = () => {
                 formatFacilityType(facility.type),
                 facility.yakapAccredited ? 'Yakap Accredited' : null,
                 typeof distance === 'number' && !isNaN(distance)
-                  ? `${formatDistance(distance)} away`
+                  ? `${formatDistance(distance)}`
                   : null,
               ]
                 .filter(Boolean)
@@ -296,8 +296,8 @@ export const FacilityDetailsScreen = () => {
                   {openStatusText}
                 </Text>
               </View>
-              <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
             </View>
+            <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} variant="badge" />
           </View>
 
           {/* Quick Actions */}

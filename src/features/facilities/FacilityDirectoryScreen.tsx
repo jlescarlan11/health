@@ -152,7 +152,7 @@ export const FacilityDirectoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <StandardHeader title="Find Facilities" showBackButton />
+      <StandardHeader title="Facility Directory" showBackButton />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
