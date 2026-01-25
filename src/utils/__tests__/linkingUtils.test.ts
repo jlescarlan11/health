@@ -72,25 +72,39 @@ describe('openViber', () => {
     expect(result).toBe(false);
   });
 
-  it('cleans phone number and tries viber scheme', async () => {
+  it('converts local Philippine numbers to international format', async () => {
     const canOpenURL = jest.spyOn(Linking, 'canOpenURL').mockResolvedValue(true);
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
 
-    const result = await openViber('+63 912-345-6789');
+    // 09171234567 -> 639171234567
+    await openViber('09171234567');
+
+    expect(canOpenURL).toHaveBeenCalledWith('viber://chat?number=639171234567');
+    expect(openURL).toHaveBeenCalledWith('viber://chat?number=639171234567');
+  });
+
+  it('tries both with and without + for international numbers', async () => {
+    const canOpenURL = jest.spyOn(Linking, 'canOpenURL').mockImplementation(async (url) => {
+      // Simulate that only the non-+ version is supported by some systems
+      return !url.includes('%2B');
+    });
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+
+    const result = await openViber('+639171234567');
 
     expect(result).toBe(true);
-    // +639123456789 -> %2B639123456789
-    expect(canOpenURL).toHaveBeenCalledWith('viber://chat?number=%2B639123456789');
-    expect(openURL).toHaveBeenCalledWith('viber://chat?number=%2B639123456789');
+    expect(canOpenURL).toHaveBeenCalledWith('viber://chat?number=%2B639171234567');
+    expect(canOpenURL).toHaveBeenCalledWith('viber://chat?number=639171234567');
+    expect(openURL).toHaveBeenCalledWith('viber://chat?number=639171234567');
   });
 
   it('tries contact scheme if chat scheme fails', async () => {
     jest.spyOn(Linking, 'canOpenURL').mockImplementation(async (url) => url.includes('contact'));
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
 
-    const result = await openViber('123');
+    const result = await openViber('12345');
     expect(result).toBe(true);
-    expect(openURL).toHaveBeenCalledWith('viber://contact?number=123');
+    expect(openURL).toHaveBeenCalledWith('viber://contact?number=12345');
   });
 
   it('returns false if viber is not installed (no fallback)', async () => {

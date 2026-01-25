@@ -99,6 +99,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
 
         {hasViber && (
           <TouchableOpacity
+            testID="viber-button"
             style={[styles.iconButton, { backgroundColor: '#7360f2' }]}
             onPress={handleViberAction}
             activeOpacity={0.7}
@@ -109,6 +110,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
 
         {hasMessenger && (
           <TouchableOpacity
+            testID="messenger-button"
             style={[styles.iconButton, { backgroundColor: '#0084ff' }]}
             onPress={handleMessengerAction}
             activeOpacity={0.7}

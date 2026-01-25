@@ -30,6 +30,7 @@ import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
 import { formatFacilityType } from '../utils';
 import { useTheme, Text as PaperText } from 'react-native-paper';
 import { useUserLocation } from '../hooks';
+import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
 import { ServiceChip } from '../components/common/ServiceChip';
 import { CommunicationHub } from '../components/features/facilities';
@@ -79,6 +80,7 @@ const CATEGORIES = {
 
 export const FacilityDetailsScreen = () => {
   const theme = useTheme();
+  const { scaleFactor } = useAdaptiveUI();
   const insets = useSafeAreaInsets();
   const route = useRoute<FacilityDetailsRouteProp>();
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
@@ -209,8 +211,8 @@ export const FacilityDetailsScreen = () => {
           />
           {images.length > 0 && (
             <View style={styles.galleryIndicator}>
-              <Ionicons name="images-outline" size={16} color="#fff" />
-              <Text style={styles.galleryText}>View Photos</Text>
+              <Ionicons name="images-outline" size={16 * scaleFactor} color="#fff" />
+              <Text style={[styles.galleryText, { fontSize: 12 * scaleFactor }]}>View Photos</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -227,7 +229,7 @@ export const FacilityDetailsScreen = () => {
         <View style={styles.contentContainer}>
           {/* Header Info */}
           <View style={styles.headerSection}>
-            <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>
+            <Text style={[styles.facilityName, { color: theme.colors.onSurface, fontSize: 24 * scaleFactor }]}>
               {facility.name}
             </Text>
 
@@ -242,8 +244,8 @@ export const FacilityDetailsScreen = () => {
                 .filter(Boolean)
                 .map((item, index, array) => (
                   <React.Fragment key={index}>
-                    <Text style={styles.metaItem}>{item}</Text>
-                    {index < array.length - 1 && <Text style={styles.metaSeparator}>•</Text>}
+                    <Text style={[styles.metaItem, { fontSize: 12 * scaleFactor }]}>{item}</Text>
+                    {index < array.length - 1 && <Text style={[styles.metaSeparator, { fontSize: 12 * scaleFactor }]}>•</Text>}
                   </React.Fragment>
                 ))}
             </View>
@@ -254,7 +256,7 @@ export const FacilityDetailsScreen = () => {
               >
                 <MaterialCommunityIcons
                   name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-                  size={14}
+                  size={14 * scaleFactor}
                   color={isOpen ? '#164032' : '#852D2D'}
                   style={{ marginRight: 6 }}
                 />
@@ -264,6 +266,8 @@ export const FacilityDetailsScreen = () => {
                     color: isOpen ? '#164032' : '#852D2D',
                     fontWeight: '700',
                     letterSpacing: 0.3,
+                    fontSize: 12 * scaleFactor, // approximating labelMedium default
+                    lineHeight: 16 * scaleFactor,
                   }}
                 >
                   {openStatusText}
@@ -281,6 +285,7 @@ export const FacilityDetailsScreen = () => {
               title="Directions"
               onPress={handleDirections}
               style={styles.actionButton}
+              labelStyle={{ fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor }}
               variant="primary"
             />
           </View>
@@ -290,11 +295,11 @@ export const FacilityDetailsScreen = () => {
           {/* Location */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="location-outline" size={24} color={theme.colors.primary} />
+              <Ionicons name="location-outline" size={24 * scaleFactor} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Address</Text>
-              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface, fontSize: 12 * scaleFactor }]}>Address</Text>
+              <Text style={[styles.infoText, { color: theme.colors.onSurface, fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor }]}>
                 {facility.address}
               </Text>
             </View>
@@ -303,15 +308,15 @@ export const FacilityDetailsScreen = () => {
           {/* Hours */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
+              <Ionicons name="time-outline" size={24 * scaleFactor} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface, fontSize: 12 * scaleFactor }]}>
                 Operating Hours
               </Text>
 
               {formatOperatingHours(facility).map((line, idx) => (
-                <Text key={idx} style={[styles.infoText, { color: theme.colors.onSurface }]}>
+                <Text key={idx} style={[styles.infoText, { color: theme.colors.onSurface, fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor }]}>
                   {line}
                 </Text>
               ))}
@@ -323,7 +328,7 @@ export const FacilityDetailsScreen = () => {
             <View style={styles.iconContainer}>
               <Ionicons
                 name="call-outline"
-                size={24}
+                size={24 * scaleFactor}
                 color={
                   facility.contacts?.length || facility.phone
                     ? theme.colors.primary
@@ -332,7 +337,7 @@ export const FacilityDetailsScreen = () => {
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Phone</Text>
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface, fontSize: 12 * scaleFactor }]}>Phone</Text>
 
               {facility.contacts &&
               facility.contacts.filter((c) => c.platform === 'phone').length > 0 ? (
@@ -349,13 +354,13 @@ export const FacilityDetailsScreen = () => {
                           style={[
                             styles.infoText,
                             styles.linkText,
-                            { color: theme.colors.primary },
+                            { color: theme.colors.primary, fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor },
                           ]}
                         >
                           {contact.phoneNumber}
                         </Text>
                         {contact.role && (
-                          <Text style={[styles.metaItem, { fontSize: 14 }]}>
+                          <Text style={[styles.metaItem, { fontSize: 14 * scaleFactor }]}>
                             {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
                           </Text>
                         )}
@@ -375,6 +380,8 @@ export const FacilityDetailsScreen = () => {
                         color: facility.phone
                           ? theme.colors.primary
                           : theme.colors.onSurfaceVariant,
+                        fontSize: 16 * scaleFactor,
+                        lineHeight: 24 * scaleFactor
                       },
                     ]}
                   >
@@ -389,7 +396,7 @@ export const FacilityDetailsScreen = () => {
 
           {/* Grouped Services */}
           <View style={styles.servicesSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface, fontSize: 18 * scaleFactor }]}>
               Services & Capabilities
             </Text>
 
@@ -400,7 +407,7 @@ export const FacilityDetailsScreen = () => {
 
               return (
                 <View key={category} style={styles.categoryContainer}>
-                  <Text style={[styles.categoryTitle, { color: '#164032' }]}>{category}</Text>
+                  <Text style={[styles.categoryTitle, { color: '#164032', fontSize: 16 * scaleFactor }]}>{category}</Text>
                   <View style={styles.servicesGrid}>
                     {visibleServices.map((service, index) => (
                       <ServiceChip key={index} service={service} />
@@ -413,12 +420,12 @@ export const FacilityDetailsScreen = () => {
                       }
                       style={styles.seeAllButton}
                     >
-                      <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
+                      <Text style={[styles.seeAllText, { color: theme.colors.primary, fontSize: 12 * scaleFactor }]}>
                         {isExpanded ? 'Show Less' : `See All (${services.length})`}
                       </Text>
                       <Ionicons
                         name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                        size={16}
+                        size={16 * scaleFactor}
                         color={theme.colors.primary}
                       />
                     </TouchableOpacity>
@@ -430,7 +437,7 @@ export const FacilityDetailsScreen = () => {
 
           {facility.lastUpdated && (
             <View style={styles.verificationContainer}>
-              <Text style={[styles.verificationText, { color: theme.colors.outline }]}>
+              <Text style={[styles.verificationText, { color: theme.colors.outline, fontSize: 12 * scaleFactor }]}>
                 Data verified as of {new Date(facility.lastUpdated).toLocaleDateString()}
               </Text>
             </View>

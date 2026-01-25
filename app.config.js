@@ -20,6 +20,7 @@ module.exports = {
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         UIBackgroundModes: ['remote-notification'],
+        LSApplicationQueriesSchemes: ['viber', 'fb-messenger'],
       },
     },
     android: {
