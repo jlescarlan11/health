@@ -34,6 +34,11 @@ export type FacilityService =
   | 'Trauma Care'
   | 'X-ray';
 
+export interface FacilityBusyness {
+  score: number; // occupancy / capacity
+  status: 'quiet' | 'moderate' | 'busy';
+}
+
 export interface Facility {
   id: string;
   name: string;
@@ -57,6 +62,7 @@ export interface Facility {
   specialized_services?: string[];
   is_24_7?: boolean;
   lastUpdated?: number; // Timestamp of last verification
+  busyness?: FacilityBusyness;
 }
 
 export interface EmergencyContact {

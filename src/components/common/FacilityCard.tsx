@@ -2,11 +2,12 @@ import React from 'react';
 import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity, Linking } from 'react-native';
 import { Card, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Facility, FacilityService } from '../../types';
+import { Facility, FacilityService, FacilityBusyness } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
 import { getOpenStatus, formatFacilityType } from '../../utils';
 import { openExternalMaps } from '../../utils/linkingUtils';
 import { Button } from './Button';
+import { BusynessIndicator } from './BusynessIndicator';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -194,18 +195,21 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         {/* Status Row */}
         <View style={styles.statusRow}>
-          <MaterialCommunityIcons
-            name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-            size={14}
-            color={statusColor}
-            style={{ marginRight: 6 }}
-          />
-          <Text
-            variant="labelMedium"
-            style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
-          >
-            {statusText}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <MaterialCommunityIcons
+              name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
+              size={14}
+              color={statusColor}
+              style={{ marginRight: 6 }}
+            />
+            <Text
+              variant="labelMedium"
+              style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
+            >
+              {statusText}
+            </Text>
+          </View>
+          <BusynessIndicator busyness={facility.busyness} />
         </View>
 
         {/* Services Row */}

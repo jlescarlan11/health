@@ -218,7 +218,11 @@ export const FacilityDetailsScreen = () => {
         title={facility.name}
         showBackButton
         rightActions={
-          <TouchableOpacity onPress={handleShare} style={styles.headerShareButton}>
+          <TouchableOpacity
+            onPress={handleShare}
+            style={styles.headerShareButton}
+            testID="header-share-button"
+          >
             <Ionicons name="share-outline" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
         }

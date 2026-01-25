@@ -35,6 +35,7 @@ jest.mock('react-native-image-viewing', () => 'ImageViewing');
 jest.mock('@expo/vector-icons', () => ({
   MaterialIcons: 'MaterialIcons',
   Ionicons: 'Ionicons',
+  MaterialCommunityIcons: 'MaterialCommunityIcons',
 }));
 
 // Mock Linking and Share
@@ -45,7 +46,16 @@ const mockShare = jest.fn(() => Promise.resolve({ action: Share.sharedAction }))
 jest.spyOn(Share, 'share').mockImplementation(mockShare);
 
 // Mock StandardHeader since it's a custom component
-jest.mock('../src/components/common/StandardHeader', () => 'StandardHeader');
+jest.mock('../src/components/common/StandardHeader', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return ({ title, rightActions }: any) => (
+    <View testID="StandardHeader">
+      <Text>{title}</Text>
+      <View>{rightActions}</View>
+    </View>
+  );
+});
 
 describe('FacilityDetailsScreen', () => {
   const mockFacility = {
@@ -78,11 +88,11 @@ describe('FacilityDetailsScreen', () => {
   });
 
   it('renders facility details correctly', () => {
-    const { getByText } = render(<FacilityDetailsScreen />);
+    const { getByText, getAllByText } = render(<FacilityDetailsScreen />);
 
-    expect(getByText('Naga City Hospital')).toBeTruthy();
+    expect(getAllByText('Naga City Hospital').length).toBeGreaterThan(0);
     expect(getByText('Public Hospital')).toBeTruthy();
-    expect(getByText('YAKAP')).toBeTruthy(); // Badge
+    expect(getByText('Yakap Accredited')).toBeTruthy();
     expect(getByText('Concepcion Pequeña, Naga City')).toBeTruthy();
     expect(getByText('Emergency')).toBeTruthy();
     expect(getByText('Consultation')).toBeTruthy();
@@ -95,11 +105,8 @@ describe('FacilityDetailsScreen', () => {
   });
 
   it('handles share button press', () => {
-    const { getByText } = render(<FacilityDetailsScreen />);
-    // There are two share buttons (header and body). StandardHeader is mocked as string 'StandardHeader',
-    // so it won't render the header button children unless we make it a functional mock component that renders children.
-    // However, the body button "Share" should be findable.
-    fireEvent.press(getByText('Share'));
+    const { getByTestId } = render(<FacilityDetailsScreen />);
+    fireEvent.press(getByTestId('header-share-button'));
     expect(mockShare).toHaveBeenCalled();
   });
 });

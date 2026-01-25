@@ -1,8 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import * as Location from 'expo-location';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setUserLocation } from '../store/facilitiesSlice';
+import { RootState } from '../store';
 import { Alert, Linking } from 'react-native';
+import { calculateDistance } from '../utils/locationUtils';
+import { generateVisitorHash } from '../utils/privacyUtils';
+import { sendFacilitySignal } from '../services/facilityService';
 
 interface UseUserLocationOptions {
   watch?: boolean;
@@ -19,6 +23,72 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
   const dispatch = useDispatch();
+  const facilities = useSelector((state: RootState) => state.facilities.facilities);
+  const facilitiesRef = useRef(facilities);
+
+  // Update facilities ref when Redux state changes, without triggering re-renders of callbacks
+  useEffect(() => {
+    facilitiesRef.current = facilities;
+  }, [facilities]);
+
+  // Persistence for dwell detection across location updates
+  const dwellState = useRef<{
+    facilityId: string | null;
+    startTime: number | null;
+    hasSignaled: boolean;
+  }>({
+    facilityId: null,
+    startTime: null,
+    hasSignaled: false,
+  });
+
+  /**
+   * Evaluates proximity to healthcare facilities and manages dwell timing.
+   * If a user remains within 50m of a facility for > 3 minutes, a visit signal is sent.
+   */
+  const checkProximity = useCallback((currentLocation: Location.LocationObject) => {
+    const currentFacilities = facilitiesRef.current;
+    if (!currentFacilities.length) return;
+
+    const { latitude, longitude } = currentLocation.coords;
+    let nearestFacilityId: string | null = null;
+    let minDistance = Infinity;
+
+    // Find the nearest facility within 50 meters (0.05 km)
+    for (const facility of currentFacilities) {
+      const distance = calculateDistance(latitude, longitude, facility.latitude, facility.longitude);
+      if (distance <= 0.05 && distance < minDistance) {
+        minDistance = distance;
+        nearestFacilityId = facility.id;
+      }
+    }
+
+    const now = Date.now();
+    const state = dwellState.current;
+
+    if (nearestFacilityId) {
+      if (state.facilityId === nearestFacilityId) {
+        // User is still within the same facility radius
+        const dwellDuration = now - (state.startTime || now);
+        // Signal after 3 continuous minutes (180,000 ms)
+        if (dwellDuration >= 3 * 60 * 1000 && !state.hasSignaled) {
+          const visitorHash = generateVisitorHash();
+          sendFacilitySignal(nearestFacilityId, visitorHash);
+          state.hasSignaled = true;
+        }
+      } else {
+        // Entered a new facility radius (or first detection)
+        state.facilityId = nearestFacilityId;
+        state.startTime = now;
+        state.hasSignaled = false;
+      }
+    } else {
+      // Not within any facility radius; reset dwell state
+      state.facilityId = null;
+      state.startTime = null;
+      state.hasSignaled = false;
+    }
+  }, []); // No dependencies - uses facilitiesRef and dwellState refs
 
   const setManualLocation = useCallback(
     (districtId: string) => {
@@ -71,6 +141,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
         accuracy: Location.Accuracy.Balanced,
       });
       setLocation(location);
+      checkProximity(location);
       dispatch(
         setUserLocation({
           latitude: location.coords.latitude,
@@ -81,7 +152,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
       setErrorMsg('Error getting location');
       console.warn(error);
     }
-  }, [dispatch, requestPermission]);
+  }, [dispatch, requestPermission, checkProximity]);
 
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
@@ -109,6 +180,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
             },
             (newLocation) => {
               setLocation(newLocation);
+              checkProximity(newLocation);
               dispatch(
                 setUserLocation({
                   latitude: newLocation.coords.latitude,
@@ -130,7 +202,9 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
         subscription.remove();
       }
     };
-  }, [dispatch, requestPermission, watch, getCurrentLocation, requestOnMount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watch, requestOnMount]); // Only re-run if core watch/mount options change
+
 
   return {
     location,

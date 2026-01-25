@@ -22,11 +22,25 @@ model Facility {
   barangay         String?
   specialized_services String[] @default([])
   is_24_7          Boolean  @default(false)
+  capacity         Int      @default(50)
+  live_metrics     Json     @default("{}")
+  busy_patterns    Json     @default("{}")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+  signals          FacilitySignal[]
 
   @@index([latitude, longitude])
   @@index([type])
+}
+
+model FacilitySignal {
+  id           String   @id @default(cuid())
+  facilityId   String
+  facility     Facility @relation(fields: [facilityId], references: [id])
+  visitorHash  String
+  timestamp    DateTime @default(now())
+
+  @@index([facilityId, timestamp])
 }
 
 model Symptom {
