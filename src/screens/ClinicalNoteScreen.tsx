@@ -1,51 +1,168 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, useWindowDimensions, Alert, ActivityIndicator } from 'react-native';
 import { Text, IconButton, Divider, useTheme } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootState } from '../store';
+import { RootStackParamList } from '../types/navigation';
 import { StandardHeader, Button } from '../components/common';
 import { parseSoap, formatClinicalShareText } from '../utils/clinicalUtils';
 import * as Clipboard from 'expo-clipboard';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
+import QRCode from 'react-native-qrcode-svg';
+import * as DB from '../services/database';
 
 export const ClinicalNoteScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute<RouteProp<RootStackParamList, 'ClinicalNote'>>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const latestAssessment = useSelector((state: RootState) => state.offline.latestAssessment);
+  const { width: screenWidth } = useWindowDimensions();
+  const { recordId } = route.params || {};
 
+  const latestAssessmentRedux = useSelector((state: RootState) => state.offline.latestAssessment);
+
+  const [historicalRecord, setHistoricalRecord] = useState<DB.ClinicalHistoryRecord | null>(null);
+  const [loading, setLoading] = useState(!!recordId);
   const [copied, setCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
-  if (!latestAssessment) {
+  useEffect(() => {
+    if (recordId) {
+      const fetchRecord = async () => {
+        try {
+          setLoading(true);
+          const record = await DB.getHistoryById(recordId);
+          setHistoricalRecord(record);
+        } catch (error) {
+          console.error('Failed to fetch historical record:', error);
+          Alert.alert('Error', 'Failed to load historical clinical record.');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchRecord();
+    }
+  }, [recordId]);
+
+  const assessmentData = recordId ? historicalRecord : latestAssessmentRedux;
+
+  if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <Text variant="bodyLarge">Clinical note not found.</Text>
-        <IconButton
-          icon="home"
-          mode="contained"
-          onPress={() => navigation.navigate('Home' as never)}
-          style={styles.homeButton}
-        />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
 
-  const sections = parseSoap(latestAssessment.clinical_soap);
-  const formattedDate = new Date(latestAssessment.timestamp).toLocaleString('en-US', {
+  if (!assessmentData) {
+    return (
+      <View style={styles.centerContainer}>
+        <StandardHeader
+          title="Clinical Handover"
+          showBackButton
+          onBackPress={() => navigation.goBack()}
+        />
+        <View style={styles.emptyContainer}>
+          <Text variant="bodyLarge">Clinical note not found.</Text>
+          <IconButton
+            icon="home"
+            mode="contained"
+            onPress={() => navigation.navigate('Home' as never)}
+            style={styles.homeButton}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  const sections = parseSoap(assessmentData.clinical_soap);
+  const formattedDate = new Date(assessmentData.timestamp).toLocaleString('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
 
+  const shareText = formatClinicalShareText(
+    assessmentData.clinical_soap,
+    assessmentData.timestamp,
+    assessmentData.medical_justification,
+  );
+
   const handleShare = async () => {
-    const text = formatClinicalShareText(
-      latestAssessment.clinical_soap,
-      latestAssessment.timestamp,
-      latestAssessment.medical_justification,
-    );
-    await Clipboard.setStringAsync(text);
+    await Clipboard.setStringAsync(shareText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      setExporting(true);
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica', sans-serif; padding: 40px; color: #333; }
+              .header { border-bottom: 2px solid #379777; padding-bottom: 10px; margin-bottom: 30px; }
+              .title { font-size: 24px; font-weight: bold; color: #379777; }
+              .date { font-size: 14px; color: #666; }
+              .section { margin-bottom: 20px; }
+              .section-title { font-size: 16px; font-weight: bold; text-transform: uppercase; color: #379777; margin-bottom: 5px; }
+              .content { font-size: 14px; line-height: 1.6; }
+              .footer { margin-top: 50px; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="title">Medical Referral Report</div>
+              <div class="date">${formattedDate}</div>
+            </div>
+            ${sections.s ? `
+              <div class="section">
+                <div class="section-title">Subjective (History)</div>
+                <div class="content">${sections.s}</div>
+              </div>
+            ` : ''}
+            ${sections.o ? `
+              <div class="section">
+                <div class="section-title">Objective (Signs)</div>
+                <div class="content">${sections.o}</div>
+              </div>
+            ` : ''}
+            ${sections.a ? `
+              <div class="section">
+                <div class="section-title">Assessment (Triage)</div>
+                <div class="content">${sections.a}</div>
+              </div>
+            ` : ''}
+            ${sections.p ? `
+              <div class="section">
+                <div class="section-title">Plan (Next Steps)</div>
+                <div class="content">${sections.p}</div>
+              </div>
+            ` : ''}
+            ${!sections.s && !sections.o && !sections.a && !sections.p ? `
+              <div class="section">
+                <div class="section-title">Clinical Summary</div>
+                <div class="content">${assessmentData.clinical_soap}</div>
+              </div>
+            ` : ''}
+            <div class="footer">
+              Generated by HEALTH App - Naga City. Assessment ID: ${assessmentData.id}
+            </div>
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html });
+      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+    } catch (error) {
+      console.error('PDF Export failed:', error);
+      Alert.alert('Export Error', 'Failed to generate PDF referral.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const Section = ({ title, content }: { title: string; content?: string }) => {
@@ -94,19 +211,48 @@ export const ClinicalNoteScreen = () => {
           </>
         ) : (
           <Text variant="bodyLarge" style={styles.rawText}>
-            {latestAssessment.clinical_soap}
+            {assessmentData.clinical_soap}
           </Text>
         )}
+
+        <View style={styles.qrSection}>
+          <Divider style={styles.qrDivider} />
+          <Text variant="titleLarge" style={styles.sectionTitle}>
+            Digital Referral
+          </Text>
+          <Text variant="bodySmall" style={styles.qrSubtitle}>
+            Clinic staff can scan this code to instantly view your clinical report.
+          </Text>
+          <View style={styles.qrContainer}>
+            <QRCode
+              value={shareText}
+              size={screenWidth - 80}
+              color="black"
+              backgroundColor="white"
+            />
+          </View>
+        </View>
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Button
-          variant={copied ? 'outline' : 'primary'}
-          onPress={handleShare}
-          style={styles.shareButton}
-          title={copied ? 'Copied!' : 'Copy for Handover'}
-          icon={copied ? 'check' : 'content-copy'}
-        />
+        <View style={styles.buttonRow}>
+          <Button
+            variant="outline"
+            onPress={handleExportPDF}
+            style={[styles.footerButton, { marginRight: 8 }]}
+            title={exporting ? 'Exporting...' : 'Export PDF'}
+            icon="file-pdf-box"
+            loading={exporting}
+            disabled={exporting}
+          />
+          <Button
+            variant={copied ? 'outline' : 'primary'}
+            onPress={handleShare}
+            style={styles.footerButton}
+            title={copied ? 'Copied!' : 'Copy Text'}
+            icon={copied ? 'check' : 'content-copy'}
+          />
+        </View>
       </View>
     </View>
   );
@@ -120,6 +266,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 20,
   },
   homeButton: {
@@ -130,7 +281,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 24,
+    paddingBottom: 40,
   },
   headerInfo: {
     marginBottom: 24,
@@ -161,12 +312,38 @@ const styles = StyleSheet.create({
   rawText: {
     lineHeight: 24,
   },
+  qrSection: {
+    marginTop: 16,
+    alignItems: 'flex-start',
+  },
+  qrDivider: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  qrSubtitle: {
+    marginBottom: 20,
+    opacity: 0.7,
+  },
+  qrContainer: {
+    padding: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    alignSelf: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
   footer: {
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
   },
-  shareButton: {
-    width: '100%',
+  buttonRow: {
+    flexDirection: 'row',
+  },
+  footerButton: {
+    flex: 1,
   },
 });

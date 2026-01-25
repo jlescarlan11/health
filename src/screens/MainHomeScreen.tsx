@@ -157,6 +157,15 @@ export const MainHomeScreen = () => {
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
               />
             </View>
+            <View style={styles.bottomStackItem}>
+              <FeatureCard
+                title="My Health Records"
+                subtitle="View and share your previous assessments"
+                icon="folder-account-outline"
+                color={theme.colors.primary}
+                onPress={() => navigation.navigate('ClinicalHistory')}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
