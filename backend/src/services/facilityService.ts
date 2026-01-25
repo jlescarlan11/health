@@ -1,5 +1,10 @@
 import prisma from '../lib/prisma';
-import { Facility, Prisma } from '../../generated/prisma/client';
+import { Facility, Prisma, FacilityContact } from '../../generated/prisma/client';
+
+export type EnrichedFacility = Facility & {
+  contacts: FacilityContact[];
+  busyness_score: number;
+};
 
 interface GetFacilitiesParams {
   type?: string;
@@ -15,7 +20,14 @@ interface GetNearbyFacilitiesParams {
   type?: string;
 }
 
-export const getAllFacilities = async (params: GetFacilitiesParams) => {
+export const getAllFacilities = async (
+  params: GetFacilitiesParams,
+): Promise<{
+  facilities: EnrichedFacility[];
+  total: number;
+  limit: number;
+  offset: number;
+}> => {
   const { type, yakap_accredited, limit, offset } = params;
 
   const where: Prisma.FacilityWhereInput = {};
@@ -57,18 +69,18 @@ export const getAllFacilities = async (params: GetFacilitiesParams) => {
   }
 
   // Inject busyness_score derived from live_metrics
-  const enrichedFacilities = facilities.map((f) => {
-    const metrics = (f.live_metrics as any) || {};
+  const enrichedFacilities: EnrichedFacility[] = facilities.map((f) => {
+    const metrics = (f.live_metrics as Record<string, any>) || {};
     return {
       ...f,
       busyness_score: metrics.busyness_score || 0,
-    };
+    } as EnrichedFacility;
   });
 
   return {
     facilities: enrichedFacilities,
     total,
-    limit: fetchAll ? total : limit,
+    limit: fetchAll ? total : (limit as number),
     offset: fetchAll ? 0 : (offset ?? 0),
   };
 };
@@ -102,7 +114,7 @@ export const updateLiveOccupancy = async (facilityId: string) => {
   const capacity = facility.capacity || 50;
   const busynessScore = currentOccupancy / capacity;
 
-  const previousMetrics = (facility.live_metrics as any) || {};
+  const previousMetrics = (facility.live_metrics as Record<string, any>) || {};
   const previousOccupancy = previousMetrics.current_occupancy || 0;
 
   let trend = 'stable';
@@ -124,9 +136,7 @@ export const updateLiveOccupancy = async (facilityId: string) => {
   });
 };
 
-export const getFacilityById = async (
-  id: string,
-): Promise<(Facility & { busyness_score: number }) | null> => {
+export const getFacilityById = async (id: string): Promise<EnrichedFacility | null> => {
   const facility = await prisma.facility.findUnique({
     where: { id },
     include: { contacts: true },
@@ -134,14 +144,23 @@ export const getFacilityById = async (
 
   if (!facility) return null;
 
-  const metrics = (facility.live_metrics as any) || {};
+  const metrics = (facility.live_metrics as Record<string, any>) || {};
   return {
     ...facility,
     busyness_score: metrics.busyness_score || 0,
-  };
+  } as EnrichedFacility;
 };
 
-export const getFacilitiesByType = async (type: string, limit = 10, offset = 0) => {
+export const getFacilitiesByType = async (
+  type: string,
+  limit = 10,
+  offset = 0,
+): Promise<{
+  facilities: EnrichedFacility[];
+  total: number;
+  limit: number;
+  offset: number;
+}> => {
   const where = { type };
   const [facilities, total] = await Promise.all([
     prisma.facility.findMany({
@@ -154,18 +173,20 @@ export const getFacilitiesByType = async (type: string, limit = 10, offset = 0) 
     prisma.facility.count({ where }),
   ]);
 
-  const enrichedFacilities = facilities.map((f) => {
-    const metrics = (f.live_metrics as any) || {};
+  const enrichedFacilities: EnrichedFacility[] = facilities.map((f) => {
+    const metrics = (f.live_metrics as Record<string, any>) || {};
     return {
       ...f,
       busyness_score: metrics.busyness_score || 0,
-    };
+    } as EnrichedFacility;
   });
 
   return { facilities: enrichedFacilities, total, limit, offset };
 };
 
-export const getFacilitiesNearby = async (params: GetNearbyFacilitiesParams) => {
+export const getFacilitiesNearby = async (
+  params: GetNearbyFacilitiesParams,
+): Promise<(EnrichedFacility & { distance: number })[]> => {
   const { latitude, longitude, radiusInKm, type } = params;
 
   // Use raw query for Haversine distance calculation
@@ -215,12 +236,12 @@ export const getFacilitiesNearby = async (params: GetNearbyFacilitiesParams) => 
     .map((raw) => {
       const f = facilityMap.get(raw.id);
       if (!f) return null;
-      const metrics = (f.live_metrics as any) || {};
+      const metrics = (f.live_metrics as Record<string, any>) || {};
       return {
         ...f,
         distance: raw.distance,
         busyness_score: metrics.busyness_score || 0,
-      };
+      } as EnrichedFacility & { distance: number };
     })
-    .filter((f): f is NonNullable<typeof f> => f !== null);
+    .filter((f): f is EnrichedFacility & { distance: number } => f !== null);
 };

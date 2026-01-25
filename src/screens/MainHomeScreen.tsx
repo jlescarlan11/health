@@ -118,12 +118,12 @@ export const MainHomeScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right', 'bottom']}
+      edges={['top', 'left', 'right']}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <HomeHero
           hasClinicalReport={!!lastNote}
-          onClinicalReportPress={() => navigation.navigate('ClinicalNote')}
+          onClinicalReportPress={() => navigation.navigate('ClinicalNote', {})}
         />
 
         <View style={styles.cardsContainer}>

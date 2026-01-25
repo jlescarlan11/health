@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import { MainHomeScreen } from '../screens/MainHomeScreen';
+import { BottomTabNavigator } from './BottomTabNavigator';
 import CheckNavigator from './CheckNavigator';
 import FacilitiesNavigator from './FacilitiesNavigator';
 import YakapNavigator from './YakapNavigator';
@@ -34,7 +34,7 @@ const AppNavigator = () => {
         cardShadowEnabled: false, // Prevents the vertical line shadow artifact
       }}
     >
-      <Stack.Screen name="Home" component={MainHomeScreen} />
+      <Stack.Screen name="Home" component={BottomTabNavigator} />
       <Stack.Screen name="Check" component={CheckNavigator} />
       <Stack.Screen name="Find" component={FacilitiesNavigator} />
       <Stack.Screen name="YAKAP" component={YakapNavigator} />
