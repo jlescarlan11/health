@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Card, Text, useTheme } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Card, Text, useTheme, IconButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { ServiceChip } from '../../common/ServiceChip';
 import { useAdaptiveUI } from '../../../hooks/useAdaptiveUI';
+import { sharingUtils } from '../../../utils/sharingUtils';
 
 export interface FeedItemData {
   id: string;
@@ -44,7 +45,11 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
       <Card.Content style={styles.cardContent}>
         <View style={styles.leftColumn}>
           <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-            <MaterialCommunityIcons name={item.icon as any} size={28 * scaleFactor} color={TOKIWA_IRO} />
+            <MaterialCommunityIcons
+              name={item.icon as any}
+              size={28 * scaleFactor}
+              color={TOKIWA_IRO}
+            />
           </View>
         </View>
 
@@ -63,17 +68,31 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
           >
             {item.title}
           </Text>
-          
+
           <Text
             variant="bodySmall"
             numberOfLines={2}
-            style={[styles.descriptionText, { fontSize: 14 * scaleFactor, lineHeight: 20 * scaleFactor }]}
+            style={[
+              styles.descriptionText,
+              { fontSize: 14 * scaleFactor, lineHeight: 20 * scaleFactor },
+            ]}
           >
             {item.description}
           </Text>
         </View>
 
-        <View style={styles.chevronContainer}>
+        <View style={styles.actionContainer}>
+          <IconButton
+            icon="share-variant-outline"
+            size={20 * scaleFactor}
+            onPress={(e) => {
+              e.stopPropagation();
+              sharingUtils.shareHealthTip(item);
+            }}
+            style={styles.shareIconButton}
+            iconColor={theme.colors.primary}
+            accessibilityLabel={`Share ${item.title}`}
+          />
           <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.outline} />
         </View>
       </Card.Content>
@@ -126,6 +145,15 @@ const styles = StyleSheet.create({
   descriptionText: {
     color: '#64748B',
     fontWeight: '500',
+  },
+  actionContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: 8,
+  },
+  shareIconButton: {
+    margin: 0,
+    marginBottom: 8,
   },
   chevronContainer: {
     justifyContent: 'center',

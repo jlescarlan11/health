@@ -223,12 +223,14 @@ async function main() {
   for (const record of records) {
     try {
       // Process coordinates, defaulting to 0.0 if "to be filled" or missing
-      const lat = record.latitude && !record.latitude.includes('to be filled') 
-        ? parseFloat(record.latitude) 
-        : 0.0;
-      const lng = record.longitude && !record.longitude.includes('to be filled') 
-        ? parseFloat(record.longitude) 
-        : 0.0;
+      const lat =
+        record.latitude && !record.latitude.includes('to be filled')
+          ? parseFloat(record.latitude)
+          : 0.0;
+      const lng =
+        record.longitude && !record.longitude.includes('to be filled')
+          ? parseFloat(record.longitude)
+          : 0.0;
 
       const operatingHours = parseOperatingHours(record.operating_hours);
 

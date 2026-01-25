@@ -2,12 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import {
-  MainHomeScreen,
-  HealthFeedScreen,
-  ProfileScreen,
-  SettingsScreen,
-} from '../screens';
+import { MainHomeScreen, HealthFeedScreen, ProfileScreen, SettingsScreen } from '../screens';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainTabParamList } from '../types/navigation';
@@ -78,9 +73,7 @@ export const BottomTabNavigator = () => {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="cog" size={28} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="cog" size={28} color={color} />,
         }}
       />
     </Tab.Navigator>

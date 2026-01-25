@@ -37,22 +37,22 @@ const TimeInput = ({
   error?: boolean;
 }) => {
   const theme = useTheme();
-  
+
   // Format: HH:MM
   const handleChange = (text: string) => {
     // Remove non-numeric characters
     const cleaned = text.replace(/[^0-9]/g, '');
-    
+
     let formatted = cleaned;
     if (cleaned.length > 2) {
       formatted = `${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}`;
     }
-    
+
     // Validate bounds
     if (formatted.length === 5) {
       const hours = parseInt(formatted.split(':')[0], 10);
       const minutes = parseInt(formatted.split(':')[1], 10);
-      
+
       if (hours > 23) formatted = `23:${formatted.split(':')[1]}`;
       if (minutes > 59) formatted = `${formatted.split(':')[0]}:59`;
     }
@@ -62,17 +62,20 @@ const TimeInput = ({
 
   return (
     <View style={styles.timeInputContainer}>
-      <Text variant="labelLarge" style={{ marginBottom: 4, color: error ? theme.colors.error : theme.colors.onSurface }}>
+      <Text
+        variant="labelLarge"
+        style={{ marginBottom: 4, color: error ? theme.colors.error : theme.colors.onSurface }}
+      >
         Time (24h)
       </Text>
       <TextInput
         style={[
           styles.timeInput,
-          { 
+          {
             borderColor: error ? theme.colors.error : theme.colors.outline,
             color: theme.colors.onSurface,
             backgroundColor: theme.colors.surface,
-          }
+          },
         ]}
         value={value}
         onChangeText={handleChange}
@@ -111,8 +114,8 @@ export default function MedicationTrackerScreen() {
     }
 
     if (time.length !== 5 || !time.includes(':')) {
-       setValidationError('Please enter a valid time (HH:MM).');
-       return;
+      setValidationError('Please enter a valid time (HH:MM).');
+      return;
     }
 
     setValidationError(null);
@@ -139,26 +142,22 @@ export default function MedicationTrackerScreen() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert(
-      'Delete Medication',
-      'Are you sure you want to delete this medication?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-             // Clear taken state for this item
-             setTakenState(prev => {
-                const next = { ...prev };
-                delete next[id];
-                return next;
-             });
-             dispatch(deleteMedication(id));
-          },
+    Alert.alert('Delete Medication', 'Are you sure you want to delete this medication?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => {
+          // Clear taken state for this item
+          setTakenState((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+          });
+          dispatch(deleteMedication(id));
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleToggleTaken = (id: string) => {
@@ -173,34 +172,46 @@ export default function MedicationTrackerScreen() {
       <Text variant="headlineSmall" style={styles.headerTitle}>
         Add Medication
       </Text>
-      
+
       <TextInput
-        style={[styles.input, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline, color: theme.colors.onSurface }]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outline,
+            color: theme.colors.onSurface,
+          },
+        ]}
         placeholder="Medication Name (e.g., Aspirin)"
         placeholderTextColor={theme.colors.onSurfaceVariant}
         value={name}
         onChangeText={setName}
       />
-      
+
       <View style={styles.row}>
         <View style={{ flex: 1, marginRight: 8 }}>
-            <TextInput
-            style={[styles.input, { backgroundColor: theme.colors.surface, borderColor: theme.colors.outline, color: theme.colors.onSurface }]}
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outline,
+                color: theme.colors.onSurface,
+              },
+            ]}
             placeholder="Dosage (e.g., 100mg)"
             placeholderTextColor={theme.colors.onSurfaceVariant}
             value={dosage}
             onChangeText={setDosage}
-            />
+          />
         </View>
         <View style={{ width: 100 }}>
-             <TimeInput value={time} onChange={setTime} error={!!validationError && !time} />
+          <TimeInput value={time} onChange={setTime} error={!!validationError && !time} />
         </View>
       </View>
 
       {validationError && (
-        <Text style={{ color: theme.colors.error, marginBottom: 8 }}>
-          {validationError}
-        </Text>
+        <Text style={{ color: theme.colors.error, marginBottom: 8 }}>{validationError}</Text>
       )}
 
       <Button
@@ -221,11 +232,7 @@ export default function MedicationTrackerScreen() {
         <ActivityIndicator size="large" color={theme.colors.primary} />
       ) : (
         <>
-          <MaterialCommunityIcons
-            name="pill"
-            size={64}
-            color={theme.colors.surfaceVariant}
-          />
+          <MaterialCommunityIcons name="pill" size={64} color={theme.colors.surfaceVariant} />
           <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant, marginTop: 16 }}>
             No medications tracked yet.
           </Text>
@@ -238,7 +245,10 @@ export default function MedicationTrackerScreen() {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['bottom', 'left', 'right']}
+    >
       <FlatList
         data={medications}
         keyExtractor={(item) => item.id}
@@ -257,8 +267,10 @@ export default function MedicationTrackerScreen() {
       />
       {error && (
         <Surface style={[styles.errorBanner, { backgroundColor: theme.colors.errorContainer }]}>
-            <Text style={{ color: theme.colors.onErrorContainer }}>{error}</Text>
-            <Button compact onPress={() => dispatch(fetchMedications())}>Retry</Button>
+          <Text style={{ color: theme.colors.onErrorContainer }}>{error}</Text>
+          <Button compact onPress={() => dispatch(fetchMedications())}>
+            Retry
+          </Button>
         </Surface>
       )}
     </SafeAreaView>
@@ -293,7 +305,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   timeInputContainer: {
-    // 
+    //
   },
   timeInput: {
     borderWidth: 1,
@@ -321,5 +333,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  }
+  },
 });

@@ -17,7 +17,7 @@ import { StandardHeader, Button } from '../components/common';
 import { parseSoap, formatClinicalShareText } from '../utils/clinicalUtils';
 import * as Clipboard from 'expo-clipboard';
 import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
+import { sharingUtils } from '../utils/sharingUtils';
 import QRCode from 'react-native-qrcode-svg';
 import * as DB from '../services/database';
 
@@ -103,6 +103,10 @@ export const ClinicalNoteScreen = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleSocialShare = async () => {
+    await sharingUtils.shareReport('Clinical Referral Report', shareText);
+  };
+
   const handleExportPDF = async () => {
     try {
       setExporting(true);
@@ -183,7 +187,7 @@ export const ClinicalNoteScreen = () => {
       `;
 
       const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
+      await sharingUtils.shareFile(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
     } catch (error) {
       console.error('PDF Export failed:', error);
       Alert.alert('Export Error', 'Failed to generate PDF referral.');
@@ -267,16 +271,23 @@ export const ClinicalNoteScreen = () => {
             variant="outline"
             onPress={handleExportPDF}
             style={[styles.footerButton, { marginRight: 8 }]}
-            title={exporting ? 'Exporting...' : 'Export PDF'}
+            title={exporting ? '...' : 'PDF'}
             icon="file-pdf-box"
             loading={exporting}
             disabled={exporting}
           />
           <Button
+            variant="outline"
+            onPress={handleSocialShare}
+            style={[styles.footerButton, { marginRight: 8 }]}
+            title="Share"
+            icon="share-variant"
+          />
+          <Button
             variant={copied ? 'outline' : 'primary'}
             onPress={handleShare}
             style={styles.footerButton}
-            title={copied ? 'Copied!' : 'Copy Text'}
+            title={copied ? 'Done' : 'Copy'}
             icon={copied ? 'check' : 'content-copy'}
           />
         </View>

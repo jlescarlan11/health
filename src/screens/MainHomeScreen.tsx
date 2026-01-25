@@ -106,7 +106,7 @@ export const MainHomeScreen = () => {
       id: '2',
       title: 'Upcoming Vaccination Drive',
       category: 'Community',
-      description: 'Free vaccinations available at the Naga City People\'s Hall this Friday.',
+      description: "Free vaccinations available at the Naga City People's Hall this Friday.",
       icon: 'needle',
       timestamp: '5 hours ago',
     },

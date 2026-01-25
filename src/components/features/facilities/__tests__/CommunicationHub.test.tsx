@@ -27,7 +27,11 @@ jest.mock('react-native-paper', () => {
     }),
     Button: (props: any) => {
       const { Text } = require('react-native');
-      return React.createElement('View', { accessibilityRole: 'button', ...props }, React.createElement(Text, {}, props.children));
+      return React.createElement(
+        'View',
+        { accessibilityRole: 'button', ...props },
+        React.createElement(Text, {}, props.children),
+      );
     },
   };
 });
@@ -45,10 +49,8 @@ describe('CommunicationHub', () => {
   });
 
   it('renders all action buttons when contacts are provided', () => {
-    const { getByText, getByTestId } = render(
-      <CommunicationHub contacts={mockContacts as any} />
-    );
-    
+    const { getByText, getByTestId } = render(<CommunicationHub contacts={mockContacts as any} />);
+
     expect(getByText('Call')).toBeTruthy();
     // Buttons for Viber and Messenger use icons, so we check if they exist via their presence
     // In our implementation they are TouchableOpacity wrapping icons.
@@ -56,38 +58,34 @@ describe('CommunicationHub', () => {
 
   it('calls openViber when Viber button is pressed', async () => {
     const spy = jest.spyOn(linkingUtils, 'openViber').mockResolvedValue(true);
-    const { getByTestId } = render(
-      <CommunicationHub contacts={mockContacts as any} />
-    );
-    
+    const { getByTestId } = render(<CommunicationHub contacts={mockContacts as any} />);
+
     fireEvent.press(getByTestId('viber-button'));
-    
+
     expect(spy).toHaveBeenCalledWith('09171234567');
   });
 
   it('calls openMessenger when Messenger button is pressed', async () => {
     const spy = jest.spyOn(linkingUtils, 'openMessenger').mockResolvedValue(true);
-    const { getByTestId } = render(
-      <CommunicationHub contacts={mockContacts as any} />
-    );
-    
+    const { getByTestId } = render(<CommunicationHub contacts={mockContacts as any} />);
+
     fireEvent.press(getByTestId('messenger-button'));
-    
+
     expect(spy).toHaveBeenCalledWith('user.id.123');
   });
 
   it('shows an alert if openViber fails', async () => {
     jest.spyOn(linkingUtils, 'openViber').mockResolvedValue(false);
     const { getByTestId } = render(
-      <CommunicationHub contacts={[{ platform: 'viber', phoneNumber: '123' }] as any} />
+      <CommunicationHub contacts={[{ platform: 'viber', phoneNumber: '123' }] as any} />,
     );
-    
+
     fireEvent.press(getByTestId('viber-button'));
-    
+
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Error',
-        'Viber is not installed or the number is invalid.'
+        'Viber is not installed or the number is invalid.',
       );
     });
   });
@@ -95,15 +93,15 @@ describe('CommunicationHub', () => {
   it('shows an alert if openMessenger fails', async () => {
     jest.spyOn(linkingUtils, 'openMessenger').mockResolvedValue(false);
     const { getByTestId } = render(
-      <CommunicationHub contacts={[{ platform: 'messenger', phoneNumber: 'abc' }] as any} />
+      <CommunicationHub contacts={[{ platform: 'messenger', phoneNumber: 'abc' }] as any} />,
     );
-    
+
     fireEvent.press(getByTestId('messenger-button'));
-    
+
     await waitFor(() => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Error',
-        'Messenger is not installed or the link is invalid.'
+        'Messenger is not installed or the link is invalid.',
       );
     });
   });

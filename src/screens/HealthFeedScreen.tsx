@@ -21,7 +21,7 @@ const MOCK_DATA: FeedItemData[] = [
     id: '2',
     title: 'Upcoming Vaccination Drive',
     category: 'Community',
-    description: 'Free vaccinations available at the Naga City People\'s Hall this Friday.',
+    description: "Free vaccinations available at the Naga City People's Hall this Friday.",
     icon: 'needle',
     timestamp: '5 hours ago',
   },
@@ -54,11 +54,11 @@ export const HealthFeedScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
-      <StandardHeader
-        title="Health Promotion Feed"
-        showBackButton={false}
-      />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
+      <StandardHeader title="Health Promotion Feed" showBackButton={false} />
       <FlatList
         data={MOCK_DATA}
         renderItem={renderItem}
@@ -66,7 +66,9 @@ export const HealthFeedScreen = () => {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.headerInfo}>
-            <Text variant="titleLarge" style={styles.headerTitle}>Latest Updates</Text>
+            <Text variant="titleLarge" style={styles.headerTitle}>
+              Latest Updates
+            </Text>
             <Text variant="bodyMedium" style={styles.headerSubtitle}>
               Stay informed with the latest health news and tips for Naga City.
             </Text>

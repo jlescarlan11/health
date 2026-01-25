@@ -53,7 +53,7 @@ export const addMedication = createAsyncThunk(
     try {
       const record = mapMedicationToRecord(medication);
       await DB.saveMedication(record);
-      
+
       // Schedule notification side effect
       try {
         await NotificationService.scheduleMedicationReminder(medication);

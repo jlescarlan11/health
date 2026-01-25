@@ -25,7 +25,8 @@ const MOCK_CAMPAIGNS: Campaign[] = [
   {
     id: '2',
     title: 'Dengue Awareness & Cleanup',
-    description: 'Community-wide cleanup drive to prevent mosquito breeding. Fogging scheduled for afternoon.',
+    description:
+      'Community-wide cleanup drive to prevent mosquito breeding. Fogging scheduled for afternoon.',
     date: '2026-02-20',
     type: 'health-drive',
     location: 'Naga City Plaza',

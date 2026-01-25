@@ -21,6 +21,8 @@ import { ServiceChip } from './ServiceChip';
 import { CommunicationHub } from '../features/facilities';
 import { TeleconsultBadge } from './TeleconsultBadge';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
+import { sharingUtils } from '../../utils/sharingUtils';
+import { IconButton } from 'react-native-paper';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -150,15 +152,25 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     >
       <View style={styles.cardInner}>
         {/* Header Row */}
-        <Text
-          variant="titleMedium"
-          style={[
-            styles.title,
-            { fontSize: 20 * scaleFactor, lineHeight: 26 * scaleFactor },
-          ]}
-        >
-          {facility.name}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text
+            variant="titleMedium"
+            style={[styles.title, { fontSize: 20 * scaleFactor, lineHeight: 26 * scaleFactor }]}
+          >
+            {facility.name}
+          </Text>
+          <IconButton
+            icon="share-variant-outline"
+            size={20 * scaleFactor}
+            onPress={(e) => {
+              e.stopPropagation();
+              sharingUtils.shareFacilityInfo(facility);
+            }}
+            style={styles.shareIconButton}
+            iconColor={theme.colors.primary}
+            accessibilityLabel={`Share ${facility.name} info`}
+          />
+        </View>
 
         {/* Meta Row */}
         <View style={styles.metaRow}>
@@ -183,11 +195,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 {index < array.length - 1 && (
                   <Text
                     variant="labelSmall"
-                    style={[
-                      styles.metaText,
-                      styles.metaSeparator,
-                      { fontSize: 12 * scaleFactor },
-                    ]}
+                    style={[styles.metaText, styles.metaSeparator, { fontSize: 12 * scaleFactor }]}
                   >
                     •
                   </Text>
@@ -198,12 +206,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           {hasMatches && (
             <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9', marginLeft: 4 }]}>
               <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
-              <Text
-                style={[
-                  styles.matchText,
-                  { color: '#2E7D32', fontSize: 10 * scaleFactor },
-                ]}
-              >
+              <Text style={[styles.matchText, { color: '#2E7D32', fontSize: 10 * scaleFactor }]}>
                 Matches Needs
               </Text>
             </View>
@@ -289,13 +292,23 @@ const styles = StyleSheet.create({
   cardInner: {
     padding: 16,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
     lineHeight: 26,
     letterSpacing: -0.2,
-    marginBottom: 8,
+    flex: 1,
+  },
+  shareIconButton: {
+    margin: 0,
+    marginTop: -4,
   },
   metaRow: {
     flexDirection: 'row',

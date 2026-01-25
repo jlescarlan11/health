@@ -68,9 +68,26 @@ jest.mock('expo-constants', () => ({
 jest.mock('expo-modules-core', () => ({
   NativeModulesProxy: {},
   requireNativeModule: jest.fn(),
+  requireOptionalNativeModule: jest.fn(),
   Platform: {
     OS: 'ios',
     select: (objs) => objs.ios || objs.default,
+  },
+}));
+
+// Mock expo-notifications
+jest.mock('expo-notifications', () => ({
+  setNotificationHandler: jest.fn(),
+  setNotificationChannelAsync: jest.fn(),
+  getPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  requestPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
+  scheduleNotificationAsync: jest.fn(),
+  cancelScheduledNotificationAsync: jest.fn(),
+  cancelAllScheduledNotificationsAsync: jest.fn(),
+  addNotificationReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() })),
+  AndroidImportance: {
+    MAX: 4,
   },
 }));
 
@@ -175,6 +192,13 @@ jest.mock('expo-location', () => ({
     Balanced: 3,
   },
 }));
+
+// Mock react-native-qrcode-svg
+jest.mock('react-native-qrcode-svg', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return (props) => React.createElement(View, props);
+});
 
 // Mock react-native-safe-area-context
 jest.mock('react-native-safe-area-context', () => {

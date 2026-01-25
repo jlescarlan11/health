@@ -1,6 +1,4 @@
-import reducer, {
-  toggleSpecializedMode,
-} from '../settingsSlice';
+import reducer, { toggleSpecializedMode } from '../settingsSlice';
 
 describe('settingsSlice', () => {
   const initialState = {

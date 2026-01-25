@@ -1,41 +1,171 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, useTheme } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
-import { MainTabScreenProps } from '../types/navigation';
+import { TextInput, Text, useTheme, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import StandardHeader from '../components/common/StandardHeader';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
-type Props = MainTabScreenProps<'Profile'>;
+import StandardHeader from '../components/common/StandardHeader';
+import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
+import { updateProfile } from '../store/profileSlice';
+import { Button } from '../components/common/Button';
+import { DigitalIDCard } from '../components';
 
 export const ProfileScreen = () => {
   const theme = useTheme();
-  const navigation = useNavigation<Props['navigation']>();
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.profile);
+
+  const [fullName, setFullName] = useState(profile.fullName || '');
+  const [dob, setDob] = useState(profile.dob || '');
+  const [bloodType, setBloodType] = useState(profile.bloodType || '');
+  const [philHealthId, setPhilHealthId] = useState(profile.philHealthId || '');
+  const [visible, setVisible] = useState(false);
+
+  // Sync local state with Redux state (important for rehydration)
+  useEffect(() => {
+    setFullName(profile.fullName || '');
+    setDob(profile.dob || '');
+    setBloodType(profile.bloodType || '');
+    setPhilHealthId(profile.philHealthId || '');
+  }, [profile]);
+
+  const handleSave = () => {
+    dispatch(
+      updateProfile({
+        fullName: fullName.trim() || null,
+        dob: dob.trim() || null,
+        bloodType: bloodType.trim() || null,
+        philHealthId: philHealthId.trim() || null,
+      }),
+    );
+    setVisible(true);
+  };
+
+  const onDismissSnackbar = () => setVisible(false);
+
+  const rightActions = (
+    <Button
+      title="Save"
+      variant="text"
+      onPress={handleSave}
+      labelStyle={[styles.saveButtonLabel, { color: theme.colors.primary }]}
+    />
+  );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['left', 'right']}>
-      <StandardHeader 
-        title="Health ID" 
-        showBackButton={false}
-      />
-      <View style={styles.content}>
-        <View style={[styles.avatarContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-          <MaterialCommunityIcons name="account" size={80} color={theme.colors.primary} />
-        </View>
-        
-        <Text variant="headlineSmall" style={styles.title}>Your Health Profile</Text>
-        <Text variant="bodyMedium" style={styles.subtitle}>
-          This section will soon allow you to manage your local health credentials and YAKAP enrollment status.
-        </Text>
-        
-        <View style={styles.card}>
-          <MaterialCommunityIcons name="information-outline" size={24} color={theme.colors.primary} />
-          <Text variant="bodySmall" style={styles.cardText}>
-            Naga City Health ID features are currently being finalized.
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right']}
+    >
+      <StandardHeader title="Health ID" showBackButton={false} rightActions={rightActions} />
+      <KeyboardAwareScrollView
+        contentContainerStyle={styles.scrollContent}
+        enableOnAndroid={true}
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
+      >
+        <DigitalIDCard />
+        <View style={styles.header}>
+          <View
+            style={[styles.avatarContainer, { backgroundColor: theme.colors.primaryContainer }]}
+          >
+            <MaterialCommunityIcons name="account" size={60} color={theme.colors.primary} />
+          </View>
+          <Text variant="headlineSmall" style={styles.title}>
+            Your Health Profile
+          </Text>
+          <Text variant="bodyMedium" style={styles.subtitle}>
+            Manage your personal health information for quick access during care and YAKAP
+            eligibility.
           </Text>
         </View>
-      </View>
+
+        <View style={styles.form}>
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="outlined"
+              label="Full Name"
+              placeholder="e.g. Juan Dela Cruz"
+              value={fullName}
+              onChangeText={setFullName}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="outlined"
+              label="Date of Birth"
+              placeholder="YYYY-MM-DD"
+              value={dob}
+              onChangeText={setDob}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="outlined"
+              label="Blood Type"
+              placeholder="e.g. O+"
+              value={bloodType}
+              onChangeText={setBloodType}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              mode="outlined"
+              label="PhilHealth ID"
+              placeholder="12-digit number"
+              value={philHealthId}
+              onChangeText={setPhilHealthId}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              keyboardType="numeric"
+              dense
+            />
+          </View>
+        </View>
+
+        <View style={styles.infoCard}>
+          <MaterialCommunityIcons name="shield-check" size={24} color={theme.colors.primary} />
+          <Text variant="bodySmall" style={styles.infoText}>
+            Your health profile data is stored locally on this device. It is only used to assist
+            healthcare providers and simplify your enrollment in local health programs.
+          </Text>
+        </View>
+      </KeyboardAwareScrollView>
+
+      <Snackbar
+        visible={visible}
+        onDismiss={onDismissSnackbar}
+        duration={2000}
+        style={[styles.snackbar, { backgroundColor: theme.colors.surface }]}
+        wrapperStyle={styles.snackbarWrapper}
+      >
+        <View style={styles.snackbarContent}>
+          <MaterialCommunityIcons name="check-circle" size={20} color={theme.colors.primary} />
+          <Text style={[styles.snackbarText, { color: theme.colors.onSurface }]}>
+            Profile saved successfully
+          </Text>
+        </View>
+      </Snackbar>
     </SafeAreaView>
   );
 };
@@ -44,43 +174,84 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  scrollContent: {
     padding: 24,
+    paddingBottom: 120, // Clear bottom tab bar
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   avatarContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   title: {
     fontWeight: '700',
     color: '#45474B',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   subtitle: {
     textAlign: 'center',
     color: '#666',
-    lineHeight: 22,
-    marginBottom: 32,
+    lineHeight: 20,
+    paddingHorizontal: 12,
   },
-  card: {
+  form: {
+    width: '100%',
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  input: {
+    backgroundColor: 'transparent',
+    fontSize: 15,
+  },
+  inputOutline: {
+    borderRadius: 24,
+  },
+  saveButtonLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(55, 151, 119, 0.05)',
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
+    marginTop: 16,
     borderWidth: 1,
     borderColor: 'rgba(55, 151, 119, 0.1)',
   },
-  cardText: {
+  infoText: {
     marginLeft: 12,
-    color: '#379777',
+    color: '#45474B',
     flex: 1,
+    lineHeight: 18,
+  },
+  snackbarWrapper: {
+    bottom: 90, // Above bottom tabs
+  },
+  snackbar: {
+    borderRadius: 24,
+    elevation: 4,
+  },
+  snackbarContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  snackbarText: {
+    marginLeft: 8,
+    fontWeight: '600',
   },
 });

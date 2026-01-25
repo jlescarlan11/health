@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Button } from '../../components/common/Button';
+import { Card } from '../../components/common/Card';
 import StandardHeader from '../../components/common/StandardHeader';
 import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
 import { YakapStackScreenProps } from '../../types/navigation';
@@ -27,6 +28,10 @@ const YakapHomeScreen = () => {
 
   const navigateToFaq = () => {
     navigation.navigate('YakapFaq');
+  };
+
+  const navigateToProfile = () => {
+    navigation.navigate('Home', { screen: 'Profile' });
   };
 
   const renderBenefitItem = (benefit: YakapBenefit) => {
@@ -86,6 +91,43 @@ const YakapHomeScreen = () => {
               in the YAKAP program and start accessing free healthcare benefits.
             </Text>
           </View>
+        </View>
+
+        {/* Digital ID CTA */}
+        <View style={styles.idContainer}>
+          <Card
+            onPress={navigateToProfile}
+            style={[styles.idCard, { backgroundColor: theme.colors.primaryContainer + '40' }]}
+            mode="contained"
+          >
+            <View style={styles.idCardContent}>
+              <View
+                style={[
+                  styles.idIconContainer,
+                  { backgroundColor: theme.colors.primary },
+                ]}
+              >
+                <MaterialCommunityIcons
+                  name="card-account-details-outline"
+                  size={24}
+                  color="#FFFFFF"
+                />
+              </View>
+              <View style={styles.idTextContainer}>
+                <Text variant="titleMedium" style={styles.idTitle}>
+                  My Digital ID
+                </Text>
+                <Text variant="bodySmall" style={styles.idSubtitle}>
+                  View and manage your health profile for faster processing at health centers.
+                </Text>
+              </View>
+              <MaterialCommunityIcons
+                name="chevron-right"
+                size={24}
+                color={theme.colors.onSurfaceVariant}
+              />
+            </View>
+          </Card>
         </View>
 
         {/* Action Buttons */}
@@ -181,6 +223,40 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     opacity: 0.9,
     letterSpacing: 0.2,
+  },
+  idContainer: {
+    paddingHorizontal: 24,
+    marginTop: -8,
+    marginBottom: 24,
+  },
+  idCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 151, 119, 0.1)',
+  },
+  idCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  idIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  idTextContainer: {
+    flex: 1,
+  },
+  idTitle: {
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  idSubtitle: {
+    opacity: 0.7,
+    lineHeight: 16,
   },
   actionButtonsContainer: {
     paddingHorizontal: 24,

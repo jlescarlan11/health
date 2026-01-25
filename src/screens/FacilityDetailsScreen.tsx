@@ -34,6 +34,7 @@ import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
 import { ServiceChip } from '../components/common/ServiceChip';
 import { CommunicationHub } from '../components/features/facilities';
+import { sharingUtils } from '../utils/sharingUtils';
 
 type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
@@ -154,13 +155,8 @@ export const FacilityDetailsScreen = () => {
   const images = facility.photoUrl ? [{ uri: facility.photoUrl }] : [];
 
   const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `${facility.name}\nAddress: ${facility.address}`,
-        title: `Check out ${facility.name}`,
-      });
-    } catch {
-      Alert.alert('Error', 'Failed to share.');
+    if (facility) {
+      await sharingUtils.shareFacilityInfo(facility);
     }
   };
 
@@ -229,7 +225,12 @@ export const FacilityDetailsScreen = () => {
         <View style={styles.contentContainer}>
           {/* Header Info */}
           <View style={styles.headerSection}>
-            <Text style={[styles.facilityName, { color: theme.colors.onSurface, fontSize: 24 * scaleFactor }]}>
+            <Text
+              style={[
+                styles.facilityName,
+                { color: theme.colors.onSurface, fontSize: 24 * scaleFactor },
+              ]}
+            >
               {facility.name}
             </Text>
 
@@ -245,7 +246,9 @@ export const FacilityDetailsScreen = () => {
                 .map((item, index, array) => (
                   <React.Fragment key={index}>
                     <Text style={[styles.metaItem, { fontSize: 12 * scaleFactor }]}>{item}</Text>
-                    {index < array.length - 1 && <Text style={[styles.metaSeparator, { fontSize: 12 * scaleFactor }]}>•</Text>}
+                    {index < array.length - 1 && (
+                      <Text style={[styles.metaSeparator, { fontSize: 12 * scaleFactor }]}>•</Text>
+                    )}
                   </React.Fragment>
                 ))}
             </View>
@@ -295,11 +298,31 @@ export const FacilityDetailsScreen = () => {
           {/* Location */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="location-outline" size={24 * scaleFactor} color={theme.colors.primary} />
+              <Ionicons
+                name="location-outline"
+                size={24 * scaleFactor}
+                color={theme.colors.primary}
+              />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface, fontSize: 12 * scaleFactor }]}>Address</Text>
-              <Text style={[styles.infoText, { color: theme.colors.onSurface, fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor }]}>
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
+                ]}
+              >
+                Address
+              </Text>
+              <Text
+                style={[
+                  styles.infoText,
+                  {
+                    color: theme.colors.onSurface,
+                    fontSize: 16 * scaleFactor,
+                    lineHeight: 24 * scaleFactor,
+                  },
+                ]}
+              >
                 {facility.address}
               </Text>
             </View>
@@ -311,12 +334,27 @@ export const FacilityDetailsScreen = () => {
               <Ionicons name="time-outline" size={24 * scaleFactor} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface, fontSize: 12 * scaleFactor }]}>
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
+                ]}
+              >
                 Operating Hours
               </Text>
 
               {formatOperatingHours(facility).map((line, idx) => (
-                <Text key={idx} style={[styles.infoText, { color: theme.colors.onSurface, fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor }]}>
+                <Text
+                  key={idx}
+                  style={[
+                    styles.infoText,
+                    {
+                      color: theme.colors.onSurface,
+                      fontSize: 16 * scaleFactor,
+                      lineHeight: 24 * scaleFactor,
+                    },
+                  ]}
+                >
                   {line}
                 </Text>
               ))}
@@ -337,7 +375,14 @@ export const FacilityDetailsScreen = () => {
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface, fontSize: 12 * scaleFactor }]}>Phone</Text>
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
+                ]}
+              >
+                Phone
+              </Text>
 
               {facility.contacts &&
               facility.contacts.filter((c) => c.platform === 'phone').length > 0 ? (
@@ -354,7 +399,11 @@ export const FacilityDetailsScreen = () => {
                           style={[
                             styles.infoText,
                             styles.linkText,
-                            { color: theme.colors.primary, fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor },
+                            {
+                              color: theme.colors.primary,
+                              fontSize: 16 * scaleFactor,
+                              lineHeight: 24 * scaleFactor,
+                            },
                           ]}
                         >
                           {contact.phoneNumber}
@@ -381,7 +430,7 @@ export const FacilityDetailsScreen = () => {
                           ? theme.colors.primary
                           : theme.colors.onSurfaceVariant,
                         fontSize: 16 * scaleFactor,
-                        lineHeight: 24 * scaleFactor
+                        lineHeight: 24 * scaleFactor,
                       },
                     ]}
                   >
@@ -396,7 +445,12 @@ export const FacilityDetailsScreen = () => {
 
           {/* Grouped Services */}
           <View style={styles.servicesSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface, fontSize: 18 * scaleFactor }]}>
+            <Text
+              style={[
+                styles.sectionTitle,
+                { color: theme.colors.onSurface, fontSize: 18 * scaleFactor },
+              ]}
+            >
               Services & Capabilities
             </Text>
 
@@ -407,7 +461,11 @@ export const FacilityDetailsScreen = () => {
 
               return (
                 <View key={category} style={styles.categoryContainer}>
-                  <Text style={[styles.categoryTitle, { color: '#164032', fontSize: 16 * scaleFactor }]}>{category}</Text>
+                  <Text
+                    style={[styles.categoryTitle, { color: '#164032', fontSize: 16 * scaleFactor }]}
+                  >
+                    {category}
+                  </Text>
                   <View style={styles.servicesGrid}>
                     {visibleServices.map((service, index) => (
                       <ServiceChip key={index} service={service} />
@@ -420,7 +478,12 @@ export const FacilityDetailsScreen = () => {
                       }
                       style={styles.seeAllButton}
                     >
-                      <Text style={[styles.seeAllText, { color: theme.colors.primary, fontSize: 12 * scaleFactor }]}>
+                      <Text
+                        style={[
+                          styles.seeAllText,
+                          { color: theme.colors.primary, fontSize: 12 * scaleFactor },
+                        ]}
+                      >
                         {isExpanded ? 'Show Less' : `See All (${services.length})`}
                       </Text>
                       <Ionicons
@@ -437,7 +500,12 @@ export const FacilityDetailsScreen = () => {
 
           {facility.lastUpdated && (
             <View style={styles.verificationContainer}>
-              <Text style={[styles.verificationText, { color: theme.colors.outline, fontSize: 12 * scaleFactor }]}>
+              <Text
+                style={[
+                  styles.verificationText,
+                  { color: theme.colors.outline, fontSize: 12 * scaleFactor },
+                ]}
+              >
                 Data verified as of {new Date(facility.lastUpdated).toLocaleDateString()}
               </Text>
             </View>

@@ -53,9 +53,7 @@ describe('Adaptive UI Typography', () => {
       const title = getByText('Test Header');
       const flattenedStyle = StyleSheet.flatten(title.props.style);
 
-      expect(flattenedStyle).toEqual(
-        expect.objectContaining({ fontSize: 18 })
-      );
+      expect(flattenedStyle).toEqual(expect.objectContaining({ fontSize: 18 }));
     });
 
     it('applies scaled font size when scaleFactor is 1.25', () => {
@@ -65,9 +63,7 @@ describe('Adaptive UI Typography', () => {
       const title = getByText('Test Header');
       const flattenedStyle = StyleSheet.flatten(title.props.style);
 
-      expect(flattenedStyle).toEqual(
-        expect.objectContaining({ fontSize: 18 * 1.25 })
-      );
+      expect(flattenedStyle).toEqual(expect.objectContaining({ fontSize: 18 * 1.25 }));
     });
   });
 
@@ -92,9 +88,7 @@ describe('Adaptive UI Typography', () => {
       const title = getByText('Test Facility');
       const flattenedStyle = StyleSheet.flatten(title.props.style);
 
-      expect(flattenedStyle).toEqual(
-        expect.objectContaining({ fontSize: 20, lineHeight: 26 })
-      );
+      expect(flattenedStyle).toEqual(expect.objectContaining({ fontSize: 20, lineHeight: 26 }));
     });
 
     it('applies scaled font size to title when scaleFactor is 1.25', () => {
@@ -105,7 +99,7 @@ describe('Adaptive UI Typography', () => {
       const flattenedStyle = StyleSheet.flatten(title.props.style);
 
       expect(flattenedStyle).toEqual(
-        expect.objectContaining({ fontSize: 20 * 1.25, lineHeight: 26 * 1.25 })
+        expect.objectContaining({ fontSize: 20 * 1.25, lineHeight: 26 * 1.25 }),
       );
     });
   });

@@ -12,11 +12,7 @@ export const TeleconsultBadge: React.FC<TeleconsultBadgeProps> = ({ style }) => 
 
   return (
     <View
-      style={[
-        styles.badge,
-        { backgroundColor: theme.colors.tertiaryContainer },
-        style,
-      ]}
+      style={[styles.badge, { backgroundColor: theme.colors.tertiaryContainer }, style]}
       accessible={true}
       accessibilityLabel="Teleconsultation Available"
       accessibilityRole="image"
@@ -27,10 +23,7 @@ export const TeleconsultBadge: React.FC<TeleconsultBadgeProps> = ({ style }) => 
         color={theme.colors.onTertiaryContainer}
         style={styles.icon}
       />
-      <Text
-        variant="labelSmall"
-        style={[styles.text, { color: theme.colors.onTertiaryContainer }]}
-      >
+      <Text variant="labelSmall" style={[styles.text, { color: theme.colors.onTertiaryContainer }]}>
         Teleconsult
       </Text>
     </View>

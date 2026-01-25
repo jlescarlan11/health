@@ -60,8 +60,10 @@ export async function cancelMedicationReminder(medicationId: string) {
   const targetPrefix = `medication-${medicationId}-`;
 
   const toCancel = scheduled.filter((n) => n.identifier.startsWith(targetPrefix));
-  
-  await Promise.all(toCancel.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
+
+  await Promise.all(
+    toCancel.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
+  );
 }
 
 /**
@@ -88,17 +90,18 @@ export async function scheduleMedicationReminder(medication: Medication) {
   }
 
   // 4. Schedule for each day
-  const days = medication.days_of_week && medication.days_of_week.length > 0
-    ? medication.days_of_week
-    : Object.keys(DAY_MAP); // Default to all days if empty/undefined, or maybe we should default to none? 
-                            // The app defaults to all days on creation, so we stick to what's in the object.
+  const days =
+    medication.days_of_week && medication.days_of_week.length > 0
+      ? medication.days_of_week
+      : Object.keys(DAY_MAP); // Default to all days if empty/undefined, or maybe we should default to none?
+  // The app defaults to all days on creation, so we stick to what's in the object.
 
   for (const dayStr of days) {
     const weekday = DAY_MAP[dayStr];
     if (!weekday) continue;
 
     const identifier = `medication-${medication.id}-${weekday}`;
-    
+
     try {
       await Notifications.scheduleNotificationAsync({
         content: {
@@ -117,7 +120,7 @@ export async function scheduleMedicationReminder(medication: Medication) {
         identifier,
       });
     } catch (e) {
-        console.error(`Failed to schedule notification for ${identifier}:`, e);
+      console.error(`Failed to schedule notification for ${identifier}:`, e);
     }
   }
 }

@@ -52,7 +52,7 @@ const settingsSlice = createSlice({
     },
     toggleSpecializedMode: (
       state,
-      action: PayloadAction<keyof SettingsState['specializedModes']>
+      action: PayloadAction<keyof SettingsState['specializedModes']>,
     ) => {
       state.specializedModes[action.payload] = !state.specializedModes[action.payload];
     },
