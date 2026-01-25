@@ -409,8 +409,9 @@ const RecommendationScreen = () => {
         dispatch(
           saveClinicalNote({
             clinical_soap: response.clinical_soap,
-            recommendationLevel: response.recommended_level,
+            recommended_level: response.recommended_level,
             medical_justification: response.medical_justification,
+            initial_symptoms: symptomsRef.current,
           }),
         );
       }

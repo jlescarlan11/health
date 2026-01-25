@@ -294,5 +294,14 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
 - **Type Error Fix & Code Quality (Jan 25, 2026):**
   - **Message Interface Fix:** Updated `src/store/navigationSlice.ts` to include `'assistant'` in the `sender` union type, resolving a type mismatch with the `SymptomAssessmentScreen`. Added an explicit `: Message` return type to `composeAssistantMessage` in `src/screens/SymptomAssessmentScreen.tsx` to fix generic string inference errors.
   - **Hoisting Resolution:** Fixed `tsc` errors in `src/screens/SymptomAssessmentScreen.tsx` by moving `runEmergencyGuard` definition before its usage in `appendMessagesToConversation`, and correctly scoping the `effectiveIsAtEnd` variable in `handleNext`.
-  - **Test Update:** Fixed a type error in `src/api/__tests__/geminiCache.test.ts` by strictly typing the `role` property in mock history data.
-  - **Result:** Eliminated critical type errors in the assessment flow and improved code structure.
+  - **Clinical History Persistence (Jan 25, 2026):**
+  - **SQLite Layer:** Implemented Phase 1 by creating a `clinical_history` table in `src/services/database.ts` to store assessment results indefinitely. Added `saveClinicalHistory`, `getClinicalHistory`, and `getHistoryById` functions with transaction safety and schema migration support.
+  - **Redux Integration:** Implemented Phase 2 in `src/store/offlineSlice.ts` by introducing the `saveClinicalNote` async thunk. This thunk assigns a stable UUID to each assessment, persists it to SQLite, and updates the Redux state.
+  - **Indefinite Storage:** Removed time-based expiration (24h TTL) and `checkAssessmentTTL` logic to ensure records remain accessible across sessions.
+  - **Offline Exports:** Implemented Phase 3 in `src/screens/ClinicalNoteScreen.tsx`. Added a "Digital Referral" section with a generated QR code (using `react-native-qrcode-svg`) and a professional PDF export feature (using `expo-print` and `expo-sharing`) that works fully offline.
+  - **Clinical History UI (Jan 26, 2026):**
+    - Implemented Phase 4 by creating the "My Health Records" screen (`ClinicalHistoryScreen.tsx`), listing all saved assessments from SQLite with care level icons and timestamps.
+    - Updated `MainHomeScreen.tsx` to include a prominent entry point for Health Records.
+    - Enhanced `ClinicalNoteScreen.tsx` to fetch historical data when a `recordId` is provided in navigation parameters, otherwise defaulting to the latest live assessment from Redux.
+    - Verified functionality with `tests/ClinicalHistoryScreen.test.tsx`.
+  - **Verification:** Verified all functionality with new test suites in `src/services/__tests__/clinical_database.test.ts` and `src/store/__tests__/offlineSlice.test.ts`.
