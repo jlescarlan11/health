@@ -30,6 +30,15 @@ const migrateTableSchema = async (
   }
 };
 
+export interface ClinicalHistoryRecord {
+  id: string;
+  timestamp: number;
+  initial_symptoms: string;
+  recommended_level: string;
+  clinical_soap: string;
+  medical_justification: string;
+}
+
 export const initDatabase = async () => {
   if (initPromise) return initPromise;
 
@@ -79,6 +88,27 @@ export const initDatabase = async () => {
 
       // Migrate emergency_contacts table schema (add missing columns if table already existed)
       await migrateTableSchema('emergency_contacts', [{ name: 'lastUpdated', type: 'INTEGER' }]);
+
+      // Create Clinical History Table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS clinical_history (
+          id TEXT PRIMARY KEY,
+          timestamp INTEGER,
+          initial_symptoms TEXT,
+          recommended_level TEXT,
+          clinical_soap TEXT,
+          medical_justification TEXT
+        );
+      `);
+
+      // Migrate clinical_history table schema
+      await migrateTableSchema('clinical_history', [
+        { name: 'timestamp', type: 'INTEGER' },
+        { name: 'initial_symptoms', type: 'TEXT' },
+        { name: 'recommended_level', type: 'TEXT' },
+        { name: 'clinical_soap', type: 'TEXT' },
+        { name: 'medical_justification', type: 'TEXT' },
+      ]);
 
       console.log('Database initialized successfully');
     } catch (error) {
@@ -350,6 +380,78 @@ export const getFacilityById = async (id: string): Promise<Facility | null> => {
     };
   } catch (error) {
     console.error('Error getting facility by ID:', error);
+    throw error;
+  }
+};
+
+export const saveClinicalHistory = async (record: ClinicalHistoryRecord) => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    await db.execAsync('BEGIN TRANSACTION');
+
+    const statement = await db.prepareAsync(
+      `INSERT OR REPLACE INTO clinical_history (id, timestamp, initial_symptoms, recommended_level, clinical_soap, medical_justification) 
+       VALUES ($id, $timestamp, $initial_symptoms, $recommended_level, $clinical_soap, $medical_justification)`,
+    );
+
+    try {
+      await statement.executeAsync({
+        $id: record.id,
+        $timestamp: record.timestamp,
+        $initial_symptoms: record.initial_symptoms,
+        $recommended_level: record.recommended_level,
+        $clinical_soap: record.clinical_soap,
+        $medical_justification: record.medical_justification,
+      });
+
+      await db.execAsync('COMMIT');
+      console.log(`Saved clinical history record: ${record.id}`);
+    } catch (innerError) {
+      console.error('Error during clinical history save:', innerError);
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Failed to rollback clinical history transaction:', rollbackError);
+      }
+      throw innerError;
+    } finally {
+      await statement.finalizeAsync();
+    }
+  } catch (error) {
+    console.error('Error in saveClinicalHistory:', error);
+    throw error;
+  }
+};
+
+export const getClinicalHistory = async (): Promise<ClinicalHistoryRecord[]> => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    const result = await db.getAllAsync<ClinicalHistoryRecord>(
+      'SELECT * FROM clinical_history ORDER BY timestamp DESC',
+    );
+    return result;
+  } catch (error) {
+    console.error('Error getting clinical history:', error);
+    throw error;
+  }
+};
+
+export const getHistoryById = async (id: string): Promise<ClinicalHistoryRecord | null> => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    const result = await db.getFirstAsync<ClinicalHistoryRecord>(
+      'SELECT * FROM clinical_history WHERE id = ?',
+      [id],
+    );
+    return result;
+  } catch (error) {
+    console.error('Error getting history by ID:', error);
     throw error;
   }
 };

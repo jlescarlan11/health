@@ -28,7 +28,8 @@ export type RootStackParamList = {
     isRecentResolved?: boolean;
     resolvedKeyword?: string;
   };
-  ClinicalNote: undefined;
+  ClinicalNote: { recordId?: string };
+  ClinicalHistory: undefined;
   FacilityDetails: { facilityId: string };
   CrisisSupport: undefined;
   YakapFaq: undefined;
