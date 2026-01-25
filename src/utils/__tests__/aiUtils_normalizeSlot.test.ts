@@ -38,11 +38,11 @@ describe('normalizeSlot', () => {
   test('respects allowNone option', () => {
     // Default behavior
     expect(normalizeSlot('none')).toBeNull();
-    
+
     // With option
     expect(normalizeSlot('none', { allowNone: true })).toBe('none');
     expect(normalizeSlot('NONE', { allowNone: true })).toBe('NONE'); // Case preservation? Function returns original value if not normalized.
-    
+
     // Other indicators should still be null
     expect(normalizeSlot('null', { allowNone: true })).toBeNull();
     expect(normalizeSlot('n/a', { allowNone: true })).toBeNull();

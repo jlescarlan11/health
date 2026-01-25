@@ -21,10 +21,7 @@ const filterActiveKeywords = (
   });
 };
 
-const runEmergencyGuardLike = (
-  text: string,
-  options: GuardFilterOptions = {},
-) => {
+const runEmergencyGuardLike = (text: string, options: GuardFilterOptions = {}) => {
   const safetyCheck = detectEmergency(text, { isUserInput: true });
   const activeKeywords = filterActiveKeywords(safetyCheck.matchedKeywords, options);
   return {
@@ -34,10 +31,7 @@ const runEmergencyGuardLike = (
   };
 };
 
-const runMentalHealthGuardLike = (
-  text: string,
-  options: GuardFilterOptions = {},
-) => {
+const runMentalHealthGuardLike = (text: string, options: GuardFilterOptions = {}) => {
   const mentalResult = detectMentalHealthCrisis(text);
   const activeKeywords = filterActiveKeywords(mentalResult.matchedKeywords, options);
   return {

@@ -21,9 +21,7 @@ describe('Gemini Service Retry Logic', () => {
 
     // Re-require the module under test so it picks up the new mock
     geminiModule = require('../../api/geminiClient');
-    getGeminiResponse = geminiModule.geminiClient.getGeminiResponse.bind(
-      geminiModule.geminiClient,
-    );
+    getGeminiResponse = geminiModule.geminiClient.getGeminiResponse.bind(geminiModule.geminiClient);
     refineQuestion = geminiModule.geminiClient.refineQuestion.bind(geminiModule.geminiClient);
   });
 

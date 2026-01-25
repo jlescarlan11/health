@@ -20,18 +20,21 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
   const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
   const dispatch = useDispatch();
 
-  const setManualLocation = useCallback((districtId: string) => {
-    const district = NAGA_CITY_DISTRICTS.find(d => d.id === districtId);
-    if (district) {
-      setManualDistrictId(districtId);
-      dispatch(
-        setUserLocation({
-          latitude: district.latitude,
-          longitude: district.longitude,
-        }),
-      );
-    }
-  }, [dispatch]);
+  const setManualLocation = useCallback(
+    (districtId: string) => {
+      const district = NAGA_CITY_DISTRICTS.find((d) => d.id === districtId);
+      if (district) {
+        setManualDistrictId(districtId);
+        dispatch(
+          setUserLocation({
+            latitude: district.latitude,
+            longitude: district.longitude,
+          }),
+        );
+      }
+    },
+    [dispatch],
+  );
 
   const requestPermission = useCallback(async () => {
     try {
@@ -129,13 +132,13 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
     };
   }, [dispatch, requestPermission, watch, getCurrentLocation, requestOnMount]);
 
-  return { 
-    location, 
-    errorMsg, 
-    permissionStatus, 
+  return {
+    location,
+    errorMsg,
+    permissionStatus,
     manualDistrictId,
-    requestPermission, 
+    requestPermission,
     getCurrentLocation,
-    setManualLocation 
+    setManualLocation,
   };
 };

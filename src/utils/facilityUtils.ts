@@ -85,7 +85,9 @@ export const formatOperatingHours = (facility: Facility): string[] => {
   }
 
   if (operatingHours?.open && operatingHours?.close) {
-    return [`Daily: ${formatTime12h(operatingHours.open)} - ${formatTime12h(operatingHours.close)}`];
+    return [
+      `Daily: ${formatTime12h(operatingHours.open)} - ${formatTime12h(operatingHours.close)}`,
+    ];
   }
 
   if (hours) {
@@ -249,7 +251,6 @@ export const getOpenStatus = (
 
   return { isOpen: false, text: 'Closed', color: CLOSED_COLOR };
 };
-
 
 /**
  * Maps colloquial medical terms or AI-recommended services to canonical VALID_SERVICES.

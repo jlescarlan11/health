@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Keyboard, KeyboardAvoidingView, Platform, Linking, Pressable } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Linking,
+  Pressable,
+} from 'react-native';
 import { Searchbar, Chip, useTheme, Text } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
@@ -37,18 +45,18 @@ export const FacilityDirectoryScreen = () => {
 
   // Use the custom hook for location management
   // It will automatically update the Redux store with the user's location
-  const { 
-    permissionStatus, 
-    requestPermission, 
+  const {
+    permissionStatus,
+    requestPermission,
     getCurrentLocation,
     setManualLocation,
-    manualDistrictId
+    manualDistrictId,
   } = useUserLocation({
     watch: false,
     requestOnMount: false,
     showDeniedAlert: false,
   });
-  const selectedDistrict = NAGA_CITY_DISTRICTS.find(d => d.id === manualDistrictId);
+  const selectedDistrict = NAGA_CITY_DISTRICTS.find((d) => d.id === manualDistrictId);
 
   // Load initial data
   useEffect(() => {
@@ -101,9 +109,7 @@ export const FacilityDirectoryScreen = () => {
     if (!filters) return filterId === 'all';
     if (filterId === 'all') {
       return (
-        (!filters.type || filters.type.length === 0) &&
-        !filters.yakapAccredited &&
-        !filters.openNow
+        (!filters.type || filters.type.length === 0) && !filters.yakapAccredited && !filters.openNow
       );
     }
     const filterDef = FILTERS.find((f) => f.id === filterId);
@@ -174,11 +180,15 @@ export const FacilityDirectoryScreen = () => {
                     backgroundColor: isFilterActive('all')
                       ? theme.colors.primaryContainer
                       : theme.colors.surface,
-                    borderColor: isFilterActive('all') ? theme.colors.primary : theme.colors.outline,
+                    borderColor: isFilterActive('all')
+                      ? theme.colors.primary
+                      : theme.colors.outline,
                   },
                 ]}
                 textStyle={{
-                  color: isFilterActive('all') ? theme.colors.onPrimaryContainer : theme.colors.onSurface,
+                  color: isFilterActive('all')
+                    ? theme.colors.onPrimaryContainer
+                    : theme.colors.onSurface,
                   fontWeight: isFilterActive('all') ? '700' : '400',
                 }}
                 showSelectedOverlay
@@ -243,7 +253,7 @@ export const FacilityDirectoryScreen = () => {
                       Find the nearest help by sharing your location.
                     </Text>
                   </Pressable>
-                  
+
                   <View style={styles.manualLocationRow}>
                     <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
                       Or select your district:
@@ -252,9 +262,9 @@ export const FacilityDirectoryScreen = () => {
                       visible={districtMenuVisible}
                       onDismiss={() => setDistrictMenuVisible(false)}
                       anchor={
-                        <PaperButton 
-                          mode="text" 
-                          compact 
+                        <PaperButton
+                          mode="text"
+                          compact
                           onPress={() => setDistrictMenuVisible(true)}
                           icon="chevron-down"
                           contentStyle={{ flexDirection: 'row-reverse' }}
@@ -275,32 +285,32 @@ export const FacilityDirectoryScreen = () => {
                 </View>
               ) : selectedDistrict ? (
                 <View style={styles.selectedDistrictBanner}>
-                   <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-                      Sorted by distance from 
-                    </Text>
-                    <Menu
-                      visible={districtMenuVisible}
-                      onDismiss={() => setDistrictMenuVisible(false)}
-                      anchor={
-                        <PaperButton 
-                          mode="text" 
-                          compact 
-                          onPress={() => setDistrictMenuVisible(true)}
-                          icon="chevron-down"
-                          contentStyle={{ flexDirection: 'row-reverse' }}
-                        >
-                          {selectedDistrict.name}
-                        </PaperButton>
-                      }
-                    >
-                      {NAGA_CITY_DISTRICTS.map((district) => (
-                        <Menu.Item
-                          key={district.id}
-                          onPress={() => handleDistrictSelect(district.id)}
-                          title={district.name}
-                        />
-                      ))}
-                    </Menu>
+                  <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                    Sorted by distance from
+                  </Text>
+                  <Menu
+                    visible={districtMenuVisible}
+                    onDismiss={() => setDistrictMenuVisible(false)}
+                    anchor={
+                      <PaperButton
+                        mode="text"
+                        compact
+                        onPress={() => setDistrictMenuVisible(true)}
+                        icon="chevron-down"
+                        contentStyle={{ flexDirection: 'row-reverse' }}
+                      >
+                        {selectedDistrict.name}
+                      </PaperButton>
+                    }
+                  >
+                    {NAGA_CITY_DISTRICTS.map((district) => (
+                      <Menu.Item
+                        key={district.id}
+                        onPress={() => handleDistrictSelect(district.id)}
+                        title={district.name}
+                      />
+                    ))}
+                  </Menu>
                 </View>
               ) : null
             }

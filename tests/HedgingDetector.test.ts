@@ -9,7 +9,7 @@ import { AssessmentProfile } from '../src/types/triage';
 describe('Hedging Detector', () => {
   describe('detectHedging', () => {
     test('detects direct lack of knowledge', () => {
-      expect(detectHedging('I don\'t know')).toBeTruthy();
+      expect(detectHedging("I don't know")).toBeTruthy();
       expect(detectHedging('Not sure about that')).toBeTruthy();
       expect(detectHedging('Unclear currently')).toBeTruthy();
       expect(detectHedging('I have no idea')).toBeTruthy();
@@ -80,10 +80,10 @@ describe('Hedging Detector', () => {
       const unsafeProfile = {
         ...safeProfile,
         severity: 'Maybe 8/10',
-        red_flag_denials: 'I don\'t think so',
+        red_flag_denials: "I don't think so",
       };
       const result = analyzeProfileForHedging(unsafeProfile);
-      
+
       expect(result.hasHedging).toBe(true);
       expect(result.isSafe).toBe(false);
       expect(result.hedgedFields['severity']).toBeTruthy();
@@ -97,7 +97,7 @@ describe('Hedging Detector', () => {
         clinical_friction_details: 'Patient seems confused', // "seems"
       };
       const result = analyzeProfileForHedging(mixedProfile);
-      
+
       expect(result.hasHedging).toBe(false); // Should ignore summary/friction fields
       expect(result.isSafe).toBe(true);
     });

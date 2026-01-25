@@ -76,7 +76,7 @@ describe('AI Emergency Room Normalization', () => {
     expect(prismaMock.facility.findMany).toHaveBeenCalledTimes(1);
     const lastCall = prismaMock.facility.findMany.mock.calls[0][0];
     const where = lastCall?.where as any;
-    
+
     // Check that 'Emergency' and 'Hospital' keywords were used
     const typeFilter = where.AND.find((f: any) => f.OR && f.OR[0].type);
     const keywords = typeFilter.OR.map((o: any) => o.type.contains);

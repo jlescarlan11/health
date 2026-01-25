@@ -59,7 +59,7 @@ const normalizeSchedule = (
   let hasAny = false;
 
   for (let day = 0; day <= 6; day += 1) {
-    const rawEntry = Array.isArray(value) ? value[day] : value[day] ?? value[String(day)];
+    const rawEntry = Array.isArray(value) ? value[day] : (value[day] ?? value[String(day)]);
 
     if (rawEntry === null) {
       schedule[day] = null;
@@ -162,7 +162,8 @@ const normalizeOperatingHours = (
   const is24x7 = coerceBoolean(parsed.data.is24x7) || is24x7Fallback;
   const open = normalizeTime(parsed.data.open);
   const close = normalizeTime(parsed.data.close);
-  const description = typeof parsed.data.description === 'string' ? parsed.data.description : undefined;
+  const description =
+    typeof parsed.data.description === 'string' ? parsed.data.description : undefined;
 
   if (is24x7) {
     return {
@@ -259,4 +260,3 @@ export const normalizeFacilitiesApiResponse = (data: unknown) => {
 
   return { data: facilities, facilities, rejectedCount };
 };
-

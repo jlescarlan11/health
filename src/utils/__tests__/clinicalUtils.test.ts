@@ -58,8 +58,8 @@ describe('isTraumaContext', () => {
   test('handles boundary conditions', () => {
     expect(isTraumaContext('')).toBe(false);
     expect(isTraumaContext('   ')).toBe(false);
-    expect(isTraumaContext((null as unknown) as string)).toBe(false);
-    expect(isTraumaContext((undefined as unknown) as string)).toBe(false);
+    expect(isTraumaContext(null as unknown as string)).toBe(false);
+    expect(isTraumaContext(undefined as unknown as string)).toBe(false);
   });
 
   test('matches return value handling used by isMaternalContext', () => {

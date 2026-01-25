@@ -34,7 +34,7 @@ describe('database service', () => {
       const invalidFacilities = [{ name: 'Test' }] as any;
 
       await expect(saveFacilitiesFull(invalidFacilities)).rejects.toThrow(
-        'Invalid facilities dataset: missing facility.id'
+        'Invalid facilities dataset: missing facility.id',
       );
 
       // Verify transaction was NOT started
@@ -43,16 +43,16 @@ describe('database service', () => {
 
     it('should start transaction and save for valid facilities', async () => {
       const validFacilities = [{ id: '1', name: 'Test' }] as any;
-      
+
       await saveFacilitiesFull(validFacilities);
 
       expect(mockDb.execAsync).toHaveBeenCalledWith('BEGIN TRANSACTION');
       expect(mockDb.execAsync).toHaveBeenCalledWith('COMMIT');
     });
-    
+
     it('should handle empty facilities list correctly (clear DB)', async () => {
       const emptyFacilities: any[] = [];
-      
+
       await saveFacilitiesFull(emptyFacilities);
 
       expect(mockDb.execAsync).toHaveBeenCalledWith('BEGIN TRANSACTION');

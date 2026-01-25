@@ -73,10 +73,7 @@ const FormattedAdviceText: React.FC<FormattedAdviceTextProps> = ({ advice }) => 
     return (
       <Text
         variant="bodyLarge"
-        style={[
-          styles.paragraph,
-          { color: textColor, marginBottom: paragraphSpacing },
-        ]}
+        style={[styles.paragraph, { color: textColor, marginBottom: paragraphSpacing }]}
       >
         {fallbackText}
       </Text>
@@ -91,10 +88,7 @@ const FormattedAdviceText: React.FC<FormattedAdviceTextProps> = ({ advice }) => 
             <Text
               key={`paragraph-${index}`}
               variant="bodyLarge"
-              style={[
-                styles.paragraph,
-                { color: textColor, marginBottom: paragraphSpacing },
-              ]}
+              style={[styles.paragraph, { color: textColor, marginBottom: paragraphSpacing }]}
             >
               {chunk.content}
             </Text>
@@ -106,24 +100,15 @@ const FormattedAdviceText: React.FC<FormattedAdviceTextProps> = ({ advice }) => 
         return (
           <View
             key={`list-${index}`}
-            style={[
-              styles.listItem,
-              { paddingLeft: indent, marginBottom: listSpacing },
-            ]}
+            style={[styles.listItem, { paddingLeft: indent, marginBottom: listSpacing }]}
           >
             <Text
               variant="bodyMedium"
-              style={[
-                styles.listMarker,
-                { marginRight: markerMargin, color: textColor },
-              ]}
+              style={[styles.listMarker, { marginRight: markerMargin, color: textColor }]}
             >
               {markerText}
             </Text>
-            <Text
-              variant="bodyMedium"
-              style={[styles.listContent, { color: textColor }]}
-            >
+            <Text variant="bodyMedium" style={[styles.listContent, { color: textColor }]}>
               {chunk.content}
             </Text>
           </View>

@@ -89,10 +89,7 @@ export const ClinicalNoteScreen = () => {
           <>
             <Section title="SUBJECTIVE (History)" content={sections.s} />
             <Section title="OBJECTIVE (Signs)" content={sections.o} />
-            <Section
-              title="ASSESSMENT (Triage)"
-              content={sections.a}
-            />
+            <Section title="ASSESSMENT (Triage)" content={sections.a} />
             <Section title="PLAN (Next Steps)" content={sections.p} />
           </>
         ) : (

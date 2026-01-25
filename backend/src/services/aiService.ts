@@ -104,7 +104,6 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     const nextLevel = levels[currentIdx + 1];
     parsedResponse.recommendation = nextLevel;
     parsedResponse.reasoning += ` (Note: Recommendation upgraded to ${nextLevel} due to uncertainty/ambiguity for safety.)`;
-
   }
   // -----------------------------------
 

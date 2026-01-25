@@ -84,12 +84,10 @@ describe('Safety Regression Suite', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    planSpy = jest
-      .spyOn(geminiClient, 'generateAssessmentPlan')
-      .mockResolvedValue({
-        questions: [{ id: 'red_flags', text: 'Do you have symptoms?' }],
-        intro: 'Intro',
-      });
+    planSpy = jest.spyOn(geminiClient, 'generateAssessmentPlan').mockResolvedValue({
+      questions: [{ id: 'red_flags', text: 'Do you have symptoms?' }],
+      intro: 'Intro',
+    });
     profileSpy = jest
       .spyOn(geminiClient, 'extractClinicalProfile')
       .mockResolvedValue({ triage_readiness_score: 0.5 } as any);
@@ -98,9 +96,7 @@ describe('Safety Regression Suite', () => {
       .mockImplementation(async function* () {
         yield 'chunk';
       });
-    responseSpy = jest
-      .spyOn(geminiClient, 'getGeminiResponse')
-      .mockResolvedValue('Test response');
+    responseSpy = jest.spyOn(geminiClient, 'getGeminiResponse').mockResolvedValue('Test response');
     (useNavigation as jest.Mock).mockReturnValue({
       replace: mockNavigate,
       goBack: jest.fn(),
@@ -252,7 +248,7 @@ describe('Safety Regression Suite', () => {
       const questions = [{ id: 'age', text: 'How old are you?' }];
 
       const prioritized = prioritizeQuestions(questions);
-      
+
       // Should have injected the question
       expect(prioritized.length).toBe(2);
       const redFlagQuestion = prioritized.find((q: any) => q.id === 'red_flags');

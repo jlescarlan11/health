@@ -94,10 +94,10 @@ describe('calculateTriageScore - Comprehensive Consensus Check', () => {
     });
 
     it('should NOT trigger if a high score precedes a low score without consensus on the first', () => {
-       // "mild 8/10 then 2/10" -> still has "mild" and "2/10", so it triggers.
-       // This is acceptable behavior for regex-based extraction.
-       const { score } = calculateTriageScore({ ...baseSlots, severity: 'mild 8/10 then 2/10' });
-       expect(score).toBe(1.0);
+      // "mild 8/10 then 2/10" -> still has "mild" and "2/10", so it triggers.
+      // This is acceptable behavior for regex-based extraction.
+      const { score } = calculateTriageScore({ ...baseSlots, severity: 'mild 8/10 then 2/10' });
+      expect(score).toBe(1.0);
     });
 
     it('should handle special characters', () => {
@@ -117,42 +117,30 @@ describe('calculateTriageScore - Comprehensive Consensus Check', () => {
       expect(score).toBe(1.0);
     });
 
-    
+    it('should verify Age/Progression are the only waived penalties', () => {
+      // If we miss Duration instead of Age
 
-        it('should verify Age/Progression are the only waived penalties', () => {
+      const durationMissing = {
+        ...baseSlots,
 
-          // If we miss Duration instead of Age
+        age: '25',
 
-          const durationMissing = {
+        duration: null,
 
-            ...baseSlots,
+        progression: 'stable',
 
-            age: '25',
+        severity: 'mild 2/10',
+      };
 
-            duration: null,
+      const { score } = calculateTriageScore(durationMissing);
 
-            progression: 'stable',
+      // coreSlots becomes ['duration', 'severity']
 
-            severity: 'mild 2/10'
+      // 'duration' is null -> 1 null count.
 
-          };
+      // score = 0.8 - 0.1 = 0.7
 
-          
-
-          const { score } = calculateTriageScore(durationMissing);
-
-          // coreSlots becomes ['duration', 'severity']
-
-          // 'duration' is null -> 1 null count.
-
-          // score = 0.8 - 0.1 = 0.7
-
-          expect(score).toBeCloseTo(0.7);
-
-        });
-
-      });
-
+      expect(score).toBeCloseTo(0.7);
     });
-
-    
+  });
+});

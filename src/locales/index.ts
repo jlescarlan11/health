@@ -40,10 +40,13 @@ const resolveTable = () => {
 };
 
 const lookup = (table: LocaleTable, key: string) => {
-  return key.split('.').reduce<Record<string, unknown> | undefined>((acc, part) => {
-    if (!acc || typeof acc !== 'object') return undefined;
-    return acc[part] as Record<string, unknown> | undefined;
-  }, table as unknown as Record<string, unknown>);
+  return key.split('.').reduce<Record<string, unknown> | undefined>(
+    (acc, part) => {
+      if (!acc || typeof acc !== 'object') return undefined;
+      return acc[part] as Record<string, unknown> | undefined;
+    },
+    table as unknown as Record<string, unknown>,
+  );
 };
 
 export const t = (key: string, params?: Record<string, string>) => {

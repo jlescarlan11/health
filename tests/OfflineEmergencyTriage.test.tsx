@@ -1,11 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import {
-  act,
-  fireEvent,
-  render,
-  waitFor,
-} from '@testing-library/react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Provider as ReduxProvider } from 'react-redux';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { PaperProvider } from 'react-native-paper';
@@ -21,9 +16,7 @@ import NetInfo from '@react-native-community/netinfo';
 jest.mock('@react-navigation/native', () => ({
   useRoute: jest.fn(),
   useNavigation: jest.fn(),
-  useFocusEffect: jest
-    .fn()
-    .mockImplementation((effect: () => void) => effect()),
+  useFocusEffect: jest.fn().mockImplementation((effect: () => void) => effect()),
   DefaultTheme: {
     colors: {
       primary: '#000000',
@@ -54,9 +47,7 @@ jest.mock('../src/components/common', () => {
   const { View } = require('react-native');
 
   return {
-    InputCard: React.forwardRef((props: any, ref: any) => (
-      <View ref={ref} {...props} />
-    )),
+    InputCard: React.forwardRef((props: any, ref: any) => <View ref={ref} {...props} />),
     TypingIndicator: () => <View />,
     ProgressBar: () => <View />,
     MultiSelectChecklist: () => <View />,
@@ -146,28 +137,16 @@ describe('SymptomAssessmentScreen offline triage', () => {
       </ReduxProvider>,
     );
 
-    await waitFor(() =>
-      expect(
-        getByText(/Offline Emergency Check/),
-      ).toBeTruthy(),
-    );
+    await waitFor(() => expect(getByText(/Offline Emergency Check/)).toBeTruthy());
 
-    await waitFor(() =>
-      expect(
-        getByText(/Are any of these emergency signs present/),
-      ).toBeTruthy(),
-    );
+    await waitFor(() => expect(getByText(/Are any of these emergency signs present/)).toBeTruthy());
 
     fireEvent.press(getByText('No'));
     act(() => {
       jest.advanceTimersByTime(500);
     });
 
-    await waitFor(() =>
-      expect(
-        getByText(/severe chest pain\/pressure/),
-      ).toBeTruthy(),
-    );
+    await waitFor(() => expect(getByText(/severe chest pain\/pressure/)).toBeTruthy());
 
     fireEvent.press(getByText('Yes'));
     act(() => {

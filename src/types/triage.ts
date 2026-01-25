@@ -63,7 +63,12 @@ export interface TriageFlow {
   nodes: Record<string, TriageNode>;
 }
 
-export type SystemCategory = 'Cardiac' | 'Respiratory' | 'Neurological' | 'Acute Abdomen' | 'Trauma';
+export type SystemCategory =
+  | 'Cardiac'
+  | 'Respiratory'
+  | 'Neurological'
+  | 'Acute Abdomen'
+  | 'Trauma';
 
 export interface SystemLockConfig {
   system: SystemCategory;
@@ -73,14 +78,14 @@ export interface SystemLockConfig {
 
 /**
  * SYSTEM-BASED LOCK CONFIGURATION
- * 
+ *
  * This map defines the deterministic overrides for the triage system.
  * If any keyword within a system is detected in the user's symptom description,
  * the triage category is automatically escalated to the target category.
- * 
- * Safety Rationale: LLMs can occasionally under-triage systemic or internal 
- * symptoms as "simple" if they are described with low qualitative severity. 
- * These locks ensure that high-stakes anatomical systems always trigger 
+ *
+ * Safety Rationale: LLMs can occasionally under-triage systemic or internal
+ * symptoms as "simple" if they are described with low qualitative severity.
+ * These locks ensure that high-stakes anatomical systems always trigger
  * high-resolution assessment protocols (longer turn floors, Tier 3 rule-outs).
  */
 export const SYSTEM_LOCK_KEYWORD_MAP: Record<SystemCategory, SystemLockConfig> = {
@@ -88,28 +93,60 @@ export const SYSTEM_LOCK_KEYWORD_MAP: Record<SystemCategory, SystemLockConfig> =
     system: 'Cardiac',
     escalationCategory: 'critical',
     keywords: [
-      'chest pain', 'chest pressure', 'chest tightness', 'squeezing chest',
-      'heart attack', 'myocardial infarction', 'palpitations', 'racing heart',
-      'skipped beats', 'pain in left arm', 'pain in jaw', 'radiating pain',
+      'chest pain',
+      'chest pressure',
+      'chest tightness',
+      'squeezing chest',
+      'heart attack',
+      'myocardial infarction',
+      'palpitations',
+      'racing heart',
+      'skipped beats',
+      'pain in left arm',
+      'pain in jaw',
+      'radiating pain',
     ],
   },
   Respiratory: {
     system: 'Respiratory',
     escalationCategory: 'critical',
     keywords: [
-      'shortness of breath', 'difficulty breathing', 'hard to breathe',
-      'cant breathe', 'struggling to breathe', 'gasping', 'breathless',
-      'wheezing', 'choking', 'cyanosis', 'blue lips', 'asthma attack',
+      'shortness of breath',
+      'difficulty breathing',
+      'hard to breathe',
+      'cant breathe',
+      'struggling to breathe',
+      'gasping',
+      'breathless',
+      'wheezing',
+      'choking',
+      'cyanosis',
+      'blue lips',
+      'asthma attack',
     ],
   },
   Neurological: {
     system: 'Neurological',
     escalationCategory: 'critical',
     keywords: [
-      'numbness', 'tingling', 'weakness', 'facial drooping', 'slurred speech',
-      'confusion', 'disorientation', 'seizure', 'convulsion', 'passed out',
-      'fainted', 'loss of consciousness', 'vision loss', 'worst headache',
-      'thunderclap headache', 'stiff neck', 'paralysis', 'unconscious',
+      'numbness',
+      'tingling',
+      'weakness',
+      'facial drooping',
+      'slurred speech',
+      'confusion',
+      'disorientation',
+      'seizure',
+      'convulsion',
+      'passed out',
+      'fainted',
+      'loss of consciousness',
+      'vision loss',
+      'worst headache',
+      'thunderclap headache',
+      'stiff neck',
+      'paralysis',
+      'unconscious',
       'unconsious',
     ],
   },
@@ -117,17 +154,39 @@ export const SYSTEM_LOCK_KEYWORD_MAP: Record<SystemCategory, SystemLockConfig> =
     system: 'Acute Abdomen',
     escalationCategory: 'complex',
     keywords: [
-      'severe stomach pain', 'abdominal pain', 'rigid abdomen', 'hard stomach',
-      'abdominal guarding', 'appendicitis', 'peritonitis', 'intense belly pain',
+      'severe stomach pain',
+      'abdominal pain',
+      'rigid abdomen',
+      'hard stomach',
+      'abdominal guarding',
+      'appendicitis',
+      'peritonitis',
+      'intense belly pain',
     ],
   },
   Trauma: {
     system: 'Trauma',
     escalationCategory: 'critical',
     keywords: [
-      'gunshot', 'shot', 'stab', 'stabbed', 'stabbing', 'penetrating wound', 'puncture',
-      'severe burn', 'burned', 'burnt', 'scald', 'fracture', 'broken bone', 'open fracture',
-      'vehicle accident', 'car accident', 'motorcycle accident', 'hit by car', 'hit by motorcycle',
+      'gunshot',
+      'shot',
+      'stab',
+      'stabbed',
+      'stabbing',
+      'penetrating wound',
+      'puncture',
+      'severe burn',
+      'burned',
+      'burnt',
+      'scald',
+      'fracture',
+      'broken bone',
+      'open fracture',
+      'vehicle accident',
+      'car accident',
+      'motorcycle accident',
+      'hit by car',
+      'hit by motorcycle',
       'uncontrolled bleeding',
     ],
   },

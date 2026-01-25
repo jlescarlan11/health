@@ -171,7 +171,9 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
     // Wait for targeted clarification question
     // Use a regex that matches the improved component text
     await waitFor(() => expect(screen.getByText(/perfectly safe/)).toBeTruthy());
-    await waitFor(() => expect(screen.getByText(/"red_flag_denials" might be present/)).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getByText(/"red_flag_denials" might be present/)).toBeTruthy(),
+    );
 
     // Verify binary choice buttons are visible
     expect(screen.getByTestId('button-Yes, I am sure')).toBeTruthy();
@@ -183,7 +185,7 @@ describe('SymptomAssessmentScreen Hedging Clarification', () => {
     // 3. Verify it unblocks and moves to the next question
     // Call 2 happens during the "Proceed" turn
     await waitFor(() => expect(profileSpy).toHaveBeenCalledTimes(2));
-    
+
     // Verify the next planned question is now displayed
     await waitFor(() => expect(screen.getByText(/How long has it been?/)).toBeTruthy());
   });

@@ -60,7 +60,10 @@ jest.mock('../src/components/common/Button', () => {
   const { Text, TouchableOpacity } = require('react-native');
   return {
     Button: ({ title, onPress }: any) => (
-      <TouchableOpacity onPress={onPress} testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}>
+      <TouchableOpacity
+        onPress={onPress}
+        testID={`button-${title.replace(/\s+/g, '-').toLowerCase()}`}
+      >
         <Text>{title}</Text>
       </TouchableOpacity>
     ),
@@ -97,7 +100,7 @@ describe('SymptomAssessmentScreen Category Escalation Detection', () => {
       intro: 'Intro',
     });
     profileSpy = jest.spyOn(geminiClient, 'extractClinicalProfile');
-    
+
     (useNavigation as jest.Mock).mockReturnValue({
       replace: jest.fn(),
       goBack: jest.fn(),
@@ -138,7 +141,7 @@ describe('SymptomAssessmentScreen Category Escalation Detection', () => {
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     // Initial load
@@ -153,9 +156,9 @@ describe('SymptomAssessmentScreen Category Escalation Detection', () => {
 
     // Wait for 1st extraction to complete and question 2 to appear
     await waitFor(() => expect(screen.getByText(/Question 2/)).toBeTruthy());
-    
+
     // Verify first category was set internally (implicitly by the fact that it will be compared in next turn)
-    
+
     // Answer Question 2 with something that triggers escalation
     fireEvent.changeText(input, 'Now I feel numb on one side');
     fireEvent.press(submit);
@@ -163,7 +166,7 @@ describe('SymptomAssessmentScreen Category Escalation Detection', () => {
     // Wait for 2nd extraction to complete
     await waitFor(() => {
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('[Assessment] Mid-stream escalation detected: simple -> critical')
+        expect.stringContaining('[Assessment] Mid-stream escalation detected: simple -> critical'),
       );
     });
   });
@@ -186,7 +189,7 @@ describe('SymptomAssessmentScreen Category Escalation Detection', () => {
     render(
       <ReduxProvider store={store}>
         <SymptomAssessmentScreen />
-      </ReduxProvider>
+      </ReduxProvider>,
     );
 
     await waitFor(() => expect(screen.getByText(/Question 1/)).toBeTruthy());
@@ -198,16 +201,19 @@ describe('SymptomAssessmentScreen Category Escalation Detection', () => {
     fireEvent.press(submit);
 
     await waitFor(() => expect(screen.getByText(/Question 2/)).toBeTruthy());
-    
+
     fireEvent.changeText(input, 'Actually it is better now');
     fireEvent.press(submit);
 
     await waitFor(() => {
-       // Should have been called twice for extrations but never for escalation log
-       const escalationLogs = consoleLogSpy.mock.calls.filter(call => 
-         call[0] && typeof call[0] === 'string' && call[0].includes('[Assessment] Mid-stream escalation detected')
-       );
-       expect(escalationLogs.length).toBe(0);
+      // Should have been called twice for extrations but never for escalation log
+      const escalationLogs = consoleLogSpy.mock.calls.filter(
+        (call) =>
+          call[0] &&
+          typeof call[0] === 'string' &&
+          call[0].includes('[Assessment] Mid-stream escalation detected'),
+      );
+      expect(escalationLogs.length).toBe(0);
     });
   });
 });

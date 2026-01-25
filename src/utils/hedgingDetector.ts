@@ -2,27 +2,27 @@ import { AssessmentProfile } from '../types/triage';
 
 /**
  * CLINICAL RATIONALE:
- * Safety-critical fields require high certainty to avoid under-triage. 
- * Epistemic hedging (e.g., "maybe", "I think") in these fields indicates 
+ * Safety-critical fields require high certainty to avoid under-triage.
+ * Epistemic hedging (e.g., "maybe", "I think") in these fields indicates
  * that the user is unsure about a life-threatening symptom or core context.
- * 
+ *
  * DESIGN CHOICE:
- * We use deterministic regex-based detection as a safety filter on top of 
- * LLM-based extraction. This prevents the LLM from "hallucinating" a 
+ * We use deterministic regex-based detection as a safety filter on top of
+ * LLM-based extraction. This prevents the LLM from "hallucinating" a
  * definitive denial when the user actually expressed doubt.
  */
 
 /**
  * CONFIGURATION: Safety-Critical Fields
- * These fields are checked for hedging. If uncertainty is detected, 
+ * These fields are checked for hedging. If uncertainty is detected,
  * the profile is marked as ambiguous, and clarification is forced.
  */
 export const CRITICAL_HEDGING_FIELDS: (keyof AssessmentProfile)[] = [
-  'severity',         // "Maybe 8/10" -> Prevents calculation of acute distress score.
-  'progression',      // "I think it's getting worse" -> Unreliable trend for stability.
+  'severity', // "Maybe 8/10" -> Prevents calculation of acute distress score.
+  'progression', // "I think it's getting worse" -> Unreliable trend for stability.
   'red_flag_denials', // "I don't think so" -> Extremely dangerous if a red flag is present.
-  'age',              // "Maybe 50" -> Affects pediatric/geriatric safety protocols.
-  'duration',         // "Possibly 2 days" -> Differentiates between acute and chronic risks.
+  'age', // "Maybe 50" -> Affects pediatric/geriatric safety protocols.
+  'duration', // "Possibly 2 days" -> Differentiates between acute and chronic risks.
 ];
 
 /**
@@ -78,11 +78,7 @@ const HEDGING_PATTERNS = {
    * Vagueness Qualifiers:
    * Qualifiers that make anatomical locations or symptom characteristics vague.
    */
-  VAGUENESS: [
-    /\b(sort\s+of)\b/i,
-    /\b(kind\s+of)\b/i,
-    /\b(ish)\b/i,
-  ],
+  VAGUENESS: [/\b(sort\s+of)\b/i, /\b(kind\s+of)\b/i, /\b(ish)\b/i],
 };
 
 // Flattened list for efficient execution
@@ -141,7 +137,7 @@ export const analyzeProfileForHedging = (profile: AssessmentProfile): HedgingAna
 
 /**
  * applyHedgingCorrections: Updates the profile state based on hedging detection.
- * 
+ *
  * CRITICAL SAFETY LOGIC:
  * 1. If hedging is detected in 'red_flag_denials', the denial is REJECTED.
  *    - 'red_flags_resolved' is set to false.
@@ -160,7 +156,7 @@ export const applyHedgingCorrections = (profile: AssessmentProfile): AssessmentP
 
   // 1. Mark global ambiguity to trigger the Ambiguity Lock in TriageArbiter
   correctedProfile.ambiguity_detected = true;
-  
+
   // 2. Specialized handling for Red Flags (Safety Gate #1)
   if (analysis.hedgedFields['red_flag_denials']) {
     correctedProfile.denial_confidence = 'low';

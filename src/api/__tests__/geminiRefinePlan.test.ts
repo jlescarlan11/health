@@ -3,7 +3,10 @@ import { AssessmentProfile } from '../../types/triage';
 describe('GeminiClient.refineAssessmentPlan', () => {
   let mockGenerateContent: jest.Mock;
   let geminiModule: typeof import('../geminiClient');
-  let refineAssessmentPlan: (currentProfile: AssessmentProfile, remainingCount: number) => Promise<any[]>;
+  let refineAssessmentPlan: (
+    currentProfile: AssessmentProfile,
+    remainingCount: number,
+  ) => Promise<any[]>;
 
   beforeEach(() => {
     jest.resetModules();

@@ -81,9 +81,7 @@ describe('SymptomAssessmentScreen RESOLVE_FRICTION handling', () => {
     profileSpy = jest
       .spyOn(geminiClient, 'extractClinicalProfile')
       .mockResolvedValue({ triage_readiness_score: 0.2 } as any);
-    responseSpy = jest
-      .spyOn(geminiClient, 'getGeminiResponse')
-      .mockResolvedValue('Test response');
+    responseSpy = jest.spyOn(geminiClient, 'getGeminiResponse').mockResolvedValue('Test response');
     jest.useFakeTimers();
     (useNavigation as jest.Mock).mockReturnValue({
       replace: jest.fn(),
@@ -112,7 +110,7 @@ describe('SymptomAssessmentScreen RESOLVE_FRICTION handling', () => {
     ];
 
     planSpy.mockResolvedValue({ questions: plan, intro: 'Intro' });
-    
+
     // First extraction (normal)
     profileSpy.mockResolvedValueOnce({
       triage_readiness_score: 0.2,
@@ -149,7 +147,7 @@ describe('SymptomAssessmentScreen RESOLVE_FRICTION handling', () => {
 
     // Submit second answer which will trigger friction in our mock
     fireEvent.changeText(input, 'It is 10/10 severe');
-    
+
     // Use act because multiple state updates and promises are happening
     await act(async () => {
       fireEvent.press(submit);
@@ -157,7 +155,9 @@ describe('SymptomAssessmentScreen RESOLVE_FRICTION handling', () => {
 
     // Verify getGeminiResponse was called with the friction context
     expect(responseSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Contradiction detected: User reports severe pain but looks comfortable.')
+      expect.stringContaining(
+        'Contradiction detected: User reports severe pain but looks comfortable.',
+      ),
     );
 
     // Verify the generated question is displayed
