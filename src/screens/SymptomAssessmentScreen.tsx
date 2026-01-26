@@ -136,6 +136,7 @@ const composeAssistantMessage = ({
     inlineAck,
     profile,
     primarySymptom,
+    tone: 'neutral',
     // nextAction, // OMITTED to prevent display in user-facing text
     metadata: safeMetadata,
   });
@@ -229,32 +230,7 @@ const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[
   }
 };
 
-const SENTIMENT_PATTERNS = {
-  distress: /\b(pain|hurt|severe|scared|dying|bad|worse)\b/i,
-  denial: /\b(no|none|okay|fine|better)\b/i,
-  uncertainty: /\b(don'?t\s+know|unsure|maybe|not\s+sure)\b/i,
-};
-
-const buildBridgeText = (
-  lastUserText: string,
-  nextQuestionText: string,
-  symptomReference?: string,
-) => {
-  const text = lastUserText || '';
-  const symptomLabel = symptomReference || 'your symptoms';
-
-  if (SENTIMENT_PATTERNS.distress.test(text)) {
-    return `I understand that ${symptomLabel} is painful for you. ${nextQuestionText}`;
-  }
-  if (SENTIMENT_PATTERNS.denial.test(text)) {
-    return `That's good to know about ${symptomLabel}. ${nextQuestionText}`;
-  }
-  if (SENTIMENT_PATTERNS.uncertainty.test(text)) {
-    return `That's okay, we can keep working through ${symptomLabel}. ${nextQuestionText}`;
-  }
-
-  return `Thanks for sharing more about ${symptomLabel}. ${nextQuestionText}`;
-};
+const buildBridgeText = (_lastUserText: string, nextQuestionText: string) => nextQuestionText;
 
 const escapeForRegex = (value: string) => value.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
 const OUT_OF_SCOPE_INDICATORS = [
@@ -637,8 +613,8 @@ const SymptomAssessmentScreen = () => {
 
     const questionLabel = question.text ? `"${question.text}"` : 'this question';
     const fallbackText = shouldRemind
-      ? `It looks like we've drifted away from ${questionLabel} a couple of times. Could you answer it so I can provide the best guidance?`
-      : `Thanks for the detail. When you're ready, could you answer ${questionLabel}?`;
+      ? `Please return to ${questionLabel} so we can keep the assessment on track.`
+      : `Please answer ${questionLabel} to continue the assessment.`;
 
     const fallbackTimestamp = Date.now();
     console.log(
@@ -960,7 +936,7 @@ const SymptomAssessmentScreen = () => {
       const firstQ = prunedPlan[0];
       const introText = intro
         ? `${intro}\n\n${firstQ.text}`
-        : `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
+        : `Recorded your report of "${initialSymptom}". Answer the first question to continue.\n\n${firstQ.text}`;
 
       replaceMessagesDisplay([
         composeAssistantMessage({
@@ -1147,7 +1123,7 @@ const SymptomAssessmentScreen = () => {
                     appendMessagesToConversation([
                     composeAssistantMessage({
                       id: `pivot-${pivotTimestamp}`,
-                      body: 'Given the new details you shared, I need to ask a few specific questions to better understand your situation.',
+                    body: 'New information requires a short set of focused questions before adjusting your plan.',
                       reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
                       reasonSource: 'escalation-pivot',
                       nextAction: 'Refining assessment plan.',
@@ -1197,10 +1173,13 @@ const SymptomAssessmentScreen = () => {
             
             let ackText = '';
             if (labels.length === 1) {
-              ackText = `Thanks for clarifying — I've updated the ${labels[0]} to ${changes[0].newValue}.`;
+              ackText = `Updated the ${labels[0]} to ${changes[0].newValue}.`;
             } else {
-              const lastLabel = labels.pop();
-              ackText = `Thanks for the updates — I've noted the changes to your ${labels.join(', ')} and ${lastLabel}.`;
+              const lastLabel = labels[labels.length - 1];
+              const firstLabels = labels.slice(0, -1);
+              const joinedTargets =
+                firstLabels.length > 0 ? `${firstLabels.join(', ')} and ${lastLabel}` : lastLabel;
+              ackText = `Updated ${joinedTargets}.`;
             }
             setPendingCorrection(ackText);
           }
@@ -1348,8 +1327,8 @@ const SymptomAssessmentScreen = () => {
 
             const clarificationText =
               clarificationCount === 0
-                ? `I want to be certain I understand your symptoms. You mentioned "${hedgedField}" might be present. To be sure, is this happening to you right now?`
-                : `I'm still looking for clarity regarding "${hedgedField}". It's important for me to know for sure: are you experiencing this right now?`;
+                ? `Confirm whether "${hedgedField}" is present right now so we can resolve it.`
+                : `This detail is still unclear: is "${hedgedField}" happening right now?`;
 
             {
               const clarificationTimestamp = Date.now();
@@ -1359,7 +1338,7 @@ const SymptomAssessmentScreen = () => {
                   body: clarificationText,
                   reason: arbiterResult.reason,
                   reasonSource: 'arbiter-clarification',
-                  nextAction: 'Please confirm this detail so I can provide the best guidance.',
+                  nextAction: 'Confirm this detail to continue the assessment.',
                   inlineAck: consumePendingCorrection(),
                   timestamp: clarificationTimestamp,
                 }),
@@ -1392,11 +1371,11 @@ const SymptomAssessmentScreen = () => {
                 appendMessagesToConversation([
                   composeAssistantMessage({
                     id: 'early-exit',
-                    body: 'Thank you. I have sufficient information to provide a recommendation for you.',
+                    body: 'Collected the required data; finalizing the recommendation now.',
                     header: clarificationHeader,
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-termination',
-                    nextAction: 'I will now finalize your recommendation and share it shortly.',
+                    nextAction: 'Finalizing your recommendation now.',
                     inlineAck: consumePendingCorrection(),
                     profile,
                     primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
@@ -1556,7 +1535,7 @@ Recent User Answer: ${trimmedAnswer}
                 appendMessagesToConversation([
                   composeAssistantMessage({
                     id: `expansion-notice-${expansionTimestamp}`,
-                    body: 'I have just a few more specific questions to help me provide the best recommendation.',
+                    body: 'A few more targeted questions are needed before finalizing your recommendation.',
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-expansion',
                     nextAction: 'Please answer the next question so I can finish the assessment.',
@@ -1737,7 +1716,7 @@ Recent User Answer: ${trimmedAnswer}
                 composeAssistantMessage({
                   id: 'finalizing-safety-fallback',
                   header: clarificationHeader,
-                  body: 'I have gathered enough initial information to provide a recommendation for you.',
+                  body: 'Collected enough initial detail; preparing your recommendation now.',
                   reason: arbiterResult.reason,
                   reasonSource: 'arbiter-finalize-safety',
                   nextAction: 'Please wait while I prepare the recommendation for you.',
@@ -1904,7 +1883,7 @@ Recent User Answer: ${trimmedAnswer}
           appendMessagesToConversation([
             composeAssistantMessage({
               id: 'finalizing',
-              body: "Thank you. I'm now analyzing your responses to provide the best guidance...",
+              body: 'All responses recorded; analyzing them now to finalize your recommendation.',
               reason: 'Assessment complete and ready for final review.',
               reasonSource: 'finalizing',
               nextAction: 'Please wait while I synthesize the recommendation for you.',
@@ -2029,7 +2008,7 @@ Recent User Answer: ${trimmedAnswer}
         appendMessagesToConversation([
           composeAssistantMessage({
             id: `finalize-${finalizeTimestamp}`,
-            body: 'Thank you. I have a clear picture of your situation now. Given your symptoms, I have generated a specific care plan. Let me walk you through it.',
+            body: 'Captured the clinical picture; I have generated a care plan based on your symptoms and am ready to share it.',
             reason: 'Assessment complete and ready for handover.',
             reasonSource: 'finalize-assessment',
             nextAction: 'Please stay tuned while I prepare the recommendation for you.',

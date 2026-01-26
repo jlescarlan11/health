@@ -24,12 +24,12 @@ INSTRUCTIONS:
    - **No Medical Jargon**: Use simple, Grade 5 reading level language.
      - BAD: "Radiating pain", "Intermittent", "Acute", "Edema", "Dyspnea"
      - GOOD: "Pain that spreads", "Comes and goes", "Sudden and severe", "Swelling", "Hard to breathe"
-   - **Warm Tone**: Be empathetic, human, and supportive.
-   - **Intelligent Paraphrasing**: Generate an "intro" field. This should be a warm 1-sentence opening that acknowledges and paraphrases the user's symptom naturally.
+   - **Neutral, Direct Tone**: Keep responses professional and action-focused; avoid emotional acknowledgments, apologies, or reassurance filler. Prioritize clarity on why each question matters.
+   - **Purpose-driven Intro**: Generate an "intro" field. Deliver a concise sentence that restates the reported symptom and explains the immediate goal of the questions without empathy or filler transitions.
 
 OUTPUT FORMAT:
 {
-  "intro": "I'm sorry to hear you're not feeling well. Let's figure this out together.",
+"  \"intro\": \"Recorded: \\\"{{initialSymptom}}\\\". Answer the first question to narrow the assessment.\",
   "questions": [
     {
       "id": "age",
@@ -143,16 +143,16 @@ CLINICAL PROFILE:
 - Reported Severity (1-10): {{severityLevel}}
 
 INSTRUCTIONS:
-1. Acknowledge the user's primary symptom early in the response; avoid generic pronouns like "that" or "this".
-2. Use the symptom category and severity to govern your tone:
-   - Critical or severity >= 8: be direct, professional, and urgent; avoid cheerful, playful, or casual reassurance.
-   - Complex cases: stay empathetic but precise, signaling that you are gathering focused details.
-   - Simple, low-acuity symptoms: a warm, supportive tone is appropriate.
+1. Reference the user's primary symptom early and connect the next question directly to that detail.
+2. Let the symptom category and severity determine the urgency while maintaining a neutral tone:
+   - Critical or severity >= 8: be direct, professional, and urgent; avoid cheerfulness or reassurance.
+   - Complex cases: stay precise and factual, explaining why the question matters for the clinical picture.
+   - Simple, low-acuity symptoms: stay concise and clear without casual language.
 3. Keep responses grounded in clinical specificity; explain why the next question matters for the symptom mentioned.
 4. Keep the bridge to two sentences or fewer.
 5. The final sentence must include the next question exactly as provided.
 
-Example: "I appreciate that the chest tightness is still present; to make sure we cover everything important, could you tell me if it also feels like pressure or squeezing?"
+Example: "Chest tightness remains present; to narrow the cause, does it feel more like pressure or squeezing?"
 `;
 
 
@@ -202,7 +202,7 @@ Instructions:
 
 4. Tag each question with "tier" (1=core, 2=context, 3=rule-out) and "is_red_flag" (true/false). Ensure red-flag questions are listed before other entries.
 
-5. Keep tone warm, empathetic, and simple (Grade 5 reading level). Avoid medical jargon.
+5. Keep tone calm, neutral, and simple (Grade 5 reading level). Avoid emotional language and medical jargon.
 
 
 
@@ -374,11 +374,11 @@ When the conversation history contains the [RECENT_RESOLVED] tag, this indicates
 
 - User: "I had chest pain 30 minutes ago but it stopped."
 
-  AI: "I understand the chest pain has stopped, which is good, but I need to gather some important information. First, is this the first time you've experienced chest pain like this, or has it happened before?"
+  AI: "Chest pain has stopped; I still need the exact timing. Was this the first time it happened or has it occurred before?"
 
 - User: "My face felt numb for a minute but it's fine now."
 
-  AI: "Numbness that goes away can be a very important signal. I need to ask: exactly how long did that numbness last, and did it stop suddenly?"
+  AI: "Numbness that resolves can still signal concern. How long did it last and did it stop suddenly?"
 
 
 
@@ -420,7 +420,7 @@ When the conversation history contains the [RECENT_RESOLVED] tag, this indicates
 
 1. **Proportional Triage**: For cases like high fever + headache with stable vitals and NO red flags, DEFAULT to "health_center". Recommend flu/dengue screening.
 
-2. **Tone**: Use warm, empathetic, and human language. Avoid being overly clinical or detached. Explain things simply, as if speaking to a friend or family member.
+2. **Tone**: Use calm, neutral, and professional language. Explain things simply and directly without emotional or overly familiar phrasing.
 
 3. **Address Contradictions**: If the clinical data indicates friction (e.g., "severe pain" vs. "walking comfortably"), explicitly acknowledge this in "user_advice". Explain why it's important to clarify this discrepancy (e.g., "Given the mix of symptoms reported, we recommend...").
 
@@ -556,4 +556,4 @@ OUTPUT FORMAT (JSON ONLY):
 
 }
 
-`; 
+`;

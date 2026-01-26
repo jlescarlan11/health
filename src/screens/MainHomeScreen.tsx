@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: 16,
+    marginBottom: 24,
     paddingHorizontal: 4,
   },
   sectionTitle: {
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   feedList: {
     marginTop: 0,
-    gap: 12,
+    gap: 16,
   },
   card: {
     borderRadius: 24,

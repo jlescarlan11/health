@@ -10,6 +10,7 @@ export interface EmpatheticResponseInput {
   metadata?: Record<string, unknown>;
   profile?: AssessmentProfile;
   primarySymptom?: string;
+  tone?: 'empathetic' | 'neutral';
 }
 
 export interface EmpatheticResponseOutput {
@@ -148,6 +149,7 @@ export const formatEmpatheticResponse = ({
   metadata,
   profile,
   primarySymptom,
+  tone = 'empathetic',
 }: EmpatheticResponseInput): EmpatheticResponseOutput => {
   const contentBlocks: string[] = [];
 
@@ -155,7 +157,8 @@ export const formatEmpatheticResponse = ({
     contentBlocks.push(header.trim());
   }
   
-  const prefix = buildEmpathyPrefix(profile, primarySymptom);
+  const prefix =
+    tone === 'neutral' ? undefined : buildEmpathyPrefix(profile, primarySymptom);
   const ack = inlineAck?.trim();
   const trimmedBody = body?.trim();
   const bodySegments: string[] = [];

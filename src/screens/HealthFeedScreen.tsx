@@ -137,11 +137,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 40,
     flexGrow: 1,
   },
   headerInfo: {
-    marginBottom: 20,
+    marginBottom: 32,
     paddingHorizontal: 4,
   },
   headerTitle: {
@@ -187,6 +187,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   itemSeparator: {
-    height: 12,
+    height: 16,
   },
 });
