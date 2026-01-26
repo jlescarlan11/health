@@ -278,7 +278,11 @@ export const FacilityDetailsScreen = () => {
 
           {/* Quick Actions */}
           <View style={styles.actionButtons}>
-            <CommunicationHub contacts={facility.contacts} primaryPhone={facility.phone} />
+            <CommunicationHub
+              contacts={facility.contacts}
+              primaryPhone={facility.phone}
+              callButtonStyle={styles.actionButton}
+            />
             <Button
               icon="directions"
               title="Directions"
@@ -560,6 +564,8 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
+    marginVertical: 0,
+    minHeight: 48,
   },
   divider: {
     height: 1,

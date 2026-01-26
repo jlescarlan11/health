@@ -5,6 +5,11 @@ interface ProfileState {
   dob: string | null;
   bloodType: string | null;
   philHealthId: string | null;
+  chronicConditions: string[];
+  allergies: string[];
+  currentMedications: string[];
+  surgicalHistory: string | null;
+  familyHistory: string | null;
 }
 
 const initialState: ProfileState = {
@@ -12,6 +17,11 @@ const initialState: ProfileState = {
   dob: null,
   bloodType: null,
   philHealthId: null,
+  chronicConditions: [],
+  allergies: [],
+  currentMedications: [],
+  surgicalHistory: null,
+  familyHistory: null,
 };
 
 const profileSlice = createSlice({
@@ -26,6 +36,11 @@ const profileSlice = createSlice({
       state.dob = null;
       state.bloodType = null;
       state.philHealthId = null;
+      state.chronicConditions = [];
+      state.allergies = [];
+      state.currentMedications = [];
+      state.surgicalHistory = null;
+      state.familyHistory = null;
     },
   },
 });

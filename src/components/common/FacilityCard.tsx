@@ -256,7 +256,11 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         {/* Action Buttons Row */}
         <View style={styles.actionsRow}>
-          <CommunicationHub contacts={facility.contacts} primaryPhone={facility.phone} />
+          <CommunicationHub
+            contacts={facility.contacts}
+            primaryPhone={facility.phone}
+            callButtonStyle={styles.actionButton}
+          />
           <Button
             title="Directions"
             icon="directions"
@@ -349,6 +353,6 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginVertical: 0,
-    minHeight: 40,
+    minHeight: 48,
   },
 });
