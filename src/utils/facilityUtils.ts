@@ -361,6 +361,44 @@ export const resolveServiceAlias = (service: string): string => {
   return service;
 };
 
+const combineFacilityServices = (facility: Facility): string[] => [
+  ...(facility.services || []),
+  ...(facility.specialized_services || []),
+];
+
+const normalize = (value: string) => value.toLowerCase().trim();
+
+export const getFacilityServiceMatches = (
+  facility: Facility,
+  relevantServices: string[],
+): string[] => {
+  if (!relevantServices || relevantServices.length === 0) return [];
+
+  const allServices = combineFacilityServices(facility);
+  if (allServices.length === 0) return [];
+
+  const matched = new Set<string>();
+
+  relevantServices.forEach((req) => {
+    const resolved = resolveServiceAlias(req).trim();
+    const normalizedResolved = normalize(resolved);
+
+    const matchedService = allServices.find((service) => {
+      const normalizedService = normalize(service);
+      return (
+        normalizedService.includes(normalizedResolved) ||
+        normalizedResolved.includes(normalizedService)
+      );
+    });
+
+    if (matchedService) {
+      matched.add(matchedService);
+    }
+  });
+
+  return Array.from(matched);
+};
+
 /**
  * Calculates a priority score for a facility based on care level, service matches, and distance.
  * Higher score = higher priority.
@@ -388,21 +426,10 @@ export const scoreFacility = (
 
   // 2. Service matches (Secondary weight)
   if (requiredServices.length > 0) {
-    const allFacilityServices = [
-      ...facility.services,
-      ...(facility.specialized_services || []),
-    ].map((s) => s.toLowerCase());
+    const matchedServices = getFacilityServiceMatches(facility, requiredServices);
+    score += (matchedServices.length / requiredServices.length) * 500;
 
-    const matches = requiredServices.filter((req) => {
-      const resolvedReq = resolveServiceAlias(req).toLowerCase();
-      return allFacilityServices.some((s) => s.includes(resolvedReq) || resolvedReq.includes(s));
-    });
-
-    // Score based on proportion of matches (up to 500 points)
-    score += (matches.length / requiredServices.length) * 500;
-
-    // Bonus for matching ALL services (extra 100 points)
-    if (matches.length === requiredServices.length) {
+    if (matchedServices.length === requiredServices.length) {
       score += 100;
     }
   }
@@ -434,16 +461,7 @@ export const filterFacilitiesByServices = (
 
   return facilities
     .map((facility) => {
-      const allFacilityServices = [...facility.services, ...(facility.specialized_services || [])];
-
-      const matchedServices = relevantServices.filter((req) => {
-        const resolvedReq = resolveServiceAlias(req).toLowerCase();
-        return allFacilityServices.some(
-          (s) => s.toLowerCase().includes(resolvedReq) || resolvedReq.includes(s.toLowerCase()),
-        );
-      });
-
-      // Deterministic scoring: 100 points per match
+      const matchedServices = getFacilityServiceMatches(facility, relevantServices);
       const matchScore = matchedServices.length * 100;
 
       return {

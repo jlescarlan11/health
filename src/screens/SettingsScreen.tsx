@@ -3,14 +3,15 @@ import { StyleSheet, ScrollView, View } from 'react-native';
 import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../components/common/Text';
 import StandardHeader from '../components/common/StandardHeader';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
 import { toggleSpecializedMode } from '../store/settingsSlice';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { DigitalIDCard } from '../components';
+import { theme as appTheme } from '../theme';
 
 export const SettingsScreen = () => {
   const theme = useTheme();
@@ -18,6 +19,10 @@ export const SettingsScreen = () => {
   const dispatch = useAppDispatch();
   const { scaleFactor } = useAdaptiveUI();
   const settings = useAppSelector((state) => state.settings);
+  const insets = useSafeAreaInsets();
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const minBottomSpacing = themeSpacing.md ?? 12;
+  const baseBottomPadding = themeSpacing.lg ?? 16;
   const specializedModes = settings?.specializedModes || {
     isSenior: false,
     isPWD: false,
@@ -41,10 +46,17 @@ export const SettingsScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Settings" showBackButton={false} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom: Math.max(insets.bottom, minBottomSpacing) + baseBottomPadding,
+          },
+        ]}
+      >
         <DigitalIDCard />
         <List.Section>
           <List.Subheader style={scaledSubheaderStyle}>My Account</List.Subheader>
@@ -156,7 +168,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingTop: 8,
-    paddingBottom: 100,
   },
   surface: {
     borderRadius: 16,

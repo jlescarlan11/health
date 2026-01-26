@@ -1,26 +1,15 @@
 import React from 'react';
-import {
-  Alert,
-  StyleSheet,
-  View,
-  ViewStyle,
-  TouchableOpacity,
-  Linking,
-  Modal,
-  FlatList,
-} from 'react-native';
-import { Card, useTheme } from 'react-native-paper';
+import { Alert, StyleSheet, View, ViewStyle } from 'react-native';
+import { Card, useTheme, IconButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { Facility, FacilityService, FacilityBusyness } from '../../types';
+import { Facility } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
 import { getOpenStatus, formatFacilityType } from '../../utils';
 import { openExternalMaps } from '../../utils/linkingUtils';
-import { BusynessIndicator } from './BusynessIndicator';
-import { ServiceChip } from './ServiceChip';
 import { TeleconsultBadge } from './TeleconsultBadge';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 import { sharingUtils } from '../../utils/sharingUtils';
-import { IconButton } from 'react-native-paper';
+import { FacilityStatusIndicator } from './FacilityStatusIndicator';
 import { Text } from './Text';
 import { FacilityActionButtons } from './FacilityActionButtons';
 
@@ -30,8 +19,7 @@ interface FacilityCardProps {
   style?: ViewStyle;
   showDistance?: boolean;
   distance?: number;
-  relevantServices?: FacilityService[];
-  simplified?: boolean;
+  showMatchIndicator?: boolean;
 }
 
 export const FacilityCard: React.FC<FacilityCardProps> = ({
@@ -40,21 +28,12 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   style,
   showDistance = false,
   distance,
-  relevantServices,
-  simplified = false,
+  showMatchIndicator = false,
 }) => {
   const theme = useTheme();
   const { scaleFactor } = useAdaptiveUI();
-  const { text: statusText, color: statusColor, isOpen } = getOpenStatus(facility);
-  const [showAllServices, setShowAllServices] = React.useState(false);
-
-  const hasMatches = React.useMemo(() => {
-    if (!relevantServices || relevantServices.length === 0) return false;
-    const allServices = [...(facility.services || []), ...(facility.specialized_services || [])];
-    return relevantServices.some((rs) =>
-      allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
-    );
-  }, [facility.services, facility.specialized_services, relevantServices]);
+  const { text: statusText } = getOpenStatus(facility);
+  const hasMatches = showMatchIndicator;
 
   const hasTeleconsult = React.useMemo(() => {
     return facility.contacts?.some((c) => !!c.teleconsultUrl);
@@ -87,49 +66,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     }
   };
 
-  // Determine which services to show
-  const displayServices = React.useMemo(() => {
-    const allServices = [...(facility.services || []), ...(facility.specialized_services || [])];
-
-    // In simplified/list view, we strictly limit to 3 and ignore showAllServices
-    if (simplified) {
-      if (relevantServices && relevantServices.length > 0) {
-        // Prioritize relevant services if they exist in facility services
-        const relevant = allServices.filter((s) =>
-          relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
-        );
-        // Combine relevant with others, then slice
-        const others = allServices.filter((s) => !relevant.includes(s));
-        return [...relevant, ...others].slice(0, 3);
-      }
-      return allServices.slice(0, 3);
-    }
-
-    if (showAllServices) return allServices;
-
-    if (relevantServices && relevantServices.length > 0) {
-      // Prioritize relevant services if they exist in facility services
-      const relevant = allServices.filter((s) =>
-        relevantServices.some((rs) => s.toLowerCase().includes(rs.toLowerCase())),
-      );
-      // Combine relevant with others, then slice
-      const others = allServices.filter((s) => !relevant.includes(s));
-      return [...relevant, ...others].slice(0, 3);
-    }
-
-    return allServices.slice(0, 3);
-  }, [
-    facility.services,
-    facility.specialized_services,
-    relevantServices,
-    showAllServices,
-    simplified,
-  ]);
-
-  const totalServicesCount =
-    (facility.services?.length || 0) + (facility.specialized_services?.length || 0);
-  const hasMoreServices = totalServicesCount > displayServices.length;
-
   return (
     <Card
       style={[
@@ -146,12 +82,11 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       ]}
       onPress={onPress}
       mode="contained"
-      accessible={true}
+      accessible
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
       <View style={styles.cardInner}>
-        {/* Header Row */}
         <View style={styles.titleRow}>
           <Text variant="titleMedium" style={styles.title}>
             {facility.name}
@@ -169,7 +104,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           />
         </View>
 
-        {/* Meta Row */}
         <View style={styles.metaRow}>
           {[
             formatFacilityType(facility.type),
@@ -204,56 +138,8 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           {hasTeleconsult && <TeleconsultBadge style={{ marginLeft: 4, marginTop: 2 }} />}
         </View>
 
-        {/* Status Row */}
-        <View style={styles.statusRow}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <MaterialCommunityIcons
-              name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-              size={14}
-              color={statusColor}
-              style={{ marginRight: 6 }}
-            />
-            <Text
-              variant="labelMedium"
-              style={{
-                color: statusColor,
-                fontWeight: '700',
-                letterSpacing: 0.3,
-              }}
-            >
-              {statusText}
-            </Text>
-          </View>
-          <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
-        </View>
+        <FacilityStatusIndicator facility={facility} />
 
-        {/* Services Row */}
-        <View style={styles.servicesRow}>
-          {displayServices.map((service, index) => (
-            <ServiceChip key={index} service={service} transparent />
-          ))}
-          {hasMoreServices && !showAllServices && !simplified && (
-            <TouchableOpacity
-              style={styles.moreServices}
-              onPress={(e) => {
-                e.stopPropagation();
-                setShowAllServices(true);
-              }}
-            >
-              <Text
-                variant="labelSmall"
-                style={{
-                  color: theme.colors.primary,
-                  fontWeight: '800',
-                }}
-              >
-                +{totalServicesCount - displayServices.length} MORE
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
-        {/* Action Buttons Row */}
         <FacilityActionButtons
           contacts={facility.contacts}
           primaryPhone={facility.phone}
@@ -319,22 +205,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginLeft: 4,
     letterSpacing: 0.3,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  servicesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  moreServices: {
-    paddingHorizontal: 4,
-    paddingVertical: 4,
   },
   actionsRow: {
     marginTop: 8,

@@ -1,5 +1,6 @@
 import { normalizeNumericValue } from './stringUtils';
-import { AssessmentProfile, QuestionSlotGoal } from '../types/triage';
+import type { AssessmentProfile, QuestionSlotGoal } from '../types/triage';
+import type { HealthProfile } from '../types';
 
 export interface SoapSections {
   s?: string;
@@ -421,4 +422,78 @@ export const detectProfileChanges = (
   }
 
   return changes;
+};
+
+/**
+ * Calculates age from a date of birth string (YYYY-MM-DD).
+ */
+export const calculateAgeFromDob = (dob: string | null | undefined): number | null => {
+  if (!dob) return null;
+  const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+};
+
+/**
+ * Formats the user's health profile into a deterministic, human-readable, and LLM-friendly string.
+ * Used as a preamble for AI prompts to provide clinical context while omitting empty fields.
+ */
+export const formatProfileForAI = (profile: HealthProfile | undefined | null): string => {
+  if (!profile) return '';
+
+  const lines: string[] = [];
+
+  // 1. Age (Clinically most important)
+  if (profile.dob) {
+    const age = calculateAgeFromDob(profile.dob);
+    if (age !== null) {
+      lines.push(`- Age: ${age} (DOB: ${profile.dob})`);
+    } else {
+      lines.push(`- DOB: ${profile.dob}`);
+    }
+  }
+
+  // 2. Blood Type
+  if (profile.bloodType) {
+    lines.push(`- Blood Type: ${profile.bloodType}`);
+  }
+
+  // 3. Chronic Conditions
+  if (profile.chronicConditions && profile.chronicConditions.length > 0) {
+    const sorted = [...profile.chronicConditions].sort();
+    lines.push(`- Chronic Conditions: ${sorted.join(', ')}`);
+  }
+
+  // 4. Allergies
+  if (profile.allergies && profile.allergies.length > 0) {
+    const sorted = [...profile.allergies].sort();
+    lines.push(`- Allergies: ${sorted.join(', ')}`);
+  }
+
+  // 5. Current Medications
+  if (profile.currentMedications && profile.currentMedications.length > 0) {
+    const sorted = [...profile.currentMedications].sort();
+    lines.push(`- Medications: ${sorted.join(', ')}`);
+  }
+
+  // 6. Surgical History
+  if (profile.surgicalHistory?.trim()) {
+    lines.push(`- Surgical History: ${profile.surgicalHistory.trim()}`);
+  }
+
+  // 7. Family History
+  if (profile.familyHistory?.trim()) {
+    lines.push(`- Family History: ${profile.familyHistory.trim()}`);
+  }
+
+  if (lines.length === 0) return '';
+
+  return `USER HEALTH PROFILE:\n${lines.join('\n')}`;
 };

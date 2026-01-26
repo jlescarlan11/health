@@ -31,11 +31,12 @@ import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetecto
 import { FacilityCard } from '../components/common/FacilityCard';
 import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
 import { Button, SafetyRecheckModal, Text } from '../components/common';
+import { ServiceChip } from '../components/common/ServiceChip';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
+import { calculateDistance, scoreFacility, getFacilityServiceMatches } from '../utils';
 import { AssessmentProfile, TriageLevel, TriageAdjustmentRule } from '../types/triage';
 import { formatEmpatheticResponse } from '../utils/empatheticResponses';
 
@@ -837,17 +838,44 @@ const RecommendationScreen = () => {
               </Text>
             </View>
 
-            {recommendedFacilities.map((facility) => (
-              <FacilityCard
-                key={facility.id}
-                facility={facility}
-                showDistance={true}
-                distance={facility.distance}
-                onPress={() => handleViewDetails(facility.id)}
-                relevantServices={recommendation.relevant_services}
-                simplified={true}
-              />
-            ))}
+            {recommendedFacilities.map((facility) => {
+              const matchedServices = getFacilityServiceMatches(
+                facility,
+                recommendation.relevant_services || [],
+              );
+
+              return (
+                <View key={facility.id} style={styles.facilityEntry}>
+                  <FacilityCard
+                    facility={facility}
+                    showDistance={true}
+                    distance={facility.distance}
+                    onPress={() => handleViewDetails(facility.id)}
+                    showMatchIndicator={matchedServices.length > 0}
+                  />
+                  {matchedServices.length > 0 && (
+                    <View style={styles.matchSummaryContainer}>
+                      <Text
+                        variant="bodySmall"
+                        style={[styles.matchSummaryLabel, { color: theme.colors.onSurfaceVariant }]}
+                      >
+                        Matches your needs:
+                      </Text>
+                      <View style={styles.matchSummaryChips}>
+                        {matchedServices.map((service) => (
+                          <View
+                            key={`match-${facility.id}-${service}`}
+                            style={styles.matchSummaryChip}
+                          >
+                            <ServiceChip service={service} transparent />
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
 
             {recommendedFacilities.length === 0 && !isFacilitiesLoading && (
               <Surface style={styles.emptyState} elevation={0}>
@@ -973,6 +1001,28 @@ const styles = StyleSheet.create({
   },
 
   facilitiesSection: { marginBottom: 24 },
+  facilityEntry: {
+    marginBottom: 4,
+  },
+  matchSummaryContainer: {
+    marginTop: 4,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  matchSummaryLabel: {
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    fontSize: 12,
+  },
+  matchSummaryChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 6,
+  },
+  matchSummaryChip: {
+    marginRight: 8,
+    marginBottom: 8,
+  },
   sectionHeader: { marginBottom: 16, marginTop: 8 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },
   sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },

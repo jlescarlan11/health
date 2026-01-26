@@ -336,6 +336,16 @@ export class GeminiClient {
   }
 
   /**
+   * Prepends patient context to a prompt if provided.
+   */
+  private applyPatientContext(prompt: string, patientContext?: string): string {
+    if (!patientContext || !patientContext.trim()) {
+      return prompt;
+    }
+    return `${patientContext.trim()}\n\n---\n\n${prompt}`;
+  }
+
+  /**
    * Enforces rate limiting (RPM and Daily) with persistent RPM tracking.
    */
   private async checkRateLimits(): Promise<void> {
