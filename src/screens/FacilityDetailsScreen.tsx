@@ -15,20 +15,20 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 import { useTheme } from 'react-native-paper';
 
 import { Text } from '../components/common/Text';
 import { Button } from '../components/common/Button';
+import { FacilityActionButtons } from '../components/common/FacilityActionButtons';
 import StandardHeader from '../components/common/StandardHeader';
 import { BusynessIndicator } from '../components/common/BusynessIndicator';
 import { useUserLocation } from '../hooks';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
 import { ServiceChip } from '../components/common/ServiceChip';
-import { CommunicationHub } from '../components/features/facilities';
 import { sharingUtils } from '../utils/sharingUtils';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
@@ -277,20 +277,12 @@ export const FacilityDetailsScreen = () => {
           </View>
 
           {/* Quick Actions */}
-          <View style={styles.actionButtons}>
-            <CommunicationHub
-              contacts={facility.contacts}
-              primaryPhone={facility.phone}
-              callButtonStyle={styles.actionButton}
-            />
-            <Button
-              icon="directions"
-              title="Directions"
-              onPress={handleDirections}
-              style={styles.actionButton}
-              variant="primary"
-            />
-          </View>
+          <FacilityActionButtons
+            contacts={facility.contacts}
+            primaryPhone={facility.phone}
+            onDirectionsPress={handleDirections}
+            containerStyle={styles.actionButtons}
+          />
 
           <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
@@ -557,15 +549,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 24,
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    marginVertical: 0,
-    minHeight: 48,
   },
   divider: {
     height: 1,

@@ -15,15 +15,14 @@ import { Facility, FacilityService, FacilityBusyness } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
 import { getOpenStatus, formatFacilityType } from '../../utils';
 import { openExternalMaps } from '../../utils/linkingUtils';
-import { Button } from './Button';
 import { BusynessIndicator } from './BusynessIndicator';
 import { ServiceChip } from './ServiceChip';
-import { CommunicationHub } from '../features/facilities/CommunicationHub';
 import { TeleconsultBadge } from './TeleconsultBadge';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 import { sharingUtils } from '../../utils/sharingUtils';
 import { IconButton } from 'react-native-paper';
 import { Text } from './Text';
+import { FacilityActionButtons } from './FacilityActionButtons';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -255,20 +254,12 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
         </View>
 
         {/* Action Buttons Row */}
-        <View style={styles.actionsRow}>
-          <CommunicationHub
-            contacts={facility.contacts}
-            primaryPhone={facility.phone}
-            callButtonStyle={styles.actionButton}
-          />
-          <Button
-            title="Directions"
-            icon="directions"
-            variant="primary"
-            onPress={handleDirectionsPress}
-            style={styles.actionButton}
-          />
-        </View>
+        <FacilityActionButtons
+          contacts={facility.contacts}
+          primaryPhone={facility.phone}
+          onDirectionsPress={handleDirectionsPress}
+          containerStyle={styles.actionsRow}
+        />
       </View>
     </Card>
   );
@@ -346,13 +337,6 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   actionsRow: {
-    flexDirection: 'row',
-    gap: 12,
     marginTop: 8,
-  },
-  actionButton: {
-    flex: 1,
-    marginVertical: 0,
-    minHeight: 48,
   },
 });

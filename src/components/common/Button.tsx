@@ -76,7 +76,7 @@ export const Button: React.FC<ButtonProps> = ({
     variant === 'outline' && {
       borderColor: disabled ? theme.colors.outline : theme.colors.primary,
     },
-    labelStyle,
+    style,
   ];
 
   const scaledLabelStyle = [
