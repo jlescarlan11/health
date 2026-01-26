@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { Text, useTheme, Card, Avatar, Divider } from 'react-native-paper';
+import { useTheme, Card, Avatar, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +8,7 @@ import { RootStackScreenProps } from '../types/navigation';
 import * as DB from '../services/database';
 import { ClinicalHistoryRecord } from '../services/database';
 import StandardHeader from '../components/common/StandardHeader';
-import { Button } from '../components/common';
+import { Button, Text } from '../components/common';
 
 type Props = RootStackScreenProps<'ClinicalHistory'>;
 

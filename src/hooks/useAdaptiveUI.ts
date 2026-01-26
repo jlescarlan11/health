@@ -11,10 +11,10 @@ import { useAppSelector } from './reduxHooks';
  * @returns {boolean} returns.isSimplified - flag for simplified UI (true if Senior or PWD)
  */
 export const useAdaptiveUI = () => {
-  const specializedModes = useAppSelector((state) => state.settings.specializedModes);
+  const specializedModes = useAppSelector((state) => state.settings?.specializedModes);
 
   return useMemo(() => {
-    // Safety guard if specializedModes is undefined (e.g. legacy persisted state)
+    // Safety guard if settings or specializedModes is undefined (e.g. legacy persisted state or missing slice in tests)
     const modes = specializedModes || { isSenior: false, isPWD: false, isChronic: false };
     const { isSenior, isPWD } = modes;
 

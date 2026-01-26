@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MainHomeScreen, HealthFeedScreen, ProfileScreen, SettingsScreen } from '../screens';
+import { MainHomeScreen, HealthFeedScreen, SettingsScreen } from '../screens';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainTabParamList } from '../types/navigation';
@@ -55,16 +55,6 @@ export const BottomTabNavigator = () => {
           tabBarLabel: 'Feed',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="newspaper-variant" size={28} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Profile"
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: 'ID',
-          tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="card-account-details-outline" size={28} color={color} />
           ),
         }}
       />

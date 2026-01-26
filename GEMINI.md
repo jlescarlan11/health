@@ -109,6 +109,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Dependency Cleanup:** Uninstalled `@rnmapbox/maps` and map-related types from `package.json`.
   - **Configuration:** Removed Mapbox plugins and tokens from `app.json`, `app.config.js`, and `.env.example`.
   - **UI Refinement:** Transitioned to a purely list-based facility directory. Integrated native device maps via `Linking` for directions in `FacilityDetailsScreen.tsx`.
+  - **Cleanup:** Removed residual Mapbox configurations from `android/build.gradle`, `android/app/build.gradle`, and `android/gradle.properties` to fix build conflicts.
 
 - **Geolocation Support:** Implemented `expo-location` for real-time user positioning and distance calculation.
   - **Features:** Runtime permission handling with graceful fallbacks, and automatic distance-based sorting of facilities.

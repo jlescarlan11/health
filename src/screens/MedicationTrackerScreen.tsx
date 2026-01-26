@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   TextInput,
 } from 'react-native';
-import { Text, Button, ActivityIndicator, useTheme, Surface } from 'react-native-paper';
+import { Button, ActivityIndicator, useTheme, Surface } from 'react-native-paper';
+import { Text } from '../components/common/Text';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   addMedication,

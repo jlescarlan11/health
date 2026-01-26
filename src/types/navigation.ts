@@ -21,7 +21,6 @@ export type YakapStackParamList = {
 export type MainTabParamList = {
   HomeFeed: undefined;
   HealthFeed: undefined;
-  Profile: undefined;
   Settings: undefined;
 };
 
@@ -39,6 +38,7 @@ export type RootStackParamList = {
   };
   ClinicalNote: { recordId?: string };
   ClinicalHistory: undefined;
+  HealthProfileEdit: undefined;
   FacilityDetails: { facilityId: string };
   CrisisSupport: undefined;
   YakapFaq: undefined;

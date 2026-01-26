@@ -1,10 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Text, useTheme, Surface } from 'react-native-paper';
+import { useTheme, Surface } from 'react-native-paper';
 import { useAppSelector } from '../../../hooks/reduxHooks';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { YakapLogo } from '../../common/YakapLogo';
+import { Text } from '../../common/Text';
 
 export const DigitalIDCard: React.FC = () => {
   const theme = useTheme();

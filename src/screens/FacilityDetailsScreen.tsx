@@ -13,15 +13,28 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
-// ...
+import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import ImageViewing from 'react-native-image-viewing';
 import { useTheme } from 'react-native-paper';
+
 import { Text } from '../components/common/Text';
+import { Button } from '../components/common/Button';
+import StandardHeader from '../components/common/StandardHeader';
+import { BusynessIndicator } from '../components/common/BusynessIndicator';
 import { useUserLocation } from '../hooks';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
 import { ServiceChip } from '../components/common/ServiceChip';
 import { CommunicationHub } from '../components/features/facilities';
 import { sharingUtils } from '../utils/sharingUtils';
+import { calculateDistance, formatDistance } from '../utils/locationUtils';
+import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
+import { formatFacilityType } from '../utils/stringUtils';
+import { RootState } from '../store';
+import { RootStackScreenProps } from '../types/navigation';
 
 type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 

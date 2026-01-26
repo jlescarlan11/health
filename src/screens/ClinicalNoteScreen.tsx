@@ -7,13 +7,13 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Text, IconButton, Divider, useTheme } from 'react-native-paper';
+import { IconButton, Divider, useTheme } from 'react-native-paper';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootState } from '../store';
 import { RootStackParamList } from '../types/navigation';
-import { StandardHeader, Button } from '../components/common';
+import { StandardHeader, Button, Text } from '../components/common';
 import { parseSoap, formatClinicalShareText } from '../utils/clinicalUtils';
 import * as Clipboard from 'expo-clipboard';
 import * as Print from 'expo-print';

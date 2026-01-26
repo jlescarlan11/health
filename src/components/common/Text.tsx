@@ -7,7 +7,11 @@ import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
  * A wrapper around React Native Paper's Text component that automatically
  * applies a global scale factor for Senior/Adaptive UI modes.
  */
-export const Text: React.FC<TextProps> = ({ style, children, ...props }) => {
+interface CustomTextProps extends TextProps<any> {
+  children: React.ReactNode;
+}
+
+export const Text = ({ style, children, ...props }: CustomTextProps) => {
   const { scaleFactor } = useAdaptiveUI();
 
   // If scaleFactor is 1.0, just render the original component

@@ -40,7 +40,7 @@ const getApiUrl = () => {
     }
 
     // Try manifest hostUri
-    const hostUri = Constants.manifest?.hostUri;
+    const hostUri = Constants.expoConfig?.hostUri;
     if (hostUri) {
       const ipMatch = hostUri.match(/(\d+\.\d+\.\d+\.\d+)/);
       if (ipMatch) {

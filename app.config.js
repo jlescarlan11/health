@@ -43,6 +43,18 @@ module.exports = {
       'expo-system-ui',
       '@react-native-voice/voice',
       'expo-notifications',
+      './plugins/withGradleMemory',
+      [
+        'expo-build-properties',
+        {
+          android: {
+            kotlinVersion: '2.0.21',
+            packagingOptions: {
+              pickFirst: ['**/libc++_shared.so'],
+            },
+          },
+        },
+      ],
     ],
     extra: {
       apiUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',

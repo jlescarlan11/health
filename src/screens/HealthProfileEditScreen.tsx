@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, Text, useTheme, Snackbar } from 'react-native-paper';
+import { TextInput, useTheme, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,9 +8,9 @@ import StandardHeader from '../components/common/StandardHeader';
 import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import { updateProfile } from '../store/profileSlice';
 import { Button } from '../components/common/Button';
-import { DigitalIDCard } from '../components';
+import { DigitalIDCard, Text } from '../components';
 
-export const ProfileScreen = () => {
+export const HealthProfileEditScreen = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile);
@@ -57,7 +57,7 @@ export const ProfileScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right']}
     >
-      <StandardHeader title="Health ID" showBackButton={false} rightActions={rightActions} />
+      <StandardHeader title="Edit Health Profile" showBackButton={true} rightActions={rightActions} />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
         enableOnAndroid={true}
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 120, // Clear bottom tab bar
+    paddingBottom: 40, // Standard padding
   },
   header: {
     alignItems: 'center',
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   snackbarWrapper: {
-    bottom: 90, // Above bottom tabs
+    bottom: 20, // Standard position
   },
   snackbar: {
     borderRadius: 24,

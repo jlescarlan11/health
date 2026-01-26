@@ -12,6 +12,7 @@ import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
 import RecommendationScreen from '../screens/RecommendationScreen';
 import { ClinicalNoteScreen } from '../screens/ClinicalNoteScreen';
 import { ClinicalHistoryScreen } from '../screens/ClinicalHistoryScreen';
+import { HealthProfileEditScreen } from '../screens/HealthProfileEditScreen';
 import CrisisSupportScreen from '../screens/CrisisSupportScreen';
 import FacilityDetailsScreen from '../screens/FacilityDetailsScreen';
 import {
@@ -52,6 +53,7 @@ const AppNavigator = () => {
       />
       <Stack.Screen name="ClinicalNote" component={ClinicalNoteScreen} />
       <Stack.Screen name="ClinicalHistory" component={ClinicalHistoryScreen} />
+      <Stack.Screen name="HealthProfileEdit" component={HealthProfileEditScreen} />
       <Stack.Screen
         name="CrisisSupport"
         component={CrisisSupportScreen}
