@@ -116,7 +116,7 @@ export const MainHomeScreen = () => {
     },
   ];
 
-  const previewData = items.length > 0 ? items.slice(0, 2) : MOCK_PREVIEW;
+  const previewData = (items && items.length > 0) ? items.slice(0, 2) : MOCK_PREVIEW;
 
   return (
     <SafeAreaView

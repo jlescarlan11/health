@@ -54,15 +54,16 @@ const feedSlice = createSlice({
       })
       .addCase(fetchFeed.fulfilled, (state, action) => {
         state.loading = false;
-        const { items, page } = action.payload;
+        const items = action.payload.items || [];
+        const page = action.payload.page;
         
         if (page === 1) {
           state.items = items;
         } else {
           // Append new items, avoiding duplicates
-          const existingIds = new Set(state.items.map(i => i.id));
+          const existingIds = new Set((state.items || []).map(i => i.id));
           const newItems = items.filter(i => !existingIds.has(i.id));
-          state.items = [...state.items, ...newItems];
+          state.items = [...(state.items || []), ...newItems];
         }
 
         state.currentPage = page;

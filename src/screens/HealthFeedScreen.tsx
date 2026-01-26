@@ -26,10 +26,10 @@ export const HealthFeedScreen = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (items.length === 0) {
+    if (!items || items.length === 0) {
       loadFeed(1);
     }
-  }, [items.length, loadFeed]);
+  }, [items?.length, loadFeed]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

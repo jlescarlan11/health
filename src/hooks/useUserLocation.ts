@@ -48,7 +48,7 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
    */
   const checkProximity = useCallback((currentLocation: Location.LocationObject) => {
     const currentFacilities = facilitiesRef.current;
-    if (!currentFacilities.length) return;
+    if (!currentFacilities || currentFacilities.length === 0) return;
 
     const { latitude, longitude } = currentLocation.coords;
     let nearestFacilityId: string | null = null;
