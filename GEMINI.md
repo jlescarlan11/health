@@ -311,3 +311,10 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Issue:** Text elements in `FacilityDetailsScreen` were not responding to Senior Mode's font scaling settings.
   - **Fix:** Integrated `useAdaptiveUI` hook into `FacilityDetailsScreen.tsx`. Applied the `scaleFactor` to all text components including headers, body text, service chips, meta info, and action buttons (Directions/Call).
   - **Verification:** Created and passed a reproduction test suite `tests/FacilityDetailsScreen_Adaptive.test.tsx` ensuring 1.25x scaling is applied when Senior Mode is enabled.
+
+- **Health Promotion Feed Integration (Jan 26, 2026):**
+  - **Service Layer:** Implemented `healthFeedService.ts` using Naga City's WordPress REST API (`/wp-json/wp/v2/posts`) with a regex-based HTML scraping fallback. Added support for pagination, featured images, and author extraction with a 2-attempt retry logic.
+  - **State Management:** Refactored `feedSlice.ts` to manage `FeedItem` objects with persistence via Redux Persist. Implemented `fetchFeed` async thunk for automated data retrieval and pagination.
+  - **UI Implementation:** Updated `HealthFeedScreen.tsx` with a `FlatList` supporting pull-to-refresh, infinite scroll (load more), and comprehensive loading/error/empty states.
+  - **Branding & Sharing:** Enhanced `FeedItem.tsx` to support images and relative timestamps. Updated `sharingUtils.ts` to support sharing new feed items with direct links back to the official news source.
+  - **Integration:** Updated `MainHomeScreen.tsx` to display real-time health news previews instead of mock data.

@@ -1,62 +1,80 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export interface Campaign {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  type: 'immunization' | 'health-drive' | 'general';
-  location?: string;
-}
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { FeedItem } from '../types/feed';
+import { healthFeedService } from '../services/healthFeedService';
 
 interface FeedState {
-  campaigns: Campaign[];
+  items: FeedItem[];
+  loading: boolean;
+  error: string | null;
+  lastUpdated: number | null;
+  currentPage: number;
+  hasMore: boolean;
 }
 
-const MOCK_CAMPAIGNS: Campaign[] = [
-  {
-    id: '1',
-    title: 'Barangay Immunization Drive',
-    description: 'Free measles and polio vaccines for children under 5. Bring your baby book.',
-    date: '2026-02-15',
-    type: 'immunization',
-    location: 'Conception Pequeña Health Center',
-  },
-  {
-    id: '2',
-    title: 'Dengue Awareness & Cleanup',
-    description:
-      'Community-wide cleanup drive to prevent mosquito breeding. Fogging scheduled for afternoon.',
-    date: '2026-02-20',
-    type: 'health-drive',
-    location: 'Naga City Plaza',
-  },
-  {
-    id: '3',
-    title: 'Senior Citizen Wellness Check',
-    description: 'Free blood pressure and blood sugar screening for seniors.',
-    date: '2026-02-25',
-    type: 'general',
-    location: 'Pacol Barangay Hall',
-  },
-];
-
 const initialState: FeedState = {
-  campaigns: MOCK_CAMPAIGNS,
+  items: [],
+  loading: false,
+  error: null,
+  lastUpdated: null,
+  currentPage: 1,
+  hasMore: true,
 };
+
+export const fetchFeed = createAsyncThunk(
+  'feed/fetchFeed',
+  async ({ page, pageSize }: { page: number; pageSize: number }, { rejectWithValue }) => {
+    try {
+      const results = await healthFeedService.fetchHealthFeed({ page, pageSize });
+      return { items: results, page };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch health feed');
+    }
+  }
+);
 
 const feedSlice = createSlice({
   name: 'feed',
   initialState,
   reducers: {
-    addCampaign: (state, action: PayloadAction<Campaign>) => {
-      state.campaigns.unshift(action.payload);
+    clearError: (state) => {
+      state.error = null;
     },
-    removeCampaign: (state, action: PayloadAction<string>) => {
-      state.campaigns = state.campaigns.filter((c) => c.id !== action.payload);
+    resetFeed: (state) => {
+      state.items = [];
+      state.currentPage = 1;
+      state.hasMore = true;
+      state.error = null;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchFeed.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFeed.fulfilled, (state, action) => {
+        state.loading = false;
+        const { items, page } = action.payload;
+        
+        if (page === 1) {
+          state.items = items;
+        } else {
+          // Append new items, avoiding duplicates
+          const existingIds = new Set(state.items.map(i => i.id));
+          const newItems = items.filter(i => !existingIds.has(i.id));
+          state.items = [...state.items, ...newItems];
+        }
+
+        state.currentPage = page;
+        state.hasMore = items.length > 0;
+        state.lastUpdated = Date.now();
+      })
+      .addCase(fetchFeed.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
-export const { addCampaign, removeCampaign } = feedSlice.actions;
+export const { clearError, resetFeed } = feedSlice.actions;
 export default feedSlice.reducer;

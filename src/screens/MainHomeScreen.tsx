@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
+import { RootState } from '../store';
 import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text } from '../components/common';
 import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
@@ -19,6 +20,7 @@ export const MainHomeScreen = () => {
   const navigation = useNavigation<MainHomeNavigationProp>();
   const theme = useTheme();
   const lastNote = useSelector(selectLatestClinicalNote);
+  const { items } = useSelector((state: RootState) => state.feed);
 
   const FeatureCard = ({
     title,
@@ -95,7 +97,7 @@ export const MainHomeScreen = () => {
     );
   };
 
-  const PREVIEW_DATA: FeedItemData[] = [
+  const MOCK_PREVIEW: FeedItemData[] = [
     {
       id: '1',
       title: 'Naga City Health Tips',
@@ -113,6 +115,8 @@ export const MainHomeScreen = () => {
       timestamp: '5 hours ago',
     },
   ];
+
+  const previewData = items.length > 0 ? items.slice(0, 2) : MOCK_PREVIEW;
 
   return (
     <SafeAreaView
@@ -137,7 +141,7 @@ export const MainHomeScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {PREVIEW_DATA.map((item) => (
+          {previewData.map((item) => (
             <FeedItem
               key={item.id}
               item={item}

@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Card, Text, useTheme, IconButton } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { formatDistanceToNow, parseISO } from 'date-fns';
 import { ServiceChip } from '../../common/ServiceChip';
 import { useAdaptiveUI } from '../../../hooks/useAdaptiveUI';
 import { sharingUtils } from '../../../utils/sharingUtils';
+import { FeedItem as FeedItemType } from '../../../types/feed';
 
 export interface FeedItemData {
   id: string;
@@ -14,10 +16,11 @@ export interface FeedItemData {
   icon: string;
   timestamp: string;
   imageUrl?: string;
+  url?: string;
 }
 
 interface FeedItemProps {
-  item: FeedItemData;
+  item: FeedItemData | FeedItemType;
   onPress?: () => void;
 }
 
@@ -26,6 +29,24 @@ const TOKIWA_IRO = '#379777';
 export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
   const theme = useTheme();
   const { scaleFactor } = useAdaptiveUI();
+
+  // Unified data mapping
+  const title = item.title;
+  const description = 'description' in item ? item.description : item.excerpt;
+  const category = 'category' in item ? item.category : (item.categories[0] || 'Health');
+  const icon = (item as any).icon || 'newspaper-variant-outline';
+  const imageUrl = item.imageUrl;
+  
+  let timestamp = '';
+  if ('timestamp' in item) {
+    timestamp = item.timestamp;
+  } else if (item.dateISO) {
+    try {
+      timestamp = formatDistanceToNow(parseISO(item.dateISO), { addSuffix: true });
+    } catch (e) {
+      timestamp = item.dateISO.split('T')[0];
+    }
+  }
 
   return (
     <Card
@@ -40,13 +61,16 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
       mode="contained"
       accessible={true}
       accessibilityRole="button"
-      accessibilityLabel={`${item.category}: ${item.title}. ${item.description}`}
+      accessibilityLabel={`${category}: ${title}. ${description}`}
     >
+      {imageUrl && (
+        <Card.Cover source={{ uri: imageUrl }} style={styles.cardImage} />
+      )}
       <Card.Content style={styles.cardContent}>
         <View style={styles.leftColumn}>
           <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
             <MaterialCommunityIcons
-              name={item.icon as any}
+              name={icon as any}
               size={28 * scaleFactor}
               color={TOKIWA_IRO}
             />
@@ -55,9 +79,9 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
 
         <View style={styles.rightColumn}>
           <View style={styles.headerRow}>
-            <ServiceChip service={item.category} transparent />
+            <ServiceChip service={category} transparent />
             <Text variant="labelSmall" style={styles.timestampText}>
-              {item.timestamp}
+              {timestamp}
             </Text>
           </View>
 
@@ -66,7 +90,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
             numberOfLines={2}
             style={[styles.titleText, { fontSize: 18 * scaleFactor, lineHeight: 24 * scaleFactor }]}
           >
-            {item.title}
+            {title}
           </Text>
 
           <Text
@@ -77,7 +101,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
               { fontSize: 14 * scaleFactor, lineHeight: 20 * scaleFactor },
             ]}
           >
-            {item.description}
+            {description}
           </Text>
         </View>
 
@@ -91,7 +115,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
             }}
             style={styles.shareIconButton}
             iconColor={theme.colors.primary}
-            accessibilityLabel={`Share ${item.title}`}
+            accessibilityLabel={`Share ${title}`}
           />
           <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.outline} />
         </View>
@@ -107,6 +131,11 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderWidth: 0,
     overflow: 'hidden',
+  },
+  cardImage: {
+    height: 160,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   cardContent: {
     flexDirection: 'row',

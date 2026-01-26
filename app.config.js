@@ -44,11 +44,15 @@ module.exports = {
       '@react-native-voice/voice',
       'expo-notifications',
       './plugins/withGradleMemory',
+      './plugins/withAndroidXManifest',
       [
         'expo-build-properties',
         {
           android: {
             kotlinVersion: '2.0.21',
+            extraMavenRepos: [
+              'https://www.jitpack.io'
+            ],
             packagingOptions: {
               pickFirst: ['**/libc++_shared.so'],
             },

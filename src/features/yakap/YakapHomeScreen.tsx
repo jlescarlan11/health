@@ -30,8 +30,8 @@ const YakapHomeScreen = () => {
     navigation.navigate('YakapFaq');
   };
 
-  const navigateToProfile = () => {
-    navigation.navigate('Home', { screen: 'Profile' });
+  const navigateToHistory = () => {
+    navigation.navigate('ClinicalHistory');
   };
 
   const renderBenefitItem = (benefit: YakapBenefit) => {
@@ -96,7 +96,7 @@ const YakapHomeScreen = () => {
         {/* Digital ID CTA */}
         <View style={styles.idContainer}>
           <Card
-            onPress={navigateToProfile}
+            onPress={navigateToHistory}
             style={[styles.idCard, { backgroundColor: theme.colors.primaryContainer + '40' }]}
             mode="contained"
           >
@@ -108,17 +108,17 @@ const YakapHomeScreen = () => {
                 ]}
               >
                 <MaterialCommunityIcons
-                  name="card-account-details-outline"
+                  name="clipboard-text-outline"
                   size={24}
                   color="#FFFFFF"
                 />
               </View>
               <View style={styles.idTextContainer}>
                 <Text variant="titleMedium" style={styles.idTitle}>
-                  My Digital ID
+                  My Health Records
                 </Text>
                 <Text variant="bodySmall" style={styles.idSubtitle}>
-                  View and manage your health profile for faster processing at health centers.
+                  View your past assessments and clinical notes for easier reference.
                 </Text>
               </View>
               <MaterialCommunityIcons

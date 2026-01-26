@@ -17,7 +17,7 @@ describe('HealthProfileEditScreen', () => {
       reducer: {
         profile: profileReducer,
         settings: settingsReducer,
-      },
+      } as any,
       preloadedState: {
         profile: {
           fullName: 'Juan Dela Cruz',

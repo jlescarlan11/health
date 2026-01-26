@@ -2,6 +2,7 @@ import * as Sharing from 'expo-sharing';
 import { Share, Platform, Alert } from 'react-native';
 import { Facility } from '../types';
 import { FeedItemData } from '../components/features/feed/FeedItem';
+import { FeedItem } from '../types/feed';
 
 /**
  * Interface for the result of a sharing operation
@@ -41,14 +42,17 @@ export const sharingUtils = {
    * Shares a health tip with a standardized message format.
    * Uses React Native's Share API for text-based sharing.
    * 
-   * @param tip The health tip data to share (supports FeedItemData or a basic HealthTip object)
+   * @param tip The health tip data to share (supports FeedItemData, FeedItem or a basic HealthTip object)
    * @returns A promise resolving to a ShareResult
    */
-  async shareHealthTip(tip: FeedItemData | HealthTip): Promise<ShareResult> {
+  async shareHealthTip(tip: FeedItemData | FeedItem | HealthTip): Promise<ShareResult> {
     try {
+      const description = 'description' in tip ? tip.description : (tip as FeedItem).excerpt;
+      const url = 'url' in tip ? `\n\nRead more: ${tip.url}` : '';
+
       const message = `🏥 Health Tip from Naga City HEALTH App\n\n` +
         `📌 ${tip.title}\n\n` +
-        `${tip.description}\n\n` +
+        `${description}${url}\n\n` +
         `Stay safe and informed! #NagaCityHealth`;
 
       const result = await Share.share({

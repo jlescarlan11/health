@@ -1,55 +1,67 @@
-import React from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-import { Text, useTheme, Card } from 'react-native-paper';
+import React, { useEffect, useCallback, useState } from 'react';
+import { View, StyleSheet, FlatList, RefreshControl, Linking, ActivityIndicator } from 'react-native';
+import { Text, useTheme, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
 import { MainTabScreenProps } from '../types/navigation';
 import StandardHeader from '../components/common/StandardHeader';
-import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
-
-const MOCK_DATA: FeedItemData[] = [
-  {
-    id: '1',
-    title: 'Naga City Health Tips',
-    category: 'Prevention',
-    description: 'Protect yourself from seasonal illnesses with these local health guidelines.',
-    icon: 'shield-check-outline',
-    timestamp: '2 hours ago',
-  },
-  {
-    id: '2',
-    title: 'Upcoming Vaccination Drive',
-    category: 'Community',
-    description: "Free vaccinations available at the Naga City People's Hall this Friday.",
-    icon: 'needle',
-    timestamp: '5 hours ago',
-  },
-  {
-    id: '3',
-    title: 'Mental Health Awareness',
-    category: 'Wellness',
-    description: 'Join our weekly session on stress management and local support resources.',
-    icon: 'brain',
-    timestamp: '1 day ago',
-  },
-];
+import { FeedItem } from '../components/features/feed/FeedItem';
+import { fetchFeed, resetFeed } from '../store/feedSlice';
+import { RootState, AppDispatch } from '../store';
+import { FeedItem as FeedItemType } from '../types/feed';
 
 type Props = MainTabScreenProps<'HealthFeed'>;
 
-export const HealthFeedScreen = () => {
-  const navigation = useNavigation<Props['navigation']>();
-  const theme = useTheme();
+const PAGE_SIZE = 10;
 
-  const renderItem = ({ item }: { item: FeedItemData }) => {
+export const HealthFeedScreen = () => {
+  const theme = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
+  const { items, loading, error, currentPage, hasMore } = useSelector((state: RootState) => state.feed);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadFeed = useCallback((page = 1) => {
+    dispatch(fetchFeed({ page, pageSize: PAGE_SIZE }));
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (items.length === 0) {
+      loadFeed(1);
+    }
+  }, [items.length, loadFeed]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await dispatch(fetchFeed({ page: 1, pageSize: PAGE_SIZE }));
+    setRefreshing(false);
+  }, [dispatch]);
+
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      loadFeed(currentPage + 1);
+    }
+  }, [loading, hasMore, currentPage, loadFeed]);
+
+  const renderItem = ({ item }: { item: FeedItemType }) => {
     return (
       <FeedItem
         item={item}
         onPress={() => {
-          // Placeholder for detail navigation
-          console.log('Pressed item:', item.title);
+          if (item.url) {
+            Linking.openURL(item.url);
+          }
         }}
       />
+    );
+  };
+
+  const renderFooter = () => {
+    if (!loading) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={theme.colors.primary} />
+      </View>
     );
   };
 
@@ -59,11 +71,17 @@ export const HealthFeedScreen = () => {
       edges={['left', 'right']}
     >
       <StandardHeader title="Health Promotion Feed" showBackButton={false} />
+      
       <FlatList
-        data={MOCK_DATA}
+        data={items}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />
+        }
         ListHeaderComponent={
           <View style={styles.headerInfo}>
             <Text variant="titleLarge" style={styles.headerTitle}>
@@ -72,23 +90,41 @@ export const HealthFeedScreen = () => {
             <Text variant="bodyMedium" style={styles.headerSubtitle}>
               Stay informed with the latest health news and tips for Naga City.
             </Text>
+            {error && (
+              <View style={styles.errorBanner}>
+                <MaterialCommunityIcons name="alert-circle-outline" size={20} color={theme.colors.error} />
+                <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
+                <Button compact onPress={() => loadFeed(currentPage)}>Retry</Button>
+              </View>
+            )}
           </View>
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons
-              name="newspaper-variant-outline"
-              size={80}
-              color={theme.colors.outline}
-            />
-            <Text variant="headlineSmall" style={styles.emptyTitle}>
-              No Updates Yet
-            </Text>
-            <Text variant="bodyMedium" style={styles.emptySubtitle}>
-              Check back later for the latest health promotions and news.
-            </Text>
-          </View>
+          !loading ? (
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons
+                name="newspaper-variant-outline"
+                size={80}
+                color={theme.colors.outline}
+              />
+              <Text variant="headlineSmall" style={styles.emptyTitle}>
+                No Updates Yet
+              </Text>
+              <Text variant="bodyMedium" style={styles.emptySubtitle}>
+                Check back later for the latest health promotions and news.
+              </Text>
+              <Button mode="contained" onPress={() => loadFeed(1)} style={{ marginTop: 20 }}>
+                Refresh Feed
+              </Button>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={{ marginTop: 16 }}>Loading latest health news...</Text>
+            </View>
+          )
         }
+        ListFooterComponent={renderFooter}
       />
     </SafeAreaView>
   );
@@ -100,7 +136,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 100, // Extra padding for tab bar
+    paddingBottom: 100,
     flexGrow: 1,
   },
   headerInfo: {
@@ -131,5 +167,22 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  footerLoader: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(186, 26, 26, 0.05)',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  errorText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
   },
 });
