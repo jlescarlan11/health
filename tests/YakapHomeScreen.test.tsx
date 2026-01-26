@@ -42,14 +42,14 @@ describe('YakapHomeScreen', () => {
     const { getByText } = renderComponent();
 
     expect(getByText('YAKAP Program')).toBeTruthy();
-    expect(getByText('My Digital ID')).toBeTruthy();
+    expect(getByText('My Health Records')).toBeTruthy();
     expect(getByText('Start Enrollment Guide')).toBeTruthy();
   });
 
-  it('navigates to Profile when Digital ID is pressed', () => {
+  it('navigates to ClinicalHistory when Health Records is pressed', () => {
     const { getByText } = renderComponent();
-    fireEvent.press(getByText('My Digital ID'));
-    expect(mockNavigate).toHaveBeenCalledWith('Home', { screen: 'Profile' });
+    fireEvent.press(getByText('My Health Records'));
+    expect(mockNavigate).toHaveBeenCalledWith('ClinicalHistory');
   });
 
   it('navigates to EligibilityChecker when Start Enrollment Guide is pressed', () => {

@@ -2,6 +2,8 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 import { Provider as PaperProvider, Card } from 'react-native-paper';
+import { Provider } from 'react-redux';
+import { store } from '../../../../store';
 import { TriageStatusCard, getLevelLabel } from '../TriageStatusCard';
 import { theme } from '../../../../theme';
 import { TriageLevel } from '../../../../types/triage';
@@ -42,9 +44,11 @@ const levelFixtures: LevelFixture[] = [
 
 const renderCard = (props: React.ComponentProps<typeof TriageStatusCard>) =>
   render(
-    <PaperProvider theme={theme}>
-      <TriageStatusCard {...props} />
-    </PaperProvider>,
+    <Provider store={store}>
+      <PaperProvider theme={theme}>
+        <TriageStatusCard {...props} />
+      </PaperProvider>
+    </Provider>,
   );
 
 describe('TriageStatusCard', () => {
@@ -101,9 +105,11 @@ describe('TriageStatusCard', () => {
       expect(getByText('Based on your inputs, we recommend...')).toBeTruthy();
 
       rerender(
-        <PaperProvider theme={theme}>
-          <TriageStatusCard level={fixture.level} />
-        </PaperProvider>,
+        <Provider store={store}>
+          <PaperProvider theme={theme}>
+            <TriageStatusCard level={fixture.level} />
+          </PaperProvider>
+        </Provider>,
       );
       expect(queryByText('Follow these instructions.')).toBeNull();
     });

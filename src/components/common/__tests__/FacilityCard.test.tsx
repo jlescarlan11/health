@@ -1,6 +1,8 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import { FacilityCard } from '../FacilityCard';
+import { Provider } from 'react-redux';
+import { store } from '../../../store';
 import { useTheme } from 'react-native-paper';
 import type { Facility, FacilityService } from '../../../types';
 
@@ -43,8 +45,12 @@ describe('FacilityCard', () => {
     busyness: { status: 'quiet' as const, score: 0.2 },
   };
 
+  const renderWithProvider = (ui: React.ReactElement) => {
+    return render(<Provider store={store}>{ui}</Provider>);
+  };
+
   it('renders busyness indicator when facility is open', () => {
-    const { getByText } = render(<FacilityCard facility={mockFacility} />);
+    const { getByText } = renderWithProvider(<FacilityCard facility={mockFacility} />);
     expect(getByText('Not Busy')).toBeTruthy();
   });
 
@@ -54,7 +60,7 @@ describe('FacilityCard', () => {
       is_24_7: false,
       operatingHours: { is24x7: false, schedule: { [new Date().getDay()]: null } },
     };
-    const { queryByText } = render(<FacilityCard facility={closedFacility} />);
+    const { queryByText } = renderWithProvider(<FacilityCard facility={closedFacility} />);
     expect(queryByText('Quiet Now')).toBeNull();
   });
 
@@ -71,7 +77,7 @@ describe('FacilityCard', () => {
         },
       ],
     };
-    const { getByText } = render(<FacilityCard facility={teleconsultFacility} />);
+    const { getByText } = renderWithProvider(<FacilityCard facility={teleconsultFacility} />);
     expect(getByText('Teleconsult')).toBeTruthy();
   });
 });

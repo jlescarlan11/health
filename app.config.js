@@ -50,6 +50,7 @@ module.exports = {
         {
           android: {
             kotlinVersion: '2.0.21',
+            supportLibVersion: '28.0.0',
             extraMavenRepos: [
               'https://www.jitpack.io'
             ],

@@ -109,7 +109,7 @@ export const FacilityDetailsScreen = () => {
     if (!facility) return {};
 
     const grouped: Record<string, string[]> = {};
-    const allServices = [...facility.services];
+    const allServices = [...(facility.services || [])];
 
     // Add specialized_services to Specialized Services category if they exist
     if (facility.specialized_services) {

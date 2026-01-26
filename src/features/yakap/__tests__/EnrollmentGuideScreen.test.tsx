@@ -3,6 +3,8 @@ import { render } from '@testing-library/react-native';
 import EnrollmentGuideScreen from '../EnrollmentGuideScreen';
 import { NavigationContainer } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider } from 'react-redux';
+import { store } from '../../../store';
 
 // Mock dependencies
 const mockGoBack = jest.fn();
@@ -36,11 +38,13 @@ jest.mock('@expo/vector-icons', () => ({
 
 describe('EnrollmentGuideScreen', () => {
   const renderComponent = () => (
-    <PaperProvider>
-      <NavigationContainer>
-        <EnrollmentGuideScreen />
-      </NavigationContainer>
-    </PaperProvider>
+    <Provider store={store}>
+      <PaperProvider>
+        <NavigationContainer>
+          <EnrollmentGuideScreen />
+        </NavigationContainer>
+      </PaperProvider>
+    </Provider>
   );
 
   beforeEach(() => {

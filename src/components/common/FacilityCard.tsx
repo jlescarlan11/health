@@ -51,7 +51,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
   const hasMatches = React.useMemo(() => {
     if (!relevantServices || relevantServices.length === 0) return false;
-    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+    const allServices = [...(facility.services || []), ...(facility.specialized_services || [])];
     return relevantServices.some((rs) =>
       allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
     );
@@ -90,7 +90,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
   // Determine which services to show
   const displayServices = React.useMemo(() => {
-    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+    const allServices = [...(facility.services || []), ...(facility.specialized_services || [])];
 
     // In simplified/list view, we strictly limit to 3 and ignore showAllServices
     if (simplified) {
@@ -128,7 +128,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   ]);
 
   const totalServicesCount =
-    facility.services.length + (facility.specialized_services?.length || 0);
+    (facility.services?.length || 0) + (facility.specialized_services?.length || 0);
   const hasMoreServices = totalServicesCount > displayServices.length;
 
   return (

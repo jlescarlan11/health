@@ -1,6 +1,8 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
+import { Provider } from 'react-redux';
+import { store } from '../../../../store';
 import { CommunicationHub } from '../CommunicationHub';
 import * as linkingUtils from '../../../../utils/linkingUtils';
 
@@ -48,8 +50,12 @@ describe('CommunicationHub', () => {
     jest.spyOn(Alert, 'alert');
   });
 
+  const renderWithProvider = (ui: React.ReactElement) => {
+    return render(<Provider store={store}>{ui}</Provider>);
+  };
+
   it('renders all action buttons when contacts are provided', () => {
-    const { getByText, getByTestId } = render(<CommunicationHub contacts={mockContacts as any} />);
+    const { getByText, getByTestId } = renderWithProvider(<CommunicationHub contacts={mockContacts as any} />);
 
     expect(getByText('Call')).toBeTruthy();
     // Buttons for Viber and Messenger use icons, so we check if they exist via their presence
@@ -58,7 +64,7 @@ describe('CommunicationHub', () => {
 
   it('calls openViber when Viber button is pressed', async () => {
     const spy = jest.spyOn(linkingUtils, 'openViber').mockResolvedValue(true);
-    const { getByTestId } = render(<CommunicationHub contacts={mockContacts as any} />);
+    const { getByTestId } = renderWithProvider(<CommunicationHub contacts={mockContacts as any} />);
 
     fireEvent.press(getByTestId('viber-button'));
 
@@ -67,7 +73,7 @@ describe('CommunicationHub', () => {
 
   it('calls openMessenger when Messenger button is pressed', async () => {
     const spy = jest.spyOn(linkingUtils, 'openMessenger').mockResolvedValue(true);
-    const { getByTestId } = render(<CommunicationHub contacts={mockContacts as any} />);
+    const { getByTestId } = renderWithProvider(<CommunicationHub contacts={mockContacts as any} />);
 
     fireEvent.press(getByTestId('messenger-button'));
 
@@ -76,7 +82,7 @@ describe('CommunicationHub', () => {
 
   it('shows an alert if openViber fails', async () => {
     jest.spyOn(linkingUtils, 'openViber').mockResolvedValue(false);
-    const { getByTestId } = render(
+    const { getByTestId } = renderWithProvider(
       <CommunicationHub contacts={[{ platform: 'viber', phoneNumber: '123' }] as any} />,
     );
 
@@ -92,7 +98,7 @@ describe('CommunicationHub', () => {
 
   it('shows an alert if openMessenger fails', async () => {
     jest.spyOn(linkingUtils, 'openMessenger').mockResolvedValue(false);
-    const { getByTestId } = render(
+    const { getByTestId } = renderWithProvider(
       <CommunicationHub contacts={[{ platform: 'messenger', phoneNumber: 'abc' }] as any} />,
     );
 

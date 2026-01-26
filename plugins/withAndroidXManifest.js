@@ -11,6 +11,9 @@ module.exports = function withAndroidXManifest(config) {
 
     const application = androidManifest.application[0];
     
+    // Explicitly delete to avoid any multiple definition errors during merger if they exist
+    delete application.$['android:appComponentFactory'];
+
     // Add tools:replace to resolve appComponentFactory conflict
     application.$['tools:replace'] = 'android:appComponentFactory';
     application.$['android:appComponentFactory'] = 'androidx.core.app.CoreComponentFactory';
