@@ -73,7 +73,12 @@ import {
   MultiSelectChecklist,
 } from '../components/common';
 import { DYNAMIC_CLARIFIER_PROMPT_TEMPLATE } from '../constants/prompts';
-import { formatEmpatheticResponse } from '../utils/empatheticResponses';
+import {
+  formatEmpatheticResponse,
+  derivePrimarySymptom,
+  formatSymptomReference,
+  parseSeverityScore,
+} from '../utils/empatheticResponses';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -95,6 +100,8 @@ const composeAssistantMessage = ({
   reasonSource,
   nextAction,
   inlineAck,
+  profile,
+  primarySymptom,
   timestamp,
   extra = {},
 }: {
@@ -105,6 +112,8 @@ const composeAssistantMessage = ({
   reasonSource?: string;
   nextAction?: string;
   inlineAck?: string;
+  profile?: AssessmentProfile;
+  primarySymptom?: string;
   timestamp: number;
   extra?: Partial<Omit<Message, 'id' | 'sender' | 'text' | 'timestamp'>>;
 }): Message => {
@@ -125,6 +134,8 @@ const composeAssistantMessage = ({
     reason,
     reasonSource,
     inlineAck,
+    profile,
+    primarySymptom,
     // nextAction, // OMITTED to prevent display in user-facing text
     metadata: safeMetadata,
   });
@@ -224,20 +235,25 @@ const SENTIMENT_PATTERNS = {
   uncertainty: /\b(don'?t\s+know|unsure|maybe|not\s+sure)\b/i,
 };
 
-const buildBridgeText = (lastUserText: string, nextQuestionText: string) => {
+const buildBridgeText = (
+  lastUserText: string,
+  nextQuestionText: string,
+  symptomReference?: string,
+) => {
   const text = lastUserText || '';
+  const symptomLabel = symptomReference || 'your symptoms';
 
   if (SENTIMENT_PATTERNS.distress.test(text)) {
-    return `I'm sorry you're going through this... ${nextQuestionText}`;
+    return `I understand that ${symptomLabel} is painful for you. ${nextQuestionText}`;
   }
   if (SENTIMENT_PATTERNS.denial.test(text)) {
-    return `That's good to know... ${nextQuestionText}`;
+    return `That's good to know about ${symptomLabel}. ${nextQuestionText}`;
   }
   if (SENTIMENT_PATTERNS.uncertainty.test(text)) {
-    return `That's okay, we can work with that... ${nextQuestionText}`;
+    return `That's okay, we can keep working through ${symptomLabel}. ${nextQuestionText}`;
   }
 
-  return `Got it. ${nextQuestionText}`;
+  return `Thanks for sharing more about ${symptomLabel}. ${nextQuestionText}`;
 };
 
 const escapeForRegex = (value: string) => value.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
@@ -360,6 +376,7 @@ const SymptomAssessmentScreen = () => {
   const keyboardScrollRaf = useRef<number | null>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
   const trimmedInitialSymptom = (initialSymptom || '').trim();
+  const defaultPrimarySymptom = derivePrimarySymptom(initialSymptom);
   const hasInitialSymptom = trimmedInitialSymptom.length > 0;
   const safetySymptomReference = hasInitialSymptom
     ? `"${trimmedInitialSymptom}"`
@@ -930,16 +947,16 @@ const SymptomAssessmentScreen = () => {
         return true;
       });
 
-      const annotatedPlan = annotateQuestionsWithSlotMetadata(
-        prunedPlan,
-        undefined,
-        undefined,
-        slots,
-      );
-      setQuestions(annotatedPlan);
-      setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
+          const annotatedPlan = annotateQuestionsWithSlotMetadata(
+            prunedPlan,
+            undefined,
+            undefined,
+            slots,
+          );
+          setQuestions(annotatedPlan);
+          setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
 
-      // Add Intro & First Question
+          // Add Intro & First Question
       const firstQ = prunedPlan[0];
       const introText = intro
         ? `${intro}\n\n${firstQ.text}`
@@ -1089,6 +1106,13 @@ const SymptomAssessmentScreen = () => {
             extractedProfile,
             slotSnapshot ?? incrementalSlots,
           );
+          const primarySymptomForProfile = derivePrimarySymptom(initialSymptom, profile.summary);
+          const fallbackSymptomLabel = formatSymptomReference(
+            primarySymptomForProfile ?? defaultPrimarySymptom,
+          );
+          const severityScoreForProfile = parseSeverityScore(profile.severity);
+          const bridgeSymptomCategory =
+            profile.symptom_category || symptomCategory || 'simple';
 
           // --- Mid-Stream Category Escalation Detection ---
           // Triggers when clinical extraction elevates the acuity level during an active session.
@@ -1121,15 +1145,17 @@ const SymptomAssessmentScreen = () => {
                     // 2. Inject Pivot Message
                     const pivotTimestamp = Date.now();
                     appendMessagesToConversation([
-                      composeAssistantMessage({
-                        id: `pivot-${pivotTimestamp}`,
-                        body: 'Given the new details you shared, I need to ask a few specific questions to better understand your situation.',
-                        reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
-                        reasonSource: 'escalation-pivot',
-                        nextAction: 'Refining assessment plan.',
-                        inlineAck: consumePendingCorrection(),
-                        timestamp: pivotTimestamp,
-                      }),
+                    composeAssistantMessage({
+                      id: `pivot-${pivotTimestamp}`,
+                      body: 'Given the new details you shared, I need to ask a few specific questions to better understand your situation.',
+                      reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
+                      reasonSource: 'escalation-pivot',
+                      nextAction: 'Refining assessment plan.',
+                      inlineAck: consumePendingCorrection(),
+                      profile,
+                      primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                      timestamp: pivotTimestamp,
+                    }),
                     ]);
 
                     // 3. Update Question Queue
@@ -1363,18 +1389,20 @@ const SymptomAssessmentScreen = () => {
             setIsTyping(false);
             setAssessmentStage('review');
             const terminationTimestamp = Date.now();
-            appendMessagesToConversation([
-              composeAssistantMessage({
-                id: 'early-exit',
-                body: 'Thank you. I have sufficient information to provide a recommendation for you.',
-                header: clarificationHeader,
-                reason: arbiterResult.reason,
-                reasonSource: 'arbiter-termination',
-                nextAction: 'I will now finalize your recommendation and share it shortly.',
-                inlineAck: consumePendingCorrection(),
-                timestamp: terminationTimestamp,
-              }),
-            ]);
+                appendMessagesToConversation([
+                  composeAssistantMessage({
+                    id: 'early-exit',
+                    body: 'Thank you. I have sufficient information to provide a recommendation for you.',
+                    header: clarificationHeader,
+                    reason: arbiterResult.reason,
+                    reasonSource: 'arbiter-termination',
+                    nextAction: 'I will now finalize your recommendation and share it shortly.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                    timestamp: terminationTimestamp,
+                  }),
+                ]);
             setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
             return;
           }
@@ -1459,6 +1487,9 @@ Recent User Answer: ${trimmedAnswer}
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-drill-down',
                     nextAction: 'Please answer this specific question.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                     timestamp: drillTimestamp,
                   }),
                 ]);
@@ -1496,17 +1527,19 @@ Recent User Answer: ${trimmedAnswer}
             );
             {
               const resetTimestamp = Date.now();
-              appendMessagesToConversation([
-                composeAssistantMessage({
-                  id: `system-reset-${resetTimestamp}`,
-                  body: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
-                  reason: arbiterResult.reason,
-                  reasonSource: 'arbiter-reset',
-                  nextAction: 'Please help me review those details so I can keep you safe.',
-                  timestamp: resetTimestamp,
-                }),
-              ]);
-            }
+                            appendMessagesToConversation([
+                              composeAssistantMessage({
+                                id: `system-reset-${resetTimestamp}`,
+                                body: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
+                                reason: arbiterResult.reason,
+                                reasonSource: 'arbiter-reset',
+                                nextAction: 'Please help me review those details so I can keep you safe.',
+                                inlineAck: consumePendingCorrection(),
+                                profile,
+                                primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                                timestamp: resetTimestamp,
+                              }),
+                            ]);            }
           }
 
           // SAFETY GATE: If plan is exhausted but we are NOT ready to terminate (due to ambiguity or score)
@@ -1520,16 +1553,19 @@ Recent User Answer: ${trimmedAnswer}
             // Inject clarifying feedback to build trust during expansion
             {
               const expansionTimestamp = Date.now();
-              appendMessagesToConversation([
-                composeAssistantMessage({
-                  id: `expansion-notice-${expansionTimestamp}`,
-                  body: 'I have just a few more specific questions to help me provide the best recommendation.',
-                  reason: arbiterResult.reason,
-                  reasonSource: 'arbiter-expansion',
-                  nextAction: 'Please answer the next question so I can finish the assessment.',
-                  timestamp: expansionTimestamp,
-                }),
-              ]);
+                appendMessagesToConversation([
+                  composeAssistantMessage({
+                    id: `expansion-notice-${expansionTimestamp}`,
+                    body: 'I have just a few more specific questions to help me provide the best recommendation.',
+                    reason: arbiterResult.reason,
+                    reasonSource: 'arbiter-expansion',
+                    nextAction: 'Please answer the next question so I can finish the assessment.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                    timestamp: expansionTimestamp,
+                  }),
+                ]);
             }
             hasShownClarificationHeader.current = true; // Avoid double headers
             clarificationHeader = ''; // Clear for the next question bubble to avoid redundancy
@@ -1655,6 +1691,9 @@ Recent User Answer: ${trimmedAnswer}
                           reasonSource: 'arbiter-expansion',
                           nextAction:
                             'Please answer this follow-up so I can provide the most complete guidance.',
+                          inlineAck: consumePendingCorrection(),
+                          profile,
+                          primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                           timestamp: extraTimestamp,
                         }),
                       ]);
@@ -1694,17 +1733,20 @@ Recent User Answer: ${trimmedAnswer}
             setIsTyping(false);
             setAssessmentStage('review');
             const finalizeSafetyTimestamp = Date.now();
-            appendMessagesToConversation([
-              composeAssistantMessage({
-                id: 'finalizing-safety-fallback',
-                header: clarificationHeader,
-                body: 'I have gathered enough initial information to provide a recommendation for you.',
-                reason: arbiterResult.reason,
-                reasonSource: 'arbiter-finalize-safety',
-                nextAction: 'Please wait while I prepare the recommendation for you.',
-                timestamp: finalizeSafetyTimestamp,
-              }),
-            ]);
+              appendMessagesToConversation([
+                composeAssistantMessage({
+                  id: 'finalizing-safety-fallback',
+                  header: clarificationHeader,
+                  body: 'I have gathered enough initial information to provide a recommendation for you.',
+                  reason: arbiterResult.reason,
+                  reasonSource: 'arbiter-finalize-safety',
+                  nextAction: 'Please wait while I prepare the recommendation for you.',
+                  inlineAck: consumePendingCorrection(),
+                  timestamp: finalizeSafetyTimestamp,
+                  profile,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                }),
+              ]);
             setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
             return;
           }
@@ -1712,27 +1754,48 @@ Recent User Answer: ${trimmedAnswer}
           // If we are continuing within the planned questions after Turn 4 check
           if (!effectiveIsAtEnd) {
             const nextQ = activeQuestions[nextIdx];
+            const readinessScore = profile.triage_readiness_score || 0;
+            const lastUserText =
+              historyItems
+                .slice()
+                .reverse()
+                .find((item) => item.role === 'user')?.text || '';
+            const buildAdaptiveBridgeText = async (questionText: string, conversationHistory: string) => {
+              try {
+                const response = await geminiClient.generateBridgeMessage({
+                  conversationHistory,
+                  nextQuestion: questionText,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                  severityLevel: severityScoreForProfile,
+                  symptomCategory: bridgeSymptomCategory,
+                });
+                return response.trim();
+              } catch (error) {
+                console.warn('[Assessment] Bridge prompt failed; falling back to local text.', error);
+                return buildBridgeText(conversationHistory, questionText, fallbackSymptomLabel);
+              }
+            };
 
             // CHECK FOR RESUMPTION BRIDGE
             if (isQueueSuspended) {
               console.log('[Assessment] Resuming queue after drill-down. Applying bridge.');
               setIsQueueSuspended(false); // Reset flag
 
-              const bridgeBody =
-                'That helps clarify things. Let’s continue with the rest of our check.';
-              const bridgedText = `${bridgeBody} ${nextQ.text}`;
-
               setIsTyping(true);
+              const bridgeText = await buildAdaptiveBridgeText(nextQ.text, lastUserText);
               {
                 const resumeTimestamp = Date.now();
                 appendMessagesToConversation([
                   composeAssistantMessage({
                     id: `ai-resume-${nextIdx}`,
                     header: clarificationHeader,
-                    body: bridgedText,
+                    body: bridgeText,
                     reason: 'Resuming assessment plan after drill-down.',
                     reasonSource: 'arbiter-resume',
                     nextAction: 'Please answer this to continue.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                     timestamp: resumeTimestamp,
                   }),
                 ]);
@@ -1743,19 +1806,12 @@ Recent User Answer: ${trimmedAnswer}
               return;
             }
 
-            const readinessScore = profile.triage_readiness_score || 0;
-            const lastUserText =
-              historyItems
-                .slice()
-                .reverse()
-                .find((item) => item.role === 'user')?.text || '';
-
             if (readinessScore > 0.4) {
               console.log(
-                `[Assessment] Readiness > 0.4 (${readinessScore}). Using local bridge text.`,
+                `[Assessment] Readiness > 0.4 (${readinessScore}). Generating an adaptive bridge message.`,
               );
               setIsTyping(true);
-              const bridgeText = buildBridgeText(lastUserText, nextQ.text);
+              const bridgeText = await buildAdaptiveBridgeText(nextQ.text, lastUserText);
               {
                 const bridgeTimestamp = Date.now();
                 appendMessagesToConversation([
@@ -1766,6 +1822,9 @@ Recent User Answer: ${trimmedAnswer}
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-bridge',
                     nextAction: 'Please answer this prompt so I can continue the assessment.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                     timestamp: bridgeTimestamp,
                   }),
                 ]);
@@ -1778,6 +1837,7 @@ Recent User Answer: ${trimmedAnswer}
 
             // Default behavior if readiness <= 0.4
             setIsTyping(true);
+            const inlineAck = consumePendingCorrection();
             setTimeout(() => {
               const defaultTimestamp = Date.now();
               appendMessagesToConversation([
@@ -1789,7 +1849,10 @@ Recent User Answer: ${trimmedAnswer}
                   reasonSource: 'arbiter-default-question',
                   nextAction:
                     'Please answer this question so I can better understand your symptoms.',
+                  inlineAck,
                   timestamp: defaultTimestamp,
+                  profile,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                 }),
               ]);
               setCurrentQuestionIndex(nextIdx);
@@ -1809,6 +1872,7 @@ Recent User Answer: ${trimmedAnswer}
       if (!isAtEnd) {
         // Next Question (Fallback if Arbiter check fails or is skipped)
         setIsTyping(true);
+        const inlineAck = consumePendingCorrection();
         setTimeout(() => {
           const nextQ = questions[nextIdx];
           {
@@ -1820,7 +1884,10 @@ Recent User Answer: ${trimmedAnswer}
                 reason: 'Continuing the planned question path.',
                 reasonSource: 'planner-fallback',
                 nextAction: 'Please answer this so I can continue the assessment.',
+                inlineAck,
                 timestamp: defaultTimestamp,
+                profile,
+                primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
               }),
             ]);
           }
@@ -1841,6 +1908,7 @@ Recent User Answer: ${trimmedAnswer}
               reason: 'Assessment complete and ready for final review.',
               reasonSource: 'finalizing',
               nextAction: 'Please wait while I synthesize the recommendation for you.',
+              inlineAck: consumePendingCorrection(),
               timestamp: finalizingTimestamp,
             }),
           ]);
@@ -1966,6 +2034,8 @@ Recent User Answer: ${trimmedAnswer}
             reasonSource: 'finalize-assessment',
             nextAction: 'Please stay tuned while I prepare the recommendation for you.',
             timestamp: finalizeTimestamp,
+            profile,
+            primarySymptom: derivePrimarySymptom(initialSymptom, profile.summary) ?? defaultPrimarySymptom,
           }),
         ]);
       }

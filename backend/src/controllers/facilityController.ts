@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as facilityService from '../services/facilityService';
-import { Facility, FacilityContact } from '../../generated/prisma/client';
+import { Facility, FacilityContact } from '../../generated/prisma';
 
 interface FacilityWithDistance extends Facility {
   distance?: number;

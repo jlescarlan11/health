@@ -67,7 +67,8 @@ const feedSlice = createSlice({
         }
 
         state.currentPage = page;
-        state.hasMore = items.length > 0;
+        const requestedPageSize = action.meta.arg?.pageSize ?? items.length;
+        state.hasMore = items.length >= requestedPageSize;
         state.lastUpdated = Date.now();
       })
       .addCase(fetchFeed.rejected, (state, action) => {

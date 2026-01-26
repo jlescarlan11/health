@@ -14,6 +14,7 @@ import {
   REFINE_QUESTION_PROMPT,
   REFINE_PLAN_PROMPT,
   IMMEDIATE_FOLLOW_UP_PROMPT,
+  BRIDGE_PROMPT,
 } from '../constants/prompts';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
@@ -738,6 +739,27 @@ export class GeminiClient {
         is_red_flag: false,
       };
     }
+  }
+
+  public async generateBridgeMessage(args: {
+    conversationHistory: string;
+    nextQuestion: string;
+    primarySymptom?: string;
+    severityLevel?: number;
+    symptomCategory?: string;
+  }): Promise<string> {
+    const prompt = BRIDGE_PROMPT
+      .replace('{{conversationHistory}}', args.conversationHistory || 'No recent user replies.')
+      .replace('{{nextQuestion}}', args.nextQuestion)
+      .replace('{{primarySymptom}}', args.primarySymptom || 'the symptoms you reported earlier')
+      .replace('{{symptomCategory}}', args.symptomCategory || 'unknown')
+      .replace(
+        '{{severityLevel}}',
+        args.severityLevel !== undefined ? args.severityLevel.toFixed(0) : 'unknown',
+      );
+
+    const responseText = await this.generateContentWithRetry(prompt);
+    return responseText.trim();
   }
 
   /**

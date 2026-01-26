@@ -7,15 +7,15 @@ export const healthFeedController = {
    */
   getFeed: async (_req: Request, res: Response) => {
     try {
-      const news = await healthFeedService.getLatestNews();
-      
-      // If no news in DB, try to sync first
+      let news = await healthFeedService.getLatestNews();
+
       if (news.length === 0) {
         await healthFeedService.syncHealthNews();
-        const freshNews = await healthFeedService.getLatestNews();
-        return res.json(freshNews);
+        news = await healthFeedService.getLatestNews();
+      } else if (healthFeedService.shouldRefreshFeed()) {
+        void healthFeedService.syncHealthNews();
       }
-      
+
       return res.json(news);
     } catch (error) {
       console.error('Controller error fetching feed:', error);
