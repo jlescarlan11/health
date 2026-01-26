@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -8,7 +7,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
 import { RootState } from '../store';
-import { Button, YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text } from '../components/common';
+import { Button, YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text, ScreenSafeArea } from '../components/common';
+import { theme as appTheme } from '../theme';
 import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
 // Import the new components
@@ -21,6 +21,8 @@ export const MainHomeScreen = () => {
   const theme = useTheme();
   const lastNote = useSelector(selectLatestClinicalNote);
   const { items } = useSelector((state: RootState) => state.feed);
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const homeBottomPadding = spacing.lg * 2;
 
   const FeatureCard = ({
     title,
@@ -119,11 +121,14 @@ export const MainHomeScreen = () => {
   const previewData = (items && items.length > 0) ? items.slice(0, 2) : MOCK_PREVIEW;
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right']}
+      edges={['top', 'left', 'right', 'bottom']}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: homeBottomPadding }}
+        showsVerticalScrollIndicator={false}
+      >
         <HomeHero
           hasClinicalReport={!!lastNote}
           onClinicalReportPress={() => navigation.navigate('ClinicalNote', {})}
@@ -190,16 +195,13 @@ export const MainHomeScreen = () => {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 60,
   },
   cardsContainer: {
     marginTop: 16,

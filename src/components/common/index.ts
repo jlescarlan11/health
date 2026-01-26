@@ -17,3 +17,4 @@ export * from './FacilityDirectoryLogo';
 export * from './TeleconsultBadge';
 export * from './Text';
 export * from './FeatureChip';
+export * from './ScreenSafeArea';

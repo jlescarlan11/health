@@ -23,9 +23,10 @@ import {
 import { AppDispatch } from '../store';
 import { Medication } from '../types';
 import { MedicationCard } from '../components/features/medication/MedicationCard';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenSafeArea } from '../components/common';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { InputCard } from '../components/common/InputCard'; // Or use standard TextInput if InputCard is too specific
+import { theme as appTheme } from '../theme';
 
 // Simple Time Input Component since we can't add libraries
 const TimeInput = ({
@@ -92,6 +93,8 @@ const TimeInput = ({
 export default function MedicationTrackerScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const listBottomPadding = spacing.lg * 2;
   const medications = useSelector(selectAllMedications);
   const status = useSelector(selectMedicationStatus);
   const error = useSelector(selectMedicationError);
@@ -246,9 +249,9 @@ export default function MedicationTrackerScreen() {
   );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['bottom', 'left', 'right']}
+      edges={['top', 'left', 'right', 'bottom']}
     >
       <FlatList
         data={medications}
@@ -263,7 +266,7 @@ export default function MedicationTrackerScreen() {
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: listBottomPadding }]}
         keyboardShouldPersistTaps="handled"
       />
       {error && (
@@ -274,7 +277,7 @@ export default function MedicationTrackerScreen() {
           </Button>
         </Surface>
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 
@@ -282,9 +285,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listContent: {
-    paddingBottom: 24,
-  },
+  listContent: {},
   formContainer: {
     padding: 16,
     marginBottom: 8,

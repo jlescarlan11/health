@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, BackHandler, Alert } from 'react-native';
 import { Text } from '../../components/common/Text';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenSafeArea } from '../../components/common';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ProgressBar, useTheme } from 'react-native-paper';
 
@@ -14,6 +14,8 @@ const EnrollmentGuideScreen = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProp<RootStackParamList, 'EnrollmentGuide'>>();
   const theme = useTheme();
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
 
   const { pathwayId } = route.params;
 
@@ -74,7 +76,7 @@ const EnrollmentGuideScreen = () => {
   );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
@@ -97,7 +99,10 @@ const EnrollmentGuideScreen = () => {
         }}
       />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: scrollContentPaddingBottom }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerSection}>
           <Text style={[styles.pathwayName, { color: theme.colors.onSurface }]}>
             {pathway.name}
@@ -161,7 +166,7 @@ const EnrollmentGuideScreen = () => {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -171,7 +176,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingBottom: 40,
   },
   headerSection: {
     marginBottom: 32,

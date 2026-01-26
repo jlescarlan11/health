@@ -71,6 +71,7 @@ import {
   InputCardRef,
   ProgressBar,
   MultiSelectChecklist,
+  ScreenSafeArea,
 } from '../components/common';
 import { DYNAMIC_CLARIFIER_PROMPT_TEMPLATE } from '../constants/prompts';
 import {
@@ -79,6 +80,7 @@ import {
   formatSymptomReference,
   parseSeverityScore,
 } from '../utils/empatheticResponses';
+import { theme as appTheme } from '../theme';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -345,6 +347,8 @@ const SymptomAssessmentScreen = () => {
   const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const chatBottomPadding = spacing.lg * 2;
   const scrollViewRef = useRef<ScrollView>(null);
   const inputCardRef = useRef<InputCardRef>(null);
   const hasShownClarificationHeader = useRef(false);
@@ -2224,10 +2228,13 @@ Recent User Answer: ${trimmedAnswer}
 
   if (loading) {
     return (
-      <View style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}>
+      <ScreenSafeArea
+        style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}
+        edges={['top', 'left', 'right', 'bottom']}
+      >
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={{ marginTop: 16 }}>Preparing your assessment...</Text>
-      </View>
+      </ScreenSafeArea>
     );
   }
 
@@ -2304,7 +2311,10 @@ Recent User Answer: ${trimmedAnswer}
   console.log(`[DEBUG_RENDER] isVerifyingEmergency: ${isVerifyingEmergency}`);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right', 'bottom']}
+    >
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
 
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
@@ -2318,7 +2328,7 @@ Recent User Answer: ${trimmedAnswer}
       <ScrollView
         ref={scrollViewRef}
         style={styles.messagesContainer}
-        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: chatBottomPadding }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -2639,7 +2649,7 @@ Recent User Answer: ${trimmedAnswer}
           </>
         )}
       </Animated.View>
-    </View>
+    </ScreenSafeArea>
   );
 };
 

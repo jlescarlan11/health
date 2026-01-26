@@ -1,14 +1,16 @@
 import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
-import { Text } from '../components/common/Text';
+import { Text, ScreenSafeArea } from '../components/common';
 
 const PrivacyPolicyScreen = () => {
   const theme = useTheme();
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
       <ScrollView
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
@@ -23,7 +25,7 @@ const PrivacyPolicyScreen = () => {
           ut labore et dolore magna aliqua.
         </Text>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

@@ -2,14 +2,15 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, Linking, ActivityIndicator } from 'react-native';
 import { Text, useTheme, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { MainTabScreenProps } from '../types/navigation';
 import StandardHeader from '../components/common/StandardHeader';
+import { ScreenSafeArea } from '../components/common';
 import { FeedItem } from '../components/features/feed/FeedItem';
-import { fetchFeed, resetFeed } from '../store/feedSlice';
+import { fetchFeed } from '../store/feedSlice';
 import { RootState, AppDispatch } from '../store';
 import { FeedItem as FeedItemType } from '../types/feed';
+import { theme as appTheme } from '../theme';
 
 type Props = MainTabScreenProps<'HealthFeed'>;
 
@@ -20,6 +21,8 @@ export const HealthFeedScreen = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading, error, currentPage, hasMore } = useSelector((state: RootState) => state.feed);
   const [refreshing, setRefreshing] = useState(false);
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const feedBottomPadding = spacing.lg * 2;
 
   const loadFeed = useCallback((page = 1) => {
     dispatch(fetchFeed({ page, pageSize: PAGE_SIZE }));
@@ -66,17 +69,17 @@ export const HealthFeedScreen = () => {
   };
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Health Promotion Feed" showBackButton={false} />
-      
+
       <FlatList
         data={items}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: feedBottomPadding }]}
         ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
@@ -127,7 +130,7 @@ export const HealthFeedScreen = () => {
         }
         ListFooterComponent={renderFooter}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -137,7 +140,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 40,
     flexGrow: 1,
   },
   headerInfo: {

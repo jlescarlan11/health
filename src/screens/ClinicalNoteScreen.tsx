@@ -13,12 +13,13 @@ import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootState } from '../store';
 import { RootStackParamList } from '../types/navigation';
-import { StandardHeader, Button, Text } from '../components/common';
+import { StandardHeader, Button, Text, ScreenSafeArea } from '../components/common';
 import { parseSoap, formatClinicalShareText } from '../utils/clinicalUtils';
 import * as Print from 'expo-print';
 import { sharingUtils } from '../utils/sharingUtils';
 import QRCode from 'react-native-qrcode-svg';
 import * as DB from '../services/database';
+import { theme as appTheme } from '../theme';
 
 export const ClinicalNoteScreen = () => {
   const navigation = useNavigation();
@@ -27,6 +28,9 @@ export const ClinicalNoteScreen = () => {
   const insets = useSafeAreaInsets();
   const { width: screenWidth } = useWindowDimensions();
   const { recordId } = route.params || {};
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollBottomPadding = spacing.lg * 2;
+  const footerBottomPadding = Math.max(insets.bottom, spacing.md ?? 12);
 
   const latestAssessmentRedux = useSelector((state: RootState) => state.offline.latestAssessment);
 
@@ -56,15 +60,21 @@ export const ClinicalNoteScreen = () => {
 
   if (loading) {
     return (
-      <View style={styles.centerContainer}>
+      <ScreenSafeArea
+        style={[styles.centerContainer, { backgroundColor: theme.colors.background }]}
+        edges={['top', 'left', 'right', 'bottom']}
+      >
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      </ScreenSafeArea>
     );
   }
 
   if (!assessmentData) {
     return (
-      <View style={styles.centerContainer}>
+      <ScreenSafeArea
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+        edges={['left', 'right', 'bottom']}
+      >
         <StandardHeader
           title="Clinical Handover"
           showBackButton
@@ -79,7 +89,7 @@ export const ClinicalNoteScreen = () => {
             style={styles.homeButton}
           />
         </View>
-      </View>
+      </ScreenSafeArea>
     );
   }
 
@@ -203,7 +213,10 @@ export const ClinicalNoteScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right', 'bottom']}
+    >
       <StandardHeader
         title="Clinical Handover"
         showBackButton
@@ -212,7 +225,7 @@ export const ClinicalNoteScreen = () => {
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerInfo}>
@@ -257,7 +270,7 @@ export const ClinicalNoteScreen = () => {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View style={[styles.footer, { paddingBottom: footerBottomPadding }]}>
         <View style={styles.buttonRow}>
           <Button
             variant="outline"
@@ -277,7 +290,7 @@ export const ClinicalNoteScreen = () => {
           />
         </View>
       </View>
-    </View>
+    </ScreenSafeArea>
   );
 };
 
@@ -304,7 +317,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 40,
   },
   headerInfo: {
     marginBottom: 24,

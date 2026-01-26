@@ -18,10 +18,11 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { RootState } from '../../store';
-import { InputCard, EmergencyActions, FeatureChip } from '../../components/common';
+import { InputCard, EmergencyActions, FeatureChip, ScreenSafeArea } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk, clearAssessmentState, setSymptomDraft } from '../../store/navigationSlice';
+import { theme as appTheme } from '../../theme';
 
 type NavigationProp = CheckStackScreenProps<'CheckSymptom'>['navigation'];
 
@@ -42,6 +43,8 @@ const CheckSymptomScreen = () => {
   const savedDraft = useSelector((state: RootState) => state.navigation.symptomDraft);
   const assessmentState = useSelector((state: RootState) => state.navigation.assessmentState);
   const theme = useTheme();
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollBottomPadding = (themeSpacing.lg ?? 16) * 2;
 
   const insets = useSafeAreaInsets();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -217,11 +220,14 @@ const CheckSymptomScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -374,7 +380,7 @@ const CheckSymptomScreen = () => {
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>
-    </View>
+    </ScreenSafeArea>
   );
 };
 

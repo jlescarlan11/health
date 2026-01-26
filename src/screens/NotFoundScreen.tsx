@@ -1,22 +1,21 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Text } from '../components/common/Text';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
-import { Button } from '../components/common';
+import { Button, ScreenSafeArea } from '../components/common';
 
 type Props = StackScreenProps<RootStackParamList, 'NotFound'>;
 
 const NotFoundScreen: React.FC<Props> = ({ navigation }) => {
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenSafeArea style={styles.container}>
       <Text style={styles.title}>This screen doesn't exist.</Text>
       <Button
         onPress={() => navigation.replace('Home', { screen: 'HomeFeed' })}
         title="Go to home screen"
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

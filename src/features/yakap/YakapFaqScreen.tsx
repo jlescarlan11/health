@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenSafeArea } from '../../components/common';
 
 import { YAKAP_FAQS, YakapFAQ } from './yakapContent';
 import StandardHeader from '../../components/common/StandardHeader';
@@ -84,13 +84,9 @@ const FaqItem = ({
 
 const YakapFaqScreen = () => {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
-  const minBottomSpacing = themeSpacing.md ?? 12;
-  const baseBottomPadding = themeSpacing.lg ?? 16;
-  const extraBottomSpacing = Math.max(minBottomSpacing - insets.bottom, 0);
-  const scrollContentPaddingBottom = baseBottomPadding + extraBottomSpacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
 
   const handleAccordionPress = (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -98,7 +94,7 @@ const YakapFaqScreen = () => {
   };
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
@@ -124,7 +120,7 @@ const YakapFaqScreen = () => {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

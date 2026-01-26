@@ -1,11 +1,9 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { Button, Card, Text } from '../../components/common';
+import { Button, Card, Text, ScreenSafeArea } from '../../components/common';
 import StandardHeader from '../../components/common/StandardHeader';
 import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
 import { YakapStackScreenProps } from '../../types/navigation';
@@ -13,12 +11,8 @@ import { theme as appTheme } from '../../theme';
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
-  const minBottomSpacing = themeSpacing.md ?? 12;
-  const baseBottomPadding = themeSpacing.lg ?? 16;
-  const extraBottomSpacing = Math.max(minBottomSpacing - insets.bottom, 0);
-  const scrollContentPaddingBottom = baseBottomPadding + extraBottomSpacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
   const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
 
   const navigateToEnrollment = () => {
@@ -36,54 +30,38 @@ const YakapHomeScreen = () => {
     navigation.navigate('YakapFaq');
   };
 
-  const renderBenefitItem = (benefit: YakapBenefit) => {
-    return (
-      <Card
-        key={benefit.id}
-        mode="contained"
-        rippleColor={theme.colors.primary + '15'}
-        accessibilityLabel={`Benefit: ${benefit.category}`}
-        style={[
-          styles.benefitCard,
-          {
-            backgroundColor: theme.colors.surfaceVariant,
-            borderColor: theme.colors.outline,
-            shadowColor: theme.colors.shadow,
-            shadowOffset: { width: 0, height: 6 },
-            shadowOpacity: 0.12,
-            shadowRadius: 14,
-            elevation: 4,
-          },
-        ]}
-      >
-        <View style={styles.benefitCardContent}>
-          <View
-            style={[
-              styles.benefitIconContainer,
-              { backgroundColor: theme.colors.primaryContainer + '60' },
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={benefit.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
-              size={32}
-              color={theme.colors.primary}
-            />
-          </View>
-          <View style={styles.benefitTextContainer}>
-            <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
-              {benefit.category}
-            </Text>
-            <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
-              {benefit.description}
-            </Text>
-          </View>
-        </View>
-      </Card>
-    );
-  };
+  const renderBenefitItem = (benefit: YakapBenefit) => (
+    <Card
+      key={benefit.id}
+      mode="contained"
+      rippleColor={theme.colors.primary + '15'}
+      accessibilityLabel={`Benefit: ${benefit.category}`}
+      style={[
+        styles.benefitCard,
+        {
+          backgroundColor: '#ffffff',
+          borderColor: theme.colors.outline,
+          shadowColor: theme.colors.shadow,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.12,
+          shadowRadius: 14,
+          elevation: 4,
+        },
+      ]}
+    >
+      <View style={styles.benefitTextWrapper}>
+        <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
+          {benefit.category}
+        </Text>
+        <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
+          {benefit.description}
+        </Text>
+      </View>
+    </Card>
+  );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
@@ -158,7 +136,7 @@ const YakapHomeScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -225,30 +203,17 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderRadius: 20,
     borderWidth: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
   },
-  benefitCardContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  benefitIconContainer: {
-    marginRight: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-  },
-  benefitTextContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  benefitTextWrapper: {
+    flexDirection: 'column',
   },
   benefitTitle: {
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'left',
-    marginBottom: 6,
+    marginBottom: 4,
     letterSpacing: -0.2,
   },
   benefitDesc: {

@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScreenSafeArea } from '../components/common';
 import { Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 import { useTheme } from 'react-native-paper';
@@ -82,7 +82,6 @@ const CATEGORIES = {
 export const FacilityDetailsScreen = () => {
   const theme = useTheme();
   const { scaleFactor } = useAdaptiveUI();
-  const insets = useSafeAreaInsets();
   const route = useRoute<FacilityDetailsRouteProp>();
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const { facilityId } = route.params || { facilityId: '' };
@@ -210,14 +209,13 @@ export const FacilityDetailsScreen = () => {
   };
 
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
-  const minBottomSpacing = themeSpacing.md ?? 12;
   const baseBottomPadding = themeSpacing.lg ?? 16;
-  const scrollBottomPadding = Math.max(insets.bottom, minBottomSpacing) + baseBottomPadding;
+  const scrollBottomPadding = baseBottomPadding * 2;
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader
         title={facility.name}
@@ -466,7 +464,7 @@ export const FacilityDetailsScreen = () => {
           )}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

@@ -4,9 +4,9 @@ import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../components/common/Text';
 import StandardHeader from '../components/common/StandardHeader';
+import { ScreenSafeArea } from '../components/common';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
 import { toggleSpecializedMode } from '../store/settingsSlice';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
@@ -19,10 +19,8 @@ export const SettingsScreen = () => {
   const dispatch = useAppDispatch();
   const { scaleFactor } = useAdaptiveUI();
   const settings = useAppSelector((state) => state.settings);
-  const insets = useSafeAreaInsets();
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
-  const minBottomSpacing = themeSpacing.md ?? 12;
-  const bottomSafeAreaPadding = Math.max(insets.bottom, minBottomSpacing);
+  const scrollBottomPadding = themeSpacing.lg * 2;
   const specializedModes = settings?.specializedModes || {
     isSenior: false,
     isPWD: false,
@@ -44,17 +42,15 @@ export const SettingsScreen = () => {
   };
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Settings" showBackButton={false} />
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          {
-            paddingBottom: bottomSafeAreaPadding,
-          },
+          { paddingBottom: scrollBottomPadding },
         ]}
       >
         <DigitalIDCard />
@@ -157,7 +153,7 @@ export const SettingsScreen = () => {
           </Surface>
         </List.Section>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

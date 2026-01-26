@@ -7,15 +7,15 @@ import {
   LayoutAnimation,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
-import { Button, Text } from '../../components/common';
+import { Button, Text, ScreenSafeArea } from '../../components/common';
 import { YakapBenefitsCard } from '../../components/features/yakap';
 import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
 import { setHasPhilHealth } from '../../store/settingsSlice';
+import { theme as appTheme } from '../../theme';
 
 type Props = RootStackScreenProps<'EligibilityChecker'>;
 
@@ -23,6 +23,8 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const hasPhilHealth = useAppSelector((state) => state.settings.hasPhilHealth);
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
 
   const setHasPhilHealthValue = (value: boolean | null) => {
     // Enable smooth transition for state resets or changes
@@ -205,18 +207,18 @@ export const EligibilityCheckerScreen = ({ navigation }: Props) => {
   };
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Eligibility Check" showBackButton />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.colors.background }]}
+        contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.colors.background, paddingBottom: scrollContentPaddingBottom }]}
         showsVerticalScrollIndicator={false}
       >
         {renderContent()}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -226,7 +228,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 48,
     flexGrow: 1,
   },
   fadeContainer: {

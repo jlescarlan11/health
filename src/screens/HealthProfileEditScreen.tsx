@@ -1,18 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextInput, HelperText, useTheme, Snackbar, Surface } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import StandardHeader from '../components/common/StandardHeader';
 import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import { updateProfile } from '../store/profileSlice';
 import { Button } from '../components/common/Button';
 import { Text } from '../components';
+import { ScreenSafeArea } from '../components/common';
+import { theme as appTheme } from '../theme';
 
 export const HealthProfileEditScreen = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile);
+  const insets = useSafeAreaInsets();
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const baseBottomPadding = themeSpacing.lg ?? 16;
+  const scrollBottomPadding = baseBottomPadding * 2;
+  const snackbarBottomSpacing = insets.bottom + (themeSpacing.sm ?? 8);
 
   const initialDobDigits = convertIsoDateToDigits(profile.dob);
   const [fullName, setFullName] = useState(profile.fullName || '');
@@ -27,6 +34,13 @@ export const HealthProfileEditScreen = () => {
   const lastDisplayRef = useRef(formatMmDisplay(initialDobDigits));
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const statusResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [chronicConditionsInput, setChronicConditionsInput] = useState(
+    joinList(profile.chronicConditions),
+  );
+  const [allergiesInput, setAllergiesInput] = useState(joinList(profile.allergies));
+  const [medicationsInput, setMedicationsInput] = useState(joinList(profile.currentMedications));
+  const [surgicalHistoryInput, setSurgicalHistoryInput] = useState(profile.surgicalHistory || '');
+  const [familyHistoryInput, setFamilyHistoryInput] = useState(profile.familyHistory || '');
 
   useEffect(() => {
     setFullName(profile.fullName || '');
@@ -40,6 +54,11 @@ export const HealthProfileEditScreen = () => {
     setPhilHealthId(profile.philHealthId || '');
     setDobError('');
     setDobTouched(false);
+    setChronicConditionsInput(joinList(profile.chronicConditions));
+    setAllergiesInput(joinList(profile.allergies));
+    setMedicationsInput(joinList(profile.currentMedications));
+    setSurgicalHistoryInput(profile.surgicalHistory || '');
+    setFamilyHistoryInput(profile.familyHistory || '');
   }, [profile]);
 
   useEffect(() => {
@@ -71,6 +90,11 @@ export const HealthProfileEditScreen = () => {
         dob: normalized || null,
         bloodType: bloodType.trim() || null,
         philHealthId: philHealthId.trim() || null,
+        chronicConditions: parseList(chronicConditionsInput),
+        allergies: parseList(allergiesInput),
+        currentMedications: parseList(medicationsInput),
+        surgicalHistory: surgicalHistoryInput.trim() || null,
+        familyHistory: familyHistoryInput.trim() || null,
       }),
     );
     setSaveState('saved');
@@ -137,13 +161,13 @@ export const HealthProfileEditScreen = () => {
   );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="My Health Records" showBackButton rightActions={headerRightActions} />
       <KeyboardAwareScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         enableOnAndroid={true}
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
@@ -185,19 +209,22 @@ export const HealthProfileEditScreen = () => {
                 {displayDob || 'MM/DD/YYYY'}
               </Text>
             </Surface>
-            <Surface
-              style={[styles.heroBadge, styles.heroBadgeSpacing, { backgroundColor: theme.colors.secondaryContainer }]}
-              elevation={1}
-            >
-              <Text variant="bodySmall" style={styles.heroBadgeLabel}>
-                PhilHealth ID
-              </Text>
-              <Text variant="titleSmall" style={styles.heroBadgeValue}>
-                {philHealthId || 'Optional'}
-              </Text>
-            </Surface>
-          </View>
+          <Surface
+            style={[styles.heroBadge, styles.heroBadgeSpacing, { backgroundColor: theme.colors.secondaryContainer }]}
+            elevation={1}
+          >
+            <Text variant="bodySmall" style={styles.heroBadgeLabel}>
+              PhilHealth ID
+            </Text>
+            <Text variant="titleSmall" style={styles.heroBadgeValue}>
+              {philHealthId || 'Optional'}
+            </Text>
+          </Surface>
         </View>
+        <Text variant="bodySmall" style={styles.heroAiNote}>
+          We only use these details to personalize your assessments with our AI assistant, and you can change them anytime.
+        </Text>
+      </View>
 
         <View style={styles.sectionCard}>
           <Text variant="titleMedium" style={styles.sectionTitle}>
@@ -303,6 +330,114 @@ export const HealthProfileEditScreen = () => {
           </View>
         </View>
 
+        <View style={[styles.sectionCard, styles.sectionCardSpacing]}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Medical context
+          </Text>
+          <Text variant="bodySmall" style={styles.sectionHint}>
+            These details go to your AI assistant so it can remember your baseline, avoid redundant questions, and keep suggestions relevant.
+          </Text>
+
+          <View style={styles.field}>
+            <TextInput
+              mode="outlined"
+              label="Chronic conditions"
+              placeholder="e.g. asthma, hypertension"
+              value={chronicConditionsInput}
+              onChangeText={setChronicConditionsInput}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+              multiline
+              numberOfLines={2}
+              accessibilityHint="Share long-term conditions so the AI tailors follow-up questions"
+            />
+            <HelperText type="info" visible style={styles.helperText}>
+              Adds context to your AI assessment so it can recommend the safest next steps.
+            </HelperText>
+          </View>
+
+          <View style={styles.field}>
+            <TextInput
+              mode="outlined"
+              label="Allergies"
+              placeholder="e.g. penicillin, shellfish"
+              value={allergiesInput}
+              onChangeText={setAllergiesInput}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+              multiline
+              numberOfLines={2}
+              accessibilityHint="List known allergies so the AI avoids unsafe recommendations"
+            />
+            <HelperText type="info" visible style={styles.helperText}>
+              We respect your control — remove any allergy at any time if the info changes.
+            </HelperText>
+          </View>
+
+          <View style={styles.field}>
+            <TextInput
+              mode="outlined"
+              label="Current medications"
+              placeholder="e.g. metformin, lisinopril"
+              value={medicationsInput}
+              onChangeText={setMedicationsInput}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+              multiline
+              numberOfLines={2}
+              accessibilityHint="Tell the AI what you take so it can avoid interactions and redundant suggestions"
+            />
+            <HelperText type="info" visible style={styles.helperText}>
+              These meds stay private and keep your AI advisor grounded in what you already take.
+            </HelperText>
+          </View>
+
+          <View style={styles.field}>
+            <TextInput
+              mode="outlined"
+              label="Surgical history"
+              placeholder="Add relevant surgeries, dates, and notes"
+              value={surgicalHistoryInput}
+              onChangeText={setSurgicalHistoryInput}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+              multiline
+              numberOfLines={3}
+              accessibilityHint="Capture past surgeries so the AI can factor healing history into its advice"
+            />
+          </View>
+
+          <View style={styles.field}>
+            <TextInput
+              mode="outlined"
+              label="Family history"
+              placeholder="e.g. diabetes, heart disease"
+              value={familyHistoryInput}
+              onChangeText={setFamilyHistoryInput}
+              style={styles.input}
+              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+              cursorColor={theme.colors.primary}
+              selectionColor={theme.colors.primary + '40'}
+              dense
+              multiline
+              numberOfLines={3}
+              accessibilityHint="Let the AI know your family patterns so it can watch for similar risks"
+            />
+          </View>
+        </View>
+
         <View style={styles.buttonArea}>
           <Button
             title="Save changes"
@@ -331,13 +466,13 @@ export const HealthProfileEditScreen = () => {
         onDismiss={onDismissSnackbar}
         duration={2000}
         style={[styles.snackbar, { backgroundColor: theme.colors.surface }]}
-        wrapperStyle={styles.snackbarWrapper}
+        wrapperStyle={[styles.snackbarWrapper, { bottom: snackbarBottomSpacing }]}
       >
         <Text style={[styles.snackbarText, { color: theme.colors.onSurface }]}>
           Profile saved successfully
         </Text>
       </Snackbar>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -347,7 +482,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 40,
     flexGrow: 1,
   },
   heroCard: {
@@ -367,6 +501,11 @@ const styles = StyleSheet.create({
   heroSubtitle: {
     marginTop: 6,
     color: '#4A4B4D',
+    lineHeight: 20,
+  },
+  heroAiNote: {
+    marginTop: 12,
+    color: '#5C5F66',
     lineHeight: 20,
   },
   heroStats: {
@@ -454,7 +593,9 @@ const styles = StyleSheet.create({
     color: '#1E7E34',
   },
   snackbarWrapper: {
-    bottom: 20,
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   snackbar: {
     borderRadius: 24,
@@ -547,4 +688,19 @@ function getDobError(digits: string): string {
   }
 
   return '';
+}
+
+function joinList(list?: string[] | null): string {
+  if (!list || list.length === 0) {
+    return '';
+  }
+
+  return list.filter(Boolean).join(', ');
+}
+
+function parseList(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
 }
