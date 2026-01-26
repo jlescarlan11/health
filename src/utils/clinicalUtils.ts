@@ -399,10 +399,11 @@ export interface ClinicalChange {
 export const detectProfileChanges = (
   prev: AssessmentProfile | undefined,
   next: AssessmentProfile,
-): ClinicalChange | null => {
-  if (!prev) return null;
+): ClinicalChange[] => {
+  if (!prev) return [];
 
   const fieldsToCheck: (keyof AssessmentProfile)[] = ['age', 'duration', 'severity'];
+  const changes: ClinicalChange[] = [];
 
   for (const field of fieldsToCheck) {
     const oldVal = prev[field];
@@ -415,9 +416,9 @@ export const detectProfileChanges = (
     const normNew = String(newVal).trim().toLowerCase().replace(/\s+/g, ' ');
 
     if (normOld !== normNew) {
-      return { field, oldValue: oldVal as string, newValue: newVal as string };
+      changes.push({ field, oldValue: oldVal as string, newValue: newVal as string });
     }
   }
 
-  return null;
+  return changes;
 };

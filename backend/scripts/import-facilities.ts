@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse/sync';
-import { PrismaClient } from '../generated/prisma/client';
+import { PrismaClient } from '../generated/prisma';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import dotenv from 'dotenv';

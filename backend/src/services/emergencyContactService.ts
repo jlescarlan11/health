@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import { EmergencyContact } from '../../generated/prisma/client';
+import { EmergencyContact } from '../../generated/prisma';
 
 export const getAllEmergencyContacts = async (): Promise<EmergencyContact[]> => {
   return prisma.emergencyContact.findMany({

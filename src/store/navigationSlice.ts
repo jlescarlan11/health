@@ -60,6 +60,8 @@ interface NavigationState {
     outOfScopeBuffer: string[];
     triageSnapshot: TriageSnapshot | null;
     currentTurnMeta?: AssessmentTurnMeta | null;
+    isQueueSuspended?: boolean;
+    pendingCorrection?: string | null;
     incrementalSlots: ClinicalSlots;
   } | null;
 }

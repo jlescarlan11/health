@@ -9,7 +9,7 @@ export type TriageSignal =
   | 'RESOLVE_AMBIGUITY'
   | 'PRIORITIZE_RED_FLAGS'
   | 'REQUIRE_CLARIFICATION'
-  | 'RESOLVE_FRICTION';
+  | 'DRILL_DOWN';
 
 export interface ArbiterResult {
   signal: TriageSignal;
@@ -95,13 +95,13 @@ export class TriageArbiter {
     }
 
     // --- 3. CLINICAL SANITY & FRICTION OVERRIDE (Early Intervention) ---
-    const sanityResult = this.evaluateClinicalSanity(profile, remainingQuestions);
+    const sanityResult = this.evaluateClinicalSanity(profile, remainingQuestions, previousProfile);
 
     // IMMEDIATE INTERVENTION: These signals override the turn floor because they require specific active resolution.
     if (
       sanityResult.signal === 'RESOLVE_AMBIGUITY' ||
-      sanityResult.signal === 'RESOLVE_FRICTION' ||
-      sanityResult.signal === 'REQUIRE_CLARIFICATION'
+      sanityResult.signal === 'REQUIRE_CLARIFICATION' ||
+      sanityResult.signal === 'DRILL_DOWN'
     ) {
       return { ...sanityResult, saturation_count: newSaturationCount };
     }
@@ -353,7 +353,22 @@ export class TriageArbiter {
   private static evaluateClinicalSanity(
     profile: AssessmentProfile,
     remainingQuestions: { tier?: number }[],
+    previousProfile?: AssessmentProfile,
   ): ArbiterResult {
+    // 0. CRITICAL ESCALATION (Drill Down)
+    // If the category escalated to CRITICAL mid-stream, we must interrupt to drill down immediately.
+    if (
+      previousProfile &&
+      previousProfile.symptom_category !== 'critical' &&
+      profile.symptom_category === 'critical'
+    ) {
+      return {
+        signal: 'DRILL_DOWN',
+        reason: 'CRITICALITY ESCALATION: Symptom category escalated to CRITICAL.',
+        nextSteps: ['Immediate critical drill-down'],
+      };
+    }
+
     // 1. NON-NEGOTIABLE: Ambiguity Safeguard
     // Allow termination if ambiguity is detected but the user has explicitly accepted uncertainty.
     if (profile.ambiguity_detected && !profile.uncertainty_accepted) {
@@ -367,7 +382,7 @@ export class TriageArbiter {
     // 2. CLINICAL FRICTION: Contradictory reports
     if (profile.clinical_friction_detected) {
       return {
-        signal: 'RESOLVE_FRICTION',
+        signal: 'DRILL_DOWN',
         reason: `COHERENCE FAIL: Clinical friction detected. Details: ${profile.clinical_friction_details}`,
         nextSteps: ['Re-verify contradictory symptoms', 'Address mixed-signal reports'],
       };

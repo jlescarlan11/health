@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import { Facility, Prisma, FacilityContact } from '../../generated/prisma/client';
+import { Facility, Prisma, FacilityContact } from '../../generated/prisma';
 
 export type EnrichedFacility = Facility & {
   contacts: FacilityContact[];

@@ -4,6 +4,7 @@ export interface EmpatheticResponseInput {
   reason?: string;
   reasonSource?: string;
   nextAction?: string;
+  inlineAck?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -24,6 +25,7 @@ export const formatEmpatheticResponse = ({
   reason,
   reasonSource,
   nextAction,
+  inlineAck,
   metadata,
 }: EmpatheticResponseInput): EmpatheticResponseOutput => {
   const contentBlocks: string[] = [];
@@ -31,20 +33,19 @@ export const formatEmpatheticResponse = ({
   if (header?.trim()) {
     contentBlocks.push(header.trim());
   }
-  if (body?.trim()) {
-    contentBlocks.push(body.trim());
+  
+  let mainBody = body?.trim() || '';
+  if (inlineAck?.trim()) {
+    const ack = ensureSentenceEnding(inlineAck.trim());
+    mainBody = mainBody ? `${ack} ${mainBody}` : ack;
   }
 
-  // Reason is intentionally excluded from the user-facing text
+  if (mainBody) {
+    contentBlocks.push(mainBody);
+  }
+
+  // Internal fields (reason, nextAction) are intentionally excluded from the user-facing text
   // but preserved in metadata for debugging context.
-
-  const actionSentence = ensureSentenceEnding(
-    nextAction ?? 'Please follow the guidance above so I can continue helping safely',
-  );
-
-  if (actionSentence) {
-    contentBlocks.push(actionSentence);
-  }
 
   return {
     text: contentBlocks.join('\n\n'),
@@ -55,6 +56,7 @@ export const formatEmpatheticResponse = ({
         reasonSource,
         nextAction,
         header,
+        inlineAck,
       },
     },
   };

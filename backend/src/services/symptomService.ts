@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma';
-import { Symptom } from '../../generated/prisma/client';
+import { Symptom } from '../../generated/prisma';
 
 export const getAllSymptoms = async (): Promise<Symptom[]> => {
   return await prisma.symptom.findMany({
