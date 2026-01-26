@@ -77,6 +77,7 @@ export const HealthFeedScreen = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         refreshControl={
@@ -184,5 +185,8 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
+  },
+  itemSeparator: {
+    height: 12,
   },
 });

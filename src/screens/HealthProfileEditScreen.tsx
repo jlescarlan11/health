@@ -1,44 +1,103 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, useTheme, Snackbar } from 'react-native-paper';
+import { TextInput, HelperText, useTheme, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import StandardHeader from '../components/common/StandardHeader';
 import { useAppSelector, useAppDispatch } from '../hooks/reduxHooks';
 import { updateProfile } from '../store/profileSlice';
 import { Button } from '../components/common/Button';
-import { DigitalIDCard, Text } from '../components';
+import { Text } from '../components';
 
 export const HealthProfileEditScreen = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile);
 
+  const initialDobDigits = convertIsoDateToDigits(profile.dob);
   const [fullName, setFullName] = useState(profile.fullName || '');
-  const [dob, setDob] = useState(profile.dob || '');
+  const [dobDigits, setDobDigits] = useState(initialDobDigits);
+  const [displayDob, setDisplayDob] = useState(formatMmDisplay(initialDobDigits));
+  const [normalizedDob, setNormalizedDob] = useState(profile.dob || '');
   const [bloodType, setBloodType] = useState(profile.bloodType || '');
   const [philHealthId, setPhilHealthId] = useState(profile.philHealthId || '');
   const [visible, setVisible] = useState(false);
+  const [dobError, setDobError] = useState('');
+  const [dobTouched, setDobTouched] = useState(false);
+  const lastDisplayRef = useRef(formatMmDisplay(initialDobDigits));
 
-  // Sync local state with Redux state (important for rehydration)
   useEffect(() => {
     setFullName(profile.fullName || '');
-    setDob(profile.dob || '');
+    const digitsFromProfile = convertIsoDateToDigits(profile.dob);
+    setDobDigits(digitsFromProfile);
+    const reformatted = formatMmDisplay(digitsFromProfile);
+    setDisplayDob(reformatted);
+    lastDisplayRef.current = reformatted;
+    setNormalizedDob(profile.dob || '');
     setBloodType(profile.bloodType || '');
     setPhilHealthId(profile.philHealthId || '');
+    setDobError('');
+    setDobTouched(false);
   }, [profile]);
 
   const handleSave = () => {
+    setDobTouched(true);
+    const error = getDobError(dobDigits);
+    setDobError(error);
+    if (error) {
+      return;
+    }
+
+    const normalized = dobDigits.length === 8 ? normalizeDigitsToIso(dobDigits) : '';
+    if (dobDigits.length && !normalized) {
+      setDobError('Enter a valid past date (MM/DD/YYYY).');
+      return;
+    }
+
     dispatch(
       updateProfile({
         fullName: fullName.trim() || null,
-        dob: dob.trim() || null,
+        dob: normalized || null,
         bloodType: bloodType.trim() || null,
         philHealthId: philHealthId.trim() || null,
       }),
     );
     setVisible(true);
+  };
+
+  const handleDobBlur = () => {
+    setDobTouched(true);
+    const error = getDobError(dobDigits);
+    setDobError(error);
+    if (!error && dobDigits.length === 8) {
+      const normalized = normalizeDigitsToIso(dobDigits);
+      setNormalizedDob(normalized || '');
+    } else if (error) {
+      setNormalizedDob('');
+    }
+  };
+
+  const handleDobChange = (value: string) => {
+    const isDeleting = value.length < lastDisplayRef.current.length;
+    const digitsOnly = value.replace(/\D/g, '').slice(0, 8);
+
+    const nextDisplay = isDeleting ? value : formatMmDisplay(digitsOnly);
+    setDobDigits(digitsOnly);
+    setDisplayDob(nextDisplay);
+    lastDisplayRef.current = nextDisplay;
+
+    if (digitsOnly.length === 8) {
+      const normalized = normalizeDigitsToIso(digitsOnly);
+      setNormalizedDob(normalized || '');
+    } else {
+      setNormalizedDob('');
+    }
+
+    if (dobTouched) {
+      setDobError(getDobError(digitsOnly));
+    } else if (dobError) {
+      setDobError('');
+    }
   };
 
   const onDismissSnackbar = () => setVisible(false);
@@ -64,19 +123,9 @@ export const HealthProfileEditScreen = () => {
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
       >
-        <DigitalIDCard />
-        <View style={styles.header}>
-          <View
-            style={[styles.avatarContainer, { backgroundColor: theme.colors.primaryContainer }]}
-          >
-            <MaterialCommunityIcons name="account" size={60} color={theme.colors.primary} />
-          </View>
-          <Text variant="headlineSmall" style={styles.title}>
-            Your Health Profile
-          </Text>
-          <Text variant="bodyMedium" style={styles.subtitle}>
-            Manage your personal health information for quick access during care and YAKAP
-            eligibility.
+        <View style={styles.descriptionContainer}>
+          <Text variant="bodyMedium" style={styles.description}>
+            Keep your personal information current so care teams can provide faster support when you need it.
           </Text>
         </View>
 
@@ -100,15 +149,22 @@ export const HealthProfileEditScreen = () => {
             <TextInput
               mode="outlined"
               label="Date of Birth"
-              placeholder="YYYY-MM-DD"
-              value={dob}
-              onChangeText={setDob}
+              placeholder="MM/DD/YYYY"
+              value={displayDob}
+              onChangeText={handleDobChange}
               style={styles.input}
               outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
               cursorColor={theme.colors.primary}
               selectionColor={theme.colors.primary + '40'}
               dense
+              error={!!dobError}
+              keyboardType="number-pad"
+              maxLength={10}
+              onBlur={handleDobBlur}
             />
+            <HelperText type="error" visible={!!dobError} style={styles.helperText}>
+              {dobError}
+            </HelperText>
           </View>
 
           <View style={styles.inputContainer}>
@@ -142,14 +198,6 @@ export const HealthProfileEditScreen = () => {
             />
           </View>
         </View>
-
-        <View style={styles.infoCard}>
-          <MaterialCommunityIcons name="shield-check" size={24} color={theme.colors.primary} />
-          <Text variant="bodySmall" style={styles.infoText}>
-            Your health profile data is stored locally on this device. It is only used to assist
-            healthcare providers and simplify your enrollment in local health programs.
-          </Text>
-        </View>
       </KeyboardAwareScrollView>
 
       <Snackbar
@@ -159,12 +207,9 @@ export const HealthProfileEditScreen = () => {
         style={[styles.snackbar, { backgroundColor: theme.colors.surface }]}
         wrapperStyle={styles.snackbarWrapper}
       >
-        <View style={styles.snackbarContent}>
-          <MaterialCommunityIcons name="check-circle" size={20} color={theme.colors.primary} />
-          <Text style={[styles.snackbarText, { color: theme.colors.onSurface }]}>
-            Profile saved successfully
-          </Text>
-        </View>
+        <Text style={[styles.snackbarText, { color: theme.colors.onSurface }]}>
+          Profile saved successfully
+        </Text>
       </Snackbar>
     </SafeAreaView>
   );
@@ -177,34 +222,14 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
     paddingBottom: 40, // Standard padding
+    flexGrow: 1,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
+  descriptionContainer: {
+    marginBottom: 20,
   },
-  avatarContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  title: {
-    fontWeight: '700',
-    color: '#45474B',
-    marginBottom: 8,
-  },
-  subtitle: {
-    textAlign: 'center',
-    color: '#666',
+  description: {
+    color: '#4A4B4D',
     lineHeight: 20,
-    paddingHorizontal: 12,
   },
   form: {
     width: '100%',
@@ -219,25 +244,13 @@ const styles = StyleSheet.create({
   inputOutline: {
     borderRadius: 24,
   },
+  helperText: {
+    marginTop: 4,
+    marginLeft: 8,
+  },
   saveButtonLabel: {
     fontSize: 16,
     fontWeight: '700',
-  },
-  infoCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(55, 151, 119, 0.05)',
-    padding: 16,
-    borderRadius: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(55, 151, 119, 0.1)',
-  },
-  infoText: {
-    marginLeft: 12,
-    color: '#45474B',
-    flex: 1,
-    lineHeight: 18,
   },
   snackbarWrapper: {
     bottom: 20, // Standard position
@@ -246,12 +259,91 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     elevation: 4,
   },
-  snackbarContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   snackbarText: {
-    marginLeft: 8,
     fontWeight: '600',
   },
 });
+
+function formatMmDisplay(digits: string): string {
+  const month = digits.slice(0, 2);
+  const day = digits.slice(2, 4);
+  const year = digits.slice(4, 8);
+  let formatted = '';
+
+  if (month) {
+    formatted += month;
+    if (digits.length > 2) {
+      formatted += '/';
+    }
+  }
+
+  if (day) {
+    formatted += day;
+    if (digits.length > 4) {
+      formatted += '/';
+    }
+  }
+
+  if (year) {
+    formatted += year;
+  }
+
+  return formatted;
+}
+
+function normalizeDigitsToIso(digits: string): string | null {
+  if (digits.length !== 8) {
+    return null;
+  }
+
+  const month = Number(digits.slice(0, 2));
+  const day = Number(digits.slice(2, 4));
+  const year = Number(digits.slice(4, 8));
+  const candidate = new Date(year, month - 1, day);
+
+  if (
+    candidate.getFullYear() !== year ||
+    candidate.getMonth() + 1 !== month ||
+    candidate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  if (candidate > new Date()) {
+    return null;
+  }
+
+  const paddedMonth = String(month).padStart(2, '0');
+  const paddedDay = String(day).padStart(2, '0');
+
+  return `${year}-${paddedMonth}-${paddedDay}`;
+}
+
+function convertIsoDateToDigits(isoDate?: string | null): string {
+  if (!isoDate) {
+    return '';
+  }
+
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    return '';
+  }
+
+  return `${match[2]}${match[3]}${match[1]}`;
+}
+
+function getDobError(digits: string): string {
+  if (!digits) {
+    return '';
+  }
+
+  if (digits.length !== 8) {
+    return 'Complete the date as MM/DD/YYYY.';
+  }
+
+  if (!normalizeDigitsToIso(digits)) {
+    return 'Enter a valid past date (MM/DD/YYYY).';
+  }
+
+  return '';
+}

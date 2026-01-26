@@ -26,6 +26,7 @@ export const DigitalIDCard: React.FC = () => {
 
   const hasName = !!profile.fullName?.trim();
   const hasDob = !!profile.dob?.trim();
+  const formattedDob = hasDob ? formatDobForDisplay(profile.dob) : '---';
 
   return (
     <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
@@ -51,7 +52,7 @@ export const DigitalIDCard: React.FC = () => {
           <View style={styles.field}>
             <Text variant="labelSmall" style={styles.label}>DATE OF BIRTH</Text>
             <Text variant="titleMedium" style={styles.value}>
-              {hasDob ? profile.dob : '---'}
+              {formattedDob}
             </Text>
           </View>
 
@@ -168,3 +169,21 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 });
+
+function formatDobForDisplay(dob?: string | null): string {
+  if (!dob) {
+    return '';
+  }
+
+  const parts = dob.split('-');
+  if (parts.length !== 3) {
+    return dob;
+  }
+
+  const [year, month, day] = parts;
+  if (!month || !day || !year) {
+    return dob;
+  }
+
+  return `${month.padStart(2, '0')}/${day.padStart(2, '0')}/${year}`;
+}

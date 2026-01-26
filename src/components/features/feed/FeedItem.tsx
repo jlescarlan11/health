@@ -1,9 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Card, Text, useTheme, IconButton } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { ServiceChip } from '../../common/ServiceChip';
 import { useAdaptiveUI } from '../../../hooks/useAdaptiveUI';
 import { sharingUtils } from '../../../utils/sharingUtils';
 import { FeedItem as FeedItemType } from '../../../types/feed';
@@ -24,8 +22,6 @@ interface FeedItemProps {
   onPress?: () => void;
 }
 
-const TOKIWA_IRO = '#379777';
-
 export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
   const theme = useTheme();
   const { scaleFactor } = useAdaptiveUI();
@@ -34,7 +30,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
   const title = item.title;
   const description = 'description' in item ? item.description : item.excerpt;
   const category = 'category' in item ? item.category : (item.categories[0] || 'Health');
-  const icon = (item as any).icon || 'newspaper-variant-outline';
   const imageUrl = item.imageUrl;
   
   let timestamp = '';
@@ -67,45 +62,30 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
         <Card.Cover source={{ uri: imageUrl }} style={styles.cardImage} />
       )}
       <Card.Content style={styles.cardContent}>
-        <View style={styles.leftColumn}>
-          <View style={[styles.iconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
-            <MaterialCommunityIcons
-              name={icon as any}
-              size={28 * scaleFactor}
-              color={TOKIWA_IRO}
-            />
-          </View>
-        </View>
+        <Text
+          variant="titleMedium"
+          numberOfLines={2}
+          style={[styles.titleText, { fontSize: 18 * scaleFactor, lineHeight: 24 * scaleFactor }]}
+        >
+          {title}
+        </Text>
 
-        <View style={styles.rightColumn}>
-          <View style={styles.headerRow}>
-            <ServiceChip service={category} transparent />
-            <Text variant="labelSmall" style={styles.timestampText}>
-              {timestamp}
-            </Text>
-          </View>
+        <Text
+          variant="bodySmall"
+          numberOfLines={2}
+          style={[
+            styles.descriptionText,
+            { fontSize: 14 * scaleFactor, lineHeight: 20 * scaleFactor },
+          ]}
+        >
+          {description}
+        </Text>
 
-          <Text
-            variant="titleMedium"
-            numberOfLines={2}
-            style={[styles.titleText, { fontSize: 18 * scaleFactor, lineHeight: 24 * scaleFactor }]}
-          >
-            {title}
+        <View style={styles.footerRow}>
+          <Text variant="labelSmall" style={styles.timestampText}>
+            {timestamp}
           </Text>
 
-          <Text
-            variant="bodySmall"
-            numberOfLines={2}
-            style={[
-              styles.descriptionText,
-              { fontSize: 14 * scaleFactor, lineHeight: 20 * scaleFactor },
-            ]}
-          >
-            {description}
-          </Text>
-        </View>
-
-        <View style={styles.actionContainer}>
           <IconButton
             icon="share-variant-outline"
             size={20 * scaleFactor}
@@ -117,7 +97,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
             iconColor={theme.colors.primary}
             accessibilityLabel={`Share ${title}`}
           />
-          <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.outline} />
         </View>
       </Card.Content>
     </Card>
@@ -126,7 +105,6 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
     borderRadius: 20,
     elevation: 2,
     borderWidth: 0,
@@ -138,28 +116,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
   },
   cardContent: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     padding: 16,
-  },
-  leftColumn: {
-    marginRight: 16,
-    justifyContent: 'flex-start',
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 24, // Squircle pattern
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rightColumn: {
-    flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
   },
   timestampText: {
     color: '#888',
@@ -167,25 +125,21 @@ const styles = StyleSheet.create({
   },
   titleText: {
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 8,
     color: '#1F2937',
     letterSpacing: -0.5,
   },
   descriptionText: {
     color: '#64748B',
     fontWeight: '500',
+    marginBottom: 12,
   },
-  actionContainer: {
-    justifyContent: 'center',
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingLeft: 8,
   },
   shareIconButton: {
     margin: 0,
-    marginBottom: 8,
-  },
-  chevronContainer: {
-    justifyContent: 'center',
-    paddingLeft: 8,
   },
 });

@@ -130,25 +130,6 @@ export const MainHomeScreen = () => {
         />
 
         <View style={styles.cardsContainer}>
-          <View style={styles.sectionHeader}>
-            <Text variant="titleLarge" style={styles.sectionTitle}>
-              Health Tips
-            </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}>
-              <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                View All
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {previewData.map((item) => (
-            <FeedItem
-              key={item.id}
-              item={item}
-              onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
-            />
-          ))}
-
           <View style={styles.bottomStack}>
             <View style={styles.bottomStackItem}>
               <FeatureCard
@@ -180,6 +161,29 @@ export const MainHomeScreen = () => {
               />
             </View>
           </View>
+
+          <View style={styles.feedSection}>
+            <View style={styles.sectionHeader}>
+              <Text variant="titleLarge" style={styles.sectionTitle}>
+                Discover Latest News
+              </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}>
+                <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                  View All
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.feedList}>
+              {previewData.map((item) => (
+                <FeedItem
+                  key={item.id}
+                  item={item}
+                  onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
+                />
+              ))}
+            </View>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -202,7 +206,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    marginBottom: 4,
+    marginBottom: 16,
     paddingHorizontal: 4,
   },
   sectionTitle: {
@@ -217,6 +221,13 @@ const styles = StyleSheet.create({
   },
   bottomStackItem: {
     width: '100%',
+  },
+  feedSection: {
+    marginTop: 24,
+  },
+  feedList: {
+    marginTop: 0,
+    gap: 12,
   },
   card: {
     borderRadius: 24,

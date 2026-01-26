@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { load } from 'cheerio';
-import type * as cheerio from 'cheerio';
+import type { CheerioAPI, Cheerio } from 'cheerio';
+import type { AnyNode } from 'domhandler';
 import prisma from '../lib/prisma';
 import crypto from 'crypto';
 
@@ -49,8 +50,7 @@ const COVER_BODY_IMAGE_SELECTORS = [
 ];
 const IMAGE_ATTRS = ['data-src', 'data-lazy-src', 'data-original', 'src'];
 
-type CheerioRoot = cheerio.Root;
-type CheerioSelection = cheerio.Cheerio;
+type CheerioSelection = Cheerio<AnyNode>;
 
 const trimText = (value?: string) => (value ? value.replace(/\s+/g, ' ').trim() : '');
 
@@ -101,7 +101,7 @@ const findImageInSelectors = (
   return null;
 };
 
-const findMetaCoverImage = ($: CheerioRoot, selectors: string[], base?: string) => {
+const findMetaCoverImage = ($: CheerioAPI, selectors: string[], base?: string) => {
   for (const selector of selectors) {
     const element = $(selector).first();
     if (!element.length) continue;
@@ -141,7 +141,7 @@ const extractTitleLink = (article: CheerioSelection) => {
   return undefined;
 };
 
-const extractExcerpt = (article: CheerioSelection, $: CheerioRoot) => {
+const extractExcerpt = (article: CheerioSelection, $: CheerioAPI) => {
   for (const selector of EXCERPT_SELECTORS) {
     const block = article.find(selector).first();
     if (!block.length) continue;
@@ -185,9 +185,10 @@ const extractCoverImageFromArticlePage = (content: string, articleUrl: string) =
     return metaImage;
   }
 
+  const documentSelection = $.root();
   return (
-    findImageInSelectors($, COVER_BODY_IMAGE_SELECTORS, IMAGE_ATTRS, articleUrl) ??
-    findImageInSelectors($, IMAGE_SELECTORS, IMAGE_ATTRS, articleUrl) ??
+    findImageInSelectors(documentSelection, COVER_BODY_IMAGE_SELECTORS, IMAGE_ATTRS, articleUrl) ??
+    findImageInSelectors(documentSelection, IMAGE_SELECTORS, IMAGE_ATTRS, articleUrl) ??
     null
   );
 };
