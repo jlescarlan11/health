@@ -8,7 +8,8 @@ import {
   Linking,
   Pressable,
 } from 'react-native';
-import { Searchbar, Chip, useTheme, Text } from 'react-native-paper';
+import { Searchbar, Chip, useTheme } from 'react-native-paper';
+import { Text } from '../../components/common/Text';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';

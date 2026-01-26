@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Card, Paragraph, Title, useTheme, Text } from 'react-native-paper';
+import { Card, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
-import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo } from '../components/common';
+import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text } from '../components/common';
 import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
 // Import the new components
@@ -62,7 +62,8 @@ export const MainHomeScreen = () => {
           <View style={[styles.iconContainer, { backgroundColor: color }]}>{customIcon}</View>
 
           <View style={styles.textContainer}>
-            <Title
+            <Text
+              variant="titleLarge"
               numberOfLines={2}
               style={[
                 styles.cardTitle,
@@ -71,14 +72,15 @@ export const MainHomeScreen = () => {
               ]}
             >
               {title}
-            </Title>
+            </Text>
             {subtitle && (
-              <Paragraph
+              <Text
+                variant="bodyMedium"
                 numberOfLines={2}
                 style={[styles.cardSubtitle, { color: theme.colors.onSurfaceVariant }]}
               >
                 {subtitle}
-              </Paragraph>
+              </Text>
             )}
           </View>
 
@@ -125,7 +127,9 @@ export const MainHomeScreen = () => {
 
         <View style={styles.cardsContainer}>
           <View style={styles.sectionHeader}>
-            <Title style={styles.sectionTitle}>Health Tips</Title>
+            <Text variant="titleLarge" style={styles.sectionTitle}>
+              Health Tips
+            </Text>
             <TouchableOpacity onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}>
               <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 View All

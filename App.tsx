@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
@@ -19,8 +19,8 @@ import {
   registerForPushNotificationsAsync,
   configureNotifications,
 } from './src/services/notificationService';
-import { theme, navigationTheme } from './src/theme';
-import { useAppDispatch, useAppSelector } from './src/hooks';
+import { theme, navigationTheme, getScaledTheme } from './src/theme';
+import { useAppDispatch, useAppSelector, useAdaptiveUI } from './src/hooks';
 
 const prefix = Linking.createURL('/');
 
@@ -66,7 +66,10 @@ const linking: LinkingOptions<RootStackParamList> = {
 const AppContent = () => {
   const dispatch = useAppDispatch();
   const isHighRisk = useAppSelector((state) => state.navigation.isHighRisk);
+  const { scaleFactor } = useAdaptiveUI();
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
+
+  const scaledTheme = useMemo(() => getScaledTheme(scaleFactor), [scaleFactor]);
 
   useEffect(() => {
     // Configure notifications
@@ -120,11 +123,15 @@ const AppContent = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <OfflineBanner />
-      <AppNavigator />
-      <SafetyRecheckModal visible={safetyModalVisible} onDismiss={handleDismissSafetyModal} />
-    </View>
+    <PaperProvider theme={scaledTheme}>
+      <NavigationContainer linking={linking} theme={navigationTheme}>
+        <View style={styles.container}>
+          <OfflineBanner />
+          <AppNavigator />
+          <SafetyRecheckModal visible={safetyModalVisible} onDismiss={handleDismissSafetyModal} />
+        </View>
+      </NavigationContainer>
+    </PaperProvider>
   );
 };
 
@@ -138,8 +145,12 @@ export default function App() {
   // Catch any unhandled errors during module loading
   React.useEffect(() => {
     const errorHandler = (error: Error) => {
-      if (error?.message?.includes('RNFBAppModule') || error?.message?.includes('Native module')) {
-        console.warn('Firebase native module not available (expected in Expo Go):', error.message);
+      if (
+        error?.message?.includes('RNFBAppModule') ||
+        error?.message?.includes('Native module') ||
+        error?.message?.includes('Voice')
+      ) {
+        console.warn('Native module not available (expected in some development environments):', error.message);
       }
     };
 
@@ -148,7 +159,8 @@ export default function App() {
     console.error = (...args) => {
       if (
         args[0]?.message?.includes('RNFBAppModule') ||
-        args[0]?.message?.includes('Native module')
+        args[0]?.message?.includes('Native module') ||
+        args[0]?.message?.includes('Voice')
       ) {
         errorHandler(args[0]);
         return; // Suppress the error;
@@ -165,11 +177,7 @@ export default function App() {
     <StoreProvider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <SafeAreaProvider>
-          <PaperProvider theme={theme}>
-            <NavigationContainer linking={linking} theme={navigationTheme}>
-              <AppContent />
-            </NavigationContainer>
-          </PaperProvider>
+          <AppContent />
         </SafeAreaProvider>
       </PersistGate>
     </StoreProvider>

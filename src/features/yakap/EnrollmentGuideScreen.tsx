@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, BackHandler, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, BackHandler, Alert } from 'react-native';
+import { Text } from '../../components/common/Text';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { ProgressBar, useTheme } from 'react-native-paper';

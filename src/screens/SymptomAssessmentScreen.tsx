@@ -14,12 +14,19 @@ import {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+// Check if we're on Android and the method exists, AND if we're NOT on the New Architecture (Fabric)
+// Under the New Architecture, LayoutAnimation is handled differently and this call is a no-op or can cause warnings.
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental &&
+  !(global as any).nativeFabricUIManager
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
+import { ActivityIndicator, useTheme, Chip } from 'react-native-paper';
+import { Text } from '../components/common/Text';
 import { speechService } from '../services/speechService';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';

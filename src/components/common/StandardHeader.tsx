@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   StyleProp,
@@ -13,6 +12,7 @@ import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
+import { Text } from './Text';
 
 interface StandardHeaderProps {
   title: string;
@@ -80,7 +80,6 @@ export const StandardHeader: React.FC<StandardHeaderProps> = ({
             styles.title,
             {
               color: theme.colors.onSurface,
-              fontSize: 18 * scaleFactor,
             },
             titleStyle,
           ]}

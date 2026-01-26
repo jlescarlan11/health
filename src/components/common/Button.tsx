@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { Button as PaperButton, useTheme } from 'react-native-paper';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline' | 'text';
 
@@ -37,6 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const theme = useTheme();
+  const { scaleFactor } = useAdaptiveUI();
 
   let mode: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal' = 'contained';
   let buttonColor: string | undefined = undefined;
@@ -74,7 +76,16 @@ export const Button: React.FC<ButtonProps> = ({
     variant === 'outline' && {
       borderColor: disabled ? theme.colors.outline : theme.colors.primary,
     },
-    style,
+    labelStyle,
+  ];
+
+  const scaledLabelStyle = [
+    styles.label,
+    {
+      fontSize: 16 * scaleFactor,
+      lineHeight: 24 * scaleFactor,
+    },
+    labelStyle,
   ];
 
   return (
@@ -87,7 +98,7 @@ export const Button: React.FC<ButtonProps> = ({
       buttonColor={buttonColor}
       textColor={textColor}
       style={buttonStyle}
-      labelStyle={[styles.label, labelStyle]}
+      labelStyle={scaledLabelStyle}
       contentStyle={contentStyle}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityHint={accessibilityHint}

@@ -7,7 +7,7 @@ import {
   BackHandler,
   useWindowDimensions,
 } from 'react-native';
-import { Text, useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
+import { useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -30,7 +30,7 @@ import { geminiClient } from '../api/geminiClient';
 import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
-import { Button, SafetyRecheckModal } from '../components/common';
+import { Button, SafetyRecheckModal, Text } from '../components/common';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';

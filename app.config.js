@@ -37,11 +37,20 @@ module.exports = {
     web: {
       favicon: './assets/favicon.png',
     },
-    plugins: ['expo-router', 'expo-sqlite', '@react-native-firebase/app', 'expo-system-ui'],
+    plugins: [
+      'expo-sqlite',
+      '@react-native-firebase/app',
+      'expo-system-ui',
+      '@react-native-voice/voice',
+      'expo-notifications',
+    ],
     extra: {
       apiUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
       backendUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
       geminiApiKey: process.env.GEMINI_API_KEY,
+      eas: {
+        projectId: '69f9b7dc-d73b-47db-b74c-d467716c904b',
+      },
     },
   },
 };

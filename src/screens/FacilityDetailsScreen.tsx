@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Image,
@@ -14,21 +13,9 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
-import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import ImageViewing from 'react-native-image-viewing';
-
-import { RootStackScreenProps } from '../types/navigation';
-import { RootState } from '../store';
-import { Button } from '../components/common/Button';
-import { BusynessIndicator } from '../components/common/BusynessIndicator';
-import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance, formatDistance } from '../utils/locationUtils';
-import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
-import { formatFacilityType } from '../utils';
-import { useTheme, Text as PaperText } from 'react-native-paper';
+// ...
+import { useTheme } from 'react-native-paper';
+import { Text } from '../components/common/Text';
 import { useUserLocation } from '../hooks';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
@@ -208,7 +195,7 @@ export const FacilityDetailsScreen = () => {
           {images.length > 0 && (
             <View style={styles.galleryIndicator}>
               <Ionicons name="images-outline" size={16 * scaleFactor} color="#fff" />
-              <Text style={[styles.galleryText, { fontSize: 12 * scaleFactor }]}>View Photos</Text>
+              <Text style={styles.galleryText}>View Photos</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -245,10 +232,8 @@ export const FacilityDetailsScreen = () => {
                 .filter(Boolean)
                 .map((item, index, array) => (
                   <React.Fragment key={index}>
-                    <Text style={[styles.metaItem, { fontSize: 12 * scaleFactor }]}>{item}</Text>
-                    {index < array.length - 1 && (
-                      <Text style={[styles.metaSeparator, { fontSize: 12 * scaleFactor }]}>•</Text>
-                    )}
+                    <Text style={styles.metaItem}>{item}</Text>
+                    {index < array.length - 1 && <Text style={styles.metaSeparator}>•</Text>}
                   </React.Fragment>
                 ))}
             </View>
@@ -263,18 +248,16 @@ export const FacilityDetailsScreen = () => {
                   color={isOpen ? '#164032' : '#852D2D'}
                   style={{ marginRight: 6 }}
                 />
-                <PaperText
+                <Text
                   variant="labelMedium"
                   style={{
                     color: isOpen ? '#164032' : '#852D2D',
                     fontWeight: '700',
                     letterSpacing: 0.3,
-                    fontSize: 12 * scaleFactor, // approximating labelMedium default
-                    lineHeight: 16 * scaleFactor,
                   }}
                 >
                   {openStatusText}
-                </PaperText>
+                </Text>
               </View>
               <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
             </View>
@@ -288,7 +271,6 @@ export const FacilityDetailsScreen = () => {
               title="Directions"
               onPress={handleDirections}
               style={styles.actionButton}
-              labelStyle={{ fontSize: 16 * scaleFactor, lineHeight: 24 * scaleFactor }}
               variant="primary"
             />
           </View>
@@ -305,24 +287,8 @@ export const FacilityDetailsScreen = () => {
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text
-                style={[
-                  styles.sectionLabel,
-                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
-                ]}
-              >
-                Address
-              </Text>
-              <Text
-                style={[
-                  styles.infoText,
-                  {
-                    color: theme.colors.onSurface,
-                    fontSize: 16 * scaleFactor,
-                    lineHeight: 24 * scaleFactor,
-                  },
-                ]}
-              >
+              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Address</Text>
+              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
                 {facility.address}
               </Text>
             </View>
@@ -445,12 +411,7 @@ export const FacilityDetailsScreen = () => {
 
           {/* Grouped Services */}
           <View style={styles.servicesSection}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: theme.colors.onSurface, fontSize: 18 * scaleFactor },
-              ]}
-            >
+            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
               Services & Capabilities
             </Text>
 
@@ -461,11 +422,7 @@ export const FacilityDetailsScreen = () => {
 
               return (
                 <View key={category} style={styles.categoryContainer}>
-                  <Text
-                    style={[styles.categoryTitle, { color: '#164032', fontSize: 16 * scaleFactor }]}
-                  >
-                    {category}
-                  </Text>
+                  <Text style={styles.categoryTitle}>{category}</Text>
                   <View style={styles.servicesGrid}>
                     {visibleServices.map((service, index) => (
                       <ServiceChip key={index} service={service} />
@@ -478,12 +435,7 @@ export const FacilityDetailsScreen = () => {
                       }
                       style={styles.seeAllButton}
                     >
-                      <Text
-                        style={[
-                          styles.seeAllText,
-                          { color: theme.colors.primary, fontSize: 12 * scaleFactor },
-                        ]}
-                      >
+                      <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
                         {isExpanded ? 'Show Less' : `See All (${services.length})`}
                       </Text>
                       <Ionicons
@@ -503,7 +455,7 @@ export const FacilityDetailsScreen = () => {
               <Text
                 style={[
                   styles.verificationText,
-                  { color: theme.colors.outline, fontSize: 12 * scaleFactor },
+                  { color: theme.colors.outline },
                 ]}
               >
                 Data verified as of {new Date(facility.lastUpdated).toLocaleDateString()}

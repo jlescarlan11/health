@@ -1,8 +1,11 @@
 import React from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
-import { Text, useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
+import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
+import { useNavigation } = '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useDispatch, useSelector } from 'react-redux';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { Text } from '../components/common/Text';
 import StandardHeader from '../components/common/StandardHeader';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
 import { toggleSpecializedMode } from '../store/settingsSlice';

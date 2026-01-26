@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { Button } from '../../components/common/Button';
+import { Button, Text } from '../../components/common';
 import { Card } from '../../components/common/Card';
 import StandardHeader from '../../components/common/StandardHeader';
 import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';

@@ -9,7 +9,7 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { Card, Text, useTheme } from 'react-native-paper';
+import { Card, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility, FacilityService, FacilityBusyness } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
@@ -18,11 +18,12 @@ import { openExternalMaps } from '../../utils/linkingUtils';
 import { Button } from './Button';
 import { BusynessIndicator } from './BusynessIndicator';
 import { ServiceChip } from './ServiceChip';
-import { CommunicationHub } from '../features/facilities';
+import { CommunicationHub } from '../features/facilities/CommunicationHub';
 import { TeleconsultBadge } from './TeleconsultBadge';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 import { sharingUtils } from '../../utils/sharingUtils';
 import { IconButton } from 'react-native-paper';
+import { Text } from './Text';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -153,10 +154,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       <View style={styles.cardInner}>
         {/* Header Row */}
         <View style={styles.titleRow}>
-          <Text
-            variant="titleMedium"
-            style={[styles.title, { fontSize: 20 * scaleFactor, lineHeight: 26 * scaleFactor }]}
-          >
+          <Text variant="titleMedium" style={styles.title}>
             {facility.name}
           </Text>
           <IconButton
@@ -186,17 +184,11 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             .filter(Boolean)
             .map((item, index, array) => (
               <React.Fragment key={index}>
-                <Text
-                  variant="labelSmall"
-                  style={[styles.metaText, { fontSize: 12 * scaleFactor }]}
-                >
+                <Text variant="labelSmall" style={styles.metaText}>
                   {item}
                 </Text>
                 {index < array.length - 1 && (
-                  <Text
-                    variant="labelSmall"
-                    style={[styles.metaText, styles.metaSeparator, { fontSize: 12 * scaleFactor }]}
-                  >
+                  <Text variant="labelSmall" style={[styles.metaText, styles.metaSeparator]}>
                     •
                   </Text>
                 )}
@@ -206,9 +198,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           {hasMatches && (
             <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9', marginLeft: 4 }]}>
               <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
-              <Text style={[styles.matchText, { color: '#2E7D32', fontSize: 10 * scaleFactor }]}>
-                Matches Needs
-              </Text>
+              <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
             </View>
           )}
 
@@ -230,8 +220,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 color: statusColor,
                 fontWeight: '700',
                 letterSpacing: 0.3,
-                fontSize: 12 * scaleFactor,
-                lineHeight: 16 * scaleFactor,
               }}
             >
               {statusText}
@@ -258,7 +246,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
                 style={{
                   color: theme.colors.primary,
                   fontWeight: '800',
-                  fontSize: 10 * scaleFactor,
                 }}
               >
                 +{totalServicesCount - displayServices.length} MORE

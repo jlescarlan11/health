@@ -15,3 +15,4 @@ export * from './YakapLogo';
 export * from './CheckSymptomsLogo';
 export * from './FacilityDirectoryLogo';
 export * from './TeleconsultBadge';
+export * from './Text';
