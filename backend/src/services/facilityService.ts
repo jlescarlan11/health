@@ -70,10 +70,14 @@ export const getAllFacilities = async (
 
   // Inject busyness_score derived from live_metrics
   const enrichedFacilities: EnrichedFacility[] = facilities.map((f) => {
-    const metrics = (f.live_metrics as Record<string, any>) || {};
+    const metrics = (f.live_metrics as Record<string, unknown>) || {};
+    const busyness_score =
+      typeof metrics === 'object' && metrics !== null && 'busyness_score' in metrics
+        ? (metrics.busyness_score as number)
+        : 0;
     return {
       ...f,
-      busyness_score: metrics.busyness_score || 0,
+      busyness_score,
     } as EnrichedFacility;
   });
 
@@ -114,8 +118,13 @@ export const updateLiveOccupancy = async (facilityId: string) => {
   const capacity = facility.capacity || 50;
   const busynessScore = currentOccupancy / capacity;
 
-  const previousMetrics = (facility.live_metrics as Record<string, any>) || {};
-  const previousOccupancy = previousMetrics.current_occupancy || 0;
+  const previousMetrics = (facility.live_metrics as Record<string, unknown>) || {};
+  const previousOccupancy =
+    typeof previousMetrics === 'object' &&
+    previousMetrics !== null &&
+    'current_occupancy' in previousMetrics
+      ? (previousMetrics.current_occupancy as number)
+      : 0;
 
   let trend = 'stable';
   if (currentOccupancy > previousOccupancy) trend = 'increasing';
@@ -144,10 +153,14 @@ export const getFacilityById = async (id: string): Promise<EnrichedFacility | nu
 
   if (!facility) return null;
 
-  const metrics = (facility.live_metrics as Record<string, any>) || {};
+  const metrics = (facility.live_metrics as Record<string, unknown>) || {};
+  const busyness_score =
+    typeof metrics === 'object' && metrics !== null && 'busyness_score' in metrics
+      ? (metrics.busyness_score as number)
+      : 0;
   return {
     ...facility,
-    busyness_score: metrics.busyness_score || 0,
+    busyness_score,
   } as EnrichedFacility;
 };
 
@@ -174,10 +187,14 @@ export const getFacilitiesByType = async (
   ]);
 
   const enrichedFacilities: EnrichedFacility[] = facilities.map((f) => {
-    const metrics = (f.live_metrics as Record<string, any>) || {};
+    const metrics = (f.live_metrics as Record<string, unknown>) || {};
+    const busyness_score =
+      typeof metrics === 'object' && metrics !== null && 'busyness_score' in metrics
+        ? (metrics.busyness_score as number)
+        : 0;
     return {
       ...f,
-      busyness_score: metrics.busyness_score || 0,
+      busyness_score,
     } as EnrichedFacility;
   });
 
@@ -236,11 +253,15 @@ export const getFacilitiesNearby = async (
     .map((raw) => {
       const f = facilityMap.get(raw.id);
       if (!f) return null;
-      const metrics = (f.live_metrics as Record<string, any>) || {};
+      const metrics = (f.live_metrics as Record<string, unknown>) || {};
+      const busyness_score =
+        typeof metrics === 'object' && metrics !== null && 'busyness_score' in metrics
+          ? (metrics.busyness_score as number)
+          : 0;
       return {
         ...f,
         distance: raw.distance,
-        busyness_score: metrics.busyness_score || 0,
+        busyness_score,
       } as EnrichedFacility & { distance: number };
     })
     .filter((f): f is EnrichedFacility & { distance: number } => f !== null);

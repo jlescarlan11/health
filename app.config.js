@@ -4,6 +4,7 @@ module.exports = {
   expo: {
     name: 'health',
     slug: 'health',
+    scheme: 'health',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',

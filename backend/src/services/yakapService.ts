@@ -1,4 +1,12 @@
-export const getYakapInfo = () => {
+export interface YakapInfo {
+  program_name: string;
+  description: string;
+  eligibility: string[];
+  requirements: string[];
+  benefits: string[];
+}
+
+export const getYakapInfo = (): YakapInfo => {
   return {
     program_name: 'YAKAP (Yaman ang Kalusugan Program)',
     description:

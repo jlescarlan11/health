@@ -11,7 +11,12 @@ export const SettingsScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
-  const { specializedModes } = useAppSelector((state) => state.settings);
+  const settings = useAppSelector((state) => state.settings);
+  const specializedModes = settings?.specializedModes || {
+    isSenior: false,
+    isPWD: false,
+    isChronic: false,
+  };
 
   return (
     <SafeAreaView

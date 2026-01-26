@@ -96,10 +96,10 @@ function parseContacts(phoneStr: string) {
 /**
  * Safely parses JSON strings with a default fallback
  */
-function parseJson(jsonStr: string, defaultValue: any = {}) {
+function parseJson(jsonStr: string, defaultValue: unknown = {}) {
   try {
     return jsonStr && jsonStr.trim() !== '' ? JSON.parse(jsonStr) : defaultValue;
-  } catch (e) {
+  } catch {
     return defaultValue;
   }
 }

@@ -10,7 +10,7 @@ interface FacilityWithDistance extends Facility {
 
 // Helper to map DB model to Frontend Interface
 const mapToFacility = (f: FacilityWithDistance) => {
-  const operatingHours = f.operating_hours as Record<string, unknown>;
+  const operatingHours = f.operating_hours as Record<string, unknown> | null;
   const hours =
     operatingHours && typeof operatingHours === 'object'
       ? (operatingHours.description as string) || ''
@@ -37,7 +37,7 @@ const mapToFacility = (f: FacilityWithDistance) => {
     specialized_services: f.specialized_services,
     is_24_7: f.is_24_7,
     busyness_score: f.busyness_score || 0,
-    live_metrics: (f as any).live_metrics,
+    live_metrics: f.live_metrics,
   };
 };
 

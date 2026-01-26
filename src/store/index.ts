@@ -58,11 +58,28 @@ const migrations = {
     }
     return state;
   },
+  3: (state: any) => {
+    // Ensure specializedModes is initialized in settings to prevent crashes
+    if (state && state.settings && !state.settings.specializedModes) {
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          specializedModes: {
+            isSenior: false,
+            isPWD: false,
+            isChronic: false,
+          },
+        },
+      };
+    }
+    return state;
+  },
 };
 
 const persistConfig = {
   key: 'root',
-  version: 2,
+  version: 3,
   storage: AsyncStorage,
   whitelist: ['settings', 'navigation', 'offline', 'medication', 'profile', 'feed'],
   migrate: createMigrate(migrations, { debug: false }),

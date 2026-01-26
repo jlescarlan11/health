@@ -54,6 +54,14 @@ const settingsSlice = createSlice({
       state,
       action: PayloadAction<keyof SettingsState['specializedModes']>,
     ) => {
+      // Safety guard to ensure specializedModes exists
+      if (!state.specializedModes) {
+        state.specializedModes = {
+          isSenior: false,
+          isPWD: false,
+          isChronic: false,
+        };
+      }
       state.specializedModes[action.payload] = !state.specializedModes[action.payload];
     },
   },

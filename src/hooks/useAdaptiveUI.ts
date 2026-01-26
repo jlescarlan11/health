@@ -14,7 +14,9 @@ export const useAdaptiveUI = () => {
   const specializedModes = useAppSelector((state) => state.settings.specializedModes);
 
   return useMemo(() => {
-    const { isSenior, isPWD } = specializedModes;
+    // Safety guard if specializedModes is undefined (e.g. legacy persisted state)
+    const modes = specializedModes || { isSenior: false, isPWD: false, isChronic: false };
+    const { isSenior, isPWD } = modes;
 
     // Scale factor is 1.25 for seniors, otherwise default 1.0
     const scaleFactor = isSenior ? 1.25 : 1.0;
