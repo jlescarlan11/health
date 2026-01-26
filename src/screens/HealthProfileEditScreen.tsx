@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, HelperText, useTheme, Snackbar } from 'react-native-paper';
+import { TextInput, HelperText, useTheme, Snackbar, Surface } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import StandardHeader from '../components/common/StandardHeader';
@@ -21,10 +21,12 @@ export const HealthProfileEditScreen = () => {
   const [normalizedDob, setNormalizedDob] = useState(profile.dob || '');
   const [bloodType, setBloodType] = useState(profile.bloodType || '');
   const [philHealthId, setPhilHealthId] = useState(profile.philHealthId || '');
-  const [visible, setVisible] = useState(false);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [dobError, setDobError] = useState('');
   const [dobTouched, setDobTouched] = useState(false);
   const lastDisplayRef = useRef(formatMmDisplay(initialDobDigits));
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const statusResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setFullName(profile.fullName || '');
@@ -40,6 +42,14 @@ export const HealthProfileEditScreen = () => {
     setDobTouched(false);
   }, [profile]);
 
+  useEffect(() => {
+    return () => {
+      if (statusResetRef.current) {
+        clearTimeout(statusResetRef.current);
+      }
+    };
+  }, []);
+
   const handleSave = () => {
     setDobTouched(true);
     const error = getDobError(dobDigits);
@@ -54,6 +64,7 @@ export const HealthProfileEditScreen = () => {
       return;
     }
 
+    setSaveState('saving');
     dispatch(
       updateProfile({
         fullName: fullName.trim() || null,
@@ -62,7 +73,14 @@ export const HealthProfileEditScreen = () => {
         philHealthId: philHealthId.trim() || null,
       }),
     );
-    setVisible(true);
+    setSaveState('saved');
+    setSnackbarVisible(true);
+    if (statusResetRef.current) {
+      clearTimeout(statusResetRef.current);
+    }
+    statusResetRef.current = setTimeout(() => {
+      setSaveState('idle');
+    }, 2200);
   };
 
   const handleDobBlur = () => {
@@ -100,14 +118,21 @@ export const HealthProfileEditScreen = () => {
     }
   };
 
-  const onDismissSnackbar = () => setVisible(false);
-
-  const rightActions = (
+  const onDismissSnackbar = () => setSnackbarVisible(false);
+  const heroNameLabel = fullName.trim() || 'Add your full name';
+  const heroBloodLabel = bloodType.trim() || 'Add your blood type';
+  const isSaving = saveState === 'saving';
+  const headerActionLabel =
+    isSaving ? 'Saving…' : saveState === 'saved' ? 'Saved' : 'Save';
+  const headerRightActions = (
     <Button
-      title="Save"
+      title={headerActionLabel}
       variant="text"
       onPress={handleSave}
+      loading={isSaving}
+      disabled={isSaving}
       labelStyle={[styles.saveButtonLabel, { color: theme.colors.primary }]}
+      accessibilityLabel="Save health profile"
     />
   );
 
@@ -116,24 +141,76 @@ export const HealthProfileEditScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right']}
     >
-      <StandardHeader title="Edit Health Profile" showBackButton={true} rightActions={rightActions} />
+      <StandardHeader title="My Health Records" showBackButton rightActions={headerRightActions} />
       <KeyboardAwareScrollView
         contentContainerStyle={styles.scrollContent}
         enableOnAndroid={true}
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.descriptionContainer}>
-          <Text variant="bodyMedium" style={styles.description}>
-            Keep your personal information current so care teams can provide faster support when you need it.
+        <View style={styles.heroCard}>
+          <Text variant="headlineSmall" style={styles.heroTitle}>
+            My Health Record
           </Text>
+          <Text variant="bodyMedium" style={styles.heroSubtitle}>
+            Keep this section current so care teams immediately understand what matters most.
+          </Text>
+          <View style={styles.heroStats}>
+            <View style={styles.heroStat}>
+              <Text variant="titleLarge" style={styles.heroValue}>
+                {heroNameLabel}
+              </Text>
+              <Text variant="bodySmall" style={styles.heroHint}>
+                Primary name on file
+              </Text>
+            </View>
+            <View style={styles.heroStat}>
+              <Text variant="titleLarge" style={styles.heroValue}>
+                {heroBloodLabel}
+              </Text>
+              <Text variant="bodySmall" style={styles.heroHint}>
+                Blood type for emergencies
+              </Text>
+            </View>
+          </View>
+          <View style={styles.heroBadges}>
+            <Surface
+              style={[styles.heroBadge, { backgroundColor: theme.colors.primaryContainer }]}
+              elevation={1}
+            >
+              <Text variant="bodySmall" style={styles.heroBadgeLabel}>
+                Date of birth
+              </Text>
+              <Text variant="titleSmall" style={styles.heroBadgeValue}>
+                {displayDob || 'MM/DD/YYYY'}
+              </Text>
+            </Surface>
+            <Surface
+              style={[styles.heroBadge, styles.heroBadgeSpacing, { backgroundColor: theme.colors.secondaryContainer }]}
+              elevation={1}
+            >
+              <Text variant="bodySmall" style={styles.heroBadgeLabel}>
+                PhilHealth ID
+              </Text>
+              <Text variant="titleSmall" style={styles.heroBadgeValue}>
+                {philHealthId || 'Optional'}
+              </Text>
+            </Surface>
+          </View>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
+        <View style={styles.sectionCard}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Personal details
+          </Text>
+          <Text variant="bodySmall" style={styles.sectionHint}>
+            Clinics use this information to confirm your identity and keep alignment with their records.
+          </Text>
+
+          <View style={styles.field}>
             <TextInput
               mode="outlined"
-              label="Full Name"
+              label="Full name"
               placeholder="e.g. Juan Dela Cruz"
               value={fullName}
               onChangeText={setFullName}
@@ -142,13 +219,17 @@ export const HealthProfileEditScreen = () => {
               cursorColor={theme.colors.primary}
               selectionColor={theme.colors.primary + '40'}
               dense
+              accessibilityHint="Use the name that appears on your IDs so clinics can recognize you"
             />
+            <HelperText type="info" visible style={styles.helperText}>
+              Match the name that clinics and diagnostics already have on record.
+            </HelperText>
           </View>
 
-          <View style={styles.inputContainer}>
+          <View style={styles.field}>
             <TextInput
               mode="outlined"
-              label="Date of Birth"
+              label="Date of birth"
               placeholder="MM/DD/YYYY"
               value={displayDob}
               onChangeText={handleDobChange}
@@ -161,16 +242,31 @@ export const HealthProfileEditScreen = () => {
               keyboardType="number-pad"
               maxLength={10}
               onBlur={handleDobBlur}
+              accessibilityHint="Provide the month, day, and year of your birth to match your profile"
             />
             <HelperText type="error" visible={!!dobError} style={styles.helperText}>
               {dobError}
             </HelperText>
+            {!dobError && (
+              <HelperText type="info" visible style={styles.helperText}>
+                We use this date to align you with your clinics and maintain safe care plans.
+              </HelperText>
+            )}
           </View>
+        </View>
 
-          <View style={styles.inputContainer}>
+        <View style={[styles.sectionCard, styles.sectionCardSpacing]}>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            Health essentials
+          </Text>
+          <Text variant="bodySmall" style={styles.sectionHint}>
+            These values help providers prepare the right care for you and avoid repeated questions.
+          </Text>
+
+          <View style={styles.field}>
             <TextInput
               mode="outlined"
-              label="Blood Type"
+              label="Blood type"
               placeholder="e.g. O+"
               value={bloodType}
               onChangeText={setBloodType}
@@ -179,10 +275,14 @@ export const HealthProfileEditScreen = () => {
               cursorColor={theme.colors.primary}
               selectionColor={theme.colors.primary + '40'}
               dense
+              accessibilityHint="Share your blood type so emergency teams can act quickly"
             />
+            <HelperText type="info" visible style={styles.helperText}>
+              Adding your blood type keeps teams ready for urgent care without guessing.
+            </HelperText>
           </View>
 
-          <View style={styles.inputContainer}>
+          <View style={styles.field}>
             <TextInput
               mode="outlined"
               label="PhilHealth ID"
@@ -195,13 +295,39 @@ export const HealthProfileEditScreen = () => {
               selectionColor={theme.colors.primary + '40'}
               keyboardType="numeric"
               dense
+              accessibilityHint="Keep this number accurate for faster claims and eligibility checks"
             />
+            <HelperText type="info" visible style={styles.helperText}>
+              Keeping your ID synced avoids delays when updating benefits or billing.
+            </HelperText>
           </View>
+        </View>
+
+        <View style={styles.buttonArea}>
+          <Button
+            title="Save changes"
+            variant="primary"
+            onPress={handleSave}
+            loading={saveState === 'saving'}
+            disabled={saveState === 'saving'}
+            accessibilityHint="Save your updated health record details"
+            style={styles.saveButton}
+          />
+          {saveState === 'saving' && (
+            <Text variant="bodySmall" style={styles.statusMessage}>
+              Saving updates... hang tight.
+            </Text>
+          )}
+          {saveState === 'saved' && (
+            <Text variant="bodySmall" style={[styles.statusMessage, styles.statusSuccess]}>
+              Saved - the care team now sees your latest info.
+            </Text>
+          )}
         </View>
       </KeyboardAwareScrollView>
 
       <Snackbar
-        visible={visible}
+        visible={snackbarVisible}
         onDismiss={onDismissSnackbar}
         duration={2000}
         style={[styles.snackbar, { backgroundColor: theme.colors.surface }]}
@@ -221,39 +347,114 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 40, // Standard padding
+    paddingBottom: 40,
     flexGrow: 1,
   },
-  descriptionContainer: {
+  heroCard: {
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 2,
   },
-  description: {
+  heroTitle: {
+    fontWeight: '700',
+  },
+  heroSubtitle: {
+    marginTop: 6,
     color: '#4A4B4D',
     lineHeight: 20,
   },
-  form: {
-    width: '100%',
+  heroStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
   },
-  inputContainer: {
-    marginBottom: 16,
+  heroStat: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  heroValue: {
+    fontWeight: '700',
+    color: '#1B1B1F',
+  },
+  heroHint: {
+    marginTop: 4,
+    color: '#5C5F66',
+  },
+  heroBadges: {
+    flexDirection: 'row',
+    marginTop: 18,
+  },
+  heroBadge: {
+    flex: 1,
+    borderRadius: 16,
+    padding: 12,
+  },
+  heroBadgeSpacing: {
+    marginLeft: 12,
+  },
+  heroBadgeLabel: {
+    color: '#5C5F66',
+  },
+  heroBadgeValue: {
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  sectionCard: {
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  sectionCardSpacing: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontWeight: '700',
+  },
+  sectionHint: {
+    marginTop: 4,
+    color: '#5C5F66',
+    lineHeight: 20,
+  },
+  field: {
+    marginTop: 18,
   },
   input: {
     backgroundColor: 'transparent',
     fontSize: 15,
   },
   inputOutline: {
-    borderRadius: 24,
+    borderRadius: 18,
   },
   helperText: {
     marginTop: 4,
     marginLeft: 8,
   },
-  saveButtonLabel: {
-    fontSize: 16,
-    fontWeight: '700',
+  buttonArea: {
+    marginTop: 30,
+  },
+  saveButton: {
+    borderRadius: 16,
+  },
+  statusMessage: {
+    marginTop: 8,
+    color: '#5C5F66',
+  },
+  statusSuccess: {
+    color: '#1E7E34',
   },
   snackbarWrapper: {
-    bottom: 20, // Standard position
+    bottom: 20,
   },
   snackbar: {
     borderRadius: 24,

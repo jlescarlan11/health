@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -8,7 +8,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
 import { RootState } from '../store';
-import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text } from '../components/common';
+import { Button, YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text } from '../components/common';
 import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
 // Import the new components
@@ -167,11 +167,6 @@ export const MainHomeScreen = () => {
               <Text variant="titleLarge" style={styles.sectionTitle}>
                 Discover Latest News
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}>
-                <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                  View All
-                </Text>
-              </TouchableOpacity>
             </View>
 
             <View style={styles.feedList}>
@@ -182,6 +177,15 @@ export const MainHomeScreen = () => {
                   onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
                 />
               ))}
+            </View>
+            <View style={styles.seeMoreButtonContainer}>
+              <Button
+                title="See More"
+                onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
+                style={styles.seeMoreButton}
+                contentStyle={styles.seeMoreButtonContent}
+                accessibilityLabel="See more news"
+              />
             </View>
           </View>
         </View>
@@ -228,6 +232,15 @@ const styles = StyleSheet.create({
   feedList: {
     marginTop: 0,
     gap: 16,
+  },
+  seeMoreButtonContainer: {
+    marginTop: 16,
+  },
+  seeMoreButton: {
+    alignSelf: 'flex-start',
+  },
+  seeMoreButtonContent: {
+    paddingHorizontal: 0,
   },
   card: {
     borderRadius: 24,

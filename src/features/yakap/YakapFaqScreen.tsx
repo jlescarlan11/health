@@ -10,10 +10,12 @@ import {
 } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { YAKAP_FAQS, YakapFAQ } from './yakapContent';
 import StandardHeader from '../../components/common/StandardHeader';
 import { MD3Theme } from 'react-native-paper';
+import { theme as appTheme } from '../../theme';
 
 if (
   Platform.OS === 'android' &&
@@ -82,7 +84,13 @@ const FaqItem = ({
 
 const YakapFaqScreen = () => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const minBottomSpacing = themeSpacing.md ?? 12;
+  const baseBottomPadding = themeSpacing.lg ?? 16;
+  const extraBottomSpacing = Math.max(minBottomSpacing - insets.bottom, 0);
+  const scrollContentPaddingBottom = baseBottomPadding + extraBottomSpacing;
 
   const handleAccordionPress = (id: string) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -90,9 +98,20 @@ const YakapFaqScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right', 'bottom']}
+    >
       <StandardHeader title="Frequently Asked Questions" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingBottom: scrollContentPaddingBottom,
+          },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.faqList}>
           {YAKAP_FAQS.map((faq) => (
             <FaqItem
@@ -105,7 +124,7 @@ const YakapFaqScreen = () => {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -115,7 +134,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
-    paddingBottom: 48,
   },
   faqList: {
     marginTop: 8,

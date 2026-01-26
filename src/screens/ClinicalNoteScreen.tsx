@@ -15,7 +15,6 @@ import { RootState } from '../store';
 import { RootStackParamList } from '../types/navigation';
 import { StandardHeader, Button, Text } from '../components/common';
 import { parseSoap, formatClinicalShareText } from '../utils/clinicalUtils';
-import * as Clipboard from 'expo-clipboard';
 import * as Print from 'expo-print';
 import { sharingUtils } from '../utils/sharingUtils';
 import QRCode from 'react-native-qrcode-svg';
@@ -33,7 +32,6 @@ export const ClinicalNoteScreen = () => {
 
   const [historicalRecord, setHistoricalRecord] = useState<DB.ClinicalHistoryRecord | null>(null);
   const [loading, setLoading] = useState(!!recordId);
-  const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
@@ -96,12 +94,6 @@ export const ClinicalNoteScreen = () => {
     assessmentData.timestamp,
     assessmentData.medical_justification,
   );
-
-  const handleShare = async () => {
-    await Clipboard.setStringAsync(shareText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleSocialShare = async () => {
     await sharingUtils.shareReport('Clinical Referral Report', shareText);
@@ -279,16 +271,9 @@ export const ClinicalNoteScreen = () => {
           <Button
             variant="outline"
             onPress={handleSocialShare}
-            style={[styles.footerButton, { marginRight: 8 }]}
+            style={styles.footerButton}
             title="Share"
             icon="share-variant"
-          />
-          <Button
-            variant={copied ? 'outline' : 'primary'}
-            onPress={handleShare}
-            style={styles.footerButton}
-            title={copied ? 'Done' : 'Copy'}
-            icon={copied ? 'check' : 'content-copy'}
           />
         </View>
       </View>

@@ -10,7 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip, useTheme, Card } from 'react-native-paper';
+import { useTheme, Card } from 'react-native-paper';
 import { Text } from '../../components/common/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { speechService } from '../../services/speechService';
@@ -18,7 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { RootState } from '../../store';
-import { InputCard, EmergencyActions } from '../../components/common';
+import { InputCard, EmergencyActions, FeatureChip } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk, clearAssessmentState, setSymptomDraft } from '../../store/navigationSlice';
@@ -34,48 +34,6 @@ const SYMPTOM_ICONS: Record<string, string> = {
   'Stomach Pain': 'stomach',
   Injury: 'bandage',
   'Prenatal Care': 'medical-bag',
-};
-
-const SymptomItem = ({
-  label,
-  icon,
-  isSelected,
-  onPress,
-}: {
-  label: string;
-  icon: string;
-  isSelected: boolean;
-  onPress: () => void;
-}) => {
-  const theme = useTheme();
-
-  return (
-    <Chip
-      selected={isSelected}
-      onPress={onPress}
-      mode="flat"
-      showSelectedCheck={false}
-      icon={({ size, color: _color }) => (
-        <MaterialCommunityIcons
-          name={(isSelected ? 'check' : icon) as any}
-          size={size}
-          color={isSelected ? theme.colors.onPrimary : theme.colors.primary}
-        />
-      )}
-      style={[
-        styles.symptomChip,
-        {
-          backgroundColor: isSelected ? theme.colors.primary : theme.colors.secondaryContainer,
-        },
-      ]}
-      textStyle={[
-        styles.symptomLabel,
-        { color: isSelected ? theme.colors.onPrimary : theme.colors.primary },
-      ]}
-    >
-      {label}
-    </Chip>
-  );
 };
 
 const CheckSymptomScreen = () => {
@@ -378,11 +336,11 @@ const CheckSymptomScreen = () => {
                   .includes(s);
 
                 return (
-                  <SymptomItem
+                  <FeatureChip
                     key={s}
                     label={s}
                     icon={icon}
-                    isSelected={isSelected}
+                    selected={isSelected}
                     onPress={() => toggleSymptom(s)}
                   />
                 );
@@ -459,14 +417,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  symptomChip: {
-    marginBottom: 4,
-    borderRadius: 8,
-  },
-  symptomLabel: {
-    fontWeight: '500',
-    fontSize: 14,
   },
 });
 

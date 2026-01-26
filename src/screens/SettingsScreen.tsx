@@ -22,7 +22,7 @@ export const SettingsScreen = () => {
   const insets = useSafeAreaInsets();
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const minBottomSpacing = themeSpacing.md ?? 12;
-  const baseBottomPadding = themeSpacing.lg ?? 16;
+  const bottomSafeAreaPadding = Math.max(insets.bottom, minBottomSpacing);
   const specializedModes = settings?.specializedModes || {
     isSenior: false,
     isPWD: false,
@@ -46,14 +46,14 @@ export const SettingsScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['top', 'left', 'right']}
     >
       <StandardHeader title="Settings" showBackButton={false} />
       <ScrollView
         contentContainerStyle={[
           styles.content,
           {
-            paddingBottom: Math.max(insets.bottom, minBottomSpacing) + baseBottomPadding,
+            paddingBottom: bottomSafeAreaPadding,
           },
         ]}
       >

@@ -27,7 +27,7 @@ import { FacilityStatusIndicator } from '../components/common/FacilityStatusIndi
 import { useUserLocation } from '../hooks';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
-import { ServiceChip } from '../components/common/ServiceChip';
+import { FeatureChip } from '../components/common';
 import { sharingUtils } from '../utils/sharingUtils';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { formatOperatingHours } from '../utils/facilityUtils';
@@ -217,7 +217,7 @@ export const FacilityDetailsScreen = () => {
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['top', 'left', 'right']}
     >
       <StandardHeader
         title={facility.name}
@@ -413,7 +413,11 @@ export const FacilityDetailsScreen = () => {
                     <Text style={styles.categoryTitle}>{category}</Text>
                     <View style={styles.servicesGrid}>
                       {visibleServices.map((service, index) => (
-                        <ServiceChip key={index} service={service} />
+                        <FeatureChip
+                          key={`${category}-${index}`}
+                          label={service}
+                          style={styles.serviceChipItem}
+                        />
                       ))}
                     </View>
                     {hasMore && (
@@ -624,6 +628,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12, // Increased gap for better vertical separation
+  },
+  serviceChipItem: {
+    marginBottom: 0,
   },
   seeAllButton: {
     flexDirection: 'row',

@@ -67,8 +67,11 @@ const PLAN_CACHE_VERSION = 1;
 const normalizeCacheInput = (value: string): string =>
   value.replace(/\s+/g, ' ').trim().toLowerCase();
 
-const getAssessmentPlanCacheKey = (symptom: string): string =>
-  `${PLAN_CACHE_PREFIX}${normalizeCacheInput(symptom || '')}`;
+const getAssessmentPlanCacheKey = (symptom: string, patientContext?: string): string => {
+  const base = normalizeCacheInput(symptom || '');
+  if (!patientContext || !patientContext.trim()) return `${PLAN_CACHE_PREFIX}${base}`;
+  return `${PLAN_CACHE_PREFIX}${base}|ctx:${simpleHash(normalizeCacheInput(patientContext))}`;
+};
 
 const simpleHash = (value: string): string => {
   let hash = 0;
@@ -307,19 +310,25 @@ export class GeminiClient {
     symptoms: string,
     history: ChatMessage[] = [],
     cacheKeyInput?: string,
+    patientContext?: string,
   ): string {
     const overrideSource = cacheKeyInput?.trim() ? cacheKeyInput : symptoms;
     const symptomsKey = this.normalizeCacheKeyInput(overrideSource);
+    let key = symptomsKey;
 
-    if (history.length === 0) {
-      return symptomsKey;
+    if (history.length > 0) {
+      // Hash conversation for fixed-length keys
+      const historyStr = history.map((m) => `${m.role}:${m.text}`).join('|');
+      const historyHash = this.simpleHash(historyStr);
+      key = `${key}|h:${historyHash}`;
     }
 
-    // Hash conversation for fixed-length keys
-    const historyStr = history.map((m) => `${m.role}:${m.text}`).join('|');
-    const historyHash = this.simpleHash(historyStr);
+    if (patientContext && patientContext.trim()) {
+      const contextHash = this.simpleHash(this.normalizeCacheKeyInput(patientContext));
+      key = `${key}|ctx:${contextHash}`;
+    }
 
-    return `${symptomsKey}|h:${historyHash}`;
+    return key;
   }
 
   /**
@@ -601,8 +610,9 @@ export class GeminiClient {
    */
   public async generateAssessmentPlan(
     initialSymptom: string,
+    patientContext?: string,
   ): Promise<{ questions: AssessmentQuestion[]; intro?: string }> {
-    const cacheKey = getAssessmentPlanCacheKey(initialSymptom);
+    const cacheKey = getAssessmentPlanCacheKey(initialSymptom, patientContext);
 
     try {
       const cachedJson = await AsyncStorage.getItem(cacheKey);
@@ -623,10 +633,12 @@ export class GeminiClient {
     }
 
     try {
-      const prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace(
+      let prompt = GENERATE_ASSESSMENT_QUESTIONS_PROMPT.replace(
         '{{initialSymptom}}',
         initialSymptom,
       );
+      prompt = this.applyPatientContext(prompt, patientContext);
+
       const responseText = await this.generateContentWithRetry(prompt);
 
       const parsed = parseAndValidateLLMResponse<{
@@ -1020,6 +1032,8 @@ export class GeminiClient {
    * @param history Optional conversation history
    * @param safetyContext Optional specialized string for local safety scanning (user-only content)
    * @param profile Optional structured assessment profile for context-aware triage
+   * @param cacheKeyInput Optional string to override the primary symptom in the cache key
+   * @param patientContext Optional human-readable health profile preamble
    */
   public async assessSymptoms(
     symptoms: string,
@@ -1027,6 +1041,7 @@ export class GeminiClient {
     safetyContext?: string,
     profile?: AssessmentProfile,
     cacheKeyInput?: string,
+    patientContext?: string,
   ): Promise<AssessmentResponse> {
     // 0. Periodic Cleanup (non-blocking)
     this.performCacheCleanup().catch((e) => console.warn('Cleanup failed:', e));
@@ -1132,7 +1147,7 @@ export class GeminiClient {
     }
 
     // 2. Cache Check (non-blocking read)
-    const cacheKey = this.getCacheKey(symptoms, history, cacheKeyInput);
+    const cacheKey = this.getCacheKey(symptoms, history, cacheKeyInput, patientContext);
     const fullCacheKey = `${STORAGE_KEY_CACHE_PREFIX}${cacheKey}`;
 
     // Skip cache if we have a pending emergency fallback to force fresh verification
@@ -1164,9 +1179,11 @@ export class GeminiClient {
         await this.checkRateLimits();
 
         // Inject critical context if local emergency was detected
-        const systemPrompt = emergencyFallback
+        let systemPrompt = emergencyFallback
           ? `${SYMPTOM_ASSESSMENT_SYSTEM_PROMPT}\n\nCRITICAL SAFETY OVERRIDE: The system has detected EMERGENCY KEYWORDS (${emergency.matchedKeywords.join(', ')}). You MUST output "recommended_level": "emergency". Your goal is to explain WHY this is an emergency to the user in a calm, authoritative way.`
           : SYMPTOM_ASSESSMENT_SYSTEM_PROMPT;
+
+        systemPrompt = this.applyPatientContext(systemPrompt, patientContext);
 
         // Construct Chat History for Gemini
         const chat = this.model.startChat({

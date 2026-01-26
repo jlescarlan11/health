@@ -31,7 +31,7 @@ import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetecto
 import { FacilityCard } from '../components/common/FacilityCard';
 import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
 import { Button, SafetyRecheckModal, Text } from '../components/common';
-import { ServiceChip } from '../components/common/ServiceChip';
+import { FeatureChip } from '../components/common';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
@@ -863,12 +863,11 @@ const RecommendationScreen = () => {
                       </Text>
                       <View style={styles.matchSummaryChips}>
                         {matchedServices.map((service) => (
-                          <View
+                          <FeatureChip
                             key={`match-${facility.id}-${service}`}
+                            label={service}
                             style={styles.matchSummaryChip}
-                          >
-                            <ServiceChip service={service} transparent />
-                          </View>
+                          />
                         ))}
                       </View>
                     </View>
