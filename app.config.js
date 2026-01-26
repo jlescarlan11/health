@@ -4,6 +4,7 @@ module.exports = {
   expo: {
     name: 'health',
     slug: 'health',
+    scheme: 'health',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -20,6 +21,7 @@ module.exports = {
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
         UIBackgroundModes: ['remote-notification'],
+        LSApplicationQueriesSchemes: ['viber', 'fb-messenger'],
       },
     },
     android: {
@@ -35,11 +37,37 @@ module.exports = {
     web: {
       favicon: './assets/favicon.png',
     },
-    plugins: ['expo-router', 'expo-sqlite', '@react-native-firebase/app', 'expo-system-ui'],
+    plugins: [
+      'expo-sqlite',
+      '@react-native-firebase/app',
+      'expo-system-ui',
+      '@react-native-voice/voice',
+      'expo-notifications',
+      './plugins/withGradleMemory',
+      './plugins/withAndroidXManifest',
+      [
+        'expo-build-properties',
+        {
+          android: {
+            kotlinVersion: '2.0.21',
+            supportLibVersion: '28.0.0',
+            extraMavenRepos: [
+              'https://www.jitpack.io'
+            ],
+            packagingOptions: {
+              pickFirst: ['**/libc++_shared.so'],
+            },
+          },
+        },
+      ],
+    ],
     extra: {
       apiUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
       backendUrl: process.env.BACKEND_API_URL || 'http://localhost:3000/api',
       geminiApiKey: process.env.GEMINI_API_KEY,
+      eas: {
+        projectId: '69f9b7dc-d73b-47db-b74c-d467716c904b',
+      },
     },
   },
 };

@@ -12,6 +12,7 @@ import SymptomAssessmentScreen from '../screens/SymptomAssessmentScreen';
 import RecommendationScreen from '../screens/RecommendationScreen';
 import { ClinicalNoteScreen } from '../screens/ClinicalNoteScreen';
 import { ClinicalHistoryScreen } from '../screens/ClinicalHistoryScreen';
+import { HealthProfileEditScreen } from '../screens/HealthProfileEditScreen';
 import CrisisSupportScreen from '../screens/CrisisSupportScreen';
 import FacilityDetailsScreen from '../screens/FacilityDetailsScreen';
 import {
@@ -22,6 +23,7 @@ import {
   EnrollmentCompletionScreen,
 } from '../features/yakap';
 import StandardHeader from '../components/common/StandardHeader';
+import MedicationTrackerScreen from '../screens/MedicationTrackerScreen';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -51,6 +53,7 @@ const AppNavigator = () => {
       />
       <Stack.Screen name="ClinicalNote" component={ClinicalNoteScreen} />
       <Stack.Screen name="ClinicalHistory" component={ClinicalHistoryScreen} />
+      <Stack.Screen name="HealthProfileEdit" component={HealthProfileEditScreen} />
       <Stack.Screen
         name="CrisisSupport"
         component={CrisisSupportScreen}
@@ -79,6 +82,14 @@ const AppNavigator = () => {
         name="TermsOfService"
         component={TermsOfServiceScreen}
         options={{ title: 'Terms of Service' }}
+      />
+      <Stack.Screen
+        name="MedicationTracker"
+        component={MedicationTrackerScreen}
+        options={{
+          headerShown: true,
+          header: () => <StandardHeader title="Medication Tracker" />,
+        }}
       />
     </Stack.Navigator>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { Text } from '../common';
 import HeroSection from './HeroSection';
 
 interface HomeHeroProps {

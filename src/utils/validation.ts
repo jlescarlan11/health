@@ -210,16 +210,16 @@ export const normalizeFacility = (value: unknown): Facility | null => {
   const yakapAccredited = coerceBoolean(record.yakapAccredited);
 
   const phone = typeof record.phone === 'string' ? record.phone.trim() : undefined;
-  
-  const contacts = Array.isArray(record.contacts) 
-    ? (record.contacts as any[]).map(c => ({
+
+  const contacts = Array.isArray(record.contacts)
+    ? (record.contacts as any[]).map((c) => ({
         id: c.id,
         phoneNumber: c.phoneNumber,
-        platform: (c.platform === 'viber' || c.platform === 'messenger') ? c.platform : 'phone',
+        platform: c.platform === 'viber' || c.platform === 'messenger' ? c.platform : 'phone',
         teleconsultUrl: c.teleconsultUrl,
         contactName: c.contactName,
         role: c.role,
-        facilityId: c.facilityId
+        facilityId: c.facilityId,
       }))
     : undefined;
 
@@ -308,9 +308,7 @@ export const normalizeMedication = (value: unknown): Medication | null => {
 
   const dosage = typeof record.dosage === 'string' ? record.dosage.trim() : '';
   const scheduled_time =
-    typeof record.scheduled_time === 'string'
-      ? normalizeTime(record.scheduled_time) || ''
-      : '';
+    typeof record.scheduled_time === 'string' ? normalizeTime(record.scheduled_time) || '' : '';
   const is_active = coerceBoolean(record.is_active ?? true);
   const days_of_week = normalizeStringArray(record.days_of_week);
 
@@ -323,4 +321,3 @@ export const normalizeMedication = (value: unknown): Medication | null => {
     days_of_week,
   };
 };
-

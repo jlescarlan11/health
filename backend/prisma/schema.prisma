@@ -96,14 +96,57 @@ model EmergencyContact {
 }
 
 model Medication {
+
   id             String   @id @default(cuid())
+
   name           String
+
   dosage         String?
+
   scheduled_time String?
+
   is_active      Boolean  @default(true)
+
   days_of_week   String[] @default([])
+
   createdAt      DateTime @default(now())
+
   updatedAt      DateTime @updatedAt
 
+
+
   @@index([name])
+
 }
+
+
+
+model HealthFeed {
+
+  id        String   @id @default(cuid())
+
+  externalId String  @unique // Hash of URL or ID from WP
+
+  title     String
+
+  excerpt   String
+
+  url       String
+
+  imageUrl  String?
+
+  dateISO   DateTime
+
+  author    String   @default("Naga City Health")
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+
+
+  @@index([dateISO])
+
+}
+
+

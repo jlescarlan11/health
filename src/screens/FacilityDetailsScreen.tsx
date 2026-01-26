@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Image,
@@ -14,24 +13,28 @@ import {
   FlatList,
   Platform,
 } from 'react-native';
-import { useRoute, useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
+import { useTheme } from 'react-native-paper';
 
-import { RootStackScreenProps } from '../types/navigation';
-import { RootState } from '../store';
+import { Text } from '../components/common/Text';
 import { Button } from '../components/common/Button';
-import { BusynessIndicator } from '../components/common/BusynessIndicator';
 import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance, formatDistance } from '../utils/locationUtils';
-import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
-import { formatFacilityType } from '../utils';
-import { useTheme, Text as PaperText } from 'react-native-paper';
+import { BusynessIndicator } from '../components/common/BusynessIndicator';
 import { useUserLocation } from '../hooks';
+import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
 import { ServiceChip } from '../components/common/ServiceChip';
+import { CommunicationHub } from '../components/features/facilities';
+import { sharingUtils } from '../utils/sharingUtils';
+import { calculateDistance, formatDistance } from '../utils/locationUtils';
+import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
+import { formatFacilityType } from '../utils/stringUtils';
+import { RootState } from '../store';
+import { RootStackScreenProps } from '../types/navigation';
 
 type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
@@ -78,6 +81,7 @@ const CATEGORIES = {
 
 export const FacilityDetailsScreen = () => {
   const theme = useTheme();
+  const { scaleFactor } = useAdaptiveUI();
   const insets = useSafeAreaInsets();
   const route = useRoute<FacilityDetailsRouteProp>();
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
@@ -94,7 +98,6 @@ export const FacilityDetailsScreen = () => {
   const userLon = location?.coords.longitude || reduxLocation?.longitude;
 
   const [isImageViewerVisible, setImageViewerVisible] = useState(false);
-  const [contactsModalVisible, setContactsModalVisible] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   const distance = useMemo(() => {
@@ -106,7 +109,7 @@ export const FacilityDetailsScreen = () => {
     if (!facility) return {};
 
     const grouped: Record<string, string[]> = {};
-    const allServices = [...facility.services];
+    const allServices = [...(facility.services || [])];
 
     // Add specialized_services to Specialized Services category if they exist
     if (facility.specialized_services) {
@@ -151,35 +154,9 @@ export const FacilityDetailsScreen = () => {
 
   const images = facility.photoUrl ? [{ uri: facility.photoUrl }] : [];
 
-  const handleCall = () => {
-    const hasMultipleContacts = facility.contacts && facility.contacts.length > 1;
-    
-    if (hasMultipleContacts) {
-      setContactsModalVisible(true);
-      return;
-    }
-
-    const numberToCall = (facility.contacts && facility.contacts.length > 0) 
-      ? facility.contacts[0].phoneNumber 
-      : facility.phone;
-
-    if (numberToCall) {
-      Linking.openURL(`tel:${numberToCall}`).catch(() =>
-        Alert.alert('Error', 'Failed to open dialer.'),
-      );
-    } else {
-      Alert.alert('Not Available', 'Phone number is not available.');
-    }
-  };
-
   const handleShare = async () => {
-    try {
-      await Share.share({
-        message: `${facility.name}\nAddress: ${facility.address}`,
-        title: `Check out ${facility.name}`,
-      });
-    } catch {
-      Alert.alert('Error', 'Failed to share.');
+    if (facility) {
+      await sharingUtils.shareFacilityInfo(facility);
     }
   };
 
@@ -230,7 +207,7 @@ export const FacilityDetailsScreen = () => {
           />
           {images.length > 0 && (
             <View style={styles.galleryIndicator}>
-              <Ionicons name="images-outline" size={16} color="#fff" />
+              <Ionicons name="images-outline" size={16 * scaleFactor} color="#fff" />
               <Text style={styles.galleryText}>View Photos</Text>
             </View>
           )}
@@ -248,7 +225,12 @@ export const FacilityDetailsScreen = () => {
         <View style={styles.contentContainer}>
           {/* Header Info */}
           <View style={styles.headerSection}>
-            <Text style={[styles.facilityName, { color: theme.colors.onSurface }]}>
+            <Text
+              style={[
+                styles.facilityName,
+                { color: theme.colors.onSurface, fontSize: 24 * scaleFactor },
+              ]}
+            >
               {facility.name}
             </Text>
 
@@ -270,19 +252,25 @@ export const FacilityDetailsScreen = () => {
             </View>
 
             <View style={styles.statusPillContainer}>
-              <View style={[styles.statusPill, { backgroundColor: isOpen ? '#D1E7DD' : '#FAD9D9' }]}>
+              <View
+                style={[styles.statusPill, { backgroundColor: isOpen ? '#D1E7DD' : '#FAD9D9' }]}
+              >
                 <MaterialCommunityIcons
                   name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-                  size={14}
+                  size={14 * scaleFactor}
                   color={isOpen ? '#164032' : '#852D2D'}
                   style={{ marginRight: 6 }}
                 />
-                <PaperText
+                <Text
                   variant="labelMedium"
-                  style={{ color: isOpen ? '#164032' : '#852D2D', fontWeight: '700', letterSpacing: 0.3 }}
+                  style={{
+                    color: isOpen ? '#164032' : '#852D2D',
+                    fontWeight: '700',
+                    letterSpacing: 0.3,
+                  }}
                 >
                   {openStatusText}
-                </PaperText>
+                </Text>
               </View>
               <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
             </View>
@@ -290,14 +278,7 @@ export const FacilityDetailsScreen = () => {
 
           {/* Quick Actions */}
           <View style={styles.actionButtons}>
-            <Button
-              icon="phone"
-              title="Call"
-              onPress={handleCall}
-              style={styles.actionButton}
-              variant="primary"
-              disabled={!facility.phone}
-            />
+            <CommunicationHub contacts={facility.contacts} primaryPhone={facility.phone} />
             <Button
               icon="directions"
               title="Directions"
@@ -312,7 +293,11 @@ export const FacilityDetailsScreen = () => {
           {/* Location */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="location-outline" size={24} color={theme.colors.primary} />
+              <Ionicons
+                name="location-outline"
+                size={24 * scaleFactor}
+                color={theme.colors.primary}
+              />
             </View>
             <View style={styles.infoTextContainer}>
               <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Address</Text>
@@ -325,15 +310,30 @@ export const FacilityDetailsScreen = () => {
           {/* Hours */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
-              <Ionicons name="time-outline" size={24} color={theme.colors.primary} />
+              <Ionicons name="time-outline" size={24 * scaleFactor} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
+                ]}
+              >
                 Operating Hours
               </Text>
 
               {formatOperatingHours(facility).map((line, idx) => (
-                <Text key={idx} style={[styles.infoText, { color: theme.colors.onSurface }]}>
+                <Text
+                  key={idx}
+                  style={[
+                    styles.infoText,
+                    {
+                      color: theme.colors.onSurface,
+                      fontSize: 16 * scaleFactor,
+                      lineHeight: 24 * scaleFactor,
+                    },
+                  ]}
+                >
                   {line}
                 </Text>
               ))}
@@ -345,48 +345,72 @@ export const FacilityDetailsScreen = () => {
             <View style={styles.iconContainer}>
               <Ionicons
                 name="call-outline"
-                size={24}
-                color={(facility.contacts?.length || facility.phone) ? theme.colors.primary : theme.colors.onSurfaceVariant}
+                size={24 * scaleFactor}
+                color={
+                  facility.contacts?.length || facility.phone
+                    ? theme.colors.primary
+                    : theme.colors.onSurfaceVariant
+                }
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Phone</Text>
-              
-              {facility.contacts && facility.contacts.length > 0 ? (
-                facility.contacts.map((contact, index) => (
-                  <TouchableOpacity
-                    key={contact.id || index}
-                    onPress={() => Linking.openURL(`tel:${contact.phoneNumber}`)}
-                    style={styles.contactItem}
-                  >
-                    <View style={styles.contactInfo}>
-                      <Text
-                        style={[
-                          styles.infoText,
-                          styles.linkText,
-                          { color: theme.colors.primary },
-                        ]}
-                      >
-                        {contact.phoneNumber}
-                      </Text>
-                      {contact.role && (
-                        <Text style={[styles.metaItem, { fontSize: 14 }]}>
-                          {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
+              <Text
+                style={[
+                  styles.sectionLabel,
+                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
+                ]}
+              >
+                Phone
+              </Text>
+
+              {facility.contacts &&
+              facility.contacts.filter((c) => c.platform === 'phone').length > 0 ? (
+                facility.contacts
+                  .filter((c) => c.platform === 'phone')
+                  .map((contact, index) => (
+                    <TouchableOpacity
+                      key={contact.id || index}
+                      onPress={() => Linking.openURL(`tel:${contact.phoneNumber}`)}
+                      style={styles.contactItem}
+                    >
+                      <View style={styles.contactInfo}>
+                        <Text
+                          style={[
+                            styles.infoText,
+                            styles.linkText,
+                            {
+                              color: theme.colors.primary,
+                              fontSize: 16 * scaleFactor,
+                              lineHeight: 24 * scaleFactor,
+                            },
+                          ]}
+                        >
+                          {contact.phoneNumber}
                         </Text>
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                ))
+                        {contact.role && (
+                          <Text style={[styles.metaItem, { fontSize: 14 * scaleFactor }]}>
+                            {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
+                          </Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))
               ) : (
                 <TouchableOpacity
-                  onPress={handleCall}
+                  onPress={() => facility.phone && Linking.openURL(`tel:${facility.phone}`)}
                   disabled={!facility.phone}
                 >
                   <Text
                     style={[
                       styles.infoText,
                       styles.linkText,
-                      { color: facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant },
+                      {
+                        color: facility.phone
+                          ? theme.colors.primary
+                          : theme.colors.onSurfaceVariant,
+                        fontSize: 16 * scaleFactor,
+                        lineHeight: 24 * scaleFactor,
+                      },
                     ]}
                   >
                     {facility.phone || 'Not available'}
@@ -411,7 +435,7 @@ export const FacilityDetailsScreen = () => {
 
               return (
                 <View key={category} style={styles.categoryContainer}>
-                  <Text style={[styles.categoryTitle, { color: '#164032' }]}>{category}</Text>
+                  <Text style={styles.categoryTitle}>{category}</Text>
                   <View style={styles.servicesGrid}>
                     {visibleServices.map((service, index) => (
                       <ServiceChip key={index} service={service} />
@@ -429,7 +453,7 @@ export const FacilityDetailsScreen = () => {
                       </Text>
                       <Ionicons
                         name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                        size={16}
+                        size={16 * scaleFactor}
                         color={theme.colors.primary}
                       />
                     </TouchableOpacity>
@@ -441,68 +465,18 @@ export const FacilityDetailsScreen = () => {
 
           {facility.lastUpdated && (
             <View style={styles.verificationContainer}>
-              <Text style={[styles.verificationText, { color: theme.colors.outline }]}>
+              <Text
+                style={[
+                  styles.verificationText,
+                  { color: theme.colors.outline },
+                ]}
+              >
                 Data verified as of {new Date(facility.lastUpdated).toLocaleDateString()}
               </Text>
             </View>
           )}
         </View>
       </ScrollView>
-
-      {/* Contact Selection Modal */}
-      <Modal
-        visible={contactsModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setContactsModalVisible(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={() => setContactsModalVisible(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 }]}>
-            <View style={styles.modalHandle} />
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Select Number</Text>
-            <FlatList
-              data={facility.contacts}
-              keyExtractor={(item, index) => item.id || index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.contactOption}
-                  activeOpacity={0.6}
-                  onPress={() => {
-                    setContactsModalVisible(false);
-                    Linking.openURL(`tel:${item.phoneNumber}`);
-                  }}
-                >
-                  <View style={styles.contactOptionContent}>
-                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '15' }]}>
-                      <Ionicons name="call" size={18} color={theme.colors.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>
-                        {item.phoneNumber}
-                      </Text>
-                      {item.role && (
-                        <Text style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}>
-                          {item.role} {item.contactName ? `• ${item.contactName}` : ''}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity 
-              onPress={() => setContactsModalVisible(false)} 
-              style={{ marginTop: 16, paddingVertical: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.onSurface }}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </View>
   );
 };
@@ -691,65 +665,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
     letterSpacing: 0.2,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40, // Extra padding for bottom safe area
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    width: '100%',
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  contactOption: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#F3F4F6', // Subtle tint
-    borderRadius: 12,
-    marginVertical: 6,
-  },
-  contactOptionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  contactNumber: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  contactRole: {
-    fontSize: 14,
   },
   contactItem: {
     flexDirection: 'row',

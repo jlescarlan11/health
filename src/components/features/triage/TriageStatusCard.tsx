@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, Text, useTheme } from 'react-native-paper';
+import { Card, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../common/Button';
+import { Text } from '../../common/Text';
 import { TriageLevel } from '../../../types/triage';
 
 interface TriageStatusCardProps {

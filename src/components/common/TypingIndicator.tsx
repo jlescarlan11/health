@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated, ViewStyle } from 'react-native';
 import { useTheme } from 'react-native-paper';
 
 interface TypingIndicatorProps {
@@ -52,7 +52,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
     return () => animation.stop();
   }, [dot1, dot2, dot3]);
 
-  const getDotStyle = (value: Animated.Value) => ({
+  const getDotStyle = (value: Animated.Value): Animated.WithAnimatedObject<ViewStyle> => ({
     width: dotSize,
     height: dotSize,
     borderRadius: dotSize / 2,
@@ -75,7 +75,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           outputRange: [1, 1.3],
         }),
       },
-    ],
+    ] as any,
   });
 
   return (

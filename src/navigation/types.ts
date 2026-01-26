@@ -3,7 +3,9 @@ export type {
   CheckStackParamList,
   FacilitiesStackParamList,
   YakapStackParamList,
+  MainTabParamList,
   RootStackParamList,
   RootStackScreenProps,
+  MainTabScreenProps,
   FacilitiesStackScreenProps,
 } from '../types/navigation';

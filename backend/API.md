@@ -36,7 +36,7 @@ Response:
   "offset": 0
 }
 ```
-
+ 
 ### Get Facility Details
 
 GET `/facilities/:id`
@@ -226,3 +226,29 @@ Response:
 ```json
 [ ... ]
 ```
+## Health Feed
+
+### Get Latest Health News
+
+GET `/feed/health`
+
+Returns the most recently synced health news items sourced from the Naga City Government health news page. Each item includes:
+
+- `id`: Internal identifier used by Prisma
+- `externalId`: Hash of the source URL used for deduplication
+- `title`: Article headline
+- `excerpt`: Clean summary or lead paragraph
+- `url`: Original news URL
+- `dateISO`: Publication date in ISO 8601 format
+- `imageUrl`: Thumbnail (when available)
+- `author`: Always `Naga City Health`
+
+The feed scraper now always attempts to extract a cover image from the article itself (OG/Twitter metadata first, then featured/inline `<img>` tags). When no usable asset can be detected it falls back to the optional `HEALTH_FEED_DEFAULT_COVER_IMAGE` environment variable and otherwise keeps `imageUrl` as `null`.
+
+The service keeps the five freshest entries in the database. Every request returns cached entries and triggers a background refresh when the last successful sync is older than 15 minutes. If scraping fails, the API still responds with whatever is stored and logs the failure for later inspection.
+
+### Trigger Feed Sync
+
+POST `/feed/health/sync`
+
+Manually forces the scraper to run and persist the latest items. The response contains a summary message along with whatever dataset was available after the attempt (useful for debugging or emergency refreshes).

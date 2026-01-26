@@ -15,7 +15,11 @@ import { YAKAP_FAQS, YakapFAQ } from './yakapContent';
 import StandardHeader from '../../components/common/StandardHeader';
 import { MD3Theme } from 'react-native-paper';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental &&
+  !(global as any).nativeFabricUIManager
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 

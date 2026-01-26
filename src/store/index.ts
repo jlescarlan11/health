@@ -16,18 +16,27 @@ import facilitiesReducer from './facilitiesSlice';
 import navigationReducer from './navigationSlice';
 import offlineReducer from './offlineSlice';
 import settingsReducer from './settingsSlice';
+import medicationReducer from './medicationSlice';
+import profileReducer from './profileSlice';
+import feedReducer from './feedSlice';
 
 // Re-export reducers for convenience
 export { default as facilitiesReducer } from './facilitiesSlice';
 export { default as navigationReducer } from './navigationSlice';
 export { default as offlineReducer } from './offlineSlice';
 export { default as settingsReducer } from './settingsSlice';
+export { default as medicationReducer } from './medicationSlice';
+export { default as profileReducer } from './profileSlice';
+export { default as feedReducer } from './feedSlice';
 
 const rootReducer = combineReducers({
   facilities: facilitiesReducer,
   navigation: navigationReducer,
   offline: offlineReducer,
   settings: settingsReducer,
+  medication: medicationReducer,
+  profile: profileReducer,
+  feed: feedReducer,
 });
 
 const migrations = {
@@ -49,13 +58,30 @@ const migrations = {
     }
     return state;
   },
+  3: (state: any) => {
+    // Ensure specializedModes is initialized in settings to prevent crashes
+    if (state && state.settings && !state.settings.specializedModes) {
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          specializedModes: {
+            isSenior: false,
+            isPWD: false,
+            isChronic: false,
+          },
+        },
+      };
+    }
+    return state;
+  },
 };
 
 const persistConfig = {
   key: 'root',
-  version: 2,
+  version: 3,
   storage: AsyncStorage,
-  whitelist: ['settings', 'navigation', 'offline'],
+  whitelist: ['settings', 'navigation', 'offline', 'medication', 'profile', 'feed'],
   migrate: createMigrate(migrations, { debug: false }),
 };
 

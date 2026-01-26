@@ -2,6 +2,7 @@
   "expo": {
     "name": "health",
     "slug": "health",
+    "scheme": "health",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -36,7 +37,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-sqlite", "expo-speech"],
+    "plugins": ["expo-sqlite", "@react-native-voice/voice"],
     "extra": {
       "backendUrl": "process.env.BACKEND_API_URL",
       "geminiApiKey": "process.env.GEMINI_API_KEY"

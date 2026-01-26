@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import prisma from '../lib/prisma';
-import { Facility, Prisma } from '../../generated/prisma/client';
+import { Facility, Prisma } from '../../generated/prisma';
 import { VALID_SERVICES } from '../utils/constants';
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';

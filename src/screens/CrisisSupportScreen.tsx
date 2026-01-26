@@ -94,7 +94,7 @@ const CrisisSupportScreen = () => {
             variant="outline"
             onPress={() => navigation.goBack()}
             style={styles.backButton}
-            title="I'm safe, go back"
+            title="I'm okay, go back"
           />
         </View>
       </ScrollView>

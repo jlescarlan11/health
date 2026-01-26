@@ -14,10 +14,10 @@ export interface SoapSections {
  */
 export const parseSoap = (text: string): SoapSections => {
   // Basic regex to capture content between markers
-  const sMatch = text.match(/S:\s*(.*?)(?=\s*O:|$)/s);
-  const oMatch = text.match(/O:\s*(.*?)(?=\s*A:|$)/s);
-  const aMatch = text.match(/A:\s*(.*?)(?=\s*P:|$)/s);
-  const pMatch = text.match(/P:\s*(.*?)$/s);
+  const sMatch = text.match(/S:\s*([\s\S]*?)(?=\s*O:|$)/);
+  const oMatch = text.match(/O:\s*([\s\S]*?)(?=\s*A:|$)/);
+  const aMatch = text.match(/A:\s*([\s\S]*?)(?=\s*P:|$)/);
+  const pMatch = text.match(/P:\s*([\s\S]*?)$/);
 
   // If regex parsing fails, try parsing as JSON
   if (!sMatch && !oMatch && !aMatch && !pMatch) {
@@ -399,10 +399,11 @@ export interface ClinicalChange {
 export const detectProfileChanges = (
   prev: AssessmentProfile | undefined,
   next: AssessmentProfile,
-): ClinicalChange | null => {
-  if (!prev) return null;
+): ClinicalChange[] => {
+  if (!prev) return [];
 
   const fieldsToCheck: (keyof AssessmentProfile)[] = ['age', 'duration', 'severity'];
+  const changes: ClinicalChange[] = [];
 
   for (const field of fieldsToCheck) {
     const oldVal = prev[field];
@@ -415,9 +416,9 @@ export const detectProfileChanges = (
     const normNew = String(newVal).trim().toLowerCase().replace(/\s+/g, ' ');
 
     if (normOld !== normNew) {
-      return { field, oldValue: oldVal as string, newValue: newVal as string };
+      changes.push({ field, oldValue: oldVal as string, newValue: newVal as string });
     }
   }
 
-  return null;
+  return changes;
 };

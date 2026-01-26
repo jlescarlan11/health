@@ -47,7 +47,7 @@ export const findNearestFacilitiesByType = (
     result[type] = null;
   });
 
-  if (!facilities.length || !userLocation) {
+  if (!facilities || !facilities.length || !userLocation) {
     return result;
   }
 

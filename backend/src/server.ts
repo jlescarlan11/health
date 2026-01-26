@@ -12,20 +12,22 @@ if (!process.env.DATABASE_URL) {
 }
 
 import app from './app';
+import cron from 'node-cron';
+import { healthFeedService } from './services/healthFeedService';
 
 const PORT = process.env.PORT || 3000;
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  process.exit(1);
-});
-
 const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // Initial sync on startup
+  healthFeedService.syncHealthNews().catch(err => console.error('Initial feed sync failed:', err));
+  
+  // Schedule sync every 24 hours at midnight
+  cron.schedule('0 0 * * *', () => {
+    console.log('Running scheduled health news sync...');
+    healthFeedService.syncHealthNews();
+  });
 });
 
 server.on('error', (error: Error) => {

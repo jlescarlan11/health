@@ -2,12 +2,12 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MainHomeScreen } from '../screens/MainHomeScreen';
-import { SettingsScreen } from '../screens/SettingsScreen';
+import { MainHomeScreen, HealthFeedScreen, SettingsScreen } from '../screens';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { MainTabParamList } from '../types/navigation';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export const BottomTabNavigator = () => {
   const theme = useTheme();
@@ -15,7 +15,7 @@ export const BottomTabNavigator = () => {
 
   // Dynamic height calculation: Base height (60) + safe area inset
   // For devices without insets, we provide a reasonable default padding
-  const paddingBottom = insets.bottom > 0 ? insets.bottom : (Platform.OS === 'ios' ? 20 : 12);
+  const paddingBottom = insets.bottom > 0 ? insets.bottom : Platform.OS === 'ios' ? 20 : 12;
   const tabHeight = 60 + paddingBottom;
 
   return (
@@ -43,8 +43,18 @@ export const BottomTabNavigator = () => {
         component={MainHomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="home-variant" size={28} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="HealthFeed"
+        component={HealthFeedScreen}
+        options={{
+          tabBarLabel: 'Feed',
+          tabBarIcon: ({ color }) => (
+            <MaterialCommunityIcons name="newspaper-variant" size={28} color={color} />
           ),
         }}
       />
@@ -53,9 +63,7 @@ export const BottomTabNavigator = () => {
         component={SettingsScreen}
         options={{
           tabBarLabel: 'Settings',
-          tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="cog" size={28} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <MaterialCommunityIcons name="cog" size={28} color={color} />,
         }}
       />
     </Tab.Navigator>

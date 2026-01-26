@@ -8,11 +8,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, useTheme } from 'react-native-paper';
+import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
-import { Button } from '../../components/common/Button';
+import { Button, Text } from '../../components/common';
 import { YakapBenefitsCard } from '../../components/features/yakap';
 import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
 import { setHasPhilHealth } from '../../store/settingsSlice';

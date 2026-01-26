@@ -102,30 +102,24 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
               Try searching for something else, like:
             </Text>
             <View style={{ flexDirection: 'row', marginTop: 8, gap: 8 }}>
-              <Text
-                variant="bodyMedium"
-                style={{ color: theme.colors.primary, fontWeight: '700' }}
-              >
+              <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 Emergency
               </Text>
               <Text style={{ color: theme.colors.outline }}>•</Text>
-              <Text
-                variant="bodyMedium"
-                style={{ color: theme.colors.primary, fontWeight: '700' }}
-              >
+              <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 Dental
               </Text>
               <Text style={{ color: theme.colors.outline }}>•</Text>
-              <Text
-                variant="bodyMedium"
-                style={{ color: theme.colors.primary, fontWeight: '700' }}
-              >
+              <Text variant="bodyMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
                 X-ray
               </Text>
             </View>
           </View>
         ) : (
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, marginTop: 12, textAlign: 'center' }}>
+          <Text
+            variant="bodyMedium"
+            style={{ color: theme.colors.onSurfaceVariant, marginTop: 12, textAlign: 'center' }}
+          >
             Try adjusting your search or filters to find what you're looking for.
           </Text>
         )}

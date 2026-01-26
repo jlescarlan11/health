@@ -11,6 +11,7 @@ interface FacilityFilters {
   searchQuery?: string;
   openNow?: boolean;
   quietNow?: boolean;
+  telemedicine?: boolean;
 }
 
 interface FacilitiesState {
@@ -34,6 +35,7 @@ const initialState: FacilitiesState = {
     yakapAccredited: false,
     openNow: false,
     quietNow: false,
+    telemedicine: false,
     searchQuery: '',
   },
   isLoading: false,
@@ -48,7 +50,7 @@ export const fetchFacilities = createAsyncThunk('facilities/fetchFacilities', as
 // Shared filtering logic
 const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facility[] => {
   if (!filters) return facilities;
-  const { type, services, yakapAccredited, searchQuery, openNow, quietNow } = filters;
+  const { type, services, yakapAccredited, searchQuery, openNow, quietNow, telemedicine } = filters;
 
   return facilities.filter((facility) => {
     const matchesType = !type || type.length === 0 || type.includes(facility.type);
@@ -67,8 +69,17 @@ const applyFilters = (facilities: Facility[], filters: FacilityFilters): Facilit
     const matchesOpen = !openNow || getOpenStatus(facility).isOpen;
     const matchesQuiet = !quietNow || (facility.busyness && facility.busyness.score < 0.4);
 
+    const matchesTelemedicine =
+      !telemedicine || (facility.contacts && facility.contacts.some((c) => c.platform !== 'phone'));
+
     return (
-      matchesType && matchesYakap && matchesSearch && matchesServices && matchesOpen && matchesQuiet
+      matchesType &&
+      matchesYakap &&
+      matchesSearch &&
+      matchesServices &&
+      matchesOpen &&
+      matchesQuiet &&
+      matchesTelemedicine
     );
   });
 };
@@ -205,6 +216,7 @@ const facilitiesSlice = createSlice({
         yakapAccredited: false,
         openNow: false,
         quietNow: false,
+        telemedicine: false,
         searchQuery: '',
       };
       state.filteredFacilities = [...state.facilities];

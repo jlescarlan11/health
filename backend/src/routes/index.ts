@@ -4,6 +4,7 @@ import symptomRoutes from './symptomRoutes';
 import aiRoutes from './aiRoutes';
 import yakapRoutes from './yakapRoutes';
 import emergencyContactRoutes from './emergencyContactRoutes';
+import healthFeedRoutes from './healthFeedRoutes';
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/symptoms', symptomRoutes);
 router.use('/ai', aiRoutes);
 router.use('/yakap', yakapRoutes);
 router.use('/emergency-contacts', emergencyContactRoutes);
+router.use('/feed', healthFeedRoutes);
 
 export default router;

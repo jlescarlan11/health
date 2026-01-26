@@ -13,6 +13,8 @@ import {
   FINAL_SLOT_EXTRACTION_PROMPT,
   REFINE_QUESTION_PROMPT,
   REFINE_PLAN_PROMPT,
+  IMMEDIATE_FOLLOW_UP_PROMPT,
+  BRIDGE_PROMPT,
 } from '../constants/prompts';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
@@ -699,6 +701,65 @@ export class GeminiClient {
       // Fallback: Return empty array so the caller keeps the existing plan or handles it gracefully
       return [];
     }
+  }
+
+  /**
+   * Generates a single, targeted follow-up question for immediate drill-down.
+   */
+  public async generateImmediateFollowUp(
+    profile: AssessmentProfile,
+    context: string,
+  ): Promise<AssessmentQuestion> {
+    try {
+      const prompt = IMMEDIATE_FOLLOW_UP_PROMPT.replace(
+        '{{profile}}',
+        JSON.stringify(profile, null, 2),
+      ).replace('{{context}}', context);
+
+      const responseText = await this.generateContentWithRetry(prompt, {
+        responseMimeType: 'application/json',
+      });
+
+      const parsed = parseAndValidateLLMResponse<{ question: AssessmentQuestion }>(responseText);
+
+      // Default fallback if parsing fails or returns empty
+      if (!parsed.question || !parsed.question.text) {
+        throw new Error('Invalid drill-down question generated');
+      }
+
+      return parsed.question;
+    } catch (error) {
+      console.error('[GeminiClient] Failed to generate immediate follow-up:', error);
+      // Fallback question
+      return {
+        id: `fallback-${Date.now()}`,
+        text: 'Could you tell me more about that specific symptom?',
+        type: 'text',
+        tier: 3,
+        is_red_flag: false,
+      };
+    }
+  }
+
+  public async generateBridgeMessage(args: {
+    conversationHistory: string;
+    nextQuestion: string;
+    primarySymptom?: string;
+    severityLevel?: number;
+    symptomCategory?: string;
+  }): Promise<string> {
+    const prompt = BRIDGE_PROMPT
+      .replace('{{conversationHistory}}', args.conversationHistory || 'No recent user replies.')
+      .replace('{{nextQuestion}}', args.nextQuestion)
+      .replace('{{primarySymptom}}', args.primarySymptom || 'the symptoms you reported earlier')
+      .replace('{{symptomCategory}}', args.symptomCategory || 'unknown')
+      .replace(
+        '{{severityLevel}}',
+        args.severityLevel !== undefined ? args.severityLevel.toFixed(0) : 'unknown',
+      );
+
+    const responseText = await this.generateContentWithRetry(prompt);
+    return responseText.trim();
   }
 
   /**

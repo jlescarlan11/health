@@ -10,7 +10,8 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, Chip, useTheme, Card } from 'react-native-paper';
+import { Chip, useTheme, Card } from 'react-native-paper';
+import { Text } from '../../components/common/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';

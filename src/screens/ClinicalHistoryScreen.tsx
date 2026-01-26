@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import { Text, useTheme, Card, Avatar, Divider } from 'react-native-paper';
+import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useTheme, Card, Avatar, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,7 +8,7 @@ import { RootStackScreenProps } from '../types/navigation';
 import * as DB from '../services/database';
 import { ClinicalHistoryRecord } from '../services/database';
 import StandardHeader from '../components/common/StandardHeader';
-import { Button } from '../components/common';
+import { Button, Text } from '../components/common';
 
 type Props = RootStackScreenProps<'ClinicalHistory'>;
 
@@ -39,7 +33,7 @@ export const ClinicalHistoryScreen = () => {
   useFocusEffect(
     useCallback(() => {
       loadHistory();
-    }, [])
+    }, []),
   );
 
   const getLevelInfo = (level: string) => {
@@ -84,7 +78,7 @@ export const ClinicalHistoryScreen = () => {
             <Avatar.Icon
               size={48}
               icon={levelInfo.icon}
-              backgroundColor={levelInfo.color + '20'} // 20% opacity
+              style={{ backgroundColor: levelInfo.color + '20' }} // 20% opacity
               color={levelInfo.color}
             />
           </View>
@@ -109,8 +103,12 @@ export const ClinicalHistoryScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <StandardHeader title="My Health Records" showBackButton onBackPress={() => navigation.goBack()} />
-      
+      <StandardHeader
+        title="My Health Records"
+        showBackButton
+        onBackPress={() => navigation.goBack()}
+      />
+
       {loading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -123,7 +121,11 @@ export const ClinicalHistoryScreen = () => {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="folder-outline" size={80} color={theme.colors.outline} />
+              <MaterialCommunityIcons
+                name="folder-outline"
+                size={80}
+                color={theme.colors.outline}
+              />
               <Text variant="headlineSmall" style={styles.emptyTitle}>
                 Empty Vault
               </Text>

@@ -68,6 +68,33 @@ export const theme = {
   },
 };
 
+/**
+ * Generates a scaled version of the theme based on the provided scale factor.
+ * This applies to all MD3 typography variants.
+ */
+export const getScaledTheme = (scaleFactor: number) => {
+  if (scaleFactor === 1) return theme;
+
+  const scaledTypography = { ...theme.fonts };
+
+  // Iterate through all font variants and scale their fontSize and lineHeight
+  Object.keys(scaledTypography).forEach((key) => {
+    const variant = scaledTypography[key as keyof typeof scaledTypography] as any;
+    if (variant && typeof variant === 'object') {
+      scaledTypography[key as keyof typeof scaledTypography] = {
+        ...variant,
+        fontSize: variant.fontSize ? variant.fontSize * scaleFactor : variant.fontSize,
+        lineHeight: variant.lineHeight ? variant.lineHeight * scaleFactor : variant.lineHeight,
+      };
+    }
+  });
+
+  return {
+    ...theme,
+    fonts: scaledTypography,
+  };
+};
+
 export const navigationTheme = {
   ...NavigationDefaultTheme,
   colors: {

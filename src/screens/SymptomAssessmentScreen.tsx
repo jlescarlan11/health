@@ -14,12 +14,19 @@ import {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+// Check if we're on Android and the method exists, AND if we're NOT on the New Architecture (Fabric)
+// Under the New Architecture, LayoutAnimation is handled differently and this call is a no-op or can cause warnings.
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental &&
+  !(global as any).nativeFabricUIManager
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ActivityIndicator, useTheme, Chip } from 'react-native-paper';
+import { ActivityIndicator, useTheme, Chip } from 'react-native-paper';
+import { Text } from '../components/common/Text';
 import { speechService } from '../services/speechService';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -66,7 +73,12 @@ import {
   MultiSelectChecklist,
 } from '../components/common';
 import { DYNAMIC_CLARIFIER_PROMPT_TEMPLATE } from '../constants/prompts';
-import { formatEmpatheticResponse } from '../utils/empatheticResponses';
+import {
+  formatEmpatheticResponse,
+  derivePrimarySymptom,
+  formatSymptomReference,
+  parseSeverityScore,
+} from '../utils/empatheticResponses';
 
 type ScreenRouteProp = RootStackScreenProps<'SymptomAssessment'>['route'];
 type NavigationProp = RootStackScreenProps<'SymptomAssessment'>['navigation'];
@@ -87,6 +99,9 @@ const composeAssistantMessage = ({
   reason,
   reasonSource,
   nextAction,
+  inlineAck,
+  profile,
+  primarySymptom,
   timestamp,
   extra = {},
 }: {
@@ -96,17 +111,34 @@ const composeAssistantMessage = ({
   reason?: string;
   reasonSource?: string;
   nextAction?: string;
+  inlineAck?: string;
+  profile?: AssessmentProfile;
+  primarySymptom?: string;
   timestamp: number;
   extra?: Partial<Omit<Message, 'id' | 'sender' | 'text' | 'timestamp'>>;
 }): Message => {
   const { metadata: extraMetadata, ...extraRest } = extra;
+  
+  // Explicitly move nextAction to metadata to ensure it is never rendered in text
+  // while preserving it for internal tracking/debugging.
+  const safeMetadata = {
+    ...(extraMetadata || {}),
+    nextAction,
+    reason,
+    reasonSource,
+  };
+
   const formatted = formatEmpatheticResponse({
     header,
     body,
     reason,
     reasonSource,
-    nextAction,
-    metadata: extraMetadata,
+    inlineAck,
+    profile,
+    primarySymptom,
+    tone: 'neutral',
+    // nextAction, // OMITTED to prevent display in user-facing text
+    metadata: safeMetadata,
   });
   return {
     id,
@@ -198,27 +230,7 @@ const formatSelectionAnswer = (question: AssessmentQuestion, selections: string[
   }
 };
 
-const SENTIMENT_PATTERNS = {
-  distress: /\b(pain|hurt|severe|scared|dying|bad|worse)\b/i,
-  denial: /\b(no|none|okay|fine|better)\b/i,
-  uncertainty: /\b(don'?t\s+know|unsure|maybe|not\s+sure)\b/i,
-};
-
-const buildBridgeText = (lastUserText: string, nextQuestionText: string) => {
-  const text = lastUserText || '';
-
-  if (SENTIMENT_PATTERNS.distress.test(text)) {
-    return `I'm sorry you're going through this... ${nextQuestionText}`;
-  }
-  if (SENTIMENT_PATTERNS.denial.test(text)) {
-    return `That's good to know... ${nextQuestionText}`;
-  }
-  if (SENTIMENT_PATTERNS.uncertainty.test(text)) {
-    return `That's okay, we can work with that... ${nextQuestionText}`;
-  }
-
-  return `Got it. ${nextQuestionText}`;
-};
+const buildBridgeText = (_lastUserText: string, nextQuestionText: string) => nextQuestionText;
 
 const escapeForRegex = (value: string) => value.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&');
 const OUT_OF_SCOPE_INDICATORS = [
@@ -277,6 +289,7 @@ interface ClarifierPromptContext {
   triageScoreText: string;
   currentTurn: number;
   categoryLabel: string;
+  establishedFacts: string;
 }
 
 const buildClarifierPrompt = (context: ClarifierPromptContext) =>
@@ -290,6 +303,7 @@ const buildClarifierPrompt = (context: ClarifierPromptContext) =>
     flagsText: context.flagsText,
     recentResponses: context.recentResponses,
     triageScore: context.triageScoreText,
+    establishedFacts: context.establishedFacts,
     currentTurn: context.currentTurn.toString(),
     minTurnsSimple: MIN_TURNS_SIMPLE.toString(),
     minTurnsComplex: MIN_TURNS_COMPLEX.toString(),
@@ -338,6 +352,7 @@ const SymptomAssessmentScreen = () => {
   const keyboardScrollRaf = useRef<number | null>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
   const trimmedInitialSymptom = (initialSymptom || '').trim();
+  const defaultPrimarySymptom = derivePrimarySymptom(initialSymptom);
   const hasInitialSymptom = trimmedInitialSymptom.length > 0;
   const safetySymptomReference = hasInitialSymptom
     ? `"${trimmedInitialSymptom}"`
@@ -406,8 +421,12 @@ const SymptomAssessmentScreen = () => {
   const [incrementalSlots, setIncrementalSlots] = useState<ClinicalSlots>(
     savedState?.incrementalSlots || hydrateInitialSlots,
   );
+  const [isQueueSuspended, setIsQueueSuspended] = useState(savedState?.isQueueSuspended || false);
   const [currentTurnMeta, setCurrentTurnMeta] = useState<AssessmentTurnMeta | null>(
     savedState?.currentTurnMeta ?? null,
+  );
+  const [pendingCorrection, setPendingCorrection] = useState<string | null>(
+    savedState?.pendingCorrection ?? null,
   );
 
   // Offline
@@ -594,8 +613,8 @@ const SymptomAssessmentScreen = () => {
 
     const questionLabel = question.text ? `"${question.text}"` : 'this question';
     const fallbackText = shouldRemind
-      ? `It looks like we've drifted away from ${questionLabel} a couple of times. Could you answer it so I can keep helping safely?`
-      : `Thanks for the detail. When you're ready, could you answer ${questionLabel}?`;
+      ? `Please return to ${questionLabel} so we can keep the assessment on track.`
+      : `Please answer ${questionLabel} to continue the assessment.`;
 
     const fallbackTimestamp = Date.now();
     console.log(
@@ -608,7 +627,7 @@ const SymptomAssessmentScreen = () => {
         body: fallbackText,
         reason: 'Your answer drifted away from the current question.',
         reasonSource: 'out-of-scope',
-        nextAction: `Please answer ${questionLabel} so I can keep helping safely.`,
+        nextAction: `Please answer ${questionLabel} so I can continue the assessment.`,
         timestamp: fallbackTimestamp,
       }),
     ]);
@@ -675,8 +694,10 @@ const SymptomAssessmentScreen = () => {
         sessionBuffer,
         outOfScopeBuffer,
         currentTurnMeta,
+        pendingCorrection,
         triageSnapshot,
         incrementalSlots,
+        isQueueSuspended,
       }),
     );
   }, [
@@ -703,8 +724,10 @@ const SymptomAssessmentScreen = () => {
     sessionBuffer,
     outOfScopeBuffer,
     currentTurnMeta,
+    pendingCorrection,
     triageSnapshot,
     incrementalSlots,
+    isQueueSuspended,
     dispatch,
     loading,
   ]);
@@ -900,20 +923,20 @@ const SymptomAssessmentScreen = () => {
         return true;
       });
 
-      const annotatedPlan = annotateQuestionsWithSlotMetadata(
-        prunedPlan,
-        undefined,
-        undefined,
-        slots,
-      );
-      setQuestions(annotatedPlan);
-      setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
+          const annotatedPlan = annotateQuestionsWithSlotMetadata(
+            prunedPlan,
+            undefined,
+            undefined,
+            slots,
+          );
+          setQuestions(annotatedPlan);
+          setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
 
-      // Add Intro & First Question
+          // Add Intro & First Question
       const firstQ = prunedPlan[0];
       const introText = intro
         ? `${intro}\n\n${firstQ.text}`
-        : `I've noted your report of "${initialSymptom}". To help me provide the best guidance, I have a few questions.\n\n${firstQ.text}`;
+        : `Recorded your report of "${initialSymptom}". Answer the first question to continue.\n\n${firstQ.text}`;
 
       replaceMessagesDisplay([
         composeAssistantMessage({
@@ -943,6 +966,14 @@ const SymptomAssessmentScreen = () => {
     const answer = answerOverride || inputText;
     const trimmedAnswer = answer.trim();
     if (!trimmedAnswer || processing) return;
+
+    const consumePendingCorrection = () => {
+      const correction = pendingCorrection;
+      if (correction) {
+        setPendingCorrection(null);
+      }
+      return correction || undefined;
+    };
 
     if (isClarifyingDenial) setIsClarifyingDenial(false);
 
@@ -1051,6 +1082,13 @@ const SymptomAssessmentScreen = () => {
             extractedProfile,
             slotSnapshot ?? incrementalSlots,
           );
+          const primarySymptomForProfile = derivePrimarySymptom(initialSymptom, profile.summary);
+          const fallbackSymptomLabel = formatSymptomReference(
+            primarySymptomForProfile ?? defaultPrimarySymptom,
+          );
+          const severityScoreForProfile = parseSeverityScore(profile.severity);
+          const bridgeSymptomCategory =
+            profile.symptom_category || symptomCategory || 'simple';
 
           // --- Mid-Stream Category Escalation Detection ---
           // Triggers when clinical extraction elevates the acuity level during an active session.
@@ -1083,14 +1121,17 @@ const SymptomAssessmentScreen = () => {
                     // 2. Inject Pivot Message
                     const pivotTimestamp = Date.now();
                     appendMessagesToConversation([
-                      composeAssistantMessage({
-                        id: `pivot-${pivotTimestamp}`,
-                        body: 'Given the new details you shared, I need to ask a few specific questions to better understand your situation.',
-                        reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
-                        reasonSource: 'escalation-pivot',
-                        nextAction: 'Refining assessment plan.',
-                        timestamp: pivotTimestamp,
-                      }),
+                    composeAssistantMessage({
+                      id: `pivot-${pivotTimestamp}`,
+                    body: 'New information requires a short set of focused questions before adjusting your plan.',
+                      reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
+                      reasonSource: 'escalation-pivot',
+                      nextAction: 'Refining assessment plan.',
+                      inlineAck: consumePendingCorrection(),
+                      profile,
+                      primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                      timestamp: pivotTimestamp,
+                    }),
                     ]);
 
                     // 3. Update Question Queue
@@ -1121,29 +1162,26 @@ const SymptomAssessmentScreen = () => {
             }
           }
 
-          const change = detectProfileChanges(previousProfile, profile);
+          const changes = detectProfileChanges(previousProfile, profile);
 
-          if (change) {
-            console.log(
-              `[Assessment] Detected correction in ${change.field}: "${change.oldValue}" -> "${change.newValue}"`,
+          if (changes.length > 0) {
+            console.log(`[Assessment] Detected ${changes.length} corrections.`);
+            const labels = changes.map(c => 
+              c.field === 'duration' ? 'duration' : 
+              c.field === 'age' ? 'age' : 'severity'
             );
-            const fieldLabel =
-              change.field === 'duration'
-                ? 'duration'
-                : change.field === 'age'
-                  ? 'age'
-                  : 'severity';
-            const ackTimestamp = Date.now();
-            appendMessagesToConversation([
-              composeAssistantMessage({
-                id: `ack-${ackTimestamp}`,
-                body: `Thanks for clarifying — I've updated the ${fieldLabel} to ${change.newValue}.`,
-                reason: 'User corrected a clinical value.',
-                reasonSource: 'reactive-ack',
-                nextAction: 'Continuing with assessment.',
-                timestamp: ackTimestamp,
-              }),
-            ]);
+            
+            let ackText = '';
+            if (labels.length === 1) {
+              ackText = `Updated the ${labels[0]} to ${changes[0].newValue}.`;
+            } else {
+              const lastLabel = labels[labels.length - 1];
+              const firstLabels = labels.slice(0, -1);
+              const joinedTargets =
+                firstLabels.length > 0 ? `${firstLabels.join(', ')} and ${lastLabel}` : lastLabel;
+              ackText = `Updated ${joinedTargets}.`;
+            }
+            setPendingCorrection(ackText);
           }
 
           // --- DYNAMIC PLAN PRUNING ---
@@ -1289,8 +1327,8 @@ const SymptomAssessmentScreen = () => {
 
             const clarificationText =
               clarificationCount === 0
-                ? `I want to be perfectly safe. You mentioned "${hedgedField}" might be present. To be certain, is this happening to you right now?`
-                : `I'm still a bit unsure about your safety regarding "${hedgedField}". It's important for me to know for sure: are you experiencing this right now?`;
+                ? `Confirm whether "${hedgedField}" is present right now so we can resolve it.`
+                : `This detail is still unclear: is "${hedgedField}" happening right now?`;
 
             {
               const clarificationTimestamp = Date.now();
@@ -1300,7 +1338,8 @@ const SymptomAssessmentScreen = () => {
                   body: clarificationText,
                   reason: arbiterResult.reason,
                   reasonSource: 'arbiter-clarification',
-                  nextAction: 'Please confirm this detail so I can keep you safe.',
+                  nextAction: 'Confirm this detail to continue the assessment.',
+                  inlineAck: consumePendingCorrection(),
                   timestamp: clarificationTimestamp,
                 }),
               ]);
@@ -1329,17 +1368,20 @@ const SymptomAssessmentScreen = () => {
             setIsTyping(false);
             setAssessmentStage('review');
             const terminationTimestamp = Date.now();
-            appendMessagesToConversation([
-              composeAssistantMessage({
-                id: 'early-exit',
-                body: 'Thank you. I have sufficient information to provide a safe recommendation.',
-                header: clarificationHeader,
-                reason: arbiterResult.reason,
-                reasonSource: 'arbiter-termination',
-                nextAction: 'I will now finalize your recommendation and share it shortly.',
-                timestamp: terminationTimestamp,
-              }),
-            ]);
+                appendMessagesToConversation([
+                  composeAssistantMessage({
+                    id: 'early-exit',
+                    body: 'Collected the required data; finalizing the recommendation now.',
+                    header: clarificationHeader,
+                    reason: arbiterResult.reason,
+                    reasonSource: 'arbiter-termination',
+                    nextAction: 'Finalizing your recommendation now.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                    timestamp: terminationTimestamp,
+                  }),
+                ]);
             setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
             return;
           }
@@ -1373,46 +1415,61 @@ const SymptomAssessmentScreen = () => {
             );
             setQuestions(annotatedReordered);
             activeQuestions = annotatedReordered;
-          } else if (arbiterResult.signal === 'RESOLVE_FRICTION') {
-            console.log('[Assessment] RESOLVE_FRICTION signal received. Generating clarification.');
-            const frictionContext = `SYSTEM: Contradiction detected: ${profile.clinical_friction_details}. Ask a question to clarify this.`;
+          } else if (arbiterResult.signal === 'DRILL_DOWN') {
+            console.log('[Assessment] DRILL_DOWN signal received. Generating immediate follow-up.');
+
+            // Construct context for the drill down
+            const drillDownContext = `
+Arbiter Reason: ${arbiterResult.reason}
+Friction Details: ${profile.clinical_friction_details || 'None'}
+Recent User Answer: ${trimmedAnswer}
+            `.trim();
 
             setIsTyping(true);
             try {
-              const generatedText = await geminiClient.getGeminiResponse(frictionContext);
-              const frictionQuestion: AssessmentQuestion = {
-                id: `friction-${Date.now()}`,
-                text: generatedText.trim(),
-                type: 'text',
-                tier: 3,
-              };
+              const drillDownQuestion = await geminiClient.generateImmediateFollowUp(
+                profile,
+                drillDownContext,
+              );
 
+              // Ensure uniqueness of ID
+              drillDownQuestion.id = `drill-down-${Date.now()}`;
+
+              // Inject at nextIdx (next question)
               const updatedQuestions = [
                 ...activeQuestions.slice(0, nextIdx),
-                frictionQuestion,
+                drillDownQuestion,
                 ...activeQuestions.slice(nextIdx),
               ];
+
               const annotatedQuestions = annotateQuestionsWithSlotMetadata(
                 updatedQuestions,
                 profile,
                 newAnswers,
                 slotSnapshot,
               );
+
               setQuestions(annotatedQuestions);
               activeQuestions = annotatedQuestions;
 
-              // Proactive resolution: Inject message immediately and return
+              // Set suspended state so we know to bridge back later
+              setIsQueueSuspended(true);
+
+              // Display the drill-down question immediately
               {
-                const frictionTimestamp = Date.now();
+                const drillTimestamp = Date.now();
                 appendMessagesToConversation([
                   composeAssistantMessage({
-                    id: `friction-msg-${frictionTimestamp}`,
+                    id: `drill-down-msg-${drillTimestamp}`,
                     header: clarificationHeader,
-                    body: frictionQuestion.text,
+                    body: drillDownQuestion.text,
                     reason: arbiterResult.reason,
-                    reasonSource: 'arbiter-friction',
-                    nextAction: 'Please answer this so I can resolve the conflicting details.',
-                    timestamp: frictionTimestamp,
+                    reasonSource: 'arbiter-drill-down',
+                    nextAction: 'Please answer this specific question.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                    timestamp: drillTimestamp,
                   }),
                 ]);
               }
@@ -1422,7 +1479,7 @@ const SymptomAssessmentScreen = () => {
               setProcessing(false);
               return;
             } catch (err) {
-              console.error('[Assessment] Failed to generate friction resolution question:', err);
+              console.error('[Assessment] Failed to generate drill-down question:', err);
               // Fallback to reordering if generation fails
               const remaining = activeQuestions.slice(nextIdx);
               const priority = remaining.filter((q) => q.tier === 3);
@@ -1449,17 +1506,19 @@ const SymptomAssessmentScreen = () => {
             );
             {
               const resetTimestamp = Date.now();
-              appendMessagesToConversation([
-                composeAssistantMessage({
-                  id: `system-reset-${resetTimestamp}`,
-                  body: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
-                  reason: arbiterResult.reason,
-                  reasonSource: 'arbiter-reset',
-                  nextAction: 'Please help me review those details so I can keep you safe.',
-                  timestamp: resetTimestamp,
-                }),
-              ]);
-            }
+                            appendMessagesToConversation([
+                              composeAssistantMessage({
+                                id: `system-reset-${resetTimestamp}`,
+                                body: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
+                                reason: arbiterResult.reason,
+                                reasonSource: 'arbiter-reset',
+                                nextAction: 'Please help me review those details so I can keep you safe.',
+                                inlineAck: consumePendingCorrection(),
+                                profile,
+                                primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                                timestamp: resetTimestamp,
+                              }),
+                            ]);            }
           }
 
           // SAFETY GATE: If plan is exhausted but we are NOT ready to terminate (due to ambiguity or score)
@@ -1473,16 +1532,19 @@ const SymptomAssessmentScreen = () => {
             // Inject clarifying feedback to build trust during expansion
             {
               const expansionTimestamp = Date.now();
-              appendMessagesToConversation([
-                composeAssistantMessage({
-                  id: `expansion-notice-${expansionTimestamp}`,
-                  body: 'I need to clarify just a few more specific details to be sure about your safety...',
-                  reason: arbiterResult.reason,
-                  reasonSource: 'arbiter-expansion',
-                  nextAction: 'Please answer the next question so I can confirm everything I need.',
-                  timestamp: expansionTimestamp,
-                }),
-              ]);
+                appendMessagesToConversation([
+                  composeAssistantMessage({
+                    id: `expansion-notice-${expansionTimestamp}`,
+                    body: 'A few more targeted questions are needed before finalizing your recommendation.',
+                    reason: arbiterResult.reason,
+                    reasonSource: 'arbiter-expansion',
+                    nextAction: 'Please answer the next question so I can finish the assessment.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                    timestamp: expansionTimestamp,
+                  }),
+                ]);
             }
             hasShownClarificationHeader.current = true; // Avoid double headers
             clarificationHeader = ''; // Clear for the next question bubble to avoid redundancy
@@ -1528,6 +1590,7 @@ const SymptomAssessmentScreen = () => {
             const flagsText = flagDetails.length > 0 ? flagDetails.join('; ') : 'none flagged';
 
             const symptomContext = trimmedInitialSymptom || 'the symptoms you reported earlier';
+            const establishedFacts = JSON.stringify(profile, null, 2);
             const clarifierPrompt = buildClarifierPrompt({
               resolvedTag,
               initialSymptom: trimmedInitialSymptom || safetySymptomReference,
@@ -1535,7 +1598,7 @@ const SymptomAssessmentScreen = () => {
               arbiterReason: arbiterResult.reason || 'No arbiter reason provided.',
               missingSlotsText: unresolvedSlotsText,
               coreSlotsText: missingCoreSlotsText,
-              flagsText,
+              flagsText: flagsText,
               recentResponses: recentResponsesText,
               triageScoreText:
                 profile.triage_readiness_score !== undefined
@@ -1543,6 +1606,7 @@ const SymptomAssessmentScreen = () => {
                   : 'unknown',
               currentTurn: nextIdx,
               categoryLabel: isComplexCategory ? 'complex/critical/vulnerable' : 'simple',
+              establishedFacts,
             });
 
             try {
@@ -1605,7 +1669,10 @@ const SymptomAssessmentScreen = () => {
                           reason: arbiterResult.reason,
                           reasonSource: 'arbiter-expansion',
                           nextAction:
-                            'Please answer this follow-up so I can cover every safety concern.',
+                            'Please answer this follow-up so I can provide the most complete guidance.',
+                          inlineAck: consumePendingCorrection(),
+                          profile,
+                          primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                           timestamp: extraTimestamp,
                         }),
                       ]);
@@ -1645,17 +1712,20 @@ const SymptomAssessmentScreen = () => {
             setIsTyping(false);
             setAssessmentStage('review');
             const finalizeSafetyTimestamp = Date.now();
-            appendMessagesToConversation([
-              composeAssistantMessage({
-                id: 'finalizing-safety-fallback',
-                header: clarificationHeader,
-                body: 'I have gathered enough initial information to provide a safe recommendation.',
-                reason: arbiterResult.reason,
-                reasonSource: 'arbiter-finalize-safety',
-                nextAction: 'Please wait while I prepare a conservative recommendation for you.',
-                timestamp: finalizeSafetyTimestamp,
-              }),
-            ]);
+              appendMessagesToConversation([
+                composeAssistantMessage({
+                  id: 'finalizing-safety-fallback',
+                  header: clarificationHeader,
+                  body: 'Collected enough initial detail; preparing your recommendation now.',
+                  reason: arbiterResult.reason,
+                  reasonSource: 'arbiter-finalize-safety',
+                  nextAction: 'Please wait while I prepare the recommendation for you.',
+                  inlineAck: consumePendingCorrection(),
+                  timestamp: finalizeSafetyTimestamp,
+                  profile,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                }),
+              ]);
             setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
             return;
           }
@@ -1669,13 +1739,58 @@ const SymptomAssessmentScreen = () => {
                 .slice()
                 .reverse()
                 .find((item) => item.role === 'user')?.text || '';
+            const buildAdaptiveBridgeText = async (questionText: string, conversationHistory: string) => {
+              try {
+                const response = await geminiClient.generateBridgeMessage({
+                  conversationHistory,
+                  nextQuestion: questionText,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                  severityLevel: severityScoreForProfile,
+                  symptomCategory: bridgeSymptomCategory,
+                });
+                return response.trim();
+              } catch (error) {
+                console.warn('[Assessment] Bridge prompt failed; falling back to local text.', error);
+                return buildBridgeText(conversationHistory, questionText, fallbackSymptomLabel);
+              }
+            };
+
+            // CHECK FOR RESUMPTION BRIDGE
+            if (isQueueSuspended) {
+              console.log('[Assessment] Resuming queue after drill-down. Applying bridge.');
+              setIsQueueSuspended(false); // Reset flag
+
+              setIsTyping(true);
+              const bridgeText = await buildAdaptiveBridgeText(nextQ.text, lastUserText);
+              {
+                const resumeTimestamp = Date.now();
+                appendMessagesToConversation([
+                  composeAssistantMessage({
+                    id: `ai-resume-${nextIdx}`,
+                    header: clarificationHeader,
+                    body: bridgeText,
+                    reason: 'Resuming assessment plan after drill-down.',
+                    reasonSource: 'arbiter-resume',
+                    nextAction: 'Please answer this to continue.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                    timestamp: resumeTimestamp,
+                  }),
+                ]);
+              }
+              setCurrentQuestionIndex(nextIdx);
+              setIsTyping(false);
+              setProcessing(false);
+              return;
+            }
 
             if (readinessScore > 0.4) {
               console.log(
-                `[Assessment] Readiness > 0.4 (${readinessScore}). Using local bridge text.`,
+                `[Assessment] Readiness > 0.4 (${readinessScore}). Generating an adaptive bridge message.`,
               );
               setIsTyping(true);
-              const bridgeText = buildBridgeText(lastUserText, nextQ.text);
+              const bridgeText = await buildAdaptiveBridgeText(nextQ.text, lastUserText);
               {
                 const bridgeTimestamp = Date.now();
                 appendMessagesToConversation([
@@ -1686,6 +1801,9 @@ const SymptomAssessmentScreen = () => {
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-bridge',
                     nextAction: 'Please answer this prompt so I can continue the assessment.',
+                    inlineAck: consumePendingCorrection(),
+                    profile,
+                    primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                     timestamp: bridgeTimestamp,
                   }),
                 ]);
@@ -1698,6 +1816,7 @@ const SymptomAssessmentScreen = () => {
 
             // Default behavior if readiness <= 0.4
             setIsTyping(true);
+            const inlineAck = consumePendingCorrection();
             setTimeout(() => {
               const defaultTimestamp = Date.now();
               appendMessagesToConversation([
@@ -1709,7 +1828,10 @@ const SymptomAssessmentScreen = () => {
                   reasonSource: 'arbiter-default-question',
                   nextAction:
                     'Please answer this question so I can better understand your symptoms.',
+                  inlineAck,
                   timestamp: defaultTimestamp,
+                  profile,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                 }),
               ]);
               setCurrentQuestionIndex(nextIdx);
@@ -1729,6 +1851,7 @@ const SymptomAssessmentScreen = () => {
       if (!isAtEnd) {
         // Next Question (Fallback if Arbiter check fails or is skipped)
         setIsTyping(true);
+        const inlineAck = consumePendingCorrection();
         setTimeout(() => {
           const nextQ = questions[nextIdx];
           {
@@ -1740,7 +1863,10 @@ const SymptomAssessmentScreen = () => {
                 reason: 'Continuing the planned question path.',
                 reasonSource: 'planner-fallback',
                 nextAction: 'Please answer this so I can continue the assessment.',
+                inlineAck,
                 timestamp: defaultTimestamp,
+                profile,
+                primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
               }),
             ]);
           }
@@ -1757,10 +1883,11 @@ const SymptomAssessmentScreen = () => {
           appendMessagesToConversation([
             composeAssistantMessage({
               id: 'finalizing',
-              body: "Thank you. I'm now analyzing your responses to provide the best guidance...",
+              body: 'All responses recorded; analyzing them now to finalize your recommendation.',
               reason: 'Assessment complete and ready for final review.',
               reasonSource: 'finalizing',
               nextAction: 'Please wait while I synthesize the recommendation for you.',
+              inlineAck: consumePendingCorrection(),
               timestamp: finalizingTimestamp,
             }),
           ]);
@@ -1881,11 +2008,13 @@ const SymptomAssessmentScreen = () => {
         appendMessagesToConversation([
           composeAssistantMessage({
             id: `finalize-${finalizeTimestamp}`,
-            body: 'Thank you. I have a clear picture of your situation now. Given your symptoms, I have generated a specific care plan. Let me walk you through it.',
+            body: 'Captured the clinical picture; I have generated a care plan based on your symptoms and am ready to share it.',
             reason: 'Assessment complete and ready for handover.',
             reasonSource: 'finalize-assessment',
             nextAction: 'Please stay tuned while I prepare the recommendation for you.',
             timestamp: finalizeTimestamp,
+            profile,
+            primarySymptom: derivePrimarySymptom(initialSymptom, profile.summary) ?? defaultPrimarySymptom,
           }),
         ]);
       }
@@ -2317,20 +2446,19 @@ const SymptomAssessmentScreen = () => {
           !isClarifyingDenial ? (
           <View style={{ paddingBottom: 8, gap: 8 }}>
             <Text
-              variant="titleSmall"
               style={{
-                marginBottom: 8,
                 paddingHorizontal: 16,
+                marginBottom: 8,
                 letterSpacing: 1.5,
                 fontWeight: '700',
                 fontSize: 12,
                 color: theme.colors.onSurfaceVariant,
               }}
             >
-              SAFETY CHECK
+              SYMPTOM VERIFICATION
             </Text>
             <Text style={{ paddingHorizontal: 16, marginBottom: 8, color: theme.colors.onSurface }}>
-              {`Just to be perfectly safe, since you told me about ${safetySymptomReference}, are you experiencing any other severe symptoms like difficulty breathing or chest pain, or is it still limited to ${safetyShortLabel}?`}
+              {`To ensure I have a complete picture of your health right now, are you experiencing any other severe symptoms like difficulty breathing or chest pain, or is it still limited to ${safetyShortLabel}?`}
             </Text>
             <Button
               variant="primary"

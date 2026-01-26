@@ -8,7 +8,8 @@ import {
   Linking,
   Pressable,
 } from 'react-native';
-import { Searchbar, Chip, useTheme, Text } from 'react-native-paper';
+import { Searchbar, Chip, useTheme } from 'react-native-paper';
+import { Text } from '../../components/common/Text';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';
@@ -31,6 +32,7 @@ const FILTERS = [
   { id: 'yakap', label: 'YAKAP Accredited', facet: 'yakapAccredited' },
   { id: 'open_now', label: 'Open Now', facet: 'openNow' },
   { id: 'quiet_now', label: 'Quiet Now', facet: 'quietNow' },
+  { id: 'telemedicine', label: 'Telemedicine', facet: 'telemedicine' },
 ];
 
 import { Menu, Button as PaperButton } from 'react-native-paper';
@@ -86,7 +88,15 @@ export const FacilityDirectoryScreen = () => {
 
   const handleFilterPress = (filterId: string) => {
     if (filterId === 'all') {
-      dispatch(setFilters({ type: [], yakapAccredited: false, openNow: false, quietNow: false }));
+      dispatch(
+        setFilters({
+          type: [],
+          yakapAccredited: false,
+          openNow: false,
+          quietNow: false,
+          telemedicine: false,
+        }),
+      );
       return;
     }
 
@@ -105,6 +115,8 @@ export const FacilityDirectoryScreen = () => {
       dispatch(setFilters({ openNow: !filters.openNow }));
     } else if (filterDef.facet === 'quietNow') {
       dispatch(setFilters({ quietNow: !filters.quietNow }));
+    } else if (filterDef.facet === 'telemedicine') {
+      dispatch(setFilters({ telemedicine: !filters.telemedicine }));
     }
   };
 
@@ -115,7 +127,8 @@ export const FacilityDirectoryScreen = () => {
         (!filters.type || filters.type.length === 0) &&
         !filters.yakapAccredited &&
         !filters.openNow &&
-        !filters.quietNow
+        !filters.quietNow &&
+        !filters.telemedicine
       );
     }
     const filterDef = FILTERS.find((f) => f.id === filterId);

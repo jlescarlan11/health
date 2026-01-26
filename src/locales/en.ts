@@ -2,9 +2,9 @@ const en = {
   safety_note: {
     title: 'Safety Note',
     readiness_upgrade:
-      'Recommended higher care level because some key details were unclear, and a cautious next step is safest.',
+      'Recommended higher care level because some key details were unclear, and a cautious next step is recommended.',
     red_flag_upgrade:
-      'Recommended higher care level because some warning signs can be serious even if you feel okay right now.',
+      'Recommended higher care level because some warning signs require prompt medical evaluation even if you feel okay right now.',
     recent_resolved_floor:
       'Recommended higher care level because a serious symptom you recently had still needs a checkup, even if it has eased.',
     system_based_lock_cardiac:
@@ -18,21 +18,20 @@ const en = {
     system_based_lock_abdomen:
       'Recommended higher care level because your symptoms involve strong belly pain, which should be checked promptly.',
     consensus_check:
-      'Recommended higher care level after a safety review confirmed a more cautious plan.',
+      'Recommended higher care level after a comprehensive review confirmed a more cautious plan.',
     age_escalation:
-      'Recommended higher care level because age can affect risk, and we want you to be safe.',
+      'Recommended higher care level because age can affect clinical risk, and we want to ensure you get the most appropriate care.',
     mental_health_override:
       'Recommended urgent care because your responses suggest you may need immediate support. Help is available.',
     offline_fallback:
-      'Recommended this care level based on local safety checks while the full assessment was unavailable.',
+      'Recommended this care level based on local clinical protocols while the full assessment was unavailable.',
     manual_override:
-      'Recommended this care level after a safety review, to make sure you get the right help.',
+      'Recommended this care level after a clinical review of your symptoms.',
     authority_block:
-      'Adjusted the care level because you clearly said you do not have key emergency warning signs.',
-    fallback: 'Recommended this care level to keep you safe based on the information you shared.',
+      'Adjusted the care level based on your specific responses to emergency screening questions.',
+    fallback: 'Recommended this care level to provide the best guidance based on the information you shared.',
     legacy_recent_resolved:
       'Recommended higher care level because the symptom you recently experienced requires professional evaluation, even if it has currently stopped.',
-    legacy_missing_fields: 'Recommended higher care level because {{list}} {{verb}} unclear.',
     legacy_complex_or_vague:
       'Recommended higher care level because your symptoms are complex or vague.',
   },

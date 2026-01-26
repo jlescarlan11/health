@@ -61,7 +61,7 @@ const FormattedAdviceText: React.FC<FormattedAdviceTextProps> = ({ advice }) => 
   const theme = useTheme();
   const chunks = useMemo(() => parseAdvice(advice), [advice]);
 
-  const spacing = theme.spacing as Record<string, number> | undefined;
+  const spacing = (theme as any).spacing as Record<string, number> | undefined;
   const paragraphSpacing = spacing?.medium ?? spacing?.md ?? 12;
   const listSpacing = spacing?.small ?? spacing?.sm ?? 8;
   const indent = spacing?.medium ?? spacing?.md ?? 12;

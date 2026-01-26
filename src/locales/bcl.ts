@@ -2,9 +2,9 @@ const bcl = {
   safety_note: {
     title: 'Pahiling sa Kaluwasan',
     readiness_upgrade:
-      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta may mga importante na detalye na dae malinaw, kaya mas ligtas an mas maingat na sunod na hakbang.',
+      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta may mga importante na detalye na dae malinaw, kaya inirerekomenda an mas maingat na sunod na hakbang.',
     red_flag_upgrade:
-      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta may mga senyales na puwedeng seryoso bisan ok an pakiramdam mo.',
+      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta may mga senyales na nangangaipo nin agarang pag-check bisan ok an pakiramdam mo.',
     recent_resolved_floor:
       'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta an seryosong sintomas na na-experience mo kamakailan kailangan pa man ma-check bisan humupa na.',
     system_based_lock_cardiac:
@@ -18,23 +18,21 @@ const bcl = {
     system_based_lock_abdomen:
       'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta an mga sintomas mo matinding sakit nin tiyan kaya dapat ma-check agad.',
     consensus_check:
-      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga pagkatapos nin safety review na nagsabi na mas maingat na plano an mas ligtas.',
+      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga pagkatapos nin komprehensibong review na nagsabi na mas maingat na plano an kinakaipo.',
     age_escalation:
-      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta an edad puwedeng magpataas nin risk, kaya gusto namon na maging ligtas ka.',
+      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta an edad puwedeng magpataas nin clinical risk, kaya gusto namon na masigurong tama an pag-aalaga na makukuha mo.',
     mental_health_override:
       'Inirerekomenda namon an agarang pag-aalaga ta an mga sagot mo nagmumungkahi na may kailangan kang agarang suporta. May tabang na available.',
     offline_fallback:
-      'Inirerekomenda namon an care level na ini base sa local safety checks habang dae available an full assessment.',
+      'Inirerekomenda namon an care level na ini base sa local clinical protocols habang dae available an full assessment.',
     manual_override:
-      'Inirerekomenda namon an care level na ini pagkatapos nin safety review para masigurong tama an tulong na makukuha mo.',
+      'Inirerekomenda namon an care level na ini pagkatapos nin clinical review kan saimong mga sintomas.',
     authority_block:
-      'In-adjust namon an care level ta malinaw mong sinabi na dae ka may mga pangunahing emergency warning signs.',
+      'In-adjust namon an care level base sa saimong mga simbag sa emergency screening questions.',
     fallback:
-      'Inirerekomenda namon an care level na ini para masiguro an seguridad mo base sa impormasyong ibinahagi mo.',
+      'Inirerekomenda namon an care level na ini para matawan ka nin tamang giya base sa impormasyong ibinahagi mo.',
     legacy_recent_resolved:
       'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta an sintomas na na-experience mo kamakailan kailangan nin propesyonal na pag-check, bisan huminto na.',
-    legacy_missing_fields:
-      'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta dae malinaw an {{list}}.',
     legacy_complex_or_vague:
       'Inirerekomenda namon an mas mataas na lebel nin pag-aalaga ta komplikado o dae malinaw an mga sintomas mo.',
   },

@@ -109,6 +109,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Dependency Cleanup:** Uninstalled `@rnmapbox/maps` and map-related types from `package.json`.
   - **Configuration:** Removed Mapbox plugins and tokens from `app.json`, `app.config.js`, and `.env.example`.
   - **UI Refinement:** Transitioned to a purely list-based facility directory. Integrated native device maps via `Linking` for directions in `FacilityDetailsScreen.tsx`.
+  - **Cleanup:** Removed residual Mapbox configurations from `android/build.gradle`, `android/app/build.gradle`, and `android/gradle.properties` to fix build conflicts.
 
 - **Geolocation Support:** Implemented `expo-location` for real-time user positioning and distance calculation.
   - **Features:** Runtime permission handling with graceful fallbacks, and automatic distance-based sorting of facilities.
@@ -305,3 +306,15 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     - Enhanced `ClinicalNoteScreen.tsx` to fetch historical data when a `recordId` is provided in navigation parameters, otherwise defaulting to the latest live assessment from Redux.
     - Verified functionality with `tests/ClinicalHistoryScreen.test.tsx`.
   - **Verification:** Verified all functionality with new test suites in `src/services/__tests__/clinical_database.test.ts` and `src/store/__tests__/offlineSlice.test.ts`.
+
+- **Facility Details Font Scaling Fix (Jan 26, 2026):**
+  - **Issue:** Text elements in `FacilityDetailsScreen` were not responding to Senior Mode's font scaling settings.
+  - **Fix:** Integrated `useAdaptiveUI` hook into `FacilityDetailsScreen.tsx`. Applied the `scaleFactor` to all text components including headers, body text, service chips, meta info, and action buttons (Directions/Call).
+  - **Verification:** Created and passed a reproduction test suite `tests/FacilityDetailsScreen_Adaptive.test.tsx` ensuring 1.25x scaling is applied when Senior Mode is enabled.
+
+- **Health Promotion Feed Integration (Jan 26, 2026):**
+  - **Service Layer:** Implemented `healthFeedService.ts` using Naga City's WordPress REST API (`/wp-json/wp/v2/posts`) with a regex-based HTML scraping fallback. Added support for pagination, featured images, and author extraction with a 2-attempt retry logic.
+  - **State Management:** Refactored `feedSlice.ts` to manage `FeedItem` objects with persistence via Redux Persist. Implemented `fetchFeed` async thunk for automated data retrieval and pagination.
+  - **UI Implementation:** Updated `HealthFeedScreen.tsx` with a `FlatList` supporting pull-to-refresh, infinite scroll (load more), and comprehensive loading/error/empty states.
+  - **Branding & Sharing:** Enhanced `FeedItem.tsx` to support images and relative timestamps. Updated `sharingUtils.ts` to support sharing new feed items with direct links back to the official news source.
+  - **Integration:** Updated `MainHomeScreen.tsx` to display real-time health news previews instead of mock data.

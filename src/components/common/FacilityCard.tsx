@@ -1,6 +1,15 @@
 import React from 'react';
-import { Alert, StyleSheet, View, ViewStyle, TouchableOpacity, Linking, Modal, FlatList } from 'react-native';
-import { Card, Text, useTheme } from 'react-native-paper';
+import {
+  Alert,
+  StyleSheet,
+  View,
+  ViewStyle,
+  TouchableOpacity,
+  Linking,
+  Modal,
+  FlatList,
+} from 'react-native';
+import { Card, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Facility, FacilityService, FacilityBusyness } from '../../types';
 import { formatDistance } from '../../utils/locationUtils';
@@ -9,6 +18,12 @@ import { openExternalMaps } from '../../utils/linkingUtils';
 import { Button } from './Button';
 import { BusynessIndicator } from './BusynessIndicator';
 import { ServiceChip } from './ServiceChip';
+import { CommunicationHub } from '../features/facilities/CommunicationHub';
+import { TeleconsultBadge } from './TeleconsultBadge';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
+import { sharingUtils } from '../../utils/sharingUtils';
+import { IconButton } from 'react-native-paper';
+import { Text } from './Text';
 
 interface FacilityCardProps {
   facility: Facility;
@@ -30,17 +45,21 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   simplified = false,
 }) => {
   const theme = useTheme();
-  const [showAllServices, setShowAllServices] = React.useState(false);
-  const [contactsModalVisible, setContactsModalVisible] = React.useState(false);
+  const { scaleFactor } = useAdaptiveUI();
   const { text: statusText, color: statusColor, isOpen } = getOpenStatus(facility);
+  const [showAllServices, setShowAllServices] = React.useState(false);
 
   const hasMatches = React.useMemo(() => {
     if (!relevantServices || relevantServices.length === 0) return false;
-    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+    const allServices = [...(facility.services || []), ...(facility.specialized_services || [])];
     return relevantServices.some((rs) =>
       allServices.some((s) => s.toLowerCase().includes(rs.toLowerCase())),
     );
   }, [facility.services, facility.specialized_services, relevantServices]);
+
+  const hasTeleconsult = React.useMemo(() => {
+    return facility.contacts?.some((c) => !!c.teleconsultUrl);
+  }, [facility.contacts]);
 
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${
     facility.type
@@ -69,31 +88,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     }
   };
 
-  const handleCallPress = () => {
-    const hasMultipleContacts = facility.contacts && facility.contacts.length > 1;
-
-    if (hasMultipleContacts) {
-      setContactsModalVisible(true);
-      return;
-    }
-
-    const numberToCall =
-      facility.contacts && facility.contacts.length > 0
-        ? facility.contacts[0].phoneNumber
-        : facility.phone;
-
-    if (numberToCall) {
-      Linking.openURL(`tel:${numberToCall}`).catch(() =>
-        Alert.alert('Error', 'Failed to open dialer.'),
-      );
-    } else {
-      Alert.alert('Not Available', 'Phone number is not available.');
-    }
-  };
-
   // Determine which services to show
   const displayServices = React.useMemo(() => {
-    const allServices = [...facility.services, ...(facility.specialized_services || [])];
+    const allServices = [...(facility.services || []), ...(facility.specialized_services || [])];
 
     // In simplified/list view, we strictly limit to 3 and ignore showAllServices
     if (simplified) {
@@ -131,7 +128,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   ]);
 
   const totalServicesCount =
-    facility.services.length + (facility.specialized_services?.length || 0);
+    (facility.services?.length || 0) + (facility.specialized_services?.length || 0);
   const hasMoreServices = totalServicesCount > displayServices.length;
 
   return (
@@ -156,9 +153,22 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     >
       <View style={styles.cardInner}>
         {/* Header Row */}
-        <Text variant="titleMedium" style={styles.title}>
-          {facility.name}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text variant="titleMedium" style={styles.title}>
+            {facility.name}
+          </Text>
+          <IconButton
+            icon="share-variant-outline"
+            size={20 * scaleFactor}
+            onPress={(e) => {
+              e.stopPropagation();
+              sharingUtils.shareFacilityInfo(facility);
+            }}
+            style={styles.shareIconButton}
+            iconColor={theme.colors.primary}
+            accessibilityLabel={`Share ${facility.name} info`}
+          />
+        </View>
 
         {/* Meta Row */}
         <View style={styles.metaRow}>
@@ -191,6 +201,8 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
             </View>
           )}
+
+          {hasTeleconsult && <TeleconsultBadge style={{ marginLeft: 4, marginTop: 2 }} />}
         </View>
 
         {/* Status Row */}
@@ -204,7 +216,11 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             />
             <Text
               variant="labelMedium"
-              style={{ color: statusColor, fontWeight: '700', letterSpacing: 0.3 }}
+              style={{
+                color: statusColor,
+                fontWeight: '700',
+                letterSpacing: 0.3,
+              }}
             >
               {statusText}
             </Text>
@@ -227,7 +243,10 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             >
               <Text
                 variant="labelSmall"
-                style={{ color: theme.colors.primary, fontWeight: '800', fontSize: 10 }}
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: '800',
+                }}
               >
                 +{totalServicesCount - displayServices.length} MORE
               </Text>
@@ -237,14 +256,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
 
         {/* Action Buttons Row */}
         <View style={styles.actionsRow}>
-          <Button
-            title="Call"
-            icon="phone"
-            variant="primary"
-            onPress={handleCallPress}
-            style={styles.actionButton}
-            disabled={!facility.phone && (!facility.contacts || facility.contacts.length === 0)}
-          />
+          <CommunicationHub contacts={facility.contacts} primaryPhone={facility.phone} />
           <Button
             title="Directions"
             icon="directions"
@@ -254,63 +266,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           />
         </View>
       </View>
-
-      {/* Contact Selection Modal */}
-      <Modal
-        visible={contactsModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setContactsModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setContactsModalVisible(false)}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
-            <View style={styles.modalHandle} />
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
-              Select Number
-            </Text>
-            <FlatList
-              data={facility.contacts}
-              keyExtractor={(item, index) => item.id || index.toString()}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.contactOption}
-                  activeOpacity={0.6}
-                  onPress={() => {
-                    setContactsModalVisible(false);
-                    Linking.openURL(`tel:${item.phoneNumber}`);
-                  }}
-                >
-                  <View style={styles.contactOptionContent}>
-                    <View style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '15' }]}>
-                      <MaterialCommunityIcons name="phone" size={18} color={theme.colors.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>
-                        {item.phoneNumber}
-                      </Text>
-                      {item.role && (
-                        <Text style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}>
-                          {item.role} {item.contactName ? `• ${item.contactName}` : ''}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity 
-              onPress={() => setContactsModalVisible(false)} 
-              style={{ marginTop: 16, paddingVertical: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.onSurface }}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </Card>
   );
 };
@@ -324,13 +279,23 @@ const styles = StyleSheet.create({
   cardInner: {
     padding: 16,
   },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 4,
+  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
     lineHeight: 26,
     letterSpacing: -0.2,
-    marginBottom: 8,
+    flex: 1,
+  },
+  shareIconButton: {
+    margin: 0,
+    marginTop: -4,
   },
   metaRow: {
     flexDirection: 'row',
@@ -385,64 +350,5 @@ const styles = StyleSheet.create({
     flex: 1,
     marginVertical: 0,
     minHeight: 40,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    width: '100%',
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  contactOption: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#F3F4F6', // Subtle tint
-    borderRadius: 12,
-    marginVertical: 6,
-  },
-  contactOptionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  contactNumber: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  contactRole: {
-    fontSize: 14,
   },
 });

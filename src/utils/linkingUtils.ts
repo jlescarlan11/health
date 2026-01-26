@@ -18,17 +18,29 @@ const cleanPhoneNumber = (phone: string): string => {
 export const openViber = async (phone: string): Promise<boolean> => {
   if (!phone) return false;
 
-  const cleanPhone = cleanPhoneNumber(phone);
-  // Viber requires the number to be in international format (e.g., +63...)
-  // If the user didn't provide +, we might need to assume or leave it.
-  // For safety, we just pass the cleaned number.
-  // Note: encoded '+' is %2B.
-  const encodedPhone = encodeURIComponent(cleanPhone);
+  let cleanPhone = phone.replace(/[^\d+]/g, '');
 
-  const candidates: string[] = [
-    `viber://chat?number=${encodedPhone}`,
-    `viber://contact?number=${encodedPhone}`, // Alternative scheme
-  ];
+  // Handle Philippine local numbers: 09... -> 639...
+  if (cleanPhone.startsWith('09') && cleanPhone.length === 11) {
+    cleanPhone = '63' + cleanPhone.substring(1);
+  } else if (cleanPhone.startsWith('+639') && cleanPhone.length === 13) {
+    // Keep as is, but we'll also try without +
+  }
+
+  const variations = [cleanPhone];
+  if (cleanPhone.startsWith('+')) {
+    variations.push(cleanPhone.substring(1));
+  } else if (!cleanPhone.startsWith('+') && cleanPhone.length > 5) {
+    // If it looks like an international number but missing +, try adding it
+    variations.push('+' + cleanPhone);
+  }
+
+  const candidates: string[] = [];
+  for (const v of variations) {
+    const encoded = encodeURIComponent(v);
+    candidates.push(`viber://chat?number=${encoded}`);
+    candidates.push(`viber://contact?number=${encoded}`);
+  }
 
   for (const url of candidates) {
     const supported = await Linking.canOpenURL(url).catch(() => false);
@@ -41,9 +53,7 @@ export const openViber = async (phone: string): Promise<boolean> => {
       }
     }
   }
-  
-  // Web fallback isn't standard for Viber mobile, but we can return false
-  // to let the caller handle the "App not found" state.
+
   return false;
 };
 

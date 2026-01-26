@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   StyleProp,
@@ -12,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
+import { Text } from './Text';
 
 interface StandardHeaderProps {
   title: string;
@@ -35,6 +36,7 @@ export const StandardHeader: React.FC<StandardHeaderProps> = ({
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { scaleFactor } = useAdaptiveUI();
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -74,7 +76,13 @@ export const StandardHeader: React.FC<StandardHeaderProps> = ({
       </View>
       <View style={styles.titleContainer}>
         <Text
-          style={[styles.title, { color: theme.colors.onSurface }, titleStyle]}
+          style={[
+            styles.title,
+            {
+              color: theme.colors.onSurface,
+            },
+            titleStyle,
+          ]}
           accessibilityRole="header"
           numberOfLines={1}
           ellipsizeMode="tail"
