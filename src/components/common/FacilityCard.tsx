@@ -31,7 +31,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   showMatchIndicator = false,
 }) => {
   const theme = useTheme();
-  const { scaleFactor } = useAdaptiveUI();
+  const { scaleFactor, isPWDMode, simplifiedSpacing, borderRadius, touchTargetScale } = useAdaptiveUI();
   const { text: statusText } = getOpenStatus(facility);
   const hasMatches = showMatchIndicator;
 
@@ -52,6 +52,33 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
         }`
       : ''
   }`;
+
+  const metaRowStyle = [styles.metaRow, isPWDMode && styles.metaRowPWD];
+  const metaTextStyle = [styles.metaText, isPWDMode && styles.metaTextPWD];
+  const titleTextStyle = [
+    styles.title,
+    {
+      fontSize: 20 * scaleFactor * (isPWDMode ? 1.05 : 1),
+      lineHeight: 26 * scaleFactor,
+    },
+  ];
+  const shareIconSize = 20 * scaleFactor * touchTargetScale;
+  const cardInnerStyle = [
+    styles.cardInner,
+    {
+      padding: simplifiedSpacing,
+    },
+  ];
+  const titleRowStyle = [styles.titleRow, isPWDMode && { marginBottom: 8 }];
+  const matchBadgeStyle = [
+    styles.matchBadge,
+    isPWDMode && styles.matchBadgePWD,
+    { backgroundColor: '#E8F5E9', marginLeft: 4 },
+  ];
+  const teleconsultStyle = {
+    marginLeft: 4,
+    marginTop: isPWDMode ? 10 : 2,
+  };
 
   const handleDirectionsPress = async () => {
     const opened = await openExternalMaps({
@@ -78,6 +105,9 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           shadowOpacity: 0.05,
           shadowRadius: 8,
           elevation: 2,
+          borderRadius,
+          borderWidth: isPWDMode ? 1 : 0,
+          borderColor: isPWDMode ? '#E5E7EB' : undefined,
         },
       ]}
       onPress={onPress}
@@ -86,14 +116,14 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >
-      <View style={styles.cardInner}>
-        <View style={styles.titleRow}>
-          <Text variant="titleMedium" style={styles.title}>
+      <View style={cardInnerStyle}>
+        <View style={titleRowStyle}>
+          <Text variant="titleMedium" style={titleTextStyle}>
             {facility.name}
           </Text>
           <IconButton
             icon="share-variant-outline"
-            size={20 * scaleFactor}
+            size={shareIconSize}
             onPress={(e) => {
               e.stopPropagation();
               sharingUtils.shareFacilityInfo(facility);
@@ -104,7 +134,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
           />
         </View>
 
-        <View style={styles.metaRow}>
+        <View style={metaRowStyle}>
           {[
             formatFacilityType(facility.type),
             facility.yakapAccredited ? 'YAKAP Accredited' : null,
@@ -117,10 +147,10 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             .filter(Boolean)
             .map((item, index, array) => (
               <React.Fragment key={index}>
-                <Text variant="labelSmall" style={styles.metaText}>
+                <Text variant="labelSmall" style={metaTextStyle}>
                   {item}
                 </Text>
-                {index < array.length - 1 && (
+                {!isPWDMode && index < array.length - 1 && (
                   <Text variant="labelSmall" style={[styles.metaText, styles.metaSeparator]}>
                     •
                   </Text>
@@ -129,13 +159,13 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
             ))}
 
           {hasMatches && (
-            <View style={[styles.matchBadge, { backgroundColor: '#E8F5E9', marginLeft: 4 }]}>
+            <View style={matchBadgeStyle}>
               <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
               <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
             </View>
           )}
 
-          {hasTeleconsult && <TeleconsultBadge style={{ marginLeft: 4, marginTop: 2 }} />}
+          {hasTeleconsult && <TeleconsultBadge style={teleconsultStyle} />}
         </View>
 
         <FacilityStatusIndicator facility={facility} />
@@ -184,10 +214,20 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     marginBottom: 12,
   },
+  metaRowPWD: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
   metaText: {
     fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
+  },
+  metaTextPWD: {
+    fontSize: 14,
+    marginBottom: 6,
+    color: '#475467',
   },
   metaSeparator: {
     marginHorizontal: 6,
@@ -199,6 +239,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+  },
+  matchBadgePWD: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
   matchText: {
     fontSize: 10,

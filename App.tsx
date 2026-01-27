@@ -66,10 +66,27 @@ const linking: LinkingOptions<RootStackParamList> = {
 const AppContent = () => {
   const dispatch = useAppDispatch();
   const isHighRisk = useAppSelector((state) => state.navigation.isHighRisk);
-  const { scaleFactor } = useAdaptiveUI();
+  const { scaleFactor, isPWDMode, layoutPadding } = useAdaptiveUI();
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
 
-  const scaledTheme = useMemo(() => getScaledTheme(scaleFactor), [scaleFactor]);
+  const scaledTheme = useMemo(() => {
+    const baseTheme = getScaledTheme(scaleFactor);
+    if (!isPWDMode) {
+      return baseTheme;
+    }
+    return {
+      ...baseTheme,
+      colors: {
+        ...baseTheme.colors,
+        background: '#FEF9F2',
+        onBackground: '#1B1C1D',
+        surface: '#FFFFFF',
+        outline: '#7C3AED',
+      },
+      roundness: 18,
+      rippleColor: '#E5E7EB',
+    };
+  }, [scaleFactor, isPWDMode]);
 
   useEffect(() => {
     // Configure notifications
@@ -122,10 +139,20 @@ const AppContent = () => {
     // dispatch(setHighRisk(false));
   };
 
+  const adaptiveContainerStyle = [
+    styles.container,
+    isPWDMode && {
+      paddingHorizontal: layoutPadding / 2,
+      paddingTop: layoutPadding / 2,
+      paddingBottom: layoutPadding / 2,
+      backgroundColor: '#FEF9F2',
+    },
+  ];
+
   return (
     <PaperProvider theme={scaledTheme}>
       <NavigationContainer linking={linking} theme={navigationTheme}>
-        <View style={styles.container}>
+        <View style={adaptiveContainerStyle}>
           <OfflineBanner />
           <AppNavigator />
           <SafetyRecheckModal visible={safetyModalVisible} onDismiss={handleDismissSafetyModal} />

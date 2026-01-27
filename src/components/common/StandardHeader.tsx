@@ -36,7 +36,7 @@ export const StandardHeader: React.FC<StandardHeaderProps> = ({
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { scaleFactor } = useAdaptiveUI();
+  const { scaleFactor, isPWDMode, touchTargetScale } = useAdaptiveUI();
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -48,41 +48,58 @@ export const StandardHeader: React.FC<StandardHeaderProps> = ({
     }
   };
 
+  const headerHeight = isPWDMode ? 70 : 60;
+  const backButtonStyle = [
+    styles.backButton,
+    isPWDMode && {
+      padding: 12,
+      borderRadius: 12,
+      backgroundColor: '#F3F0EB',
+    },
+  ];
+
+  const containerStyle = [
+    styles.container,
+    {
+      backgroundColor: theme.colors.surface,
+      borderBottomColor: isPWDMode ? theme.colors.primary : theme.colors.outlineVariant,
+      paddingTop: insets.top,
+      paddingHorizontal: isPWDMode ? 20 : 16,
+      paddingBottom: isPWDMode ? 10 : 6,
+      height: headerHeight + insets.top,
+    },
+    style,
+  ];
+
+  const titleStyles = [
+    styles.title,
+    {
+      fontSize: 18 * scaleFactor * (isPWDMode ? 1.1 : 1),
+      color: theme.colors.onSurface,
+    },
+    titleStyle,
+  ];
+
+  const iconSize = 24 * touchTargetScale;
+
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: theme.colors.surface,
-          borderBottomColor: theme.colors.outlineVariant,
-          paddingTop: insets.top,
-          height: 60 + insets.top,
-        },
-        style,
-      ]}
-    >
+    <View style={containerStyle}>
       <View style={styles.leftContainer}>
         {showBackButton && (
           <TouchableOpacity
             onPress={handleBackPress}
-            style={styles.backButton}
+            style={backButtonStyle}
             accessibilityRole="button"
             accessibilityLabel="Go back"
             accessibilityHint="Navigates to the previous screen"
           >
-            <Ionicons name="arrow-back" size={24} color={theme.colors.onSurface} />
+            <Ionicons name="arrow-back" size={iconSize} color={theme.colors.onSurface} />
           </TouchableOpacity>
         )}
       </View>
       <View style={styles.titleContainer}>
         <Text
-          style={[
-            styles.title,
-            {
-              color: theme.colors.onSurface,
-            },
-            titleStyle,
-          ]}
+          style={titleStyles}
           accessibilityRole="header"
           numberOfLines={1}
           ellipsizeMode="tail"

@@ -1,8 +1,7 @@
-import React from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import { StyleSheet, ScrollView, View, StyleProp, TextStyle } from 'react-native';
 import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDispatch } from 'react-redux';
 import { Text } from '../components/common/Text';
 import StandardHeader from '../components/common/StandardHeader';
@@ -17,7 +16,7 @@ export const SettingsScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<any>();
   const dispatch = useAppDispatch();
-  const { scaleFactor } = useAdaptiveUI();
+  const { scaleFactor, isPWDMode } = useAdaptiveUI();
   const settings = useAppSelector((state) => state.settings);
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const scrollBottomPadding = themeSpacing.lg * 2;
@@ -36,11 +35,9 @@ export const SettingsScreen = () => {
     styles.itemTitle,
     { fontSize: styles.itemTitle.fontSize * scaleFactor },
   ];
-
   const scaledDescriptionStyle = {
     fontSize: 14 * scaleFactor,
   };
-
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -86,49 +83,14 @@ export const SettingsScreen = () => {
 
         <List.Section>
           <List.Subheader style={scaledSubheaderStyle}>Care Profile</List.Subheader>
-          <Surface style={styles.surface} elevation={1}>
-            <List.Item
-              title="Senior"
-              description="Optimize for elderly care needs"
-              left={(props) => (
-                <List.Icon {...props} icon="account-star-outline" color={theme.colors.primary} />
-              )}
-              right={() => (
-                <View style={styles.switchContainer}>
-                  <Switch
-                    value={specializedModes.isSenior}
-                    onValueChange={() => {
-                      dispatch(toggleSpecializedMode('isSenior'));
-                    }}
-                    color={theme.colors.primary}
-                  />
-                </View>
-              )}
-              titleStyle={scaledItemTitleStyle}
-              descriptionStyle={scaledDescriptionStyle}
-            />
-            <Divider />
-            <List.Item
-              title="PWD"
-              description="Optimize for accessibility needs"
-              left={(props) => (
-                <List.Icon {...props} icon="wheelchair" color={theme.colors.primary} />
-              )}
-              right={() => (
-                <View style={styles.switchContainer}>
-                  <Switch
-                    value={specializedModes.isPWD}
-                    onValueChange={() => {
-                      dispatch(toggleSpecializedMode('isPWD'));
-                    }}
-                    color={theme.colors.primary}
-                  />
-                </View>
-              )}
-              titleStyle={scaledItemTitleStyle}
-              descriptionStyle={scaledDescriptionStyle}
-            />
-          </Surface>
+          <CareProfileCard
+            isPWDMode={isPWDMode}
+            specializedModes={specializedModes}
+            onToggleMode={(mode) => dispatch(toggleSpecializedMode(mode))}
+            primaryColor={theme.colors.primary}
+            itemTitleStyle={scaledItemTitleStyle}
+            descriptionStyle={scaledDescriptionStyle}
+          />
         </List.Section>
 
         <List.Section>
@@ -154,9 +116,83 @@ export const SettingsScreen = () => {
           </Surface>
         </List.Section>
       </ScrollView>
-    </ScreenSafeArea>
-  );
+      </ScreenSafeArea>
+    );
+  };
+
+type SpecializedModeKey = 'isSenior' | 'isPWD' | 'isChronic';
+
+type CareProfileCardProps = {
+  isPWDMode: boolean;
+  specializedModes: {
+    isSenior: boolean;
+    isPWD: boolean;
+    isChronic: boolean;
+  };
+  onToggleMode: (mode: SpecializedModeKey) => void;
+  primaryColor: string;
+  itemTitleStyle: StyleProp<TextStyle>;
+  descriptionStyle: StyleProp<TextStyle>;
 };
+
+const CareProfileCard = React.memo<CareProfileCardProps>(
+  ({ isPWDMode, specializedModes, onToggleMode, primaryColor, itemTitleStyle, descriptionStyle }) => {
+    const surfaceStyle = useMemo(
+      () => (isPWDMode ? [styles.surface, styles.pwdSurfaceHighlight] : styles.surface),
+      [isPWDMode],
+    );
+
+    const titleStyle = useMemo(
+      () => (isPWDMode ? [itemTitleStyle, styles.pwdTitleActive] : itemTitleStyle),
+      [isPWDMode, itemTitleStyle],
+    );
+
+    const toggleSenior = useCallback(() => onToggleMode('isSenior'), [onToggleMode]);
+    const togglePWD = useCallback(() => onToggleMode('isPWD'), [onToggleMode]);
+
+    const pwdDescription = useMemo(
+      () =>
+        isPWDMode
+          ? 'Simplified layout active — larger text, spacing, and touch targets across the app.'
+          : 'Optimize for accessibility needs',
+      [isPWDMode],
+    );
+
+    return (
+      <Surface style={surfaceStyle} elevation={1}>
+        <List.Item
+          title="Senior"
+          description="Optimize for elderly care needs"
+          left={(props) => (
+            <List.Icon {...props} icon="account-star-outline" color={primaryColor} />
+          )}
+          right={() => (
+            <View style={styles.switchContainer}>
+              <Switch value={specializedModes.isSenior} onValueChange={toggleSenior} color={primaryColor} />
+            </View>
+          )}
+          titleStyle={itemTitleStyle}
+          descriptionStyle={descriptionStyle}
+        />
+        <Divider />
+        <List.Item
+          title="PWD"
+          description={pwdDescription}
+          left={(props) => <List.Icon {...props} icon="wheelchair" color={primaryColor} />}
+          right={() => (
+            <View style={styles.switchContainer}>
+              <Switch value={specializedModes.isPWD} onValueChange={togglePWD} color={primaryColor} />
+            </View>
+          )}
+          titleStyle={titleStyle}
+          descriptionStyle={descriptionStyle}
+        />
+      </Surface>
+    );
+  },
+);
+
+CareProfileCard.displayName = 'CareProfileCard';
 
 const styles = StyleSheet.create({
   container: {
@@ -184,5 +220,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingRight: 8,
+  },
+  pwdSurfaceHighlight: {
+    borderWidth: 1,
+    borderColor: '#7C3AED',
+    backgroundColor: '#FFFCF9',
+  },
+  pwdTitleActive: {
+    color: '#141B2F',
   },
 });

@@ -4,6 +4,7 @@ import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { CommunicationHub } from '../features/facilities';
 import { Button } from './Button';
 import { FacilityContact } from '../../types';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 
 interface FacilityActionButtonsProps {
   contacts?: FacilityContact[];
@@ -26,22 +27,35 @@ export const FacilityActionButtons: React.FC<FacilityActionButtonsProps> = ({
   directionButtonTitle = 'Directions',
   directionButtonIcon = 'directions',
 }) => {
+  const { isPWDMode, simplifiedSpacing } = useAdaptiveUI();
+  const sharedButtonBaseStyle = [styles.sharedButton, isPWDMode && styles.pwdSharedButton];
+  const actionContainerStyles = [
+    styles.actionsContainer,
+    { marginTop: isPWDMode ? simplifiedSpacing / 2 : 8 },
+    containerStyle,
+  ];
+  const secondSlotStyle = [
+    styles.actionSlot,
+    styles.secondSlot,
+    isPWDMode && { marginLeft: simplifiedSpacing / 2 },
+  ];
+
   return (
-    <View style={[styles.actionsContainer, containerStyle]}>
+    <View style={actionContainerStyles}>
       <View style={styles.actionSlot}>
         <CommunicationHub
           contacts={contacts}
           primaryPhone={primaryPhone}
-          callButtonStyle={[styles.sharedButton, callButtonStyle]}
+          callButtonStyle={[...sharedButtonBaseStyle, callButtonStyle]}
         />
       </View>
-      <View style={[styles.actionSlot, styles.secondSlot]}>
+      <View style={secondSlotStyle}>
         <Button
           icon={directionButtonIcon}
           title={directionButtonTitle}
           onPress={onDirectionsPress}
           variant="primary"
-          style={[styles.sharedButton, directionButtonStyle]}
+          style={[...sharedButtonBaseStyle, directionButtonStyle]}
         />
       </View>
     </View>
@@ -63,5 +77,8 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     marginVertical: 0,
+  },
+  pwdSharedButton: {
+    marginVertical: 6,
   },
 });

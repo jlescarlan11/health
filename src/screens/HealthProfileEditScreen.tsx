@@ -165,7 +165,7 @@ export const HealthProfileEditScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <StandardHeader title="My Health Records" showBackButton rightActions={headerRightActions} />
+      <StandardHeader title="Edit Health Profile" showBackButton rightActions={headerRightActions} />
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         enableOnAndroid={true}
