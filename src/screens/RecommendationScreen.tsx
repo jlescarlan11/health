@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useRoute,
   useNavigation,
@@ -30,17 +29,20 @@ import { geminiClient } from '../api/geminiClient';
 import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetector';
 import { FacilityCard } from '../components/common/FacilityCard';
 import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
-import { Button, SafetyRecheckModal, Text } from '../components/common';
+import { Button, SafetyRecheckModal, Text, ScreenSafeArea } from '../components/common';
+import { FeatureChip } from '../components/common';
+import { chipLayoutStyles } from '../components/common/chipLayout';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
 import StandardHeader from '../components/common/StandardHeader';
-import { calculateDistance, scoreFacility, filterFacilitiesByServices } from '../utils';
+import { calculateDistance, scoreFacility, getFacilityServiceMatches } from '../utils';
 import { AssessmentProfile, TriageLevel, TriageAdjustmentRule } from '../types/triage';
 import { formatEmpatheticResponse } from '../utils/empatheticResponses';
 
 import { TriageStatusCard } from '../components/features/triage/TriageStatusCard';
 import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
+import { theme as appTheme } from '../theme';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
 
@@ -193,6 +195,8 @@ const RecommendationScreen = () => {
   const theme = useTheme() as any;
   const { width: screenWidth } = useWindowDimensions();
   const dispatch = useDispatch<AppDispatch>();
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const recommendationBottomPadding = spacing.lg * 2;
 
   // Try to get location to improve sorting
   useUserLocation({ watch: false });
@@ -745,11 +749,14 @@ const RecommendationScreen = () => {
   };
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: recommendationBottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.statusCardWrapper}>
           <TriageStatusCard
             level={triageLevel}
@@ -837,17 +844,42 @@ const RecommendationScreen = () => {
               </Text>
             </View>
 
-            {recommendedFacilities.map((facility) => (
-              <FacilityCard
-                key={facility.id}
-                facility={facility}
-                showDistance={true}
-                distance={facility.distance}
-                onPress={() => handleViewDetails(facility.id)}
-                relevantServices={recommendation.relevant_services}
-                simplified={true}
-              />
-            ))}
+            {recommendedFacilities.map((facility) => {
+              const matchedServices = getFacilityServiceMatches(
+                facility,
+                recommendation.relevant_services || [],
+              );
+
+              return (
+                <View key={facility.id} style={styles.facilityEntry}>
+                  <FacilityCard
+                    facility={facility}
+                    showDistance={true}
+                    distance={facility.distance}
+                    onPress={() => handleViewDetails(facility.id)}
+                    showMatchIndicator={matchedServices.length > 0}
+                  />
+                  {matchedServices.length > 0 && (
+                    <View style={styles.matchSummaryContainer}>
+                      <Text
+                        variant="bodySmall"
+                        style={[styles.matchSummaryLabel, { color: theme.colors.onSurfaceVariant }]}
+                      >
+                        Matches your needs:
+                      </Text>
+                      <View style={[chipLayoutStyles.chipContainer, styles.matchSummaryChips]}>
+                        {matchedServices.map((service) => (
+                          <FeatureChip
+                            key={`match-${facility.id}-${service}`}
+                            label={service}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
 
             {recommendedFacilities.length === 0 && !isFacilitiesLoading && (
               <Surface style={styles.emptyState} elevation={0}>
@@ -920,7 +952,7 @@ const RecommendationScreen = () => {
         onDismiss={() => setSafetyModalVisible(false)}
         initialSymptomSummary={initialSymptomSummary}
       />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -928,7 +960,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { marginTop: 16, fontWeight: '500' },
-  content: { padding: 16, paddingVertical: 12, paddingBottom: 40 },
+  content: { padding: 16, paddingVertical: 12 },
   statusCardWrapper: {
     marginBottom: 24,
   },
@@ -973,6 +1005,22 @@ const styles = StyleSheet.create({
   },
 
   facilitiesSection: { marginBottom: 24 },
+  facilityEntry: {
+    marginBottom: 4,
+  },
+  matchSummaryContainer: {
+    marginTop: 4,
+    marginBottom: 12,
+    paddingHorizontal: 16,
+  },
+  matchSummaryLabel: {
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    fontSize: 12,
+  },
+  matchSummaryChips: {
+    marginTop: 6,
+  },
   sectionHeader: { marginBottom: 16, marginTop: 8 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },
   sectionSubtitle: { color: '#666', marginTop: 2, fontSize: 13 },

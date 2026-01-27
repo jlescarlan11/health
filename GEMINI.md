@@ -275,22 +275,10 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Self-Care Style Update:** Modified the 'Self-Care' recommendation styling in `TriageStatusCard.tsx` and `RecommendationScreen.tsx` to match the visual identity of symptom chips (using `secondaryContainer` background and `primary` text/icon color).
   - **Files Modified:** `src/screens/RecommendationScreen.tsx`, `src/components/features/triage/TriageStatusCard.tsx`, `src/components/features/triage/__tests__/TriageStatusCard.test.tsx`.
 
-- **Test Suite Stabilization (Jan 25, 2026):**
-  - **Fixes:** Resolved multiple test failures caused by async logic, regex inaccuracies, and incomplete mocks.
-    - **`geminiClient.ts`**: Updated `isTransientFailure` to correctly retry on "503 Service Unavailable" errors.
-    - **`clinicalUtils.ts`**: Improved regex to correctly extract age from "I am 30" and prevent "years old" from being parsed as duration.
-    - **`jest.setup.js`**: Updated `expo-sqlite` mock to support the async API (`openDatabaseAsync`), fixing database service tests.
-    - **`geminiFallback.test.ts`**: Fixed mock initialization and added `AsyncStorage.clear()` to prevent test state leakage.
-    - **`gemini.test.ts`**: Updated retry tests to use transient error types ("Network Error") to correctly trigger retry logic.
-    - **`SafetyInterceptorStress.test.ts`**: Fixed array handling for suppressed keywords in mental health guard tests.
-  - **Cleanup:** Removed the flaky `tests/RecommendationScreen.test.tsx` integration test as per user request to unblock the pipeline, noting that core logic is covered by service-level tests.
-  - **Result:** All frontend (59 suites) and backend (6 suites) tests are now passing.
-
 - **Bug Fix: Assessment Plan Refinement (Jan 25, 2026):**
   - **Issue:** Resolved a `TypeError: Cannot read property 'slice' of undefined` occurring during symptom assessment when the plan was refined due to category escalation.
   - **Root Cause:** The `activeQuestions` variable was being accessed in the escalation logic block before its declaration in the subsequent pruning block.
   - **Fix:** Hoisted the initialization of `activeQuestions` to the beginning of the `handleNext` logic flow in `SymptomAssessmentScreen.tsx` and updated the pruning logic to use this mutable reference, ensuring the question queue is correctly updated and propagated.
-  - **Verification:** Verified with `SymptomAssessmentDynamicPruning.test.tsx` and `SymptomAssessmentRedFlags.test.tsx`.
 
 - **Type Error Fix & Code Quality (Jan 25, 2026):**
   - **Message Interface Fix:** Updated `src/store/navigationSlice.ts` to include `'assistant'` in the `sender` union type, resolving a type mismatch with the `SymptomAssessmentScreen`. Added an explicit `: Message` return type to `composeAssistantMessage` in `src/screens/SymptomAssessmentScreen.tsx` to fix generic string inference errors.
@@ -304,13 +292,10 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
     - Implemented Phase 4 by creating the "My Health Records" screen (`ClinicalHistoryScreen.tsx`), listing all saved assessments from SQLite with care level icons and timestamps.
     - Updated `MainHomeScreen.tsx` to include a prominent entry point for Health Records.
     - Enhanced `ClinicalNoteScreen.tsx` to fetch historical data when a `recordId` is provided in navigation parameters, otherwise defaulting to the latest live assessment from Redux.
-    - Verified functionality with `tests/ClinicalHistoryScreen.test.tsx`.
-  - **Verification:** Verified all functionality with new test suites in `src/services/__tests__/clinical_database.test.ts` and `src/store/__tests__/offlineSlice.test.ts`.
 
 - **Facility Details Font Scaling Fix (Jan 26, 2026):**
   - **Issue:** Text elements in `FacilityDetailsScreen` were not responding to Senior Mode's font scaling settings.
   - **Fix:** Integrated `useAdaptiveUI` hook into `FacilityDetailsScreen.tsx`. Applied the `scaleFactor` to all text components including headers, body text, service chips, meta info, and action buttons (Directions/Call).
-  - **Verification:** Created and passed a reproduction test suite `tests/FacilityDetailsScreen_Adaptive.test.tsx` ensuring 1.25x scaling is applied when Senior Mode is enabled.
 
 - **Health Promotion Feed Integration (Jan 26, 2026):**
   - **Service Layer:** Implemented `healthFeedService.ts` using Naga City's WordPress REST API (`/wp-json/wp/v2/posts`) with a regex-based HTML scraping fallback. Added support for pagination, featured images, and author extraction with a 2-attempt retry logic.
@@ -318,3 +303,7 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **UI Implementation:** Updated `HealthFeedScreen.tsx` with a `FlatList` supporting pull-to-refresh, infinite scroll (load more), and comprehensive loading/error/empty states.
   - **Branding & Sharing:** Enhanced `FeedItem.tsx` to support images and relative timestamps. Updated `sharingUtils.ts` to support sharing new feed items with direct links back to the official news source.
   - **Integration:** Updated `MainHomeScreen.tsx` to display real-time health news previews instead of mock data.
+
+- **Test Removal (Jan 27, 2026):**
+  - **Cleanup:** Removed all test files and directories (`tests/`, `src/**/__tests__/`, `**/*.test.*`) from the project to simplify the codebase as per user request.
+  - **Memory Update:** Updated project documentation and memory to reflect the absence of test files.

@@ -38,7 +38,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const { scaleFactor } = useAdaptiveUI();
+  const { scaleFactor, isPWDMode, touchTargetScale } = useAdaptiveUI();
 
   let mode: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal' = 'contained';
   let buttonColor: string | undefined = undefined;
@@ -71,22 +71,27 @@ export const Button: React.FC<ButtonProps> = ({
 
   const finalMode = modeProp || mode;
 
+  const labelScale = isPWDMode ? 1.1 : 1;
   const buttonStyle = [
     styles.button,
     variant === 'outline' && {
       borderColor: disabled ? theme.colors.outline : theme.colors.primary,
     },
-    labelStyle,
+    isPWDMode && styles.pwdButton,
+    { minHeight: 48 * touchTargetScale },
+    style,
   ];
 
   const scaledLabelStyle = [
     styles.label,
     {
-      fontSize: 16 * scaleFactor,
-      lineHeight: 24 * scaleFactor,
+      fontSize: 16 * scaleFactor * labelScale,
+      lineHeight: 24 * scaleFactor * labelScale,
     },
     labelStyle,
   ];
+
+  const finalContentStyle = [styles.content, isPWDMode && styles.pwdContent, contentStyle];
 
   return (
     <PaperButton
@@ -99,7 +104,7 @@ export const Button: React.FC<ButtonProps> = ({
       textColor={textColor}
       style={buttonStyle}
       labelStyle={scaledLabelStyle}
-      contentStyle={contentStyle}
+      contentStyle={finalContentStyle}
       accessibilityLabel={accessibilityLabel || title}
       accessibilityHint={accessibilityHint}
       accessibilityRole={accessibilityRole}
@@ -114,12 +119,21 @@ const styles = StyleSheet.create({
   button: {
     marginVertical: 4,
     borderRadius: 8,
-    minHeight: 48,
     justifyContent: 'center',
   },
   label: {
     fontSize: 16,
     fontWeight: '600',
     paddingVertical: 4,
+  },
+  content: {
+    paddingVertical: 4,
+  },
+  pwdButton: {
+    marginVertical: 8,
+    borderRadius: 18,
+  },
+  pwdContent: {
+    paddingVertical: 12,
   },
 });

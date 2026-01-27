@@ -10,7 +10,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Chip, useTheme, Card } from 'react-native-paper';
+import { useTheme, Card } from 'react-native-paper';
 import { Text } from '../../components/common/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { speechService } from '../../services/speechService';
@@ -18,65 +18,16 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { RootState } from '../../store';
-import { InputCard, EmergencyActions } from '../../components/common';
+import { InputCard, EmergencyActions, FeatureChip } from '../../components/common';
+import { chipLayoutStyles } from '../../components/common/chipLayout';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk, clearAssessmentState, setSymptomDraft } from '../../store/navigationSlice';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 
 type NavigationProp = CheckStackScreenProps<'CheckSymptom'>['navigation'];
 
 const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Prenatal Care', 'Injury'];
-
-const SYMPTOM_ICONS: Record<string, string> = {
-  Fever: 'thermometer',
-  Cough: 'bacteria',
-  Headache: 'head-alert',
-  'Stomach Pain': 'stomach',
-  Injury: 'bandage',
-  'Prenatal Care': 'medical-bag',
-};
-
-const SymptomItem = ({
-  label,
-  icon,
-  isSelected,
-  onPress,
-}: {
-  label: string;
-  icon: string;
-  isSelected: boolean;
-  onPress: () => void;
-}) => {
-  const theme = useTheme();
-
-  return (
-    <Chip
-      selected={isSelected}
-      onPress={onPress}
-      mode="flat"
-      showSelectedCheck={false}
-      icon={({ size, color: _color }) => (
-        <MaterialCommunityIcons
-          name={(isSelected ? 'check' : icon) as any}
-          size={size}
-          color={isSelected ? theme.colors.onPrimary : theme.colors.primary}
-        />
-      )}
-      style={[
-        styles.symptomChip,
-        {
-          backgroundColor: isSelected ? theme.colors.primary : theme.colors.secondaryContainer,
-        },
-      ]}
-      textStyle={[
-        styles.symptomLabel,
-        { color: isSelected ? theme.colors.onPrimary : theme.colors.primary },
-      ]}
-    >
-      {label}
-    </Chip>
-  );
-};
 
 const CheckSymptomScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -86,6 +37,8 @@ const CheckSymptomScreen = () => {
   const theme = useTheme();
 
   const insets = useSafeAreaInsets();
+  const { isPWDMode, layoutPadding } = useAdaptiveUI();
+  const adaptivePadding = isPWDMode ? layoutPadding : 0;
   const scrollViewRef = useRef<ScrollView>(null);
   const keyboardHeightRef = useRef(new Animated.Value(0));
   const keyboardHeight = keyboardHeightRef.current;
@@ -263,11 +216,24 @@ const CheckSymptomScreen = () => {
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 24 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: 24 + insets.top + adaptivePadding,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.mainContent}>
+        <View
+          style={[
+            styles.mainContent,
+            {
+              paddingLeft: 16 + adaptivePadding + Math.max(insets.left, 0),
+              paddingRight: 16 + adaptivePadding + Math.max(insets.right, 0),
+            },
+          ]}
+        >
           <View style={styles.emergencyLayoutContainer}>
             <Card
               mode="elevated"
@@ -340,8 +306,8 @@ const CheckSymptomScreen = () => {
                 style={({ pressed }) => [
                   styles.resumeBanner,
                   {
-                    backgroundColor: theme.colors.secondaryContainer,
-                    opacity: pressed ? 0.8 : 1,
+                    backgroundColor: theme.colors.surface,
+                    opacity: pressed ? 0.95 : 1,
                   },
                 ]}
               >
@@ -349,15 +315,15 @@ const CheckSymptomScreen = () => {
                   <View style={styles.resumeTextContainer}>
                     <Text
                       variant="bodyMedium"
-                      style={{ color: theme.colors.primary, fontWeight: '600' }}
+                      style={{ color: theme.colors.onSurface, fontWeight: '600' }}
                     >
-                      Continue your assessment for "{assessmentState.initialSymptom}"
+                      {`Continue your assessment for: "${assessmentState.initialSymptom}"`}
                     </Text>
                   </View>
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={24}
-                    color={theme.colors.primary}
+                    color={theme.colors.onSurface}
                   />
                 </View>
               </Pressable>
@@ -369,20 +335,18 @@ const CheckSymptomScreen = () => {
               Common Symptoms
             </Text>
 
-            <View style={styles.chipContainer}>
+            <View style={chipLayoutStyles.chipContainer}>
               {QUICK_SYMPTOMS.map((s) => {
-                const icon = SYMPTOM_ICONS[s] || 'medical-bag';
                 const isSelected = symptom
                   .split(',')
                   .map((item) => item.trim())
                   .includes(s);
 
                 return (
-                  <SymptomItem
+                  <FeatureChip
                     key={s}
                     label={s}
-                    icon={icon}
-                    isSelected={isSelected}
+                    selected={isSelected}
                     onPress={() => toggleSymptom(s)}
                   />
                 );
@@ -396,9 +360,10 @@ const CheckSymptomScreen = () => {
         style={[
           styles.anchoredInputContainer,
           {
-            paddingBottom: Math.max(16, insets.bottom + 8),
-            paddingLeft: Math.max(16, insets.left),
-            paddingRight: Math.max(16, insets.right),
+            paddingTop: adaptivePadding,
+            paddingBottom: Math.max(16, insets.bottom + 8) + adaptivePadding,
+            paddingLeft: Math.max(16, insets.left) + adaptivePadding,
+            paddingRight: Math.max(16, insets.right) + adaptivePadding,
             backgroundColor: theme.colors.background,
             marginBottom: keyboardHeight,
           },
@@ -423,8 +388,8 @@ const CheckSymptomScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: 0, paddingVertical: 24 },
-  mainContent: { paddingHorizontal: 16 },
+  scrollContent: { paddingHorizontal: 0 },
+  mainContent: {},
   emergencyLayoutContainer: { marginBottom: 24 },
   emergencyCard: { borderRadius: 16, elevation: 0 },
   emergencyCardContent: { padding: 16 },
@@ -435,11 +400,16 @@ const styles = StyleSheet.create({
   welcomeText: { fontWeight: 'bold', textAlign: 'left' },
   subtitle: { marginTop: 8, lineHeight: 20 },
   resumeBanner: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 0.5,
-    borderColor: 'rgba(55, 151, 119, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 1,
   },
   resumeContent: {
     flexDirection: 'row',
@@ -449,25 +419,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   anchoredInputContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
+    width: '100%',
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  symptomChip: {
-    marginBottom: 4,
-    borderRadius: 8,
-  },
-  symptomLabel: {
-    fontWeight: '500',
-    fontSize: 14,
-  },
 });
 
 export default CheckSymptomScreen;

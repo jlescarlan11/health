@@ -50,7 +50,6 @@ export const FacilityListView: React.FC<FacilityListViewProps> = ({ ListHeaderCo
       showDistance={true} // Assuming calculated distance is available or handled by parent/card
       onPress={() => handleFacilityPress(item)}
       style={styles.card}
-      simplified={true}
     />
   );
 

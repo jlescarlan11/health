@@ -13,7 +13,7 @@ import { Text } from '../../components/common/Text';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenSafeArea } from '../../components/common';
 import { ScrollView } from 'react-native';
 
 import { AppDispatch } from '../../store';
@@ -164,7 +164,7 @@ export const FacilityDirectoryScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+    <ScreenSafeArea style={styles.container} edges={['left', 'right', 'bottom']}>
       <StandardHeader title="Facility Directory" showBackButton />
 
       <KeyboardAvoidingView
@@ -336,7 +336,7 @@ export const FacilityDirectoryScreen = () => {
           />
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

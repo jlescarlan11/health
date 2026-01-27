@@ -8,6 +8,8 @@ import {
   Modal,
   FlatList,
   Text,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
@@ -19,6 +21,7 @@ import { openViber, openMessenger } from '../../../utils/linkingUtils';
 interface CommunicationHubProps {
   contacts?: FacilityContact[];
   primaryPhone?: string;
+  callButtonStyle?: StyleProp<ViewStyle>;
 }
 
 interface PhoneItem {
@@ -31,6 +34,7 @@ interface PhoneItem {
 export const CommunicationHub: React.FC<CommunicationHubProps> = ({
   contacts = [],
   primaryPhone,
+  callButtonStyle,
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
@@ -87,38 +91,40 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.actionsRow}>
-        <Button
-          icon="phone"
-          title="Call"
-          onPress={handlePhoneAction}
-          style={styles.callButton}
-          variant="primary"
-          disabled={!hasPhone}
-        />
+      <Button
+        icon="phone"
+        title="Call"
+        onPress={handlePhoneAction}
+        style={[styles.callButton, callButtonStyle]}
+        variant="primary"
+        disabled={!hasPhone}
+      />
 
-        {hasViber && (
-          <TouchableOpacity
-            testID="viber-button"
-            style={[styles.iconButton, { backgroundColor: '#7360f2' }]}
-            onPress={handleViberAction}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons name={'viber' as any} size={24} color="#fff" />
-          </TouchableOpacity>
-        )}
+      {(hasViber || hasMessenger) && (
+        <View style={styles.iconRow}>
+          {hasViber && (
+            <TouchableOpacity
+              testID="viber-button"
+              style={[styles.iconButton, { backgroundColor: '#7360f2' }]}
+              onPress={handleViberAction}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name={'viber' as any} size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
 
-        {hasMessenger && (
-          <TouchableOpacity
-            testID="messenger-button"
-            style={[styles.iconButton, { backgroundColor: '#0084ff' }]}
-            onPress={handleMessengerAction}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons name="facebook-messenger" size={24} color="#fff" />
-          </TouchableOpacity>
-        )}
-      </View>
+          {hasMessenger && (
+            <TouchableOpacity
+              testID="messenger-button"
+              style={[styles.iconButton, { backgroundColor: '#0084ff' }]}
+              onPress={handleMessengerAction}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="facebook-messenger" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Phone Selection Modal */}
       <Modal
@@ -195,13 +201,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  actionsRow: {
+  callButton: {
+    flex: 1,
+  },
+  iconRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-  },
-  callButton: {
-    flex: 1,
+    marginTop: 8,
   },
   iconButton: {
     width: 48,

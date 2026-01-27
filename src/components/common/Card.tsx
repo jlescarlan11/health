@@ -6,6 +6,7 @@ interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
   title?: string;
   subtitle?: string;
   mode?: 'elevated' | 'outlined' | 'contained';
@@ -19,6 +20,7 @@ export const Card: React.FC<CardProps> = ({
   children,
   onPress,
   style,
+  contentStyle,
   title,
   subtitle,
   mode = 'elevated',
@@ -46,7 +48,7 @@ export const Card: React.FC<CardProps> = ({
           subtitleStyle={styles.subtitle}
         />
       )}
-      <PaperCard.Content>{children}</PaperCard.Content>
+      <PaperCard.Content style={contentStyle}>{children}</PaperCard.Content>
     </PaperCard>
   );
 };

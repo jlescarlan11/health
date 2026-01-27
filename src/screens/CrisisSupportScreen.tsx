@@ -1,14 +1,17 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Linking, Alert } from 'react-native';
 import { Text, Card, useTheme, IconButton, Surface } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { MENTAL_HEALTH_RESOURCES, MentalHealthResource } from '../services/mentalHealthDetector';
 import { Button } from '../components/common/Button';
+import { ScreenSafeArea } from '../components/common';
+import { theme as appTheme } from '../theme';
 
 const CrisisSupportScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation();
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const contentBottomPadding = spacing.lg * 2;
 
   const handleCall = (number: string) => {
     // Clean number for tel: link (remove non-digits except +)
@@ -46,8 +49,14 @@ const CrisisSupportScreen = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: contentBottomPadding }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
           <IconButton
             icon="close"
@@ -98,7 +107,7 @@ const CrisisSupportScreen = () => {
           />
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -109,7 +118,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingVertical: 24,
-    paddingBottom: 40,
   },
   header: {
     marginBottom: 32,

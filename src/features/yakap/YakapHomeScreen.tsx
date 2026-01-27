@@ -1,18 +1,20 @@
 import React from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
-import { Button, Text } from '../../components/common';
-import { Card } from '../../components/common/Card';
+import { Button, Card, Text, ScreenSafeArea } from '../../components/common';
 import StandardHeader from '../../components/common/StandardHeader';
 import { YAKAP_BENEFITS, YakapBenefit } from './yakapContent';
 import { YakapStackScreenProps } from '../../types/navigation';
+import { theme as appTheme } from '../../theme';
 
 const YakapHomeScreen = () => {
   const theme = useTheme();
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
+  const benefitCardPadding = themeSpacing.lg ?? 16;
   const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
 
   const navigateToEnrollment = () => {
@@ -30,44 +32,48 @@ const YakapHomeScreen = () => {
     navigation.navigate('YakapFaq');
   };
 
-  const navigateToHistory = () => {
-    navigation.navigate('ClinicalHistory');
-  };
-
-  const renderBenefitItem = (benefit: YakapBenefit) => {
-    return (
-      <View key={benefit.id} style={styles.benefitCard}>
-        <View
-          style={[
-            styles.benefitIconContainer,
-            { backgroundColor: theme.colors.primaryContainer + '60' },
-          ]}
-        >
-          <MaterialCommunityIcons
-            name={benefit.icon as keyof (typeof MaterialCommunityIcons)['glyphMap']}
-            size={32}
-            color={theme.colors.primary}
-          />
-        </View>
-        <View style={styles.benefitTextContainer}>
-          <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
-            {benefit.category}
-          </Text>
-          <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
-            {benefit.description}
-          </Text>
-        </View>
-      </View>
-    );
-  };
+  const renderBenefitItem = (benefit: YakapBenefit) => (
+      <Card
+        key={benefit.id}
+        mode="contained"
+        rippleColor={theme.colors.primary + '15'}
+        accessibilityLabel={`Benefit: ${benefit.category}`}
+        style={[
+          styles.benefitCard,
+          {
+            backgroundColor: '#ffffff',
+            borderColor: theme.colors.outline,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.12,
+            shadowRadius: 14,
+            elevation: 4,
+          },
+        ]}
+        contentStyle={[styles.benefitCardContent, { padding: benefitCardPadding }]}
+      >
+      <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
+        {benefit.category}
+      </Text>
+      <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
+        {benefit.description}
+      </Text>
+    </Card>
+  );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <StandardHeader title="YAKAP" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <StandardHeader title="YAKAP Guide" showBackButton />
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: scrollContentPaddingBottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero Section */}
         <View
           style={[styles.heroSection, { backgroundColor: theme.colors.primaryContainer + '30' }]}
@@ -93,43 +99,6 @@ const YakapHomeScreen = () => {
           </View>
         </View>
 
-        {/* Digital ID CTA */}
-        <View style={styles.idContainer}>
-          <Card
-            onPress={navigateToHistory}
-            style={[styles.idCard, { backgroundColor: theme.colors.primaryContainer + '40' }]}
-            mode="contained"
-          >
-            <View style={styles.idCardContent}>
-              <View
-                style={[
-                  styles.idIconContainer,
-                  { backgroundColor: theme.colors.primary },
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name="clipboard-text-outline"
-                  size={24}
-                  color="#FFFFFF"
-                />
-              </View>
-              <View style={styles.idTextContainer}>
-                <Text variant="titleMedium" style={styles.idTitle}>
-                  My Health Records
-                </Text>
-                <Text variant="bodySmall" style={styles.idSubtitle}>
-                  View your past assessments and clinical notes for easier reference.
-                </Text>
-              </View>
-              <MaterialCommunityIcons
-                name="chevron-right"
-                size={24}
-                color={theme.colors.onSurfaceVariant}
-              />
-            </View>
-          </Card>
-        </View>
-
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
           <Button variant="primary" onPress={navigateToEnrollment} title="Start Enrollment Guide" />
@@ -145,24 +114,12 @@ const YakapHomeScreen = () => {
             KEY BENEFITS
           </Text>
           <View style={styles.benefitsList}>
-            {YAKAP_BENEFITS.map((benefit, index) => (
-              <React.Fragment key={benefit.id}>
-                {renderBenefitItem(benefit)}
-                {index < YAKAP_BENEFITS.length - 1 && (
-                  <View
-                    style={[
-                      styles.benefitDivider,
-                      { backgroundColor: theme.colors.outlineVariant },
-                    ]}
-                  />
-                )}
-              </React.Fragment>
-            ))}
+            {YAKAP_BENEFITS.map((benefit) => renderBenefitItem(benefit))}
           </View>
         </View>
 
         {/* FAQ Link */}
-        <View style={styles.footer}>
+        <View style={[styles.footer, { marginBottom: themeSpacing.lg ?? 16 }]}>
           <TouchableOpacity
             onPress={navigateToFaq}
             activeOpacity={0.7}
@@ -180,7 +137,7 @@ const YakapHomeScreen = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -188,9 +145,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 60,
-  },
+  scrollContent: {},
   heroSection: {
     paddingVertical: 48,
     paddingHorizontal: 24,
@@ -224,43 +179,9 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     letterSpacing: 0.2,
   },
-  idContainer: {
-    paddingHorizontal: 24,
-    marginTop: -8,
-    marginBottom: 24,
-  },
-  idCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(55, 151, 119, 0.1)',
-  },
-  idCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  idIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  idTextContainer: {
-    flex: 1,
-  },
-  idTitle: {
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  idSubtitle: {
-    opacity: 0.7,
-    lineHeight: 16,
-  },
   actionButtonsContainer: {
     paddingHorizontal: 24,
-    marginTop: 8,
+    marginTop: 24,
     gap: 12,
   },
   section: {
@@ -275,46 +196,32 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   benefitsList: {
-    backgroundColor: 'transparent',
+    flexDirection: 'column',
+    paddingBottom: 8,
   },
   benefitCard: {
-    flexDirection: 'row',
-    paddingVertical: 24,
-    alignItems: 'center',
+    marginVertical: 6,
+    marginBottom: 0,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  benefitIconContainer: {
-    marginRight: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-  },
-  benefitTextContainer: {
-    flex: 1,
-  },
+  benefitCardContent: {},
   benefitTitle: {
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'left',
-    marginBottom: 4,
     letterSpacing: -0.2,
   },
   benefitDesc: {
     fontSize: 14,
     fontWeight: '400',
     textAlign: 'left',
-    lineHeight: 22,
-    opacity: 0.8,
-  },
-  benefitDivider: {
-    height: 1,
-    opacity: 0.1,
+    lineHeight: 24,
+    opacity: 0.85,
   },
   footer: {
     alignItems: 'center',
     marginTop: 32,
-    marginBottom: 40,
   },
   faqLinkContainer: {
     flexDirection: 'row',

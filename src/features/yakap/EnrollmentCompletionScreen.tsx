@@ -3,11 +3,11 @@ import { View, StyleSheet, ScrollView, Alert, BackHandler } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackParamList } from '../../types/navigation';
 import StandardHeader from '../../components/common/StandardHeader';
-import { Button } from '../../components/common/Button';
+import { Button, ScreenSafeArea } from '../../components/common';
 import { YakapBenefitsCard } from '../../components/features/yakap';
+import { theme as appTheme } from '../../theme';
 
 type EnrollmentCompletionNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -17,6 +17,8 @@ type EnrollmentCompletionNavigationProp = StackNavigationProp<
 const EnrollmentCompletionScreen = () => {
   const theme = useTheme();
   const navigation = useNavigation<EnrollmentCompletionNavigationProp>();
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
 
   const navigateToFacilities = () => {
     // Navigate to Find tab with YAKAP filter
@@ -61,13 +63,16 @@ const EnrollmentCompletionScreen = () => {
   );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Guide Complete" />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollContentPaddingBottom }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.celebrationContainer}>
           <Text variant="headlineSmall" style={[styles.title, { color: theme.colors.onSurface }]}>
             Enrollment Guide Complete
@@ -95,7 +100,7 @@ const EnrollmentCompletionScreen = () => {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

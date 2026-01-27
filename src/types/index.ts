@@ -151,3 +151,14 @@ export interface Medication {
   is_active: boolean;
   days_of_week: string[];
 }
+
+export interface HealthProfile {
+  fullName?: string | null;
+  dob?: string | null;
+  bloodType?: string | null;
+  chronicConditions?: string[];
+  allergies?: string[];
+  currentMedications?: string[];
+  surgicalHistory?: string | null;
+  familyHistory?: string | null;
+}

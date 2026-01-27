@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
 import { YAKAP_BENEFITS } from '../../../features/yakap/yakapContent';
+import { theme as appTheme } from '../../../theme';
 
 interface YakapBenefitsCardProps {
   style?: StyleProp<ViewStyle>;
@@ -9,6 +10,10 @@ interface YakapBenefitsCardProps {
 
 export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) => {
   const theme = useTheme();
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const cardPadding = spacing.lg ?? 16;
+  const sectionPadding = spacing.md ?? 12;
+  const itemPadding = spacing.sm ?? 8;
 
   // We use the first benefit as core, and the next 3 as included coverage
   const coreBenefit = YAKAP_BENEFITS[0];
@@ -18,6 +23,7 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
     <View
       style={[
         styles.benefitsWrapper,
+        { padding: cardPadding },
         {
           backgroundColor: theme.colors.surface,
           borderRadius: 20,
@@ -30,7 +36,7 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
         style,
       ]}
     >
-      <View style={styles.benefitHeader}>
+      <View style={[styles.benefitHeader, { gap: itemPadding }]}>
         <Text variant="labelLarge" style={[styles.benefitLabel, { color: theme.colors.primary }]}>
           CORE BENEFIT
         </Text>
@@ -44,7 +50,6 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
           variant="bodyMedium"
           style={{
             color: theme.colors.onSurfaceVariant,
-            marginTop: 8,
             lineHeight: 22,
             opacity: 0.9,
           }}
@@ -54,15 +59,21 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
       </View>
 
       <View
-        style={[styles.divider, { backgroundColor: theme.colors.outlineVariant, opacity: 0.2 }]}
+        style={[
+          styles.divider,
+          {
+            backgroundColor: theme.colors.outlineVariant,
+            opacity: 0.2,
+            marginVertical: sectionPadding,
+          },
+        ]}
       />
 
-      <View style={styles.supplementarySection}>
+      <View style={[styles.supplementarySection, { paddingTop: sectionPadding }]}>
         <Text
           variant="labelMedium"
           style={{
             color: theme.colors.onSurface,
-            marginBottom: 20,
             opacity: 0.6,
             letterSpacing: 1.5,
             fontWeight: '800',
@@ -71,7 +82,7 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
           INCLUDED COVERAGE
         </Text>
 
-        <View style={styles.benefitList}>
+        <View style={[styles.benefitList, { gap: itemPadding }]}>
           {supplementaryBenefits.map((benefit) => {
             // Special formatting for medicine allowance to match the design pattern
             const isMedicines = benefit.id === 'medicines';
@@ -79,7 +90,13 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
             const isScreenings = benefit.id === 'screenings';
 
             return (
-              <View key={benefit.id} style={styles.benefitItem}>
+              <View
+                key={benefit.id}
+                style={[
+                  styles.benefitItem,
+                  { paddingVertical: itemPadding, paddingHorizontal: itemPadding },
+                ]}
+              >
                 <View style={[styles.benefitDot, { backgroundColor: theme.colors.primary }]} />
                 <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
                   {isLab && (
@@ -117,15 +134,15 @@ export const YakapBenefitsCard: React.FC<YakapBenefitsCardProps> = ({ style }) =
 
 const styles = StyleSheet.create({
   benefitsWrapper: {
-    padding: 24,
+    padding: 0,
   },
   benefitHeader: {
-    marginBottom: 16,
+    marginBottom: 0,
   },
   benefitLabel: {
     letterSpacing: 1.5,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 0,
     fontSize: 12,
     opacity: 0.7,
   },
@@ -136,13 +153,13 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     width: '100%',
-    marginVertical: 16,
+    marginVertical: 0,
   },
   supplementarySection: {
     width: '100%',
   },
   benefitList: {
-    gap: 16,
+    gap: 0,
   },
   benefitItem: {
     flexDirection: 'row',
@@ -152,6 +169,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    marginRight: 12,
+    marginRight: 0,
   },
 });

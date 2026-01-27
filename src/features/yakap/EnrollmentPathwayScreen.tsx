@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { Text, useTheme } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { Card } from '../../components/common/Card';
 import { Modal } from '../../components/common/Modal';
-import { Button } from '../../components/common/Button';
+import { Button, ScreenSafeArea } from '../../components/common';
 import { RootStackParamList } from '../../types/navigation';
+import { theme as appTheme } from '../../theme';
 import { ENROLLMENT_PATHWAYS, EnrollmentPathway as Pathway } from './yakapContent';
 
 import StandardHeader from '../../components/common/StandardHeader';
@@ -24,6 +24,8 @@ export const EnrollmentPathwayScreen = () => {
   const navigation = useNavigation<EnrollmentPathwayScreenNavigationProp>();
   const [selectedPathway, setSelectedPathway] = useState<Pathway | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
 
   const handlePathwaySelect = (pathway: Pathway) => {
     setSelectedPathway(pathway);
@@ -59,12 +61,15 @@ export const EnrollmentPathwayScreen = () => {
   );
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Enrollment Path" showBackButton />
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollContentPaddingBottom }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerContainer}>
           <Text variant="bodyLarge" style={[styles.headerText, { color: theme.colors.onSurface }]}>
             Choose the enrollment method that works best for you.
@@ -245,7 +250,7 @@ export const EnrollmentPathwayScreen = () => {
           />
         </View>
       </Modal>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 

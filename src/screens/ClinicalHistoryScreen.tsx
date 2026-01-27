@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useTheme, Card, Avatar, Divider } from 'react-native-paper';
+import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { useTheme, Card, Avatar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { RootStackScreenProps } from '../types/navigation';
 import * as DB from '../services/database';
 import { ClinicalHistoryRecord } from '../services/database';
 import StandardHeader from '../components/common/StandardHeader';
-import { Button, Text } from '../components/common';
+import { Button, Text, ScreenSafeArea } from '../components/common';
+import { theme as appTheme } from '../theme';
 
 type Props = RootStackScreenProps<'ClinicalHistory'>;
 
@@ -17,6 +17,8 @@ export const ClinicalHistoryScreen = () => {
   const theme = useTheme();
   const [history, setHistory] = useState<ClinicalHistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const listBottomPadding = (themeSpacing.lg ?? 16) * 2;
 
   const loadHistory = async () => {
     try {
@@ -102,7 +104,10 @@ export const ClinicalHistoryScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right', 'bottom']}
+    >
       <StandardHeader
         title="My Health Records"
         showBackButton
@@ -118,7 +123,7 @@ export const ClinicalHistoryScreen = () => {
           data={history}
           renderItem={renderItem}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: listBottomPadding }]}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <MaterialCommunityIcons
@@ -142,7 +147,7 @@ export const ClinicalHistoryScreen = () => {
           }
         />
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
@@ -158,7 +163,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 0,
     flexGrow: 1,
   },
   card: {

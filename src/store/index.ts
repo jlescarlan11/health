@@ -75,11 +75,28 @@ const migrations = {
     }
     return state;
   },
+  4: (state: any) => {
+    // Initialize new profile health fields if they don't exist
+    if (state && state.profile && state.profile.chronicConditions === undefined) {
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          chronicConditions: [],
+          allergies: [],
+          currentMedications: [],
+          surgicalHistory: null,
+          familyHistory: null,
+        },
+      };
+    }
+    return state;
+  },
 };
 
 const persistConfig = {
   key: 'root',
-  version: 3,
+  version: 4,
   storage: AsyncStorage,
   whitelist: ['settings', 'navigation', 'offline', 'medication', 'profile', 'feed'],
   migrate: createMigrate(migrations, { debug: false }),

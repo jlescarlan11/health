@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card, useTheme } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -8,7 +7,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
 import { RootState } from '../store';
-import { YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text } from '../components/common';
+import { Button, YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text, ScreenSafeArea } from '../components/common';
+import { theme as appTheme } from '../theme';
 import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
 // Import the new components
@@ -21,6 +21,8 @@ export const MainHomeScreen = () => {
   const theme = useTheme();
   const lastNote = useSelector(selectLatestClinicalNote);
   const { items } = useSelector((state: RootState) => state.feed);
+  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const homeBottomPadding = spacing.lg * 2;
 
   const FeatureCard = ({
     title,
@@ -119,11 +121,15 @@ export const MainHomeScreen = () => {
   const previewData = (items && items.length > 0) ? items.slice(0, 2) : MOCK_PREVIEW;
 
   return (
-    <SafeAreaView
+    <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right']}
+      edges={['top', 'left', 'right', 'bottom']}
+      disableBottomInset
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: homeBottomPadding }}
+        showsVerticalScrollIndicator={false}
+      >
         <HomeHero
           hasClinicalReport={!!lastNote}
           onClinicalReportPress={() => navigation.navigate('ClinicalNote', {})}
@@ -167,11 +173,6 @@ export const MainHomeScreen = () => {
               <Text variant="titleLarge" style={styles.sectionTitle}>
                 Discover Latest News
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}>
-                <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
-                  View All
-                </Text>
-              </TouchableOpacity>
             </View>
 
             <View style={styles.feedList}>
@@ -183,19 +184,25 @@ export const MainHomeScreen = () => {
                 />
               ))}
             </View>
+            <View style={styles.seeMoreButtonContainer}>
+              <Button
+                title="See More"
+                onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
+                style={styles.seeMoreButton}
+                contentStyle={styles.seeMoreButtonContent}
+                accessibilityLabel="See more news"
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 60,
   },
   cardsContainer: {
     marginTop: 16,
@@ -228,6 +235,15 @@ const styles = StyleSheet.create({
   feedList: {
     marginTop: 0,
     gap: 16,
+  },
+  seeMoreButtonContainer: {
+    marginTop: 16,
+  },
+  seeMoreButton: {
+    alignSelf: 'flex-start',
+  },
+  seeMoreButtonContent: {
+    paddingHorizontal: 0,
   },
   card: {
     borderRadius: 24,

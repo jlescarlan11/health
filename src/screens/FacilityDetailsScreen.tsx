@@ -6,7 +6,6 @@ import {
   Image,
   TouchableOpacity,
   Linking,
-  Share,
   Dimensions,
   Alert,
   Modal,
@@ -15,26 +14,28 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { ScreenSafeArea } from '../components/common';
+import { Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
 import { useTheme } from 'react-native-paper';
 
 import { Text } from '../components/common/Text';
 import { Button } from '../components/common/Button';
+import { FacilityActionButtons } from '../components/common/FacilityActionButtons';
 import StandardHeader from '../components/common/StandardHeader';
-import { BusynessIndicator } from '../components/common/BusynessIndicator';
+import { FacilityStatusIndicator } from '../components/common/FacilityStatusIndicator';
 import { useUserLocation } from '../hooks';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
-import { ServiceChip } from '../components/common/ServiceChip';
-import { CommunicationHub } from '../components/features/facilities';
+import { FeatureChip } from '../components/common';
+import { chipLayoutStyles } from '../components/common/chipLayout';
 import { sharingUtils } from '../utils/sharingUtils';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
-import { getOpenStatus, formatOperatingHours } from '../utils/facilityUtils';
+import { formatOperatingHours } from '../utils/facilityUtils';
 import { formatFacilityType } from '../utils/stringUtils';
 import { RootState } from '../store';
 import { RootStackScreenProps } from '../types/navigation';
+import { theme as appTheme } from '../theme';
 
 type FacilityDetailsRouteProp = RootStackScreenProps<'FacilityDetails'>['route'];
 
@@ -82,7 +83,6 @@ const CATEGORIES = {
 export const FacilityDetailsScreen = () => {
   const theme = useTheme();
   const { scaleFactor } = useAdaptiveUI();
-  const insets = useSafeAreaInsets();
   const route = useRoute<FacilityDetailsRouteProp>();
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const { facilityId } = route.params || { facilityId: '' };
@@ -138,6 +138,42 @@ export const FacilityDetailsScreen = () => {
     return grouped;
   }, [facility]);
 
+  const hasServiceGroups = Object.keys(groupedServices).length > 0;
+
+  const infoLabelStyle = [
+    styles.sectionLabel,
+    {
+      color: theme.colors.onSurface,
+      fontSize: 12 * scaleFactor,
+      fontWeight: '700',
+    },
+  ];
+
+  const infoValueTypography = {
+    fontSize: 16 * scaleFactor,
+    lineHeight: 24 * scaleFactor,
+  };
+
+  const infoValueTextStyle = [
+    styles.infoText,
+    infoValueTypography,
+    { color: theme.colors.onSurfaceVariant },
+  ];
+
+  const contactPhoneTextStyle = [
+    styles.infoText,
+    styles.linkText,
+    infoValueTypography,
+    { color: theme.colors.primary },
+  ];
+
+  const contactPhoneDisabledTextStyle = [
+    styles.infoText,
+    styles.linkText,
+    infoValueTypography,
+    { color: theme.colors.onSurfaceVariant },
+  ];
+
   if (!facility) {
     return (
       <View style={[styles.centered, { backgroundColor: theme.colors.background }]}>
@@ -173,10 +209,15 @@ export const FacilityDetailsScreen = () => {
     }
   };
 
-  const { text: openStatusText, color: openStatusColor, isOpen } = getOpenStatus(facility);
+  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const baseBottomPadding = themeSpacing.lg ?? 16;
+  const scrollBottomPadding = baseBottomPadding * 2;
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScreenSafeArea
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      edges={['left', 'right', 'bottom']}
+    >
       <StandardHeader
         title={facility.name}
         showBackButton
@@ -192,7 +233,7 @@ export const FacilityDetailsScreen = () => {
       />
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 40 + insets.bottom }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Photo Gallery */}
@@ -251,42 +292,16 @@ export const FacilityDetailsScreen = () => {
                 ))}
             </View>
 
-            <View style={styles.statusPillContainer}>
-              <View
-                style={[styles.statusPill, { backgroundColor: isOpen ? '#D1E7DD' : '#FAD9D9' }]}
-              >
-                <MaterialCommunityIcons
-                  name={isOpen ? 'clock-check-outline' : 'clock-alert-outline'}
-                  size={14 * scaleFactor}
-                  color={isOpen ? '#164032' : '#852D2D'}
-                  style={{ marginRight: 6 }}
-                />
-                <Text
-                  variant="labelMedium"
-                  style={{
-                    color: isOpen ? '#164032' : '#852D2D',
-                    fontWeight: '700',
-                    letterSpacing: 0.3,
-                  }}
-                >
-                  {openStatusText}
-                </Text>
-              </View>
-              <BusynessIndicator busyness={facility.busyness} isVisible={isOpen} />
-            </View>
+            <FacilityStatusIndicator facility={facility} />
           </View>
 
           {/* Quick Actions */}
-          <View style={styles.actionButtons}>
-            <CommunicationHub contacts={facility.contacts} primaryPhone={facility.phone} />
-            <Button
-              icon="directions"
-              title="Directions"
-              onPress={handleDirections}
-              style={styles.actionButton}
-              variant="primary"
-            />
-          </View>
+          <FacilityActionButtons
+            contacts={facility.contacts}
+            primaryPhone={facility.phone}
+            onDirectionsPress={handleDirections}
+            containerStyle={styles.actionButtons}
+          />
 
           <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
 
@@ -300,8 +315,8 @@ export const FacilityDetailsScreen = () => {
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={[styles.sectionLabel, { color: theme.colors.onSurface }]}>Address</Text>
-              <Text style={[styles.infoText, { color: theme.colors.onSurface }]}>
+              <Text style={infoLabelStyle}>Address</Text>
+              <Text style={infoValueTextStyle}>
                 {facility.address}
               </Text>
             </View>
@@ -313,27 +328,10 @@ export const FacilityDetailsScreen = () => {
               <Ionicons name="time-outline" size={24 * scaleFactor} color={theme.colors.primary} />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text
-                style={[
-                  styles.sectionLabel,
-                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
-                ]}
-              >
-                Operating Hours
-              </Text>
+              <Text style={infoLabelStyle}>Operating Hours</Text>
 
               {formatOperatingHours(facility).map((line, idx) => (
-                <Text
-                  key={idx}
-                  style={[
-                    styles.infoText,
-                    {
-                      color: theme.colors.onSurface,
-                      fontSize: 16 * scaleFactor,
-                      lineHeight: 24 * scaleFactor,
-                    },
-                  ]}
-                >
+                <Text key={idx} style={infoValueTextStyle}>
                   {line}
                 </Text>
               ))}
@@ -354,14 +352,7 @@ export const FacilityDetailsScreen = () => {
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text
-                style={[
-                  styles.sectionLabel,
-                  { color: theme.colors.onSurface, fontSize: 12 * scaleFactor },
-                ]}
-              >
-                Phone
-              </Text>
+              <Text style={infoLabelStyle}>Phone</Text>
 
               {facility.contacts &&
               facility.contacts.filter((c) => c.platform === 'phone').length > 0 ? (
@@ -374,19 +365,7 @@ export const FacilityDetailsScreen = () => {
                       style={styles.contactItem}
                     >
                       <View style={styles.contactInfo}>
-                        <Text
-                          style={[
-                            styles.infoText,
-                            styles.linkText,
-                            {
-                              color: theme.colors.primary,
-                              fontSize: 16 * scaleFactor,
-                              lineHeight: 24 * scaleFactor,
-                            },
-                          ]}
-                        >
-                          {contact.phoneNumber}
-                        </Text>
+                        <Text style={contactPhoneTextStyle}>{contact.phoneNumber}</Text>
                         {contact.role && (
                           <Text style={[styles.metaItem, { fontSize: 14 * scaleFactor }]}>
                             {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
@@ -401,17 +380,11 @@ export const FacilityDetailsScreen = () => {
                   disabled={!facility.phone}
                 >
                   <Text
-                    style={[
-                      styles.infoText,
-                      styles.linkText,
-                      {
-                        color: facility.phone
-                          ? theme.colors.primary
-                          : theme.colors.onSurfaceVariant,
-                        fontSize: 16 * scaleFactor,
-                        lineHeight: 24 * scaleFactor,
-                      },
-                    ]}
+                    style={
+                      facility.phone
+                        ? contactPhoneTextStyle
+                        : contactPhoneDisabledTextStyle
+                    }
                   >
                     {facility.phone || 'Not available'}
                   </Text>
@@ -424,43 +397,57 @@ export const FacilityDetailsScreen = () => {
 
           {/* Grouped Services */}
           <View style={styles.servicesSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>
-              Services & Capabilities
-            </Text>
+            <View style={styles.servicesHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Services</Text>
+            </View>
 
-            {Object.entries(groupedServices).map(([category, services]) => {
-              const isExpanded = expandedCategories[category];
-              const visibleServices = isExpanded ? services : services.slice(0, 6);
-              const hasMore = services.length > 6;
+            {hasServiceGroups ? (
+              Object.entries(groupedServices).map(([category, services]) => {
+                const isExpanded = expandedCategories[category];
+                const visibleServices = isExpanded ? services : services.slice(0, 6);
+                const hasMore = services.length > 6;
 
-              return (
-                <View key={category} style={styles.categoryContainer}>
-                  <Text style={styles.categoryTitle}>{category}</Text>
-                  <View style={styles.servicesGrid}>
-                    {visibleServices.map((service, index) => (
-                      <ServiceChip key={index} service={service} />
-                    ))}
+                return (
+                  <View key={category} style={styles.categoryContainer}>
+                    <Text style={styles.categoryTitle}>{category}</Text>
+                    <View style={chipLayoutStyles.chipContainer}>
+                      {visibleServices.map((service, index) => (
+                        <FeatureChip
+                          key={`${category}-${index}`}
+                          label={service}
+                        />
+                      ))}
+                    </View>
+                    {hasMore && (
+                      <TouchableOpacity
+                        onPress={() =>
+                          setExpandedCategories((prev) => ({ ...prev, [category]: !prev[category] }))
+                        }
+                        style={styles.seeAllButton}
+                      >
+                        <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
+                          {isExpanded ? 'Show Less' : `See All (${services.length})`}
+                        </Text>
+                        <Ionicons
+                          name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                          size={16 * scaleFactor}
+                          color={theme.colors.primary}
+                        />
+                      </TouchableOpacity>
+                    )}
                   </View>
-                  {hasMore && (
-                    <TouchableOpacity
-                      onPress={() =>
-                        setExpandedCategories((prev) => ({ ...prev, [category]: !prev[category] }))
-                      }
-                      style={styles.seeAllButton}
-                    >
-                      <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>
-                        {isExpanded ? 'Show Less' : `See All (${services.length})`}
-                      </Text>
-                      <Ionicons
-                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                        size={16 * scaleFactor}
-                        color={theme.colors.primary}
-                      />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              );
-            })}
+                );
+              })
+            ) : (
+              <Text
+                style={[
+                  styles.servicesHint,
+                  { color: theme.colors.onSurfaceVariant, fontWeight: '500' },
+                ]}
+              >
+                Services information is not available.
+              </Text>
+            )}
           </View>
 
           {facility.lastUpdated && (
@@ -477,7 +464,7 @@ export const FacilityDetailsScreen = () => {
           )}
         </View>
       </ScrollView>
-    </View>
+    </ScreenSafeArea>
   );
 };
 
@@ -501,7 +488,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 0,
   },
   headerImage: {
     width: width,
@@ -553,13 +540,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 24,
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
   },
   divider: {
     height: 1,
@@ -582,34 +563,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 4,
     textTransform: 'uppercase',
-    fontWeight: '600',
-    color: '#6B7280', // Lighter muted gray
+    fontWeight: '700',
   },
   infoText: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#111827', // Darker text
-    fontWeight: '700', // Bolder content
+    fontWeight: '400', // Body copy weight
   },
   linkText: {
     fontWeight: '500',
   },
-  statusPillContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 8,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
   servicesSection: {
     marginBottom: 24,
+  },
+  servicesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  servicesToggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  servicesToggleText: {
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  servicesHint: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -637,11 +621,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     color: '#164032',
-  },
-  servicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12, // Increased gap for better vertical separation
   },
   seeAllButton: {
     flexDirection: 'row',

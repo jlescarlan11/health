@@ -71,15 +71,21 @@ model Symptom {
 }
 
 model UserEnrollment {
-  id                 String   @id @default(cuid())
-  user_id            String   @unique
-  phone_number       String   @unique
-  enrollment_pathway String?
-  progress_step      Int      @default(0)
-  completed          Boolean  @default(false)
-  documents_uploaded Json?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  user_id             String   @unique
+  phone_number        String   @unique
+  enrollment_pathway  String?
+  progress_step       Int      @default(0)
+  completed           Boolean  @default(false)
+  documents_uploaded  Json?
+  chronic_conditions  String[] @default([])
+  allergies           String[] @default([])
+  current_medications String[] @default([])
+  surgical_history    String[] @default([])
+  family_history      String[] @default([])
+  dob                 DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([user_id])
   @@index([phone_number])

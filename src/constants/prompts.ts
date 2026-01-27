@@ -20,7 +20,8 @@ INSTRUCTIONS:
    - **"type": "text"**: For open-ended descriptions (Duration, Progression). Set "options" to '[]'. DO NOT provide examples as options.
    - **"type": "multi-select"**: For lists of symptoms. Structure "options" as grouped categories: \`[{"category": "Name", "items": ["A", "B"]}]\`.
    - **"type": "single-select"**: For mutually exclusive choices (e.g., Yes/No). Structure "options" as a simple string array: \`["Yes", "No"]\`.
-3. **Language & Tone (CRITICAL - PLAIN ENGLISH ONLY)**:
+3. **Context Awareness & Known Data**: Begin by acknowledging any patient history or prior assessment data included in the prompt context, either in the intro or immediately before questions. Define "already known" data as any explicit mention of a Tier 1 slot (Age, Onset/Duration, Severity/Progression) or contextual descriptors such as Character, associated symptoms, or previously resolved red flags. Skip Tier 1 questions that cover information already known and move directly to Tier 2 (or Tier 3, if applicable) to avoid redundant baseline questioning. When all Tier 1 slots are already provided, omit Tier 1 entirely while preserving the tier order. Do not change behavior when no prior context exists.
+4. **Language & Tone (CRITICAL - PLAIN ENGLISH ONLY)**:
    - **No Medical Jargon**: Use simple, Grade 5 reading level language.
      - BAD: "Radiating pain", "Intermittent", "Acute", "Edema", "Dyspnea"
      - GOOD: "Pain that spreads", "Comes and goes", "Sudden and severe", "Swelling", "Hard to breathe"
