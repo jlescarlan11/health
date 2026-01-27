@@ -306,8 +306,8 @@ const CheckSymptomScreen = () => {
                 style={({ pressed }) => [
                   styles.resumeBanner,
                   {
-                    backgroundColor: theme.colors.secondaryContainer,
-                    opacity: pressed ? 0.8 : 1,
+                    backgroundColor: theme.colors.surface,
+                    opacity: pressed ? 0.95 : 1,
                   },
                 ]}
               >
@@ -315,15 +315,15 @@ const CheckSymptomScreen = () => {
                   <View style={styles.resumeTextContainer}>
                     <Text
                       variant="bodyMedium"
-                      style={{ color: theme.colors.primary, fontWeight: '600' }}
+                      style={{ color: theme.colors.onSurface, fontWeight: '600' }}
                     >
-                      Continue your assessment for "{assessmentState.initialSymptom}"
+                      {`Continue your assessment for: "${assessmentState.initialSymptom}"`}
                     </Text>
                   </View>
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={24}
-                    color={theme.colors.primary}
+                    color={theme.colors.onSurface}
                   />
                 </View>
               </Pressable>
@@ -400,11 +400,16 @@ const styles = StyleSheet.create({
   welcomeText: { fontWeight: 'bold', textAlign: 'left' },
   subtitle: { marginTop: 8, lineHeight: 20 },
   resumeBanner: {
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 0.5,
-    borderColor: 'rgba(55, 151, 119, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 1,
   },
   resumeContent: {
     flexDirection: 'row',
