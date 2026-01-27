@@ -66,18 +66,6 @@ export const SettingsScreen = () => {
               titleStyle={scaledItemTitleStyle}
               descriptionStyle={scaledDescriptionStyle}
             />
-            <Divider />
-            <List.Item
-              title="My Health Records"
-              description="View your assessment history"
-              left={(props) => (
-                <List.Icon {...props} icon="folder-account-outline" color={theme.colors.primary} />
-              )}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => navigation.navigate('ClinicalHistory')}
-              titleStyle={scaledItemTitleStyle}
-              descriptionStyle={scaledDescriptionStyle}
-            />
           </Surface>
         </List.Section>
 
