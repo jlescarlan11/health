@@ -41,12 +41,13 @@ export const DigitalIDCard: React.FC = () => {
       { label: 'PhilHealth ID', value: profile.philHealthId || '---' },
     ],
   ];
-  const detailColumnStyle = cardWidth >= 420 ? styles.detailGridItemHalf : styles.detailGridItemFull;
+  const detailColumnStyle =
+    cardWidth >= 420 ? styles.detailGridItemHalf : styles.detailGridItemFull;
 
   return (
     <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
       {/* Header with Branding */}
-      <View style={[styles.header, { backgroundColor: theme.colors.primary }]}> 
+      <View style={[styles.header, { backgroundColor: theme.colors.primary }]}>
         <View style={styles.headerLeft}>
           <MaterialCommunityIcons
             name="id-card"
@@ -68,7 +69,7 @@ export const DigitalIDCard: React.FC = () => {
       </View>
 
       <View style={styles.content}>
-        <View style={[styles.qrWrapper, { minWidth: scanHintMinWidth }]}> 
+        <View style={[styles.qrWrapper, { minWidth: scanHintMinWidth }]}>
           <View style={styles.qrContainer}>
             <QRCode
               value={qrValue}
@@ -78,12 +79,7 @@ export const DigitalIDCard: React.FC = () => {
               quietZone={4}
             />
           </View>
-          <Text
-            variant="labelSmall"
-            style={styles.scanHint}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
+          <Text variant="labelSmall" style={styles.scanHint} numberOfLines={1} ellipsizeMode="tail">
             SCAN TO VERIFY
           </Text>
         </View>
@@ -106,7 +102,9 @@ export const DigitalIDCard: React.FC = () => {
         </View>
 
         <View style={styles.toggleRow}>
-          <Text variant="labelSmall" style={styles.toggleLabel}>Show Health Snapshot</Text>
+          <Text variant="labelSmall" style={styles.toggleLabel}>
+            Show Health Snapshot
+          </Text>
           <Switch
             value={showSnapshot}
             onValueChange={setShowSnapshot}
@@ -124,7 +122,7 @@ export const DigitalIDCard: React.FC = () => {
               Health Snapshots
             </Text>
             <View style={styles.medicalGrid}>
-              {[ 
+              {[
                 {
                   label: 'Chronic conditions',
                   value: formatListForDisplay(profile.chronicConditions),
@@ -304,11 +302,11 @@ const styles = StyleSheet.create({
   medicalLabel: {
     fontSize: 9,
     opacity: 0.65,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   medicalValue: {
     marginTop: 4,
-    fontWeight: '600',
+    fontWeight: '400',
     lineHeight: 18,
   },
   hiddenMessage: {
@@ -341,9 +339,7 @@ function formatListForDisplay(items?: string[] | null): string {
     return 'Not recorded';
   }
 
-  const filtered = items
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
+  const filtered = items.map((entry) => entry.trim()).filter((entry) => entry.length > 0);
 
   if (!filtered.length) {
     return 'Not recorded';
