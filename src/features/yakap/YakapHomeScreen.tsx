@@ -50,14 +50,12 @@ const YakapHomeScreen = () => {
         },
       ]}
     >
-      <View style={styles.benefitTextWrapper}>
-        <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
-          {benefit.category}
-        </Text>
-        <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
-          {benefit.description}
-        </Text>
-      </View>
+      <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
+        {benefit.category}
+      </Text>
+      <Text style={[styles.benefitDesc, { color: theme.colors.onSurfaceVariant }]}>
+        {benefit.description}
+      </Text>
     </Card>
   );
 
@@ -204,17 +202,11 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderRadius: 20,
     borderWidth: 1,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-  },
-  benefitTextWrapper: {
-    flexDirection: 'column',
   },
   benefitTitle: {
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'left',
-    marginBottom: 4,
     letterSpacing: -0.2,
   },
   benefitDesc: {

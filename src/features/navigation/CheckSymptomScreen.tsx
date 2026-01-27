@@ -18,24 +18,15 @@ import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { RootState } from '../../store';
-import { InputCard, EmergencyActions, FeatureChip, ScreenSafeArea } from '../../components/common';
+import { InputCard, EmergencyActions, FeatureChip } from '../../components/common';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk, clearAssessmentState, setSymptomDraft } from '../../store/navigationSlice';
-import { theme as appTheme } from '../../theme';
+import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 
 type NavigationProp = CheckStackScreenProps<'CheckSymptom'>['navigation'];
 
 const QUICK_SYMPTOMS = ['Fever', 'Cough', 'Headache', 'Stomach Pain', 'Prenatal Care', 'Injury'];
-
-const SYMPTOM_ICONS: Record<string, string> = {
-  Fever: 'thermometer',
-  Cough: 'bacteria',
-  Headache: 'head-alert',
-  'Stomach Pain': 'stomach',
-  Injury: 'bandage',
-  'Prenatal Care': 'medical-bag',
-};
 
 const CheckSymptomScreen = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -43,10 +34,10 @@ const CheckSymptomScreen = () => {
   const savedDraft = useSelector((state: RootState) => state.navigation.symptomDraft);
   const assessmentState = useSelector((state: RootState) => state.navigation.assessmentState);
   const theme = useTheme();
-  const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
-  const scrollBottomPadding = (themeSpacing.lg ?? 16) * 2;
 
   const insets = useSafeAreaInsets();
+  const { isPWDMode, layoutPadding } = useAdaptiveUI();
+  const adaptivePadding = isPWDMode ? layoutPadding : 0;
   const scrollViewRef = useRef<ScrollView>(null);
   const keyboardHeightRef = useRef(new Animated.Value(0));
   const keyboardHeight = keyboardHeightRef.current;
@@ -220,18 +211,28 @@ const CheckSymptomScreen = () => {
   };
 
   return (
-    <ScreenSafeArea
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['top', 'left', 'right', 'bottom']}
-    >
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: 24 + insets.top + adaptivePadding,
+          },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.mainContent}>
+        <View
+          style={[
+            styles.mainContent,
+            {
+              paddingLeft: 16 + adaptivePadding + Math.max(insets.left, 0),
+              paddingRight: 16 + adaptivePadding + Math.max(insets.right, 0),
+            },
+          ]}
+        >
           <View style={styles.emergencyLayoutContainer}>
             <Card
               mode="elevated"
@@ -335,20 +336,37 @@ const CheckSymptomScreen = () => {
 
             <View style={styles.chipContainer}>
               {QUICK_SYMPTOMS.map((s) => {
-                const icon = SYMPTOM_ICONS[s] || 'medical-bag';
                 const isSelected = symptom
                   .split(',')
                   .map((item) => item.trim())
                   .includes(s);
 
                 return (
-                  <FeatureChip
+                  <Pressable
                     key={s}
-                    label={s}
-                    icon={icon}
-                    selected={isSelected}
                     onPress={() => toggleSymptom(s)}
-                  />
+                    style={({ pressed }) => [
+                      styles.symptomChip,
+                      {
+                        backgroundColor: isSelected
+                          ? theme.colors.primary
+                          : theme.colors.secondaryContainer,
+                        opacity: pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      variant="bodyMedium"
+                      style={[
+                        styles.symptomChipLabel,
+                        {
+                          color: isSelected ? theme.colors.onPrimary : theme.colors.primary,
+                        },
+                      ]}
+                    >
+                      {s}
+                    </Text>
+                  </Pressable>
                 );
               })}
             </View>
@@ -360,9 +378,10 @@ const CheckSymptomScreen = () => {
         style={[
           styles.anchoredInputContainer,
           {
-            paddingBottom: Math.max(16, insets.bottom + 8),
-            paddingLeft: Math.max(16, insets.left),
-            paddingRight: Math.max(16, insets.right),
+            paddingTop: adaptivePadding,
+            paddingBottom: Math.max(16, insets.bottom + 8) + adaptivePadding,
+            paddingLeft: Math.max(16, insets.left) + adaptivePadding,
+            paddingRight: Math.max(16, insets.right) + adaptivePadding,
             backgroundColor: theme.colors.background,
             marginBottom: keyboardHeight,
           },
@@ -380,15 +399,15 @@ const CheckSymptomScreen = () => {
           onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>
-    </ScreenSafeArea>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: 0, paddingVertical: 24 },
-  mainContent: { paddingHorizontal: 16 },
+  scrollContent: { paddingHorizontal: 0 },
+  mainContent: {},
   emergencyLayoutContainer: { marginBottom: 24 },
   emergencyCard: { borderRadius: 16, elevation: 0 },
   emergencyCardContent: { padding: 16 },
@@ -413,9 +432,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   anchoredInputContainer: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 10,
+    width: '100%',
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },
@@ -423,6 +440,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  symptomChip: {
+    borderRadius: 12,
+    marginBottom: 4,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  symptomChipLabel: {
+    fontWeight: '500',
+    fontSize: 14,
   },
 });
 
