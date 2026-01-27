@@ -78,7 +78,14 @@ export const DigitalIDCard: React.FC = () => {
               quietZone={4}
             />
           </View>
-          <Text variant="labelSmall" style={styles.scanHint}>SCAN TO VERIFY</Text>
+          <Text
+            variant="labelSmall"
+            style={styles.scanHint}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            SCAN TO VERIFY
+          </Text>
         </View>
 
         <View style={styles.detailsGrid}>
