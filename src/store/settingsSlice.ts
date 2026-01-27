@@ -62,7 +62,10 @@ const settingsSlice = createSlice({
           isChronic: false,
         };
       }
-      state.specializedModes[action.payload] = !state.specializedModes[action.payload];
+      state.specializedModes = {
+        ...state.specializedModes,
+        [action.payload]: !state.specializedModes[action.payload],
+      };
     },
   },
 });

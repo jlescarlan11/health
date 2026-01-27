@@ -1,9 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, View, StyleProp, TextStyle } from 'react-native';
+import { StyleSheet, ScrollView, View, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { useDispatch } from 'react-redux';
-import { Text } from '../components/common/Text';
 import StandardHeader from '../components/common/StandardHeader';
 import { ScreenSafeArea } from '../components/common';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
@@ -52,61 +50,69 @@ export const SettingsScreen = () => {
         ]}
       >
         <DigitalIDCard />
-        <List.Section>
-          <List.Subheader style={scaledSubheaderStyle}>My Account</List.Subheader>
-          <Surface style={styles.surface} elevation={1}>
-            <List.Item
-              title="Edit Health Profile"
-              description="Update your personal health information"
-              left={(props) => (
-                <List.Icon {...props} icon="account-edit-outline" color={theme.colors.primary} />
-              )}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => navigation.navigate('HealthProfileEdit')}
-              titleStyle={scaledItemTitleStyle}
-              descriptionStyle={scaledDescriptionStyle}
-            />
-          </Surface>
-        </List.Section>
+        <View style={styles.sectionWrapper}>
+          <List.Section>
+            <List.Subheader style={scaledSubheaderStyle}>My Account</List.Subheader>
+            <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
+              <List.Item
+                title="Edit Health Profile"
+                description="Update your personal health information"
+                left={(props) => (
+                  <List.Icon {...props} icon="account-edit-outline" color={theme.colors.primary} />
+                )}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => navigation.navigate('HealthProfileEdit')}
+                titleStyle={scaledItemTitleStyle}
+                descriptionStyle={scaledDescriptionStyle}
+              />
+            </Surface>
+          </List.Section>
+        </View>
 
-        <List.Section>
-          <List.Subheader style={scaledSubheaderStyle}>Care Profile</List.Subheader>
-          <CareProfileCard
-            isPWDMode={isPWDMode}
-            specializedModes={specializedModes}
-            onToggleMode={(mode) => dispatch(toggleSpecializedMode(mode))}
-            primaryColor={theme.colors.primary}
-            itemTitleStyle={scaledItemTitleStyle}
-            descriptionStyle={scaledDescriptionStyle}
-          />
-        </List.Section>
+        <View style={styles.sectionWrapper}>
+          <List.Section>
+            <List.Subheader style={scaledSubheaderStyle}>Care Profile</List.Subheader>
+            <CareProfileCard
+              key={isPWDMode ? 'care-profile-pwd-on' : 'care-profile-pwd-off'}
+              isPWDMode={isPWDMode}
+              specializedModes={specializedModes}
+              onToggleMode={(mode) => dispatch(toggleSpecializedMode(mode))}
+              primaryColor={theme.colors.primary}
+              itemTitleStyle={scaledItemTitleStyle}
+              descriptionStyle={scaledDescriptionStyle}
+              containerStyle={styles.sectionSurfaceSpacing}
+            />
+          </List.Section>
+        </View>
 
-        <List.Section>
-          <List.Subheader style={scaledSubheaderStyle}>About</List.Subheader>
-          <Surface style={styles.surface} elevation={1}>
-            <List.Item
-              title="Privacy Policy"
-              left={(props) => <List.Icon {...props} icon="shield-account-outline" />}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => navigation.navigate('PrivacyPolicy')}
-              titleStyle={scaledItemTitleStyle}
-              descriptionStyle={scaledDescriptionStyle}
-            />
-            <Divider />
-            <List.Item
-              title="Terms of Service"
-              left={(props) => <List.Icon {...props} icon="file-document-outline" />}
-              right={(props) => <List.Icon {...props} icon="chevron-right" />}
-              onPress={() => navigation.navigate('TermsOfService')}
-              titleStyle={scaledItemTitleStyle}
-              descriptionStyle={scaledDescriptionStyle}
-            />
-          </Surface>
-        </List.Section>
+        <View style={styles.sectionWrapper}>
+          <List.Section>
+            <List.Subheader style={scaledSubheaderStyle}>About</List.Subheader>
+            <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
+              <List.Item
+                title="Privacy Policy"
+                left={(props) => <List.Icon {...props} icon="shield-account-outline" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => navigation.navigate('PrivacyPolicy')}
+                titleStyle={scaledItemTitleStyle}
+                descriptionStyle={scaledDescriptionStyle}
+              />
+              <Divider />
+              <List.Item
+                title="Terms of Service"
+                left={(props) => <List.Icon {...props} icon="file-document-outline" />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => navigation.navigate('TermsOfService')}
+                titleStyle={scaledItemTitleStyle}
+                descriptionStyle={scaledDescriptionStyle}
+              />
+            </Surface>
+          </List.Section>
+        </View>
       </ScrollView>
-      </ScreenSafeArea>
-    );
-  };
+    </ScreenSafeArea>
+  );
+};
 
 type SpecializedModeKey = 'isSenior' | 'isPWD' | 'isChronic';
 
@@ -121,10 +127,11 @@ type CareProfileCardProps = {
   primaryColor: string;
   itemTitleStyle: StyleProp<TextStyle>;
   descriptionStyle: StyleProp<TextStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
 };
 
 const CareProfileCard = React.memo<CareProfileCardProps>(
-  ({ isPWDMode, specializedModes, onToggleMode, primaryColor, itemTitleStyle, descriptionStyle }) => {
+  ({ isPWDMode, specializedModes, onToggleMode, primaryColor, itemTitleStyle, descriptionStyle, containerStyle }) => {
     const surfaceStyle = useMemo(
       () => (isPWDMode ? [styles.surface, styles.pwdSurfaceHighlight] : styles.surface),
       [isPWDMode],
@@ -147,7 +154,7 @@ const CareProfileCard = React.memo<CareProfileCardProps>(
     );
 
     return (
-      <Surface style={surfaceStyle} elevation={1}>
+      <Surface style={[surfaceStyle, containerStyle]} elevation={1}>
         <List.Item
           title="Senior"
           description="Optimize for elderly care needs"
@@ -194,6 +201,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: 'white',
+  },
+  sectionWrapper: {
+    width: '100%',
+    marginTop: 16,
+  },
+  sectionSurfaceSpacing: {
+    marginTop: 8,
   },
   subheader: {
     paddingLeft: 4,

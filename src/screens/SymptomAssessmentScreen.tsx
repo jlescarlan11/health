@@ -24,7 +24,6 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Text } from '../components/common/Text';
 import { speechService } from '../services/speechService';
@@ -346,7 +345,6 @@ const SymptomAssessmentScreen = () => {
   const dispatch = useDispatch();
   const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
   const theme = useTheme();
-  const insets = useSafeAreaInsets();
   const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const chatBottomPadding = spacing.lg * 2;
   const scrollViewRef = useRef<ScrollView>(null);
@@ -2401,7 +2399,6 @@ Recent User Answer: ${trimmedAnswer}
           {
             marginBottom: keyboardHeight,
             backgroundColor: theme.colors.background,
-            paddingBottom: Math.max(insets.bottom, 16) + 8,
           },
         ]}
       >
@@ -2674,20 +2671,6 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 16, lineHeight: 22 },
   inputSection: {
     padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-    zIndex: 2,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
   },
 });
 
