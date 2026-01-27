@@ -73,6 +73,7 @@ model Symptom {
 model UserEnrollment {
   id                  String   @id @default(cuid())
   user_id             String   @unique
+  username            String   @unique
   phone_number        String   @unique
   enrollment_pathway  String?
   progress_step       Int      @default(0)
@@ -81,14 +82,26 @@ model UserEnrollment {
   chronic_conditions  String[] @default([])
   allergies           String[] @default([])
   current_medications String[] @default([])
-  surgical_history    String[] @default([])
-  family_history      String[] @default([])
+  surgical_history    String?
+  family_history      String?
   dob                 DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  clinicalHistories   ClinicalHistory[]
 
   @@index([user_id])
   @@index([phone_number])
+}
+
+model ClinicalHistory {
+  id                 String           @id @default(cuid())
+  userEnrollmentId   String
+  userEnrollment     UserEnrollment   @relation(fields: [userEnrollmentId], references: [id], onDelete: Cascade)
+  payload            Json
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([userEnrollmentId])
 }
 
 model EmergencyContact {

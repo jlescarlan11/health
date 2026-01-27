@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import axios from 'axios';
 
 const ensureApiBase = (url?: string) => {
   if (!url) return url;
@@ -46,3 +47,19 @@ const getApiUrl = () => {
 };
 
 export const API_URL = getApiUrl();
+
+export const transferAssessmentResult = async (
+  targetUsername: string,
+  assessmentData: unknown,
+) => {
+  const response = await axios.post(
+    `${API_URL}/assessments/transfer`,
+    {
+      targetUsername,
+      assessmentData,
+    },
+    { timeout: 15000 },
+  );
+
+  return response.data;
+};

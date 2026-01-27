@@ -40,13 +40,9 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
     - Severity: ${data.severity || 'Not specified'}
     - Medical History: ${data.medical_history || 'None'}
 
-    VALID_SERVICES = [
-      ${VALID_SERVICES.map((s) => `"${s}"`).join(', ')}
-    ]
-
     Task:
     1. Analyze the symptoms and severity to determine the appropriate level of care (Self-Care, Health Center, Hospital, or Emergency).
-    2. Provide 2-3 "relevant_services" that align with the VALID_SERVICES list.
+    2. Provide 2-3 "relevant_services" that align with the high-level facility categories such as General, Trauma, Pediatrics, Mental Health, Maternal Care, or Diagnostics (Radiology/Lab). Do not repeat the entire VALID_SERVICES list; the backend will validate your selections.
     3. Optionally include "facility_type_constraints" if the case needs a specific facility type (for example, "Hospital with trauma services").
     4. Provide a clear reasoning for your recommendation.
 

@@ -50,11 +50,7 @@ const STORAGE_KEY_CACHE_PREFIX = 'gemini_cache_';
 const STORAGE_KEY_LAST_CLEANUP = 'gemini_last_cache_cleanup';
 const STORAGE_KEY_RPM_TIMESTAMPS = 'gemini_rpm_timestamps';
 
-const slotHistoryWindowSetting = Number(Constants.expoConfig?.extra?.slotExtractionHistoryWindow);
-const DEFAULT_USER_HISTORY_WINDOW =
-  Number.isFinite(slotHistoryWindowSetting) && slotHistoryWindowSetting > 0
-    ? slotHistoryWindowSetting
-    : 8;
+const CLINICAL_PROFILE_CONTEXT_MESSAGE_LIMIT = 6;
 
 const PROFILE_CACHE_TTL_MS = 60 * 60 * 1000;
 const PROFILE_CACHE_PREFIX = 'clinical_profile_cache_';
@@ -764,21 +760,13 @@ export class GeminiClient {
   }
 
   public async generateBridgeMessage(args: {
-    conversationHistory: string;
+    lastUserAnswer: string;
     nextQuestion: string;
-    primarySymptom?: string;
-    severityLevel?: number;
-    symptomCategory?: string;
   }): Promise<string> {
-    const prompt = BRIDGE_PROMPT
-      .replace('{{conversationHistory}}', args.conversationHistory || 'No recent user replies.')
-      .replace('{{nextQuestion}}', args.nextQuestion)
-      .replace('{{primarySymptom}}', args.primarySymptom || 'the symptoms you reported earlier')
-      .replace('{{symptomCategory}}', args.symptomCategory || 'unknown')
-      .replace(
-        '{{severityLevel}}',
-        args.severityLevel !== undefined ? args.severityLevel.toFixed(0) : 'unknown',
-      );
+    const prompt = BRIDGE_PROMPT.replace('{{lastUserAnswer}}', args.lastUserAnswer || '').replace(
+      '{{nextQuestion}}',
+      args.nextQuestion,
+    );
 
     const responseText = await this.generateContentWithRetry(prompt);
     return responseText.trim();
@@ -790,17 +778,19 @@ export class GeminiClient {
   public async extractClinicalProfile(
     history: { role: 'assistant' | 'user'; text: string }[],
     options?: {
-      userHistoryWindow?: number;
+      currentProfileSummary?: string;
     },
   ): Promise<AssessmentProfile> {
-    const requestedWindow = options?.userHistoryWindow ?? DEFAULT_USER_HISTORY_WINDOW;
-    const historyWindow = Math.max(0, Math.floor(requestedWindow));
+    const meaningfulMessages = history.filter((msg) => msg.text && msg.text.trim());
+    const recentMessages = meaningfulMessages.slice(-CLINICAL_PROFILE_CONTEXT_MESSAGE_LIMIT);
+    const formattedRecentMessages = recentMessages
+      .map((msg) => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}: ${msg.text}`)
+      .join('\n');
+    const recentMessagesPrompt = formattedRecentMessages || 'No recent conversation is available.';
+    const profileSummary =
+      options?.currentProfileSummary?.trim() || 'No previous profile summary is available.';
 
-    const userMessages = history.filter((msg) => msg.role === 'user');
-    const limitedMessages = historyWindow > 0 ? userMessages.slice(-historyWindow) : userMessages;
-
-    const conversationText = limitedMessages.map((msg) => `USER: ${msg.text}`).join('\n');
-    const historyHash = getHistoryHash(conversationText);
+    const historyHash = getHistoryHash(`${profileSummary}||${formattedRecentMessages}`);
     const versionedHistoryKey = `${historyHash}|v${PROFILE_CACHE_VERSION}`;
     const cacheKey = getProfileCacheKey(historyHash);
 
@@ -846,9 +836,9 @@ export class GeminiClient {
     const requestPromise = (async () => {
       try {
         const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace(
-          '{{conversationHistory}}',
-          conversationText,
-        );
+          '{{currentProfileSummary}}',
+          profileSummary,
+        ).replace('{{recentMessages}}', recentMessagesPrompt);
 
         const responseText = await this.generateContentWithRetry(prompt, {
           responseMimeType: 'application/json',
@@ -866,7 +856,7 @@ export class GeminiClient {
 
         const { score, escalated_category } = calculateTriageScore({
           ...correctedProfile,
-          symptom_text: conversationText,
+          symptom_text: formattedRecentMessages,
         });
 
         correctedProfile.triage_readiness_score = score;
@@ -888,7 +878,7 @@ export class GeminiClient {
           progression: null,
           red_flag_denials: null,
           uncertainty_accepted: false,
-          summary: conversationText,
+          summary: recentMessagesPrompt,
         };
       }
     })();

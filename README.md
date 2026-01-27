@@ -83,7 +83,7 @@ npx expo start
 
 - Press `a` to open in Android Emulator
 - Press `i` to open in iOS Simulator
-- Scan the QR code with Expo Go on your physical device
+- Scan the QR code with Expo Go on your physical device (use the Expo Go app's built-in scanner so the `exp://` QR deep link opens directly inside Expo Go without invoking the system chooser or browser). If you prefer to use the native camera or a third-party scanner, set Expo Go as the Android default handler for the `exp://` scheme via Settings → Apps → Expo Go → Open by default → Add link type and verify the scheme. Scanning the QR should then deep-link straight into Expo Go and automatically load the project.
 
 ### Run Backend (if applicable locally)
 

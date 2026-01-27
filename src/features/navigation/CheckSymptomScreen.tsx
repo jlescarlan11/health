@@ -192,6 +192,7 @@ const CheckSymptomScreen = () => {
               triage_readiness_score: 1.0,
             },
           },
+          guestMode: false,
         });
         return;
       }

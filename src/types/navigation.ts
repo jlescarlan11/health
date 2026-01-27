@@ -35,6 +35,7 @@ export type RootStackParamList = {
     assessmentData: AssessmentData;
     isRecentResolved?: boolean;
     resolvedKeyword?: string;
+    guestMode?: boolean;
   };
   ClinicalNote: { recordId?: string };
   ClinicalHistory: undefined;
