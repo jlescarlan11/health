@@ -30,7 +30,7 @@ export const FeatureChip: React.FC<FeatureChipProps> = ({
   testID,
 }) => {
   const theme = useTheme();
-  const iconName = selected ? selectedIcon ?? 'check' : icon;
+  const iconName = selected ? (selectedIcon ?? 'check') : icon;
   const iconColor = selected ? theme.colors.onPrimary : theme.colors.primary;
 
   const renderIcon = iconName
@@ -47,7 +47,11 @@ export const FeatureChip: React.FC<FeatureChipProps> = ({
       disabled={disabled}
       showSelectedCheck={false}
       icon={renderIcon}
-      textStyle={[styles.label, { color: selected ? theme.colors.onPrimary : theme.colors.primary }, textStyle]}
+      textStyle={[
+        styles.label,
+        { color: selected ? theme.colors.onPrimary : theme.colors.primary },
+        textStyle,
+      ]}
       style={[
         styles.chip,
         { backgroundColor: selected ? theme.colors.primary : theme.colors.secondaryContainer },
@@ -67,11 +71,11 @@ const styles = StyleSheet.create({
     minHeight: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingVertical: 0,
   },
   label: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: '500',
   },
 });
