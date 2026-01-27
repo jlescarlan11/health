@@ -10,6 +10,7 @@ import {
   Animated,
   BackHandler,
   Dimensions,
+  Modal,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -34,6 +35,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { geminiClient } from '../api/geminiClient';
+import { selectClinicalContext } from '../store/profileSlice';
 import { detectEmergency, type EmergencyDetectionResult } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import {
@@ -93,6 +95,27 @@ interface Message {
   metadata?: Record<string, unknown>;
 }
 
+const TransitionView = ({
+  label,
+  textColor,
+  backgroundColor,
+}: {
+  label: string;
+  textColor: string;
+  backgroundColor: string;
+}) => (
+  <View style={[styles.transitionBubble, { backgroundColor }]}>
+    <ActivityIndicator size="small" color={textColor} />
+    <Text style={[styles.transitionText, { color: textColor }]}>{label}</Text>
+  </View>
+);
+
+const SYSTEM_TRANSITION_REASON_SOURCES = new Set([
+  'arbiter-expansion',
+  'arbiter-reset',
+  'escalation-pivot',
+]);
+
 const composeAssistantMessage = ({
   id,
   body,
@@ -119,7 +142,10 @@ const composeAssistantMessage = ({
   extra?: Partial<Omit<Message, 'id' | 'sender' | 'text' | 'timestamp'>>;
 }): Message => {
   const { metadata: extraMetadata, ...extraRest } = extra;
-  
+  const isSystemTransition = Boolean(
+    reasonSource && SYSTEM_TRANSITION_REASON_SOURCES.has(reasonSource),
+  );
+
   // Explicitly move nextAction to metadata to ensure it is never rendered in text
   // while preserving it for internal tracking/debugging.
   const safeMetadata = {
@@ -127,6 +153,7 @@ const composeAssistantMessage = ({
     nextAction,
     reason,
     reasonSource,
+    isSystemTransition,
   };
 
   const formatted = formatEmpatheticResponse({
@@ -141,17 +168,23 @@ const composeAssistantMessage = ({
     // nextAction, // OMITTED to prevent display in user-facing text
     metadata: safeMetadata,
   });
+  const displayText = isSystemTransition ? '' : formatted.text || '';
+  const messageMetadata = {
+    ...(formatted.metadata || {}),
+    isSystemTransition,
+  };
   return {
     id,
     sender: 'assistant',
     timestamp,
     ...extraRest,
-    text: formatted.text,
-    metadata: formatted.metadata,
+    text: displayText,
+    metadata: messageMetadata,
   };
 };
 
 type AssessmentStage = 'intake' | 'follow_up' | 'review' | 'generating';
+type AssessmentMode = 'forMe' | 'forSomeoneElse';
 
 const isNoneOption = (text: string) => {
   const lower = text.toLowerCase();
@@ -344,6 +377,7 @@ const SymptomAssessmentScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
   const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
+  const clinicalContext = useSelector(selectClinicalContext);
   const theme = useTheme();
   const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const chatBottomPadding = spacing.lg * 2;
@@ -443,6 +477,8 @@ const SymptomAssessmentScreen = () => {
   const [pendingRedFlag, setPendingRedFlag] = useState<string | null>(
     savedState?.pendingRedFlag || null,
   );
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isModeModalVisible, setIsModeModalVisible] = useState(!savedState);
 
   // Ref sync to prevent closure staleness in setTimeout callbacks
   const isRecentResolvedRef = useRef(isRecentResolved);
@@ -840,13 +876,6 @@ const SymptomAssessmentScreen = () => {
     };
   }, []);
 
-  // --- INITIALIZATION ---
-  useEffect(() => {
-    if (!savedState) {
-      initializeAssessment();
-    }
-  }, []);
-
   // --- AUTO-SCROLL LOGIC ---
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
@@ -855,7 +884,7 @@ const SymptomAssessmentScreen = () => {
     return () => clearTimeout(scrollTimer);
   }, [messages, isTyping, isVerifyingEmergency]);
 
-  const initializeAssessment = async () => {
+  const initializeAssessment = async (mode: AssessmentMode, patientContext?: string | null) => {
     // 1. Initial Emergency Check (Locally)
     const emergencyCheck = detectEmergency(initialSymptom || '', { isUserInput: true });
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
@@ -867,6 +896,7 @@ const SymptomAssessmentScreen = () => {
       dispatch(setHighRisk(true));
       navigation.replace('Recommendation', {
         assessmentData: { symptoms: initialSymptom || '', answers: [] },
+        guestMode: isGuestMode,
       });
       return;
     }
@@ -879,6 +909,7 @@ const SymptomAssessmentScreen = () => {
 
       const { questions: plan, intro } = await geminiClient.generateAssessmentPlan(
         initialSymptom || '',
+        patientContext,
       );
       setFullPlan(plan);
 
@@ -936,9 +967,14 @@ const SymptomAssessmentScreen = () => {
 
           // Add Intro & First Question
       const firstQ = prunedPlan[0];
-      const introText = intro
+      const baseIntro = intro
         ? `${intro}\n\n${firstQ.text}`
         : `Recorded your report of "${initialSymptom}". Answer the first question to continue.\n\n${firstQ.text}`;
+      const modeContextMessage =
+        mode === 'forMe'
+          ? 'I will ask about your symptoms directly so I can understand how you are feeling.'
+          : 'Tell me about the person you are helping so I can tailor the questions to them.';
+      const introText = `${modeContextMessage}\n\n${baseIntro}`;
 
       replaceMessagesDisplay([
         composeAssistantMessage({
@@ -960,6 +996,20 @@ const SymptomAssessmentScreen = () => {
         setLoading(false);
       }
     }
+  };
+
+  const handleModeSelection = (mode: AssessmentMode) => {
+    const isGuestSelection = mode === 'forSomeoneElse';
+    if (isGuestSelection) {
+      setIsGuestMode(true);
+      setIsModeModalVisible(false);
+      initializeAssessment(mode, null);
+      return;
+    }
+
+    setIsGuestMode(false);
+    setIsModeModalVisible(false);
+    initializeAssessment(mode, clinicalContext);
   };
 
   // --- INTERACTION LOGIC ---
@@ -1077,7 +1127,9 @@ const SymptomAssessmentScreen = () => {
           const triageHistoryText = historyItems
             .map((item) => `${item.role.toUpperCase()}: ${item.text}`)
             .join('\n');
-          const extractedProfile = await geminiClient.extractClinicalProfile(historyItems);
+          const extractedProfile = await geminiClient.extractClinicalProfile(historyItems, {
+            currentProfileSummary: previousProfile?.summary,
+          });
 
           // Reconcile and Detect Changes
           const profile = reconcileClinicalProfileWithSlots(
@@ -1085,9 +1137,6 @@ const SymptomAssessmentScreen = () => {
             slotSnapshot ?? incrementalSlots,
           );
           const primarySymptomForProfile = derivePrimarySymptom(initialSymptom, profile.summary);
-          const fallbackSymptomLabel = formatSymptomReference(
-            primarySymptomForProfile ?? defaultPrimarySymptom,
-          );
           const severityScoreForProfile = parseSeverityScore(profile.severity);
           const bridgeSymptomCategory =
             profile.symptom_category || symptomCategory || 'simple';
@@ -1123,17 +1172,17 @@ const SymptomAssessmentScreen = () => {
                     // 2. Inject Pivot Message
                     const pivotTimestamp = Date.now();
                     appendMessagesToConversation([
-                    composeAssistantMessage({
-                      id: `pivot-${pivotTimestamp}`,
-                    body: 'New information requires a short set of focused questions before adjusting your plan.',
-                      reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
-                      reasonSource: 'escalation-pivot',
-                      nextAction: 'Refining assessment plan.',
-                      inlineAck: consumePendingCorrection(),
-                      profile,
-                      primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
-                      timestamp: pivotTimestamp,
-                    }),
+                      composeAssistantMessage({
+                        id: `pivot-${pivotTimestamp}`,
+                        body: '',
+                        reason: `Symptom escalation: ${oldCat} -> ${newCat}`,
+                        reasonSource: 'escalation-pivot',
+                        nextAction: 'Refining assessment plan.',
+                        inlineAck: consumePendingCorrection(),
+                        profile,
+                        primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                        timestamp: pivotTimestamp,
+                      }),
                     ]);
 
                     // 3. Update Question Queue
@@ -1168,22 +1217,8 @@ const SymptomAssessmentScreen = () => {
 
           if (changes.length > 0) {
             console.log(`[Assessment] Detected ${changes.length} corrections.`);
-            const labels = changes.map(c => 
-              c.field === 'duration' ? 'duration' : 
-              c.field === 'age' ? 'age' : 'severity'
-            );
-            
-            let ackText = '';
-            if (labels.length === 1) {
-              ackText = `Updated the ${labels[0]} to ${changes[0].newValue}.`;
-            } else {
-              const lastLabel = labels[labels.length - 1];
-              const firstLabels = labels.slice(0, -1);
-              const joinedTargets =
-                firstLabels.length > 0 ? `${firstLabels.join(', ')} and ${lastLabel}` : lastLabel;
-              ackText = `Updated ${joinedTargets}.`;
-            }
-            setPendingCorrection(ackText);
+            // System-style narration removed per user request.
+            // Data is updated silently.
           }
 
           // --- DYNAMIC PLAN PRUNING ---
@@ -1508,19 +1543,20 @@ Recent User Answer: ${trimmedAnswer}
             );
             {
               const resetTimestamp = Date.now();
-                            appendMessagesToConversation([
-                              composeAssistantMessage({
-                                id: `system-reset-${resetTimestamp}`,
-                                body: "I need to double-check some of the information provided to ensure my guidance is safe and accurate. Let's look closer at your symptoms.",
-                                reason: arbiterResult.reason,
-                                reasonSource: 'arbiter-reset',
-                                nextAction: 'Please help me review those details so I can keep you safe.',
-                                inlineAck: consumePendingCorrection(),
-                                profile,
-                                primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
-                                timestamp: resetTimestamp,
-                              }),
-                            ]);            }
+              appendMessagesToConversation([
+                composeAssistantMessage({
+                  id: `system-reset-${resetTimestamp}`,
+                  body: '',
+                  reason: arbiterResult.reason,
+                  reasonSource: 'arbiter-reset',
+                  nextAction: 'Please help me review those details so I can keep you safe.',
+                  inlineAck: consumePendingCorrection(),
+                  profile,
+                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
+                  timestamp: resetTimestamp,
+                }),
+              ]);
+            }
           }
 
           // SAFETY GATE: If plan is exhausted but we are NOT ready to terminate (due to ambiguity or score)
@@ -1537,7 +1573,7 @@ Recent User Answer: ${trimmedAnswer}
                 appendMessagesToConversation([
                   composeAssistantMessage({
                     id: `expansion-notice-${expansionTimestamp}`,
-                    body: 'A few more targeted questions are needed before finalizing your recommendation.',
+                    body: '',
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-expansion',
                     nextAction: 'Please answer the next question so I can finish the assessment.',
@@ -1741,19 +1777,16 @@ Recent User Answer: ${trimmedAnswer}
                 .slice()
                 .reverse()
                 .find((item) => item.role === 'user')?.text || '';
-            const buildAdaptiveBridgeText = async (questionText: string, conversationHistory: string) => {
+            const buildAdaptiveBridgeText = async (questionText: string, lastUserText: string) => {
               try {
                 const response = await geminiClient.generateBridgeMessage({
-                  conversationHistory,
+                  lastUserAnswer: lastUserText,
                   nextQuestion: questionText,
-                  primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
-                  severityLevel: severityScoreForProfile,
-                  symptomCategory: bridgeSymptomCategory,
                 });
                 return response.trim();
               } catch (error) {
                 console.warn('[Assessment] Bridge prompt failed; falling back to local text.', error);
-                return buildBridgeText(conversationHistory, questionText, fallbackSymptomLabel);
+                return buildBridgeText(lastUserText, questionText);
               }
             };
 
@@ -1935,6 +1968,7 @@ Recent User Answer: ${trimmedAnswer}
             summary: `Emergency confirmed: ${keyword}. Keywords: ${safetyCheck.matchedKeywords.join(', ')}`,
           },
         },
+        guestMode: isGuestMode,
       });
       setPendingRedFlag(null);
     } else {
@@ -1990,6 +2024,9 @@ Recent User Answer: ${trimmedAnswer}
             role: m.sender,
             text: m.text,
           })),
+          {
+            currentProfileSummary: previousProfile?.summary,
+          },
         ));
 
       const profile = reconcileClinicalProfileWithSlots(extractedProfile, incrementalSlots);
@@ -2038,6 +2075,7 @@ Recent User Answer: ${trimmedAnswer}
           },
           isRecentResolved: resolvedFlag,
           resolvedKeyword: resolvedKeywordFinal || undefined,
+          guestMode: isGuestMode,
         });
       }, 1500);
     } catch (_) {
@@ -2096,6 +2134,7 @@ Recent User Answer: ${trimmedAnswer}
             ],
             offlineRecommendation: result.node.recommendation,
           },
+          guestMode: isGuestMode,
         });
       } else {
         const nextNode = result.node;
@@ -2119,6 +2158,9 @@ Recent User Answer: ${trimmedAnswer}
 
   // --- UTILS ---
   const handleBack = useCallback(() => {
+    if (isModeModalVisible) {
+      return;
+    }
     if (messages.length <= 1) {
       navigation.goBack();
       return;
@@ -2143,7 +2185,7 @@ Recent User Answer: ${trimmedAnswer}
         },
       ],
     );
-  }, [messages, navigation, dispatch]);
+  }, [messages, navigation, dispatch, isModeModalVisible]);
 
   useFocusEffect(
     useCallback(() => {
@@ -2182,6 +2224,18 @@ Recent User Answer: ${trimmedAnswer}
 
   // --- RENDER ---
   const renderMessage = (msg: Message) => {
+    const isSystemTransition = Boolean(msg.metadata?.isSystemTransition);
+    if (isSystemTransition) {
+      return (
+        <View key={msg.id} style={styles.transitionWrapper}>
+          <TransitionView
+            label="Adjusting assessment..."
+            textColor={theme.colors.primary}
+            backgroundColor={theme.colors.surfaceVariant}
+          />
+        </View>
+      );
+    }
     const isAssistant = msg.sender === 'assistant';
     return (
       <View
@@ -2224,6 +2278,50 @@ Recent User Answer: ${trimmedAnswer}
     );
   };
 
+  const renderModeSelectionModal = () => {
+    if (!isModeModalVisible) return null;
+    return (
+      <Modal
+        visible={isModeModalVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => {}}
+      >
+        <View style={styles.modeModalOverlay}>
+          <View style={[styles.modeModalContent, { backgroundColor: theme.colors.surface }]}>
+            <Text
+              variant="titleLarge"
+              style={{ marginBottom: 8, color: theme.colors.onSurface, fontWeight: '700' }}
+            >
+              Who is this assessment for?
+            </Text>
+            <Text style={{ color: theme.colors.onSurfaceVariant, lineHeight: 20 }}>
+              Choose the option that best fits whether you are sharing symptoms for yourself or
+              someone else.
+            </Text>
+            <View style={{ width: '100%', marginTop: 24, gap: 12 }}>
+              <Button
+                variant="primary"
+                onPress={() => handleModeSelection('forMe')}
+                title="For Me"
+                style={{ width: '100%' }}
+                accessibilityLabel="Select assessment for me"
+              />
+              <Button
+                variant="outline"
+                onPress={() => handleModeSelection('forSomeoneElse')}
+                title="For Someone Else"
+                style={{ width: '100%' }}
+                accessibilityLabel="Select assessment for someone else"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   if (loading) {
     return (
       <ScreenSafeArea
@@ -2232,6 +2330,7 @@ Recent User Answer: ${trimmedAnswer}
       >
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={{ marginTop: 16 }}>Preparing your assessment...</Text>
+        {renderModeSelectionModal()}
       </ScreenSafeArea>
     );
   }
@@ -2314,6 +2413,18 @@ Recent User Answer: ${trimmedAnswer}
       edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
+
+      {isGuestMode && (
+        <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant, letterSpacing: 0.5 }}
+          >
+            Guest mode is active. No personal profile data is included while you describe someone
+            else's symptoms.
+          </Text>
+        </View>
+      )}
 
       <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
         <ProgressBar
@@ -2646,6 +2757,7 @@ Recent User Answer: ${trimmedAnswer}
           </>
         )}
       </Animated.View>
+      {renderModeSelectionModal()}
     </ScreenSafeArea>
   );
 };
@@ -2671,6 +2783,39 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 16, lineHeight: 22 },
   inputSection: {
     padding: 16,
+  },
+  modeModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modeModalContent: {
+    width: '100%',
+    maxWidth: 480,
+    borderRadius: 18,
+    padding: 24,
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  transitionWrapper: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  transitionBubble: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  transitionText: {
+    marginLeft: 8,
+    fontSize: 14,
   },
 });
 

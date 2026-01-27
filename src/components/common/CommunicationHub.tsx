@@ -14,9 +14,9 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Button } from '../../common/Button';
-import { FacilityContact } from '../../../types';
-import { openViber, openMessenger } from '../../../utils/linkingUtils';
+import { Button } from './Button';
+import { FacilityContact } from '../../types';
+import { openViber, openMessenger } from '../../utils/linkingUtils';
 
 interface CommunicationHubProps {
   contacts?: FacilityContact[];
@@ -40,7 +40,6 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Filter contacts by platform
   const phoneContacts = contacts.filter((c) => c.platform === 'phone');
   const viberContacts = contacts.filter((c) => c.platform === 'viber');
   const messengerContacts = contacts.filter((c) => c.platform === 'messenger');
@@ -51,7 +50,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
 
   const handlePhoneAction = () => {
     const allPhoneNumbers: PhoneItem[] = [
-      ...(primaryPhone ? [{ phoneNumber: primaryPhone, role: 'Primary' }] : []),
+      ...(primaryPhone ? [{ phoneNumber: primaryPhone, role: 'Primary' as const }] : []),
       ...phoneContacts,
     ];
 
@@ -85,7 +84,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
   };
 
   const allPhoneNumbers: PhoneItem[] = [
-    ...(primaryPhone ? [{ phoneNumber: primaryPhone, role: 'Primary' }] : []),
+    ...(primaryPhone ? [{ phoneNumber: primaryPhone, role: 'Primary' as const }] : []),
     ...phoneContacts,
   ];
 
@@ -126,10 +125,9 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
         </View>
       )}
 
-      {/* Phone Selection Modal */}
       <Modal
         visible={modalVisible}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
@@ -145,9 +143,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
             ]}
           >
             <View style={styles.modalHandle} />
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
-              Select Number
-            </Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Select Number</Text>
             <FlatList
               data={allPhoneNumbers}
               keyExtractor={(item, index) => item.id || index.toString()}
@@ -167,7 +163,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
                       <Ionicons name="call" size={18} color={theme.colors.primary} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}>
+                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}> 
                         {item.phoneNumber}
                       </Text>
                       {item.role && (

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import assessmentRoutes from './assessmentRoutes';
 import facilityRoutes from './facilityRoutes';
 import symptomRoutes from './symptomRoutes';
 import aiRoutes from './aiRoutes';
@@ -8,6 +9,7 @@ import healthFeedRoutes from './healthFeedRoutes';
 
 const router = Router();
 
+router.use('/assessments', assessmentRoutes);
 router.use('/facilities', facilityRoutes);
 router.use('/symptoms', symptomRoutes);
 router.use('/ai', aiRoutes);

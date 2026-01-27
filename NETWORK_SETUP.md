@@ -138,10 +138,11 @@ curl http://YOUR_LOCAL_IP:3000/health
 ### Test from Mobile Device
 
 1. Ensure phone and computer are on the same Wi-Fi network
-2. Open Expo Go app
-3. Scan QR code or enter the connection URL
-4. Check Expo logs for API connection attempts
-5. Look for `[API]` log messages showing the backend URL being used
+2. Open the Expo Go app and use its built-in **Scan QR Code** tool so the `exp://` deep link is handled directly inside Expo Go instead of triggering a system chooser or browser.
+3. If you trigger the link from the native camera or a third-party scanner, go to Android Settings → Apps → Expo Go → Open by default → Add a link type and register the `exp://` scheme so those scans automatically launch Expo Go.
+4. Scan the QR code or enter the connection URL
+5. Check Expo logs for API connection attempts
+6. Look for `[API]` log messages showing the backend URL being used
 
 ## Important Notes
 

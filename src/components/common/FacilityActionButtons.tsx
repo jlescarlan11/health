@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 
-import { CommunicationHub } from '../features/facilities';
+import { CommunicationHub } from './CommunicationHub';
 import { Button } from './Button';
 import { FacilityContact } from '../../types';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';

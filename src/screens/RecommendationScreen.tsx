@@ -7,7 +7,7 @@ import {
   BackHandler,
   useWindowDimensions,
 } from 'react-native';
-import { useTheme, Surface, Divider, ActivityIndicator } from 'react-native-paper';
+import { useTheme, Surface, Divider, ActivityIndicator, TextInput, Snackbar } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   useRoute,
@@ -39,6 +39,7 @@ import StandardHeader from '../components/common/StandardHeader';
 import { calculateDistance, scoreFacility, getFacilityServiceMatches } from '../utils';
 import { AssessmentProfile, TriageLevel, TriageAdjustmentRule } from '../types/triage';
 import { formatEmpatheticResponse } from '../utils/empatheticResponses';
+import { transferAssessmentResult } from '../services/apiConfig';
 
 import { TriageStatusCard } from '../components/features/triage/TriageStatusCard';
 import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
@@ -201,12 +202,19 @@ const RecommendationScreen = () => {
   // Try to get location to improve sorting
   useUserLocation({ watch: false });
 
-  const { assessmentData } = route.params;
+  const { assessmentData, guestMode = false } = route.params;
   const {
     facilities,
     isLoading: isFacilitiesLoading,
     userLocation,
   } = useSelector((state: RootState) => state.facilities);
+
+  const [transferUsername, setTransferUsername] = useState('');
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferError, setTransferError] = useState<string | null>(null);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const canSubmitTransfer = transferUsername.trim().length > 0 && !transferLoading;
 
   const [loading, setLoading] = useState(true);
   const [recommendation, setRecommendation] = useState<AssessmentResponse | null>(null);
@@ -221,6 +229,34 @@ const RecommendationScreen = () => {
     () => setSafetyModalVisible(true),
     [setSafetyModalVisible],
   );
+
+  const handleTransferAssessment = useCallback(async () => {
+    const target = transferUsername.trim();
+    if (!target) {
+      setTransferError('Please provide the patient username.');
+      return;
+    }
+
+    setTransferLoading(true);
+    setTransferError(null);
+
+    try {
+      await transferAssessmentResult(target, assessmentData);
+      setTransferUsername('');
+      const successMessage = `Result sent to @${target}`;
+      setSnackbarMessage(successMessage);
+      setSnackbarVisible(true);
+    } catch (error) {
+      console.error('Transfer failure:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to transfer the assessment. Please try again.';
+      setTransferError(message);
+    } finally {
+      setTransferLoading(false);
+    }
+  }, [transferUsername, assessmentData]);
 
   const initialSymptomSummary = useMemo(
     () => summarizeInitialSymptom(assessmentData.symptoms),
@@ -409,7 +445,7 @@ const RecommendationScreen = () => {
         }),
       );
 
-      if (response.clinical_soap) {
+      if (!guestMode && response.clinical_soap) {
         dispatch(
           saveClinicalNote({
             clinical_soap: response.clinical_soap,
@@ -792,6 +828,58 @@ const RecommendationScreen = () => {
           </View>
         )}
 
+        {guestMode && (
+          <View style={styles.transferSection}>
+            <Divider style={styles.restartDivider} />
+            <Surface
+              style={[
+                styles.transferCard,
+                { backgroundColor: theme.colors.surfaceVariant ?? theme.colors.surface },
+              ]}
+              elevation={1}
+            >
+              <View style={styles.handoverHeader}>
+                <Text variant="titleLarge" style={styles.handoverTitle}>
+                  Transfer to Patient Record
+                </Text>
+              </View>
+              <Text variant="bodySmall" style={styles.transferSubtitle}>
+                Send this completed guest assessment directly to a registered user’s profile for follow-up care.
+              </Text>
+              <TextInput
+                mode="outlined"
+                label="Username"
+                placeholder="e.g., john.doe"
+                value={transferUsername}
+                onChangeText={(value) => {
+                  setTransferUsername(value);
+                  setTransferError(null);
+                }}
+                style={[styles.transferInput, { backgroundColor: theme.colors.surface }]}
+                dense
+                autoCapitalize="none"
+                autoComplete="username"
+                disabled={transferLoading}
+              />
+              {transferError && (
+                <Text variant="bodySmall" style={[styles.transferMessage, { color: theme.colors.error }]}>
+                  {transferError}
+                </Text>
+              )}
+              <Button
+                title="Send"
+                variant="primary"
+                loading={transferLoading}
+                onPress={handleTransferAssessment}
+                disabled={!canSubmitTransfer}
+                accessibilityHint="Send this assessment to the selected user"
+                style={handoverButtonStyle}
+                contentStyle={handoverButtonContentStyle}
+              />
+            </Surface>
+          </View>
+        )}
+
         {!!recommendation.clinical_soap && (
           <View style={styles.handoverSection}>
             <Divider style={styles.restartDivider} />
@@ -952,6 +1040,13 @@ const RecommendationScreen = () => {
         onDismiss={() => setSafetyModalVisible(false)}
         initialSymptomSummary={initialSymptomSummary}
       />
+      <Snackbar
+        visible={snackbarVisible}
+        onDismiss={() => setSnackbarVisible(false)}
+        duration={4000}
+      >
+        {snackbarMessage}
+      </Snackbar>
     </ScreenSafeArea>
   );
 };
@@ -1045,6 +1140,29 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   handoverButton: {},
+  transferSection: {
+    marginBottom: 24,
+    paddingHorizontal: 2,
+  },
+  transferSubtitle: {
+    color: '#666',
+    marginBottom: 12,
+    lineHeight: 18,
+  },
+  transferInput: {
+    marginBottom: 8,
+    borderRadius: 10,
+  },
+  transferMessage: {
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  transferCard: {
+    padding: 16,
+    borderRadius: 16,
+    elevation: 0,
+    marginTop: 8,
+  },
 
   emptyState: {
     padding: 40,
