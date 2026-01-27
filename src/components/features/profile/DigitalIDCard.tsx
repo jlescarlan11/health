@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   detailGridValue: {
     marginTop: 4,
-    fontWeight: '700',
+    fontWeight: '400',
     color: '#1E1E1E',
     lineHeight: 20,
   },
