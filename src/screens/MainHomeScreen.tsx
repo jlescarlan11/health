@@ -124,6 +124,7 @@ export const MainHomeScreen = () => {
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['top', 'left', 'right', 'bottom']}
+      disableBottomInset
     >
       <ScrollView
         contentContainerStyle={{ paddingBottom: homeBottomPadding }}

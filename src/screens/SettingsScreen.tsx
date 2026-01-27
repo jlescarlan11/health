@@ -45,6 +45,7 @@ export const SettingsScreen = () => {
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
+      disableBottomInset
     >
       <StandardHeader title="Settings" showBackButton={false} />
       <ScrollView

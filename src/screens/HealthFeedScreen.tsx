@@ -72,6 +72,7 @@ export const HealthFeedScreen = () => {
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
+      disableBottomInset
     >
       <StandardHeader title="Health Promotion Feed" showBackButton={false} />
 
