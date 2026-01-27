@@ -62,10 +62,13 @@ export const FeatureChip: React.FC<FeatureChipProps> = ({
 
 const styles = StyleSheet.create({
   chip: {
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    minHeight: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 0,
   },
   label: {
     fontSize: 14,

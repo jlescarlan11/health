@@ -31,6 +31,7 @@ import { FacilityCard } from '../components/common/FacilityCard';
 import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
 import { Button, SafetyRecheckModal, Text, ScreenSafeArea } from '../components/common';
 import { FeatureChip } from '../components/common';
+import { chipLayoutStyles } from '../components/common/chipLayout';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
@@ -866,12 +867,11 @@ const RecommendationScreen = () => {
                       >
                         Matches your needs:
                       </Text>
-                      <View style={styles.matchSummaryChips}>
+                      <View style={[chipLayoutStyles.chipContainer, styles.matchSummaryChips]}>
                         {matchedServices.map((service) => (
                           <FeatureChip
                             key={`match-${facility.id}-${service}`}
                             label={service}
-                            style={styles.matchSummaryChip}
                           />
                         ))}
                       </View>
@@ -1019,13 +1019,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   matchSummaryChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     marginTop: 6,
-  },
-  matchSummaryChip: {
-    marginRight: 8,
-    marginBottom: 8,
   },
   sectionHeader: { marginBottom: 16, marginTop: 8 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },

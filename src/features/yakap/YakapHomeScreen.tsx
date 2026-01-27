@@ -14,6 +14,7 @@ const YakapHomeScreen = () => {
   const theme = useTheme();
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
+  const benefitCardPadding = themeSpacing.lg ?? 16;
   const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
 
   const navigateToEnrollment = () => {
@@ -32,24 +33,25 @@ const YakapHomeScreen = () => {
   };
 
   const renderBenefitItem = (benefit: YakapBenefit) => (
-    <Card
-      key={benefit.id}
-      mode="contained"
-      rippleColor={theme.colors.primary + '15'}
-      accessibilityLabel={`Benefit: ${benefit.category}`}
-      style={[
-        styles.benefitCard,
-        {
-          backgroundColor: '#ffffff',
-          borderColor: theme.colors.outline,
-          shadowColor: theme.colors.shadow,
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.12,
-          shadowRadius: 14,
-          elevation: 4,
-        },
-      ]}
-    >
+      <Card
+        key={benefit.id}
+        mode="contained"
+        rippleColor={theme.colors.primary + '15'}
+        accessibilityLabel={`Benefit: ${benefit.category}`}
+        style={[
+          styles.benefitCard,
+          {
+            backgroundColor: '#ffffff',
+            borderColor: theme.colors.outline,
+            shadowColor: theme.colors.shadow,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.12,
+            shadowRadius: 14,
+            elevation: 4,
+          },
+        ]}
+        contentStyle={[styles.benefitCardContent, { padding: benefitCardPadding }]}
+      >
       <Text style={[styles.benefitTitle, { color: theme.colors.onSurface }]}>
         {benefit.category}
       </Text>
@@ -203,6 +205,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
+  benefitCardContent: {},
   benefitTitle: {
     fontSize: 17,
     fontWeight: '700',

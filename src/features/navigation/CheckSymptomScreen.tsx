@@ -19,6 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
 import { RootState } from '../../store';
 import { InputCard, EmergencyActions, FeatureChip } from '../../components/common';
+import { chipLayoutStyles } from '../../components/common/chipLayout';
 import { detectEmergency } from '../../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../../services/mentalHealthDetector';
 import { setHighRisk, clearAssessmentState, setSymptomDraft } from '../../store/navigationSlice';
@@ -334,7 +335,7 @@ const CheckSymptomScreen = () => {
               Common Symptoms
             </Text>
 
-            <View style={styles.chipContainer}>
+            <View style={chipLayoutStyles.chipContainer}>
               {QUICK_SYMPTOMS.map((s) => {
                 const isSelected = symptom
                   .split(',')
@@ -342,31 +343,12 @@ const CheckSymptomScreen = () => {
                   .includes(s);
 
                 return (
-                  <Pressable
+                  <FeatureChip
                     key={s}
+                    label={s}
+                    selected={isSelected}
                     onPress={() => toggleSymptom(s)}
-                    style={({ pressed }) => [
-                      styles.symptomChip,
-                      {
-                        backgroundColor: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.secondaryContainer,
-                        opacity: pressed ? 0.7 : 1,
-                      },
-                    ]}
-                  >
-                    <Text
-                      variant="bodyMedium"
-                      style={[
-                        styles.symptomChipLabel,
-                        {
-                          color: isSelected ? theme.colors.onPrimary : theme.colors.primary,
-                        },
-                      ]}
-                    >
-                      {s}
-                    </Text>
-                  </Pressable>
+                  />
                 );
               })}
             </View>
@@ -436,23 +418,6 @@ const styles = StyleSheet.create({
   },
   quickActions: { marginBottom: 24 },
   sectionTitle: { marginBottom: 12, fontWeight: '700', letterSpacing: 0.5, fontSize: 16 },
-  chipContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  symptomChip: {
-    borderRadius: 12,
-    marginBottom: 4,
-    minHeight: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  symptomChipLabel: {
-    fontWeight: '500',
-    fontSize: 14,
-  },
 });
 
 export default CheckSymptomScreen;

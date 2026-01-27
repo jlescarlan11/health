@@ -28,6 +28,7 @@ import { useUserLocation } from '../hooks';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { openExternalMaps } from '../utils/linkingUtils';
 import { FeatureChip } from '../components/common';
+import { chipLayoutStyles } from '../components/common/chipLayout';
 import { sharingUtils } from '../utils/sharingUtils';
 import { calculateDistance, formatDistance } from '../utils/locationUtils';
 import { formatOperatingHours } from '../utils/facilityUtils';
@@ -409,12 +410,11 @@ export const FacilityDetailsScreen = () => {
                 return (
                   <View key={category} style={styles.categoryContainer}>
                     <Text style={styles.categoryTitle}>{category}</Text>
-                    <View style={styles.servicesGrid}>
+                    <View style={chipLayoutStyles.chipContainer}>
                       {visibleServices.map((service, index) => (
                         <FeatureChip
                           key={`${category}-${index}`}
                           label={service}
-                          style={styles.serviceChipItem}
                         />
                       ))}
                     </View>
@@ -621,14 +621,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     color: '#164032',
-  },
-  servicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12, // Increased gap for better vertical separation
-  },
-  serviceChipItem: {
-    marginBottom: 0,
   },
   seeAllButton: {
     flexDirection: 'row',
