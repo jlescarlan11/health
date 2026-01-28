@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
-import { useTheme, Card, Avatar } from 'react-native-paper';
+import { useTheme, Card } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { RootStackScreenProps } from '../types/navigation';
@@ -76,25 +76,15 @@ export const ClinicalHistoryScreen = () => {
         accessibilityHint="Double tap to view the full clinical report"
       >
         <Card.Content style={styles.cardContent}>
-          <View style={styles.iconContainer}>
-            <Avatar.Icon
-              size={48}
-              icon={levelInfo.icon}
-              style={{ backgroundColor: levelInfo.color + '20' }} // 20% opacity
-              color={levelInfo.color}
-            />
-          </View>
           <View style={styles.textContainer}>
-            <View style={styles.headerRow}>
-              <Text variant="labelSmall" style={styles.dateText}>
-                {date} • {time}
-              </Text>
-            </View>
             <Text variant="titleMedium" numberOfLines={1} style={styles.symptomText}>
               {item.initial_symptoms}
             </Text>
-            <Text variant="bodySmall" style={[styles.levelText, { color: levelInfo.color }]}>
-              {item.recommended_level.toUpperCase().replace('_', ' ')}
+            <Text variant="bodySmall" numberOfLines={1} style={styles.detailText}>
+              {date} · {time} ·{' '}
+              <Text style={[styles.levelText, { color: levelInfo.color }]}>
+                {item.recommended_level.toUpperCase().replace('_', ' ')}
+              </Text>
             </Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.outline} />
@@ -162,12 +152,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    padding: 16,
+    padding: 12,
     paddingBottom: 0,
     flexGrow: 1,
   },
   card: {
-    marginBottom: 12,
+    marginBottom: 8,
     elevation: 1,
     backgroundColor: '#FFFFFF',
   },
@@ -175,24 +165,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  iconContainer: {
-    marginRight: 16,
-  },
   textContainer: {
     flex: 1,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  dateText: {
-    color: '#666',
+    marginRight: 8,
   },
   symptomText: {
     fontWeight: '700',
     marginBottom: 2,
+  },
+  detailText: {
+    color: '#666',
+    marginTop: 4,
   },
   levelText: {
     fontWeight: '600',

@@ -175,10 +175,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: 16,
   },
   headerSection: {
-    marginBottom: 32,
+    marginBottom: 24,
     marginTop: 8,
   },
   pathwayName: {
@@ -208,9 +208,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.05)',
   },
   card: {
-    padding: 24,
+    padding: 16,
     borderRadius: 20,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   stepHeader: {
     flexDirection: 'row',
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   },
   navigationButtons: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
     marginBottom: 40,
   },
   navButton: {

@@ -215,7 +215,10 @@ export const normalizeFacility = (value: unknown): Facility | null => {
     ? (record.contacts as any[]).map((c) => ({
         id: c.id,
         phoneNumber: c.phoneNumber,
-        platform: c.platform === 'viber' || c.platform === 'messenger' ? c.platform : 'phone',
+        platform:
+          c.platform === 'viber' || c.platform === 'messenger' || c.platform === 'email'
+            ? c.platform
+            : 'phone',
         teleconsultUrl: c.teleconsultUrl,
         contactName: c.contactName,
         role: c.role,

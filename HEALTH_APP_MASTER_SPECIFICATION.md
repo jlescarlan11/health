@@ -159,4 +159,3 @@ graph TD
 | **Safety**     | **Bicolano Support**   | `nagkukumbulsion` (seizing) triggers 10/10 neuro system lock.           |
 | **Privacy**    | **Proximity Hashing**  | SHA-256 daily rotating hash ensures zero user tracking.                 |
 | **Navigation** | **Haversine**          | Battery-efficient math for Naga City grid coordinates.                  |
-| **UI/UX**      | **Breathing Mic**      | Animated pulsing icon during voice recording for user feedback.         |

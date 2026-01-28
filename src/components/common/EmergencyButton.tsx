@@ -23,7 +23,6 @@ export const EmergencyButton: React.FC<EmergencyButtonProps> = ({
       buttonColor={buttonColor}
       textColor={textColor}
       style={[styles.button, style]}
-      contentStyle={styles.content}
       labelStyle={styles.label}
       accessibilityLabel="Emergency Call"
       accessibilityHint="Double tap to initiate an emergency call immediately"
@@ -38,11 +37,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     marginVertical: 16,
   },
-  content: {
-    height: 56,
-  },
   label: {
-    fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 1,
   },

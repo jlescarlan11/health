@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -28,7 +28,6 @@ if (
 
 import { ActivityIndicator, useTheme, Chip } from 'react-native-paper';
 import { Text } from '../components/common/Text';
-import { speechService } from '../services/speechService';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
@@ -100,21 +99,6 @@ interface Message {
   timestamp: number;
   metadata?: Record<string, unknown>;
 }
-
-const TransitionView = ({
-  label,
-  textColor,
-  backgroundColor,
-}: {
-  label: string;
-  textColor: string;
-  backgroundColor: string;
-}) => (
-  <View style={[styles.transitionBubble, { backgroundColor }]}>
-    <ActivityIndicator size="small" color={textColor} />
-    <Text style={[styles.transitionText, { color: textColor }]}>{label}</Text>
-  </View>
-);
 
 const SYSTEM_TRANSITION_REASON_SOURCES = new Set([
   'arbiter-expansion',
@@ -426,6 +410,13 @@ const SymptomAssessmentScreen = () => {
   const [messages, setMessages] = useState<Message[]>(savedState?.messages || []);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>(savedState?.questions || []);
   const [fullPlan, setFullPlan] = useState<AssessmentQuestion[]>(savedState?.fullPlan || []);
+  const syncQuestionQueue = useCallback(
+    (nextQuestions: AssessmentQuestion[]) => {
+      setQuestions(nextQuestions);
+      setFullPlan(nextQuestions);
+    },
+    [setQuestions, setFullPlan],
+  );
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(
     savedState?.currentQuestionIndex || 0,
   );
@@ -539,6 +530,79 @@ const SymptomAssessmentScreen = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [streamingText, setStreamingText] = useState<string | null>(null);
+  const TYPING_INDICATOR_TIMEOUT_MS = 20000;
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelTypingTimeout = useCallback(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+  }, []);
+  const handleTypingTimeout = useCallback(() => {
+    cancelTypingTimeout();
+    console.warn(
+      '[Assessment] Typing indicator timeout reached; clearing stuck transition/streaming state.',
+    );
+    setProcessing(false);
+    setStreamingText(null);
+    setIsTyping(false);
+  }, [cancelTypingTimeout, setProcessing, setStreamingText, setIsTyping]);
+  const setTypingState = useCallback(
+    (value: boolean) => {
+      cancelTypingTimeout();
+      if (value) {
+        typingTimeoutRef.current = setTimeout(handleTypingTimeout, TYPING_INDICATOR_TIMEOUT_MS);
+      }
+      setIsTyping(value);
+    },
+    [cancelTypingTimeout, handleTypingTimeout, setIsTyping],
+  );
+  const resetSessionScopedState = useCallback(
+    (newMessages: Message[]) => {
+      slotParserRef.current.reset();
+      const clearedSlots = slotParserRef.current.getSlots();
+      cancelTypingTimeout();
+
+      setMessages(newMessages);
+      setSessionBuffer(newMessages);
+      setOutOfScopeBuffer([]);
+      setAnswers({});
+      syncQuestionQueue([]);
+      setCurrentQuestionIndex(0);
+      setExpansionCount(0);
+      setReadiness(0);
+      setTriageSnapshot(null);
+      setAssessmentStage('intake');
+      setHasAdvancedBeyondIntake(false);
+      setSymptomCategory(null);
+      setPreviousProfile(undefined);
+      setClarificationCount(0);
+      setSelectedRedFlags([]);
+      setShowRedFlagsChecklist(false);
+      setIsClarifyingDenial(false);
+      setIsRecentResolved(false);
+      setResolvedKeyword(null);
+      setIncrementalSlots(clearedSlots);
+      setIsQueueSuspended(false);
+      setCurrentTurnMeta(null);
+      setPendingCorrection(null);
+      setSuppressedKeywords([]);
+      setPendingRedFlag(null);
+      setIsVerifyingEmergency(false);
+      setEmergencyVerificationData(null);
+      setIsOfflineMode(false);
+      setCurrentOfflineNodeId(null);
+      setLoading(false);
+      setProcessing(false);
+      setTypingState(false);
+      setStreamingText(null);
+      setInputText('');
+    },
+    [cancelTypingTimeout, setTypingState, syncQuestionQueue],
+  );
+  useEffect(() => {
+    return () => cancelTypingTimeout();
+  }, [cancelTypingTimeout]);
 
   interface SafetyGuardParams {
     text: string;
@@ -633,7 +697,7 @@ const SymptomAssessmentScreen = () => {
           });
 
           if (guardResult?.triggered && msg.sender === 'assistant') {
-            setIsTyping(false);
+            setTypingState(false);
             setStreamingText(null);
             setProcessing(false);
           }
@@ -651,10 +715,12 @@ const SymptomAssessmentScreen = () => {
     [appendMessagesToConversation],
   );
 
-  const replaceMessagesDisplay = useCallback((newMessages: Message[]) => {
-    setMessages(newMessages);
-    setSessionBuffer((prev) => [...prev, ...newMessages]);
-  }, []);
+  const replaceMessagesDisplay = useCallback(
+    (newMessages: Message[]) => {
+      resetSessionScopedState(newMessages);
+    },
+    [resetSessionScopedState],
+  );
 
   const handleOutOfScopeFallback = (answer: string, question: AssessmentQuestion) => {
     const trimmed = answer.trim();
@@ -685,7 +751,7 @@ const SymptomAssessmentScreen = () => {
       }),
     ]);
 
-    setIsTyping(false);
+    setTypingState(false);
     setProcessing(false);
     return true;
   };
@@ -787,10 +853,6 @@ const SymptomAssessmentScreen = () => {
     loading,
   ]);
 
-  // Voice
-  const [isRecording, setIsRecording] = useState(false);
-  const [volume, setVolume] = useState(0);
-
   // Reset checklist when question changes
   useEffect(() => {
     setSelectedRedFlags([]);
@@ -889,7 +951,6 @@ const SymptomAssessmentScreen = () => {
       if (keyboardScrollRaf.current !== null) {
         cancelAnimationFrame(keyboardScrollRaf.current);
       }
-      speechService.stopListening();
     };
   }, []);
 
@@ -953,8 +1014,6 @@ const SymptomAssessmentScreen = () => {
         planContext,
         patientName,
       );
-      setFullPlan(plan);
-
       // --- NEW: Dynamic Question Pruning ---
       // Use deterministic slot extraction to identify if Tier 1 questions are already answered
       const initialSlotResult = slotParserRef.current.parseTurn(initialSymptom || '');
@@ -1010,7 +1069,7 @@ const SymptomAssessmentScreen = () => {
         undefined,
         slots,
       );
-      setQuestions(annotatedPlan);
+      syncQuestionQueue(annotatedPlan);
       setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
 
       // Add Intro & First Question
@@ -1110,7 +1169,7 @@ const SymptomAssessmentScreen = () => {
       setIncrementalSlots(parsedSlots.aggregated);
       nextHistory = [...messages, userMsg];
     }
-    setIsTyping(true);
+    setTypingState(true);
 
     let guardResult: EmergencyGuardResult | null = null;
     if (!isOfflineMode && !skipEmergencyCheck) {
@@ -1128,7 +1187,7 @@ const SymptomAssessmentScreen = () => {
 
       if (guardResult?.triggered) {
         setProcessing(false);
-        setIsTyping(false);
+        setTypingState(false);
         return;
       }
     }
@@ -1240,7 +1299,7 @@ const SymptomAssessmentScreen = () => {
                       slotSnapshot,
                     );
 
-                    setQuestions(annotatedNewQueue);
+                    syncQuestionQueue(annotatedNewQueue);
                     activeQuestions = annotatedNewQueue;
                     effectiveIsAtEnd = nextIdx >= activeQuestions.length; // Re-evaluate termination condition
 
@@ -1295,7 +1354,7 @@ const SymptomAssessmentScreen = () => {
                 newAnswers,
                 slotSnapshot,
               );
-              setQuestions(annotatedList);
+              syncQuestionQueue(annotatedList);
               activeQuestions = annotatedList;
             }
           }
@@ -1403,7 +1462,7 @@ const SymptomAssessmentScreen = () => {
 
             setIsClarifyingDenial(true);
             setClarificationCount((prev) => prev + 1);
-            setIsTyping(false);
+            setTypingState(false);
 
             const clarificationText =
               clarificationCount === 0
@@ -1445,7 +1504,7 @@ const SymptomAssessmentScreen = () => {
 
           if (canTerminate) {
             console.log('[Assessment] Arbiter approved termination. Finalizing.');
-            setIsTyping(false);
+            setTypingState(false);
             setAssessmentStage('review');
             const terminationTimestamp = Date.now();
                 appendMessagesToConversation([
@@ -1493,7 +1552,7 @@ const SymptomAssessmentScreen = () => {
               newAnswers,
               slotSnapshot,
             );
-            setQuestions(annotatedReordered);
+            syncQuestionQueue(annotatedReordered);
             activeQuestions = annotatedReordered;
           } else if (arbiterResult.signal === 'DRILL_DOWN') {
             console.log('[Assessment] DRILL_DOWN signal received. Generating immediate follow-up.');
@@ -1505,7 +1564,7 @@ Friction Details: ${profile.clinical_friction_details || 'None'}
 Recent User Answer: ${trimmedAnswer}
             `.trim();
 
-            setIsTyping(true);
+            setTypingState(true);
             try {
               const drillDownQuestion = await geminiClient.generateImmediateFollowUp(
                 profile,
@@ -1529,7 +1588,7 @@ Recent User Answer: ${trimmedAnswer}
                 slotSnapshot,
               );
 
-              setQuestions(annotatedQuestions);
+              syncQuestionQueue(annotatedQuestions);
               activeQuestions = annotatedQuestions;
 
               // Set suspended state so we know to bridge back later
@@ -1555,7 +1614,7 @@ Recent User Answer: ${trimmedAnswer}
               }
 
               setCurrentQuestionIndex(nextIdx);
-              setIsTyping(false);
+              setTypingState(false);
               setProcessing(false);
               return;
             } catch (err) {
@@ -1571,7 +1630,7 @@ Recent User Answer: ${trimmedAnswer}
                 newAnswers,
                 slotSnapshot,
               );
-              setQuestions(annotatedReordered);
+              syncQuestionQueue(annotatedReordered);
               activeQuestions = annotatedReordered;
             }
           }
@@ -1630,7 +1689,7 @@ Recent User Answer: ${trimmedAnswer}
             hasShownClarificationHeader.current = true; // Avoid double headers
             clarificationHeader = ''; // Clear for the next question bubble to avoid redundancy
 
-            setIsTyping(true);
+            setTypingState(true);
 
             const resolvedTag = isRecentResolvedRef.current
               ? `[RECENT_RESOLVED: ${resolvedKeywordRef.current}]`
@@ -1693,7 +1752,7 @@ Recent User Answer: ${trimmedAnswer}
             try {
               let accumulatedResponse = '';
               // setStreamingText(''); // Don't show raw JSON stream
-              // setIsTyping(true) is already set, so the user sees the typing indicator
+              // setTypingState(true) is already set, so the user sees the typing indicator
 
               const stream = geminiClient.streamGeminiResponse(clarifierPrompt);
               for await (const chunk of stream) {
@@ -1708,7 +1767,7 @@ Recent User Answer: ${trimmedAnswer}
                     '[Assessment] Emergency verification triggered during expansion. Aborting question update.',
                   );
                   setStreamingText(null);
-                  setIsTyping(false);
+                  setTypingState(false);
                   setProcessing(false);
                   return;
                 }
@@ -1759,14 +1818,14 @@ Recent User Answer: ${trimmedAnswer}
                       ]);
                     }
 
-                    setQuestions(annotatedQuestions);
+                    syncQuestionQueue(annotatedQuestions);
                     activeQuestions = annotatedQuestions;
                     setExpansionCount(currentExpansion + 1);
                     setCurrentQuestionIndex(nextIdx);
 
                     // Clear streaming state AFTER committing message to avoid flicker
                     setStreamingText(null);
-                    setIsTyping(false);
+                    setTypingState(false);
                     setProcessing(false);
                     return;
                   }
@@ -1790,7 +1849,7 @@ Recent User Answer: ${trimmedAnswer}
             console.log(
               `[Assessment] Safety criteria not met (Readiness: ${effectiveReadiness}) but plan cannot be expanded further. Finalizing with conservative fallback.`,
             );
-            setIsTyping(false);
+            setTypingState(false);
             setAssessmentStage('review');
             const finalizeSafetyTimestamp = Date.now();
               appendMessagesToConversation([
@@ -1838,7 +1897,7 @@ Recent User Answer: ${trimmedAnswer}
               console.log('[Assessment] Resuming queue after drill-down. Applying bridge.');
               setIsQueueSuspended(false); // Reset flag
 
-              setIsTyping(true);
+              setTypingState(true);
               const bridgeText = await buildAdaptiveBridgeText(nextQ.text, lastUserText);
               {
                 const resumeTimestamp = Date.now();
@@ -1858,7 +1917,7 @@ Recent User Answer: ${trimmedAnswer}
                 ]);
               }
               setCurrentQuestionIndex(nextIdx);
-              setIsTyping(false);
+              setTypingState(false);
               setProcessing(false);
               return;
             }
@@ -1867,7 +1926,7 @@ Recent User Answer: ${trimmedAnswer}
               console.log(
                 `[Assessment] Readiness > 0.4 (${readinessScore}). Generating an adaptive bridge message.`,
               );
-              setIsTyping(true);
+              setTypingState(true);
               const bridgeText = await buildAdaptiveBridgeText(nextQ.text, lastUserText);
               {
                 const bridgeTimestamp = Date.now();
@@ -1887,13 +1946,13 @@ Recent User Answer: ${trimmedAnswer}
                 ]);
               }
               setCurrentQuestionIndex(nextIdx);
-              setIsTyping(false);
+              setTypingState(false);
               setProcessing(false);
               return;
             }
 
             // Default behavior if readiness <= 0.4
-            setIsTyping(true);
+            setTypingState(true);
             const inlineAck = consumePendingCorrection();
             setTimeout(() => {
               const defaultTimestamp = Date.now();
@@ -1913,7 +1972,7 @@ Recent User Answer: ${trimmedAnswer}
                 }),
               ]);
               setCurrentQuestionIndex(nextIdx);
-              setIsTyping(false);
+              setTypingState(false);
               setProcessing(false);
             }, 600);
             return;
@@ -1928,7 +1987,7 @@ Recent User Answer: ${trimmedAnswer}
 
       if (!isAtEnd) {
         // Next Question (Fallback if Arbiter check fails or is skipped)
-        setIsTyping(true);
+        setTypingState(true);
         const inlineAck = consumePendingCorrection();
         setTimeout(() => {
           const nextQ = questions[nextIdx];
@@ -1949,12 +2008,12 @@ Recent User Answer: ${trimmedAnswer}
             ]);
           }
           setCurrentQuestionIndex(nextIdx);
-          setIsTyping(false);
+          setTypingState(false);
           setProcessing(false);
         }, 600);
       } else {
         // EXHAUSTED QUESTIONS -> Finalize
-        setIsTyping(false);
+        setTypingState(false);
         setAssessmentStage('review');
         {
           const finalizingTimestamp = Date.now();
@@ -2126,48 +2185,46 @@ Recent User Answer: ${trimmedAnswer}
     } catch (_) {
       Alert.alert('Error', 'Could not process results. Please try again.');
       setProcessing(false);
-      setIsTyping(false);
+      setTypingState(false);
     }
   };
   // --- OFFLINE LOGIC ---
   const startOfflineTriage = () => {
-    setIsOfflineMode(true);
     const startNode = TriageEngine.getStartNode(triageFlow);
+    const introTimestamp = Date.now();
+    replaceMessagesDisplay([
+      composeAssistantMessage({
+        id: 'offline-intro',
+        body: "I'm having trouble connecting to the AI. I've switched to Offline Emergency Check.",
+        reason: 'Falling back to offline triage.',
+        reasonSource: 'offline-intro',
+        nextAction: 'Please answer the offline questions while the AI reconnects.',
+        timestamp: introTimestamp,
+        extra: { isOffline: true },
+      }),
+      composeAssistantMessage({
+        id: startNode.id,
+        body: startNode.text || '',
+        reason: 'Offline triage question',
+        reasonSource: 'offline-node',
+        nextAction: 'Please respond so we can continue the offline flow.',
+        timestamp: introTimestamp + 1,
+        extra: { isOffline: true },
+      }),
+    ]);
+    setIsOfflineMode(true);
     setCurrentOfflineNodeId(startNode.id);
-    {
-      const introTimestamp = Date.now();
-      replaceMessagesDisplay([
-        composeAssistantMessage({
-          id: 'offline-intro',
-          body: "I'm having trouble connecting to the AI. I've switched to Offline Emergency Check.",
-          reason: 'Falling back to offline triage.',
-          reasonSource: 'offline-intro',
-          nextAction: 'Please answer the offline questions while the AI reconnects.',
-          timestamp: introTimestamp,
-          extra: { isOffline: true },
-        }),
-        composeAssistantMessage({
-          id: startNode.id,
-          body: startNode.text || '',
-          reason: 'Offline triage question',
-          reasonSource: 'offline-node',
-          nextAction: 'Please respond so we can continue the offline flow.',
-          timestamp: introTimestamp + 1,
-          extra: { isOffline: true },
-        }),
-      ]);
-    }
     setLoading(false);
   };
 
   const handleOfflineLogic = (answer: string) => {
     if (!currentOfflineNodeId) return;
 
-    setIsTyping(true);
+    setTypingState(true);
     setTimeout(() => {
       const result = TriageEngine.processStep(triageFlow, currentOfflineNodeId, answer);
       if (result.isOutcome) {
-        setIsTyping(false);
+        setTypingState(false);
         navigation.replace('Recommendation', {
           assessmentData: {
             symptoms: initialSymptom || '',
@@ -2195,7 +2252,7 @@ Recent User Answer: ${trimmedAnswer}
           }),
         ]);
         setCurrentOfflineNodeId(nextNode.id);
-        setIsTyping(false);
+        setTypingState(false);
         setProcessing(false);
       }
     }, 500);
@@ -2244,84 +2301,51 @@ Recent User Answer: ${trimmedAnswer}
     }, [handleBack]),
   );
 
-  // Voice Handlers
-  const startRecording = async () => {
-    if (!speechService.isAvailable)
-      return Alert.alert('Not Available', 'Voice input not supported.');
-    try {
-      setIsRecording(true);
-      await speechService.startListening(
-        (text) => setInputText(text),
-        (err) => {
-          console.error(err);
-          setIsRecording(false);
-        },
-        (vol) => setVolume(vol),
-      );
-    } catch (_e) {
-      setIsRecording(false);
-    }
-  };
-  const stopRecording = async () => {
-    setIsRecording(false);
-    await speechService.stopListening();
-  };
-
   // --- RENDER ---
-  const renderMessage = (msg: Message) => {
-    const isSystemTransition = Boolean(msg.metadata?.isSystemTransition);
-    if (isSystemTransition) {
+  const renderMessage = useCallback(
+    ({ item }: { item: Message }) => {
+      const isAssistant = item.sender === 'assistant';
       return (
-        <View key={msg.id} style={styles.transitionWrapper}>
-          <TransitionView
-            label="Adjusting assessment..."
-            textColor={theme.colors.primary}
-            backgroundColor={theme.colors.surfaceVariant}
-          />
-        </View>
-      );
-    }
-    const isAssistant = msg.sender === 'assistant';
-    return (
-      <View
-        key={msg.id}
-        style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}
-      >
-        {isAssistant && (
+        <View
+          style={[styles.messageWrapper, isAssistant ? styles.assistantWrapper : styles.userWrapper]}
+        >
+          {isAssistant && (
+            <View
+              style={[
+                styles.avatar,
+                {
+                  backgroundColor: theme.colors.primaryContainer,
+                },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name={item.isOffline ? 'shield-check' : 'robot'}
+                size={18}
+                color={theme.colors.primary}
+              />
+            </View>
+          )}
           <View
             style={[
-              styles.avatar,
-              {
-                backgroundColor: theme.colors.primaryContainer,
-              },
+              styles.bubble,
+              isAssistant ? styles.assistantBubble : styles.userBubble,
+              { backgroundColor: isAssistant ? theme.colors.surface : theme.colors.primary },
             ]}
           >
-            <MaterialCommunityIcons
-              name={msg.isOffline ? 'shield-check' : 'robot'}
-              size={18}
-              color={theme.colors.primary}
-            />
+            <Text
+              style={[
+                styles.messageText,
+                { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
+              ]}
+            >
+              {item.text}
+            </Text>
           </View>
-        )}
-        <View
-          style={[
-            styles.bubble,
-            isAssistant ? styles.assistantBubble : styles.userBubble,
-            { backgroundColor: isAssistant ? theme.colors.surface : theme.colors.primary },
-          ]}
-        >
-          <Text
-            style={[
-              styles.messageText,
-              { color: isAssistant ? theme.colors.onSurface : theme.colors.onPrimary },
-            ]}
-          >
-            {msg.text}
-          </Text>
         </View>
-      </View>
-    );
-  };
+      );
+    },
+    [theme],
+  );
 
   const renderModeSelectionModal = () => {
     if (!isModeModalVisible) return null;
@@ -2393,6 +2417,10 @@ Recent User Answer: ${trimmedAnswer}
 
   // Determine current options if offline
   const currentQuestion = questions[currentQuestionIndex];
+  const visibleMessages = useMemo(
+    () => messages.filter((msg) => !msg.metadata?.isSystemTransition),
+    [messages],
+  );
   const offlineOptions =
     isOfflineMode && currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId]?.options : null;
 
@@ -2557,9 +2585,9 @@ Recent User Answer: ${trimmedAnswer}
 
       <FlatList
         ref={flatListRef}
-        data={messages}
+        data={visibleMessages}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => renderMessage(item)}
+        renderItem={renderMessage}
         style={styles.messagesContainer}
         contentContainerStyle={{ padding: 16, paddingBottom: chatBottomPadding }}
         keyboardShouldPersistTaps="handled"
@@ -2812,9 +2840,6 @@ Recent User Answer: ${trimmedAnswer}
               onSubmit={() => handleNext()}
               label={isOfflineMode ? 'Select an option above' : 'Type your answer...'}
               keyboardType={currentQuestion?.type === 'number' ? 'numeric' : 'default'}
-              isRecording={isRecording}
-              volume={volume}
-              onVoicePress={isRecording ? stopRecording : startRecording}
               disabled={processing || (isOfflineMode && !!offlineOptions)}
             />
           </>
@@ -2839,12 +2864,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 8,
   },
-  bubble: { maxWidth: '85%', padding: 12, borderRadius: 16, elevation: 1 },
+  bubble: { maxWidth: '85%', padding: 10, borderRadius: 16, elevation: 1 },
   assistantBubble: { borderBottomLeftRadius: 4 },
   userBubble: { borderBottomRightRadius: 4 },
   messageText: { fontSize: 16, lineHeight: 22 },
   inputSection: {
-    padding: 16,
+    padding: 12,
   },
   modeModalOverlay: {
     flex: 1,
@@ -2863,21 +2888,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
-  },
-  transitionWrapper: {
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  transitionBubble: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  transitionText: {
-    marginLeft: 8,
-    fontSize: 14,
   },
 });
 

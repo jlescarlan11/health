@@ -15,10 +15,6 @@ import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
-import {
-  registerForPushNotificationsAsync,
-  configureNotifications,
-} from './src/services/notificationService';
 import { theme, navigationTheme, getScaledTheme } from './src/theme';
 import { useAppDispatch, useAppSelector, useAdaptiveUI } from './src/hooks';
 
@@ -87,12 +83,6 @@ const AppContent = () => {
   }, [scaleFactor, isPWDMode]);
 
   useEffect(() => {
-    // Configure notifications
-    configureNotifications();
-    registerForPushNotificationsAsync().catch((err) =>
-      console.log('Notification permission init failed:', err),
-    );
-
     // Check for high risk status on mount
     if (isHighRisk) {
       setSafetyModalVisible(true);
@@ -172,8 +162,7 @@ export default function App() {
     const errorHandler = (error: Error) => {
       if (
         error?.message?.includes('RNFBAppModule') ||
-        error?.message?.includes('Native module') ||
-        error?.message?.includes('Voice')
+        error?.message?.includes('Native module')
       ) {
         console.warn('Native module not available (expected in some development environments):', error.message);
       }
@@ -184,8 +173,7 @@ export default function App() {
     console.error = (...args) => {
       if (
         args[0]?.message?.includes('RNFBAppModule') ||
-        args[0]?.message?.includes('Native module') ||
-        args[0]?.message?.includes('Voice')
+        args[0]?.message?.includes('Native module')
       ) {
         errorHandler(args[0]);
         return; // Suppress the error;

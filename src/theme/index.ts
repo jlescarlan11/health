@@ -69,6 +69,51 @@ export const theme = {
 };
 
 /**
+ * buttonSystem centralizes the shared tokens for every button in the app:
+ * - base defines the touch-target, padding, and typography that are slightly tighter than before
+ *   so buttons feel less oversized while still being accessible.
+ * - variants map the three preferred states (primary, secondary, tertiary/ghost) plus inline text
+ *   and danger states, pointing at the theme colors that should power backgrounds, text, and borders.
+ */
+export const buttonSystem = {
+  base: {
+    borderRadius: 12,
+    minHeight: 40,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0.25,
+  },
+  variants: {
+    primary: {
+      mode: 'contained',
+      backgroundColorKey: 'primary',
+      textColorKey: 'onPrimary',
+    },
+    secondary: {
+      mode: 'contained-tonal',
+      backgroundColorKey: 'secondaryContainer',
+      textColorKey: 'onSecondaryContainer',
+    },
+    ghost: {
+      mode: 'outlined',
+      textColorKey: 'primary',
+      borderColorKey: 'outline',
+    },
+    text: {
+      mode: 'text',
+      textColorKey: 'primary',
+    },
+    danger: {
+      mode: 'contained',
+      backgroundColorKey: 'error',
+      textColorKey: 'onError',
+    },
+  } as const,
+} as const;
+
+/** 
  * Generates a scaled version of the theme based on the provided scale factor.
  * This applies to all MD3 typography variants.
  */

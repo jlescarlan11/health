@@ -42,7 +42,7 @@ export interface FacilityBusyness {
 export interface FacilityContact {
   id: string;
   phoneNumber: string;
-  platform: 'phone' | 'viber' | 'messenger';
+  platform: 'phone' | 'viber' | 'messenger' | 'email';
   teleconsultUrl?: string;
   contactName?: string | null;
   role?: string | null;

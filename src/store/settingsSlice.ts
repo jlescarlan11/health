@@ -4,7 +4,6 @@ interface SettingsState {
   theme: 'light' | 'dark' | 'system';
   fontSize: 'small' | 'medium' | 'large';
   highContrastMode: boolean;
-  notificationsEnabled: boolean;
   language: 'en' | 'fil';
   specializedModes: {
     isSenior: boolean;
@@ -17,7 +16,6 @@ const initialState: SettingsState = {
   theme: 'system',
   fontSize: 'medium',
   highContrastMode: false,
-  notificationsEnabled: true,
   language: 'en',
   specializedModes: {
     isSenior: false,
@@ -38,9 +36,6 @@ const settingsSlice = createSlice({
     },
     setHighContrastMode: (state, action: PayloadAction<boolean>) => {
       state.highContrastMode = action.payload;
-    },
-    toggleNotifications: (state, action: PayloadAction<boolean>) => {
-      state.notificationsEnabled = action.payload;
     },
     setLanguage: (state, action: PayloadAction<SettingsState['language']>) => {
       state.language = action.payload;
@@ -69,7 +64,6 @@ export const {
   setTheme,
   setFontSize,
   setHighContrastMode,
-  toggleNotifications,
   setLanguage,
   toggleSpecializedMode,
 } = settingsSlice.actions;

@@ -99,6 +99,23 @@ export const SettingsScreen = () => {
 
         <View style={styles.sectionWrapper}>
           <List.Section>
+            <List.Subheader style={scaledSubheaderStyle}>Care Tools</List.Subheader>
+            <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
+              <List.Item
+                title="Medication Tracker"
+                description="Log doses, track adherence, and set reminders"
+                left={(props) => <List.Icon {...props} icon="pill" color={theme.colors.primary} />}
+                right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                onPress={() => navigation.navigate('MedicationTracker')}
+                titleStyle={scaledItemTitleStyle}
+                descriptionStyle={scaledDescriptionStyle}
+              />
+            </Surface>
+          </List.Section>
+        </View>
+
+        <View style={styles.sectionWrapper}>
+          <List.Section>
             <List.Subheader style={scaledSubheaderStyle}>About</List.Subheader>
             <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
               <List.Item

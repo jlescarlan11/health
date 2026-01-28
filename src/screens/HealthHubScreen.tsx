@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, Linking, ActivityIndicator } from 'react-native';
-import { Text, useTheme, Button } from 'react-native-paper';
+import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { MainTabScreenProps } from '../types/navigation';
@@ -11,6 +11,7 @@ import { fetchFeed } from '../store/feedSlice';
 import { RootState, AppDispatch } from '../store';
 import { FeedItem as FeedItemType } from '../types/feed';
 import { theme as appTheme } from '../theme';
+import { Button } from '../components/common';
 
 type Props = MainTabScreenProps<'HealthHub'>;
 
@@ -99,7 +100,7 @@ export const HealthHubScreen = () => {
               <View style={styles.errorBanner}>
                 <MaterialCommunityIcons name="alert-circle-outline" size={20} color={theme.colors.error} />
                 <Text style={[styles.errorText, { color: theme.colors.error }]}>{error}</Text>
-                <Button compact onPress={() => loadFeed(currentPage)}>Retry</Button>
+                <Button variant="text" compact onPress={() => loadFeed(currentPage)} title="Retry" />
               </View>
             )}
           </View>
@@ -118,9 +119,7 @@ export const HealthHubScreen = () => {
               <Text variant="bodyMedium" style={styles.emptySubtitle}>
                 Check back later for the latest health promotions and news.
               </Text>
-              <Button mode="contained" onPress={() => loadFeed(1)} style={{ marginTop: 20 }}>
-                Refresh Hub
-              </Button>
+              <Button variant="primary" onPress={() => loadFeed(1)} style={{ marginTop: 20 }} title="Refresh Hub" />
             </View>
           ) : (
             <View style={styles.emptyContainer}>

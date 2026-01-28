@@ -1,14 +1,6 @@
-import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import {
-  View,
-  StyleSheet,
-  Animated,
-  StyleProp,
-  ViewStyle,
-  KeyboardTypeOptions,
-} from 'react-native';
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
+import { View, StyleSheet, StyleProp, ViewStyle, KeyboardTypeOptions } from 'react-native';
 import { TextInput, IconButton, useTheme } from 'react-native-paper';
-import { VoiceVisualizer } from './VoiceVisualizer';
 
 interface InputCardProps {
   value: string;
@@ -21,9 +13,6 @@ interface InputCardProps {
   maxLength?: number;
   keyboardType?: KeyboardTypeOptions;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
-  isRecording?: boolean;
-  volume?: number;
-  onVoicePress?: () => void;
   containerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
 }
@@ -46,9 +35,6 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
     maxLength,
     keyboardType,
     autoCapitalize,
-    isRecording = false,
-    volume = 0,
-    onVoicePress,
     containerStyle,
     disabled = false,
   } = props;
@@ -56,8 +42,6 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
   const theme = useTheme();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inputRef = useRef<any>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useImperativeHandle(ref, () => ({
     focus: () => inputRef.current?.focus(),
@@ -65,49 +49,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
     isFocused: () => inputRef.current?.isFocused() || false,
   }));
 
-  useEffect(() => {
-    let animation: Animated.CompositeAnimation | null = null;
-    if (isRecording) {
-      animation = Animated.loop(
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(fadeAnim, {
-              toValue: 0.4,
-              duration: 1200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(fadeAnim, {
-              toValue: 0.1,
-              duration: 1200,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.sequence([
-            Animated.timing(scaleAnim, {
-              toValue: 1.4,
-              duration: 1200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(scaleAnim, {
-              toValue: 1.0,
-              duration: 1200,
-              useNativeDriver: true,
-            }),
-          ]),
-        ]),
-      );
-      animation.start();
-    } else {
-      fadeAnim.setValue(0);
-      scaleAnim.setValue(1);
-    }
-    return () => {
-      if (animation) animation.stop();
-    };
-  }, [isRecording, fadeAnim, scaleAnim]);
-
   const hasText = value.trim().length > 0;
-  const showSend = hasText && !isRecording;
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -136,32 +78,15 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
       </View>
 
       <View style={styles.actionContainer}>
-        {showSend ? (
-          <IconButton
-            icon="send"
-            testID="send-button"
-            size={24}
-            iconColor={theme.colors.primary}
-            onPress={onSubmit}
-            style={[styles.sendButton, { backgroundColor: theme.colors.primaryContainer }]}
-            disabled={disabled}
-          />
-        ) : (
-          onVoicePress && (
-            <View style={[styles.micContainer, { backgroundColor: theme.colors.surfaceVariant }]}>
-              {isRecording ? <VoiceVisualizer volume={volume} isRecording={isRecording} /> : null}
-              <IconButton
-                icon={isRecording ? 'stop' : 'microphone'}
-                testID="voice-button"
-                size={24}
-                iconColor={isRecording ? theme.colors.error : theme.colors.onSurfaceVariant}
-                onPress={onVoicePress}
-                style={styles.iconButton}
-                disabled={disabled}
-              />
-            </View>
-          )
-        )}
+        <IconButton
+          icon="send"
+          testID="send-button"
+          size={24}
+          iconColor={theme.colors.primary}
+          onPress={onSubmit}
+          style={[styles.sendButton, { backgroundColor: theme.colors.primaryContainer }]}
+          disabled={disabled || !hasText}
+        />
       </View>
     </View>
   );
@@ -182,13 +107,13 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 20,
     maxHeight: 100,
-    minHeight: 44,
+    minHeight: 40,
     backgroundColor: 'transparent',
   },
   textContent: {
     paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   outline: {
     borderRadius: 24,
@@ -198,21 +123,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
-  },
-  micContainer: {
-    position: 'relative',
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-  },
-  iconButton: {
-    margin: 0,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
   },
   sendButton: {
     margin: 0,

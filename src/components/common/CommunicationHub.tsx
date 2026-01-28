@@ -10,9 +10,12 @@ import {
   Text,
   StyleProp,
   ViewStyle,
+  useWindowDimensions,
+  Pressable,
+  Animated,
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Surface, useTheme, IconButton } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from './Button';
 import { FacilityContact } from '../../types';
@@ -24,9 +27,9 @@ interface CommunicationHubProps {
   callButtonStyle?: StyleProp<ViewStyle>;
 }
 
-interface PhoneItem {
-  phoneNumber: string;
-  role?: string | null;
+interface ContactItem {
+  value: string;
+  platform: 'phone' | 'email' | 'viber' | 'messenger';
   contactName?: string | null;
   id?: string;
 }
@@ -38,30 +41,79 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
 }) => {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const MAX_MODAL_HEIGHT_RATIO = 0.5;
+  const modalMaxHeight = windowHeight * MAX_MODAL_HEIGHT_RATIO;
+  const listMaxHeight = Math.max(modalMaxHeight - 140, 48);
   const [modalVisible, setModalVisible] = useState(false);
+  const slideAnim = React.useRef(new Animated.Value(windowHeight)).current;
 
   const phoneContacts = contacts.filter((c) => c.platform === 'phone');
+  const emailContacts = contacts.filter((c) => c.platform === 'email');
   const viberContacts = contacts.filter((c) => c.platform === 'viber');
   const messengerContacts = contacts.filter((c) => c.platform === 'messenger');
 
   const hasPhone = phoneContacts.length > 0 || !!primaryPhone;
+  const hasEmail = emailContacts.length > 0;
   const hasViber = viberContacts.length > 0;
   const hasMessenger = messengerContacts.length > 0;
 
-  const handlePhoneAction = () => {
-    const allPhoneNumbers: PhoneItem[] = [
-      ...(primaryPhone ? [{ phoneNumber: primaryPhone, role: 'Primary' as const }] : []),
-      ...phoneContacts,
-    ];
+  const contactEntries: ContactItem[] = [
+    ...phoneContacts.map((c) => ({
+      value: c.phoneNumber,
+      platform: 'phone' as const,
+      contactName: c.contactName,
+      id: c.id,
+    })),
+    ...emailContacts.map((c) => ({
+      value: c.phoneNumber,
+      platform: 'email' as const,
+      contactName: c.contactName,
+      id: c.id,
+    })),
+  ];
 
-    if (allPhoneNumbers.length > 1) {
-      setModalVisible(true);
-    } else if (allPhoneNumbers.length === 1) {
-      Linking.openURL(`tel:${allPhoneNumbers[0].phoneNumber}`).catch(() =>
+  const openContact = (contact: ContactItem) => {
+    const url = contact.platform === 'email' ? `mailto:${contact.value}` : `tel:${contact.value}`;
+    Linking.openURL(url).catch(() =>
+      Alert.alert(
+        'Error',
+        `Failed to open ${contact.platform === 'email' ? 'email client' : 'dialer'}.`,
+      ),
+    );
+  };
+
+  const showModal = () => {
+    setModalVisible(true);
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 90,
+    }).start();
+  };
+
+  const hideModal = () => {
+    Animated.timing(slideAnim, {
+      toValue: windowHeight,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setModalVisible(false);
+    });
+  };
+
+  const handleContactAction = () => {
+    if (contactEntries.length > 1) {
+      showModal();
+    } else if (contactEntries.length === 1) {
+      openContact(contactEntries[0]);
+    } else if (primaryPhone) {
+      Linking.openURL(`tel:${primaryPhone}`).catch(() =>
         Alert.alert('Error', 'Failed to open dialer.'),
       );
     } else {
-      Alert.alert('Not Available', 'Phone number is not available.');
+      Alert.alert('Not Available', 'Contact information is not available.');
     }
   };
 
@@ -83,20 +135,37 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
     }
   };
 
-  const allPhoneNumbers: PhoneItem[] = [
-    ...(primaryPhone ? [{ phoneNumber: primaryPhone, role: 'Primary' as const }] : []),
-    ...phoneContacts,
-  ];
+  const allContacts = contactEntries;
+
+  const contactButtonMode: 'phone' | 'email' | 'multiple' = (() => {
+    if (contactEntries.length === 1) {
+      return contactEntries[0].platform;
+    }
+    if (contactEntries.length === 0 && primaryPhone) {
+      return 'phone';
+    }
+    return 'multiple';
+  })();
+
+  const contactButtonLabel =
+    contactButtonMode === 'phone' ? 'Call' : contactButtonMode === 'email' ? 'Email' : 'Contacts';
+
+  const contactButtonIcon =
+    contactButtonMode === 'phone'
+      ? 'phone-outline'
+      : contactButtonMode === 'email'
+        ? 'email-outline'
+        : 'account-group-outline';
 
   return (
     <View style={styles.container}>
       <Button
-        icon="phone"
-        title="Call"
-        onPress={handlePhoneAction}
+        icon={contactButtonIcon}
+        title={contactButtonLabel}
+        onPress={handleContactAction}
         style={[styles.callButton, callButtonStyle]}
         variant="primary"
-        disabled={!hasPhone}
+        disabled={!hasPhone && !hasEmail}
       />
 
       {(hasViber || hasMessenger) && (
@@ -129,69 +198,85 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
         visible={modalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={hideModal}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setModalVisible(false)}
-        >
-          <View
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={hideModal} />
+          <Animated.View
             style={[
               styles.modalContent,
-              { backgroundColor: theme.colors.surface, paddingBottom: insets.bottom + 20 },
+              {
+                backgroundColor: theme.colors.surface,
+                maxHeight: modalMaxHeight,
+                paddingBottom: Math.max(insets.bottom, 12),
+                transform: [{ translateY: slideAnim }],
+              },
             ]}
           >
             <View style={styles.modalHandle} />
-            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Select Number</Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>
+              Select Contact
+            </Text>
             <FlatList
-              data={allPhoneNumbers}
+              data={allContacts}
               keyExtractor={(item, index) => item.id || index.toString()}
+              style={{ maxHeight: listMaxHeight }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 4, paddingHorizontal: 24 }}
               renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.contactOption}
-                  activeOpacity={0.6}
-                  onPress={() => {
-                    setModalVisible(false);
-                    Linking.openURL(`tel:${item.phoneNumber}`);
-                  }}
+                <Surface
+                  style={[
+                    styles.contactOptionSurface,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.outlineVariant,
+                    },
+                  ]}
+                  elevation={1}
                 >
                   <View style={styles.contactOptionContent}>
-                    <View
-                      style={[styles.iconCircle, { backgroundColor: theme.colors.primary + '15' }]}
-                    >
-                      <Ionicons name="call" size={18} color={theme.colors.primary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.contactNumber, { color: theme.colors.primary }]}> 
-                        {item.phoneNumber}
+                    <View style={styles.contactInfo}>
+                      <Text style={[styles.contactName, { color: '#000000' }]}>
+                        {item.contactName || (item.platform === 'email' ? 'Email' : 'Phone')}
                       </Text>
-                      {item.role && (
-                        <Text
-                          style={[styles.contactRole, { color: theme.colors.onSurfaceVariant }]}
-                        >
-                          {item.role} {item.contactName ? `• ${item.contactName}` : ''}
-                        </Text>
-                      )}
+                      <Text
+                        style={[styles.contactNumber, { color: theme.colors.onSurfaceVariant }]}
+                      >
+                        {item.value}
+                      </Text>
                     </View>
+                    <IconButton
+                      icon={item.platform === 'email' ? 'email' : 'phone'}
+                      mode="contained"
+                      containerColor={theme.colors.primary}
+                      iconColor={theme.colors.onPrimary}
+                      size={24}
+                      onPress={() => {
+                        const url =
+                          item.platform === 'email'
+                            ? `mailto:${item.value}`
+                            : `tel:${item.value}`;
+                        Linking.openURL(url);
+                        hideModal();
+                      }}
+                    />
                   </View>
-                </TouchableOpacity>
+                </Surface>
               )}
             />
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)}
-              style={{ marginTop: 16, paddingVertical: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.onSurface }}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+            <Button
+              variant="outline"
+              onPress={hideModal}
+              title="Cancel"
+              style={{ marginTop: 16, marginHorizontal: 24 }}
+            />
+          </Animated.View>
+        </View>
       </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -207,8 +292,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   iconButton: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
@@ -226,7 +311,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
+    paddingTop: 16,
     width: '100%',
   },
   modalHandle: {
@@ -242,32 +327,29 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+    paddingHorizontal: 24,
   },
-  contactOption: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    backgroundColor: '#F3F4F6',
+  contactOptionSurface: {
     borderRadius: 12,
     marginVertical: 6,
+    borderWidth: 0.5,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 8,
   },
   contactOptionContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+  contactInfo: {
+    flex: 1,
+  },
+  contactName: {
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   contactNumber: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  contactRole: {
-    fontSize: 14,
+    fontSize: 13,
+    marginTop: 2,
   },
 });

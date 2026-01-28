@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { TextInput, HelperText, useTheme, Snackbar, Surface } from 'react-native-paper';
+import { TextInput, HelperText, useTheme, Snackbar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import StandardHeader from '../components/common/StandardHeader';
@@ -143,97 +143,24 @@ export const HealthProfileEditScreen = () => {
   };
 
   const onDismissSnackbar = () => setSnackbarVisible(false);
-  const heroNameLabel = fullName.trim() || 'Add your full name';
-  const heroBloodLabel = bloodType.trim() || 'Add your blood type';
   const isSaving = saveState === 'saving';
-  const headerActionLabel =
-    isSaving ? 'Saving…' : saveState === 'saved' ? 'Saved' : 'Save';
-  const headerRightActions = (
-    <Button
-      title={headerActionLabel}
-      variant="text"
-      onPress={handleSave}
-      loading={isSaving}
-      disabled={isSaving}
-      labelStyle={[styles.saveButtonLabel, { color: theme.colors.primary }]}
-      accessibilityLabel="Save health profile"
-    />
-  );
 
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <StandardHeader title="Edit Health Profile" showBackButton rightActions={headerRightActions} />
+      <StandardHeader title="Edit Health Profile" showBackButton />
       <KeyboardAwareScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollBottomPadding }]}
         enableOnAndroid={true}
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.heroCard}>
-          <Text variant="headlineSmall" style={styles.heroTitle}>
-            My Health Record
-          </Text>
-          <Text variant="bodyMedium" style={styles.heroSubtitle}>
-            Keep this section current so care teams immediately understand what matters most.
-          </Text>
-          <View style={styles.heroStats}>
-            <View style={styles.heroStat}>
-              <Text variant="titleLarge" style={styles.heroValue}>
-                {heroNameLabel}
-              </Text>
-              <Text variant="bodySmall" style={styles.heroHint}>
-                Primary name on file
-              </Text>
-            </View>
-            <View style={styles.heroStat}>
-              <Text variant="titleLarge" style={styles.heroValue}>
-                {heroBloodLabel}
-              </Text>
-              <Text variant="bodySmall" style={styles.heroHint}>
-                Blood type for emergencies
-              </Text>
-            </View>
-          </View>
-          <View style={styles.heroBadges}>
-            <Surface
-              style={[styles.heroBadge, { backgroundColor: theme.colors.primaryContainer }]}
-              elevation={1}
-            >
-              <Text variant="bodySmall" style={styles.heroBadgeLabel}>
-                Date of birth
-              </Text>
-              <Text variant="titleSmall" style={styles.heroBadgeValue}>
-                {displayDob || 'MM/DD/YYYY'}
-              </Text>
-            </Surface>
-          <Surface
-            style={[styles.heroBadge, styles.heroBadgeSpacing, { backgroundColor: theme.colors.secondaryContainer }]}
-            elevation={1}
-          >
-            <Text variant="bodySmall" style={styles.heroBadgeLabel}>
-              PhilHealth ID
-            </Text>
-            <Text variant="titleSmall" style={styles.heroBadgeValue}>
-              {philHealthId || 'Optional'}
-            </Text>
-          </Surface>
-        </View>
-        <Text variant="bodySmall" style={styles.heroAiNote}>
-          We only use these details to personalize your assessments with our AI assistant, and you can change them anytime.
-        </Text>
-      </View>
-
         <View style={styles.sectionCard}>
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Personal details
           </Text>
-          <Text variant="bodySmall" style={styles.sectionHint}>
-            Clinics use this information to confirm your identity and keep alignment with their records.
-          </Text>
-
           <View style={styles.field}>
             <TextInput
               mode="outlined"
@@ -248,9 +175,6 @@ export const HealthProfileEditScreen = () => {
               dense
               accessibilityHint="Use the name that appears on your IDs so clinics can recognize you"
             />
-            <HelperText type="info" visible style={styles.helperText}>
-              Match the name that clinics and diagnostics already have on record.
-            </HelperText>
           </View>
 
           <View style={styles.field}>
@@ -274,11 +198,6 @@ export const HealthProfileEditScreen = () => {
             <HelperText type="error" visible={!!dobError} style={styles.helperText}>
               {dobError}
             </HelperText>
-            {!dobError && (
-              <HelperText type="info" visible style={styles.helperText}>
-                We use this date to align you with your clinics and maintain safe care plans.
-              </HelperText>
-            )}
           </View>
         </View>
 
@@ -286,10 +205,6 @@ export const HealthProfileEditScreen = () => {
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Health essentials
           </Text>
-          <Text variant="bodySmall" style={styles.sectionHint}>
-            These values help providers prepare the right care for you and avoid repeated questions.
-          </Text>
-
           <View style={styles.field}>
             <TextInput
               mode="outlined"
@@ -304,9 +219,6 @@ export const HealthProfileEditScreen = () => {
               dense
               accessibilityHint="Share your blood type so emergency teams can act quickly"
             />
-            <HelperText type="info" visible style={styles.helperText}>
-              Adding your blood type keeps teams ready for urgent care without guessing.
-            </HelperText>
           </View>
 
           <View style={styles.field}>
@@ -324,9 +236,6 @@ export const HealthProfileEditScreen = () => {
               dense
               accessibilityHint="Keep this number accurate for faster claims and eligibility checks"
             />
-            <HelperText type="info" visible style={styles.helperText}>
-              Keeping your ID synced avoids delays when updating benefits or billing.
-            </HelperText>
           </View>
         </View>
 
@@ -334,10 +243,6 @@ export const HealthProfileEditScreen = () => {
           <Text variant="titleMedium" style={styles.sectionTitle}>
             Medical context
           </Text>
-          <Text variant="bodySmall" style={styles.sectionHint}>
-            These details go to your AI assistant so it can remember your baseline, avoid redundant questions, and keep suggestions relevant.
-          </Text>
-
           <View style={styles.field}>
             <TextInput
               mode="outlined"
@@ -354,9 +259,6 @@ export const HealthProfileEditScreen = () => {
               numberOfLines={2}
               accessibilityHint="Share long-term conditions so the AI tailors follow-up questions"
             />
-            <HelperText type="info" visible style={styles.helperText}>
-              Adds context to your AI assessment so it can recommend the safest next steps.
-            </HelperText>
           </View>
 
           <View style={styles.field}>
@@ -375,9 +277,6 @@ export const HealthProfileEditScreen = () => {
               numberOfLines={2}
               accessibilityHint="List known allergies so the AI avoids unsafe recommendations"
             />
-            <HelperText type="info" visible style={styles.helperText}>
-              We respect your control — remove any allergy at any time if the info changes.
-            </HelperText>
           </View>
 
           <View style={styles.field}>
@@ -396,9 +295,6 @@ export const HealthProfileEditScreen = () => {
               numberOfLines={2}
               accessibilityHint="Tell the AI what you take so it can avoid interactions and redundant suggestions"
             />
-            <HelperText type="info" visible style={styles.helperText}>
-              These meds stay private and keep your AI advisor grounded in what you already take.
-            </HelperText>
           </View>
 
           <View style={styles.field}>
@@ -443,8 +339,8 @@ export const HealthProfileEditScreen = () => {
             title="Save changes"
             variant="primary"
             onPress={handleSave}
-            loading={saveState === 'saving'}
-            disabled={saveState === 'saving'}
+            loading={isSaving}
+            disabled={isSaving}
             accessibilityHint="Save your updated health record details"
             style={styles.saveButton}
           />
@@ -484,66 +380,6 @@ const styles = StyleSheet.create({
     padding: 24,
     flexGrow: 1,
   },
-  heroCard: {
-    borderRadius: 24,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  heroTitle: {
-    fontWeight: '700',
-  },
-  heroSubtitle: {
-    marginTop: 6,
-    color: '#4A4B4D',
-    lineHeight: 20,
-  },
-  heroAiNote: {
-    marginTop: 12,
-    color: '#5C5F66',
-    lineHeight: 20,
-  },
-  heroStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  heroStat: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  heroValue: {
-    fontWeight: '700',
-    color: '#1B1B1F',
-  },
-  heroHint: {
-    marginTop: 4,
-    color: '#5C5F66',
-  },
-  heroBadges: {
-    flexDirection: 'row',
-    marginTop: 18,
-  },
-  heroBadge: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 12,
-  },
-  heroBadgeSpacing: {
-    marginLeft: 12,
-  },
-  heroBadgeLabel: {
-    color: '#5C5F66',
-  },
-  heroBadgeValue: {
-    marginTop: 4,
-    fontWeight: '600',
-  },
   sectionCard: {
     borderRadius: 24,
     padding: 20,
@@ -559,11 +395,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontWeight: '700',
-  },
-  sectionHint: {
-    marginTop: 4,
-    color: '#5C5F66',
-    lineHeight: 20,
   },
   field: {
     marginTop: 18,

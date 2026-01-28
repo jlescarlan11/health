@@ -46,7 +46,7 @@ The underlying cause is an **information gap** in healthcare navigation, which l
 
 **Key Capabilities:**
 
-- Voice and text symptom input (English)
+- Text symptom input (English)
 - Intelligent clarifying questions (2-4 follow-ups)
 - Recommends one of four facility levels: Self-Care, Barangay Health Center, Hospital, or Emergency Services
 - Shows 3 nearest appropriate facilities with distance, phone, YAKAP status
@@ -125,7 +125,6 @@ The underlying cause is an **information gap** in healthcare navigation, which l
 ### **Additional Libraries**
 
 - **Navigation**: React Navigation 6.x
-- **Voice Input**: Expo Speech
 - **Geolocation**: Expo Location
 - **Forms**: React Hook Form 7.x
 - **HTTP Client**: Axios 1.x

@@ -1,15 +1,13 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   FlatList,
   Alert,
-  Platform,
   Keyboard,
-  TouchableOpacity,
   TextInput,
 } from 'react-native';
-import { Button, ActivityIndicator, useTheme, Surface } from 'react-native-paper';
+import { ActivityIndicator, useTheme, Surface } from 'react-native-paper';
 import { Text } from '../components/common/Text';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -25,19 +23,17 @@ import { Medication } from '../types';
 import { MedicationCard } from '../components/features/medication/MedicationCard';
 import { ScreenSafeArea } from '../components/common';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { InputCard } from '../components/common/InputCard'; // Or use standard TextInput if InputCard is too specific
 import { theme as appTheme } from '../theme';
+import { Button } from '../components/common';
 
 // Simple Time Input Component since we can't add libraries
-const TimeInput = ({
-  value,
-  onChange,
-  error,
-}: {
+interface TimeInputProps {
   value: string;
-  onChange: (time: string) => void;
+  onChangeText: (time: string) => void;
   error?: boolean;
-}) => {
+}
+
+const TimeInput = ({ value, onChangeText, error }: TimeInputProps) => {
   const theme = useTheme();
 
   // Format: HH:MM
@@ -59,7 +55,7 @@ const TimeInput = ({
       if (minutes > 59) formatted = `${formatted.split(':')[0]}:59`;
     }
 
-    onChange(formatted);
+    onChangeText(formatted);
   };
 
   return (
@@ -90,6 +86,92 @@ const TimeInput = ({
   );
 };
 
+interface MedicationFormHeaderProps {
+  name: string;
+  dosage: string;
+  time: string;
+  validationError: string | null;
+  isSaving: boolean;
+  onNameChange: (value: string) => void;
+  onDosageChange: (value: string) => void;
+  onTimeChange: (value: string) => void;
+  onSubmit: () => void;
+}
+
+const MedicationFormHeader: React.FC<MedicationFormHeaderProps> = ({
+  name,
+  dosage,
+  time,
+  validationError,
+  isSaving,
+  onNameChange,
+  onDosageChange,
+  onTimeChange,
+  onSubmit,
+}) => {
+  const theme = useTheme();
+
+  return (
+    <View style={styles.formContainer}>
+      <Text variant="headlineSmall" style={styles.headerTitle}>
+        Add Medication
+      </Text>
+
+      <TextInput
+        style={[
+          styles.input,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outline,
+            color: theme.colors.onSurface,
+          },
+        ]}
+        placeholder="Medication Name (e.g., Aspirin)"
+        placeholderTextColor={theme.colors.onSurfaceVariant}
+        value={name}
+        onChangeText={onNameChange}
+      />
+
+      <View style={styles.row}>
+        <View style={{ flex: 1, marginRight: 8 }}>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.outline,
+                color: theme.colors.onSurface,
+              },
+            ]}
+            placeholder="Dosage (e.g., 100mg)"
+            placeholderTextColor={theme.colors.onSurfaceVariant}
+            value={dosage}
+            onChangeText={onDosageChange}
+          />
+        </View>
+        <View style={{ width: 100 }}>
+          <TimeInput value={time} onChangeText={onTimeChange} error={!!validationError && !time} />
+        </View>
+      </View>
+
+      {validationError && (
+        <Text style={{ color: theme.colors.error, marginBottom: 8 }}>{validationError}</Text>
+      )}
+
+      <Button
+        variant="primary"
+        onPress={onSubmit}
+        style={styles.addButton}
+        loading={isSaving}
+        disabled={isSaving}
+        title="Save Medication"
+      />
+    </View>
+  );
+};
+
+const MemoizedMedicationFormHeader = React.memo(MedicationFormHeader);
+
 export default function MedicationTrackerScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
@@ -105,13 +187,7 @@ export default function MedicationTrackerScreen() {
   const [takenState, setTakenState] = useState<Record<string, boolean>>({});
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === 'idle') {
-      dispatch(fetchMedications());
-    }
-  }, [status, dispatch]);
-
-  const handleAddMedication = async () => {
+  const handleAddMedication = useCallback(async () => {
     if (!name.trim() || !dosage.trim() || !time.trim()) {
       setValidationError('Please fill in all fields.');
       return;
@@ -126,12 +202,12 @@ export default function MedicationTrackerScreen() {
     Keyboard.dismiss();
 
     const newMedication: Medication = {
-      id: Date.now().toString(), // Simple ID generation
+      id: Date.now().toString(),
       name: name.trim(),
       dosage: dosage.trim(),
       scheduled_time: time,
       is_active: true,
-      days_of_week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], // Default to every day
+      days_of_week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     };
 
     try {
@@ -143,7 +219,13 @@ export default function MedicationTrackerScreen() {
       console.error('Failed to add medication:', err);
       Alert.alert('Error', 'Failed to save medication. Please try again.');
     }
-  };
+  }, [name, dosage, time, dispatch]);
+
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchMedications());
+    }
+  }, [status, dispatch]);
 
   const handleDelete = (id: string) => {
     Alert.alert('Delete Medication', 'Are you sure you want to delete this medication?', [
@@ -171,65 +253,6 @@ export default function MedicationTrackerScreen() {
     }));
   };
 
-  const renderHeader = () => (
-    <View style={styles.formContainer}>
-      <Text variant="headlineSmall" style={styles.headerTitle}>
-        Add Medication
-      </Text>
-
-      <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.outline,
-            color: theme.colors.onSurface,
-          },
-        ]}
-        placeholder="Medication Name (e.g., Aspirin)"
-        placeholderTextColor={theme.colors.onSurfaceVariant}
-        value={name}
-        onChangeText={setName}
-      />
-
-      <View style={styles.row}>
-        <View style={{ flex: 1, marginRight: 8 }}>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outline,
-                color: theme.colors.onSurface,
-              },
-            ]}
-            placeholder="Dosage (e.g., 100mg)"
-            placeholderTextColor={theme.colors.onSurfaceVariant}
-            value={dosage}
-            onChangeText={setDosage}
-          />
-        </View>
-        <View style={{ width: 100 }}>
-          <TimeInput value={time} onChange={setTime} error={!!validationError && !time} />
-        </View>
-      </View>
-
-      {validationError && (
-        <Text style={{ color: theme.colors.error, marginBottom: 8 }}>{validationError}</Text>
-      )}
-
-      <Button
-        mode="contained"
-        onPress={handleAddMedication}
-        style={styles.addButton}
-        loading={status === 'loading'}
-        disabled={status === 'loading'}
-      >
-        Save Medication
-      </Button>
-    </View>
-  );
-
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       {status === 'loading' ? (
@@ -248,6 +271,26 @@ export default function MedicationTrackerScreen() {
     </View>
   );
 
+  const headerProps: MedicationFormHeaderProps = useMemo(
+    () => ({
+      name,
+      dosage,
+      time,
+      validationError,
+      isSaving: status === 'loading',
+      onNameChange: setName,
+      onDosageChange: setDosage,
+      onTimeChange: setTime,
+      onSubmit: handleAddMedication,
+    }),
+    [name, dosage, time, validationError, status, handleAddMedication],
+  );
+
+  const headerElement = useMemo(
+    () => <MemoizedMedicationFormHeader {...headerProps} />,
+    [headerProps],
+  );
+
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -264,7 +307,7 @@ export default function MedicationTrackerScreen() {
             onDelete={handleDelete}
           />
         )}
-        ListHeaderComponent={renderHeader}
+        ListHeaderComponent={headerElement}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={[styles.listContent, { paddingBottom: listBottomPadding }]}
         keyboardShouldPersistTaps="handled"
@@ -272,9 +315,7 @@ export default function MedicationTrackerScreen() {
       {error && (
         <Surface style={[styles.errorBanner, { backgroundColor: theme.colors.errorContainer }]}>
           <Text style={{ color: theme.colors.onErrorContainer }}>{error}</Text>
-          <Button compact onPress={() => dispatch(fetchMedications())}>
-            Retry
-          </Button>
+          <Button variant="text" compact onPress={() => dispatch(fetchMedications())} title="Retry" />
         </Surface>
       )}
     </ScreenSafeArea>
@@ -287,7 +328,7 @@ const styles = StyleSheet.create({
   },
   listContent: {},
   formContainer: {
-    padding: 16,
+    padding: 12,
     marginBottom: 8,
   },
   headerTitle: {
@@ -297,7 +338,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     marginBottom: 12,
     fontSize: 16,
   },
@@ -312,10 +353,10 @@ const styles = StyleSheet.create({
   timeInput: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     fontSize: 16,
     textAlign: 'center',
-    height: 52, // Match approximate height of other inputs
+    height: 48, // Match approximate height of other inputs
   },
   addButton: {
     marginTop: 4,

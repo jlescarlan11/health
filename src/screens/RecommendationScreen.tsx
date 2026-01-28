@@ -781,6 +781,7 @@ const RecommendationScreen = () => {
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
   const recommendationNarrative =
     narratives?.recommendationNarrative ?? recommendation.user_advice ?? '';
+  const cardIntro = recommendationNarrative.trim() || undefined;
 
   const guardAdjustments = recommendation.triage_logic?.adjustments ?? [];
 
@@ -832,13 +833,7 @@ const RecommendationScreen = () => {
       alignSelf: 'stretch' as const,
     },
   ];
-  const handoverButtonContentStyle = {
-    justifyContent: 'center' as const,
-  };
   const handoverButtonLabelText = 'View Handover Report';
-  const handoverButtonLabelStyle = {
-    marginLeft: 0,
-  };
   const restartButtonStyle = [
     styles.restartButton,
     {
@@ -847,13 +842,9 @@ const RecommendationScreen = () => {
       alignSelf: 'stretch' as const,
     },
   ];
-  const restartButtonContentStyle = handoverButtonContentStyle;
   const selfCareToggleStyle = {
     marginTop: theme.spacing?.md ?? 12,
     marginBottom: theme.spacing?.md ?? 12,
-  };
-  const selfCareToggleContentStyle = {
-    justifyContent: 'center' as const,
   };
 
   return (
@@ -868,6 +859,7 @@ const RecommendationScreen = () => {
         <View style={styles.statusCardWrapper}>
           <TriageStatusCard
             level={triageLevel}
+            intro={cardIntro}
             instruction={instructionWithGuardrail}
             onEmergencyAction={isEmergency ? handleEmergencyAction : undefined}
           />
@@ -950,16 +942,15 @@ const RecommendationScreen = () => {
                   {transferError}
                 </Text>
               )}
-              <Button
-                title="Send Transfer"
-                variant="primary"
-                loading={transferLoading}
-                onPress={handleTransferAssessment}
-                disabled={!canSubmitTransfer}
-                accessibilityHint="Send this assessment to the selected user"
-                style={handoverButtonStyle}
-                contentStyle={handoverButtonContentStyle}
-              />
+            <Button
+              title="Send Transfer"
+              variant="primary"
+              loading={transferLoading}
+              onPress={handleTransferAssessment}
+              disabled={!canSubmitTransfer}
+              accessibilityHint="Send this assessment to the selected user"
+              style={handoverButtonStyle}
+            />
             </Surface>
           </View>
         )}
@@ -980,8 +971,6 @@ const RecommendationScreen = () => {
               onPress={() => navigation.navigate('ClinicalNote', {})}
               variant="primary"
               style={handoverButtonStyle}
-              contentStyle={handoverButtonContentStyle}
-              labelStyle={handoverButtonLabelStyle}
               accessibilityLabel="View clinical handover report"
               accessibilityHint="Opens detailed medical information for healthcare providers"
               accessibilityRole="button"
@@ -998,7 +987,6 @@ const RecommendationScreen = () => {
             accessibilityLabel="Find nearby clinics"
             accessibilityHint="Shows optional list of nearby healthcare facilities"
             style={selfCareToggleStyle}
-            contentStyle={selfCareToggleContentStyle}
           />
         )}
 
@@ -1113,7 +1101,6 @@ const RecommendationScreen = () => {
             }}
             variant="outline"
             style={restartButtonStyle}
-            contentStyle={restartButtonContentStyle}
           />
         </View>
       </ScrollView>
