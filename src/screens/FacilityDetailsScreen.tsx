@@ -17,7 +17,7 @@ import { useSelector } from 'react-redux';
 import { ScreenSafeArea } from '../components/common';
 import { Ionicons } from '@expo/vector-icons';
 import ImageViewing from 'react-native-image-viewing';
-import { useTheme } from 'react-native-paper';
+import { useTheme, Surface, IconButton } from 'react-native-paper';
 
 import { Text } from '../components/common/Text';
 import { Button } from '../components/common/Button';
@@ -307,13 +307,6 @@ export const FacilityDetailsScreen = () => {
 
           {/* Location */}
           <View style={styles.infoSection}>
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name="location-outline"
-                size={24 * scaleFactor}
-                color={theme.colors.primary}
-              />
-            </View>
             <View style={styles.infoTextContainer}>
               <Text style={infoLabelStyle}>Address</Text>
               <Text style={infoValueTextStyle}>
@@ -324,9 +317,6 @@ export const FacilityDetailsScreen = () => {
 
           {/* Hours */}
           <View style={styles.infoSection}>
-            <View style={styles.iconContainer}>
-              <Ionicons name="time-outline" size={24 * scaleFactor} color={theme.colors.primary} />
-            </View>
             <View style={styles.infoTextContainer}>
               <Text style={infoLabelStyle}>Operating Hours</Text>
 
@@ -340,17 +330,6 @@ export const FacilityDetailsScreen = () => {
 
           {/* Contacts */}
           <View style={styles.infoSection}>
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name="chatbubbles-outline"
-                size={24 * scaleFactor}
-                color={
-                  facility.contacts?.length || facility.phone
-                    ? theme.colors.primary
-                    : theme.colors.onSurfaceVariant
-                }
-              />
-            </View>
             <View style={styles.infoTextContainer}>
               <Text style={infoLabelStyle}>Contacts</Text>
 
@@ -358,55 +337,83 @@ export const FacilityDetailsScreen = () => {
                 facility.contacts
                   .filter((c) => c.platform === 'phone' || c.platform === 'email')
                   .map((contact, index) => (
-                    <TouchableOpacity
+                    <Surface
                       key={contact.id || index}
-                      onPress={() => {
-                        const url = contact.platform === 'email' ? `mailto:${contact.phoneNumber}` : `tel:${contact.phoneNumber}`;
-                        Linking.openURL(url);
-                      }}
-                      style={styles.contactItem}
+                      style={[
+                        styles.contactOptionSurface,
+                        {
+                          backgroundColor: theme.colors.surface,
+                          borderColor: theme.colors.outlineVariant,
+                        },
+                      ]}
+                      elevation={1}
                     >
-                      <View style={styles.contactInfo}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Ionicons 
-                            name={contact.platform === 'email' ? 'mail-outline' : 'call-outline'} 
-                            size={16 * scaleFactor} 
-                            color={theme.colors.primary} 
-                            style={{ marginRight: 8 }}
-                          />
-                          <Text style={contactPhoneTextStyle}>{contact.phoneNumber}</Text>
-                        </View>
-                        {contact.contactName && (
-                          <Text style={[styles.metaItem, { fontSize: 14 * scaleFactor, marginLeft: 24 }]}>
-                            {contact.contactName}
+                      <View style={styles.contactOptionContent}>
+                        <View style={styles.contactInfo}>
+                          <Text style={[styles.contactName, { color: '#000000' }]}>
+                            {contact.contactName || (contact.platform === 'email' ? 'Email' : 'Phone')}
                           </Text>
-                        )}
+                          <Text
+                            style={[styles.contactNumber, { color: theme.colors.onSurfaceVariant }]}
+                          >
+                            {contact.phoneNumber}
+                          </Text>
+                        </View>
+                        <IconButton
+                          icon={contact.platform === 'email' ? 'email' : 'phone'}
+                          mode="contained"
+                          containerColor={theme.colors.primary}
+                          iconColor={theme.colors.onPrimary}
+                          size={24}
+                          onPress={() => {
+                            const url =
+                              contact.platform === 'email'
+                                ? `mailto:${contact.phoneNumber}`
+                                : `tel:${contact.phoneNumber}`;
+                            Linking.openURL(url);
+                          }}
+                        />
                       </View>
-                    </TouchableOpacity>
+                    </Surface>
                   ))
               ) : (
-                <TouchableOpacity
-                  onPress={() => facility.phone && Linking.openURL(`tel:${facility.phone}`)}
-                  disabled={!facility.phone}
+                <Surface
+                  style={[
+                    styles.contactOptionSurface,
+                    {
+                      backgroundColor: theme.colors.surface,
+                      borderColor: theme.colors.outlineVariant,
+                    },
+                  ]}
+                  elevation={1}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Ionicons 
-                      name="call-outline" 
-                      size={16 * scaleFactor} 
-                      color={facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant} 
-                      style={{ marginRight: 8 }}
+                  <View style={styles.contactOptionContent}>
+                    <View style={styles.contactInfo}>
+                      <Text style={[styles.contactName, { color: '#000000' }]}>Phone</Text>
+                      <Text
+                        style={[
+                          styles.contactNumber,
+                          {
+                            color: facility.phone
+                              ? theme.colors.onSurfaceVariant
+                              : theme.colors.outline,
+                          },
+                        ]}
+                      >
+                        {facility.phone || 'Not available'}
+                      </Text>
+                    </View>
+                    <IconButton
+                      icon="phone"
+                      mode="contained"
+                      containerColor={facility.phone ? theme.colors.primary : theme.colors.surfaceVariant}
+                      iconColor={facility.phone ? theme.colors.onPrimary : theme.colors.outline}
+                      size={24}
+                      disabled={!facility.phone}
+                      onPress={() => facility.phone && Linking.openURL(`tel:${facility.phone}`)}
                     />
-                    <Text
-                      style={
-                        facility.phone
-                          ? contactPhoneTextStyle
-                          : contactPhoneDisabledTextStyle
-                      }
-                    >
-                      {facility.phone || 'Not available'}
-                    </Text>
                   </View>
-                </TouchableOpacity>
+                </Surface>
               )}
             </View>
           </View>
@@ -565,28 +572,21 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   infoSection: {
-    flexDirection: 'row',
-    marginBottom: 32, // Increased spacing
-  },
-  iconContainer: {
-    width: 40,
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
+    marginBottom: 32,
   },
   infoTextContainer: {
     flex: 1,
   },
   sectionLabel: {
     fontSize: 12,
-    marginBottom: 4,
+    marginBottom: 8,
     textTransform: 'uppercase',
     fontWeight: '700',
   },
   infoText: {
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '400', // Body copy weight
+    fontWeight: '400',
   },
   linkText: {
     fontWeight: '500',
@@ -625,7 +625,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    // Subtle shadow for depth
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -663,16 +662,28 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     letterSpacing: 0.2,
   },
-  contactItem: {
+  contactOptionSurface: {
+    borderRadius: 12,
+    marginVertical: 6,
+    borderWidth: 0.5,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 8,
+  },
+  contactOptionContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingVertical: 4,
   },
   contactInfo: {
     flex: 1,
-    marginRight: 16,
+  },
+  contactName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  contactNumber: {
+    fontSize: 13,
+    marginTop: 2,
   },
 });
 

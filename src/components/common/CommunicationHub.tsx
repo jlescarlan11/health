@@ -11,6 +11,8 @@ import {
   StyleProp,
   ViewStyle,
   useWindowDimensions,
+  Pressable,
+  Animated,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Surface, useTheme, IconButton } from 'react-native-paper';
@@ -44,6 +46,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
   const modalMaxHeight = windowHeight * MAX_MODAL_HEIGHT_RATIO;
   const listMaxHeight = Math.max(modalMaxHeight - 140, 48);
   const [modalVisible, setModalVisible] = useState(false);
+  const slideAnim = React.useRef(new Animated.Value(windowHeight)).current;
 
   const phoneContacts = contacts.filter((c) => c.platform === 'phone');
   const emailContacts = contacts.filter((c) => c.platform === 'email');
@@ -80,9 +83,29 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
     );
   };
 
+  const showModal = () => {
+    setModalVisible(true);
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 20,
+      stiffness: 90,
+    }).start();
+  };
+
+  const hideModal = () => {
+    Animated.timing(slideAnim, {
+      toValue: windowHeight,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      setModalVisible(false);
+    });
+  };
+
   const handleContactAction = () => {
     if (contactEntries.length > 1) {
-      setModalVisible(true);
+      showModal();
     } else if (contactEntries.length === 1) {
       openContact(contactEntries[0]);
     } else if (primaryPhone) {
@@ -125,22 +148,18 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
   })();
 
   const contactButtonLabel =
-    contactButtonMode === 'phone'
-      ? 'Call'
-      : contactButtonMode === 'email'
-      ? 'Email'
-      : 'Contacts';
+    contactButtonMode === 'phone' ? 'Call' : contactButtonMode === 'email' ? 'Email' : 'Contacts';
 
   const contactButtonIcon =
     contactButtonMode === 'phone'
       ? 'phone-outline'
       : contactButtonMode === 'email'
-      ? 'email-outline'
-      : 'account-group-outline';
+        ? 'email-outline'
+        : 'account-group-outline';
 
   return (
     <View style={styles.container}>
-        <Button
+      <Button
         icon={contactButtonIcon}
         title={contactButtonLabel}
         onPress={handleContactAction}
@@ -179,19 +198,18 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
         visible={modalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={hideModal}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setModalVisible(false)}
-        >
-          <View
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={hideModal} />
+          <Animated.View
             style={[
               styles.modalContent,
               {
                 backgroundColor: theme.colors.surface,
                 maxHeight: modalMaxHeight,
+                paddingBottom: Math.max(insets.bottom, 12),
+                transform: [{ translateY: slideAnim }],
               },
             ]}
           >
@@ -204,7 +222,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
               keyExtractor={(item, index) => item.id || index.toString()}
               style={{ maxHeight: listMaxHeight }}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 4 }}
+              contentContainerStyle={{ paddingBottom: 4, paddingHorizontal: 24 }}
               renderItem={({ item }) => (
                 <Surface
                   style={[
@@ -221,7 +239,9 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
                       <Text style={[styles.contactName, { color: '#000000' }]}>
                         {item.contactName || (item.platform === 'email' ? 'Email' : 'Phone')}
                       </Text>
-                      <Text style={[styles.contactNumber, { color: theme.colors.onSurfaceVariant }]}>
+                      <Text
+                        style={[styles.contactNumber, { color: theme.colors.onSurfaceVariant }]}
+                      >
                         {item.value}
                       </Text>
                     </View>
@@ -232,10 +252,12 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
                       iconColor={theme.colors.onPrimary}
                       size={24}
                       onPress={() => {
-                        setModalVisible(false);
                         const url =
-                          item.platform === 'email' ? `mailto:${item.value}` : `tel:${item.value}`;
+                          item.platform === 'email'
+                            ? `mailto:${item.value}`
+                            : `tel:${item.value}`;
                         Linking.openURL(url);
+                        hideModal();
                       }}
                     />
                   </View>
@@ -244,16 +266,17 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
             />
             <Button
               variant="outline"
-              onPress={() => setModalVisible(false)}
+              onPress={hideModal}
               title="Cancel"
-              style={{ marginTop: 16 }}
+              style={{ marginTop: 16, marginHorizontal: 24 }}
             />
-          </View>
-        </TouchableOpacity>
+          </Animated.View>
+        </View>
       </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -288,7 +311,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
+    paddingTop: 16,
     width: '100%',
   },
   modalHandle: {
@@ -304,6 +327,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 16,
     textAlign: 'center',
+    paddingHorizontal: 24,
   },
   contactOptionSurface: {
     borderRadius: 12,
@@ -329,4 +353,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-
