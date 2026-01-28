@@ -64,33 +64,148 @@ function parseCapacity(capacityStr: string): number {
  * Parses complex phone strings into structured contact records
  * Handles formats like: "Person Name: 09123456789; Other Name: 09123456789"
  */
+const PHONE_RANGE_EXPANSION_LIMIT = 32;
+
+type ContactPlatform = 'phone' | 'email';
+
+interface ParsedContact {
+  contactName: string | null;
+  phoneNumber: string;
+  platform: ContactPlatform;
+  role: string;
+}
+
+function splitContactSegment(segment: string) {
+  const colonIndex = segment.indexOf(':');
+  if (colonIndex === -1) {
+    return { label: null, value: segment };
+  }
+
+  const label = segment.substring(0, colonIndex).trim();
+  const value = segment.substring(colonIndex + 1).trim();
+  return { label, value };
+}
+
+const ROLE_ONLY_LABELS = new Set([
+  'primary',
+  'primary contact',
+  'personnel',
+  'personnel/cdot',
+  'cdot',
+  'primary contact (cdot)',
+]);
+
+function isNumericLabel(label: string) {
+  return /^[\d+\-\s()]+$/.test(label.trim());
+}
+
+function deriveRoleAndName(
+  label: string | null,
+  platform: ContactPlatform,
+): { role: string; contactName: string | null } {
+  const normalizedLabel = label ? label.trim() : '';
+  if (!normalizedLabel) {
+    return {
+      role: platform === 'email' ? 'Email' : 'Primary',
+      contactName: null,
+    };
+  }
+
+  const lowerLabel = normalizedLabel.toLowerCase();
+  if (ROLE_ONLY_LABELS.has(lowerLabel) || isNumericLabel(normalizedLabel)) {
+    return { role: normalizedLabel, contactName: null };
+  }
+
+  const fallbackRole = platform === 'email' ? 'Email' : 'Personnel';
+  return { role: fallbackRole, contactName: normalizedLabel };
+}
+
+function formatPhoneWithTemplate(template: string, digits: string) {
+  const templateDigits = template.match(/\d/g) || [];
+  if (!templateDigits.length) return template;
+
+  const normalized =
+    digits.length > templateDigits.length
+      ? digits.slice(-templateDigits.length)
+      : digits.padStart(templateDigits.length, '0');
+
+  let cursor = 0;
+  return template.replace(/\d/g, () => normalized[cursor++] || '0');
+}
+
+function expandPhoneRange(value: string) {
+  const match = value.match(/(.+?)\bto\b\s*(.+)/i);
+  if (!match) return [value.trim()];
+
+  const startRaw = match[1].trim();
+  const endRaw = match[2].trim();
+  const startDigits = startRaw.replace(/\D/g, '');
+  const endDigitsRaw = endRaw.replace(/\D/g, '');
+  if (!startDigits || !endDigitsRaw) return [startRaw];
+
+  const templateLength = startDigits.length;
+  const endDigits =
+    endDigitsRaw.length >= templateLength
+      ? endDigitsRaw
+      : `${startDigits.slice(0, templateLength - endDigitsRaw.length)}${endDigitsRaw}`;
+
+  const startNumber = BigInt(startDigits);
+  const endNumber = BigInt(endDigits);
+  if (endNumber < startNumber) return [startRaw];
+
+  const difference = endNumber - startNumber;
+  if (difference > BigInt(PHONE_RANGE_EXPANSION_LIMIT)) {
+    return [startRaw];
+  }
+
+  const numbers: string[] = [];
+  for (let current = startNumber; current <= endNumber; current += BigInt(1)) {
+    const digits = current.toString().padStart(templateLength, '0');
+    numbers.push(formatPhoneWithTemplate(startRaw, digits));
+  }
+
+  return numbers;
+}
+
 function parseContacts(phoneStr: string) {
   if (
     !phoneStr ||
     phoneStr.toLowerCase().includes('to be updated') ||
     phoneStr.toLowerCase().includes('to be filled')
-  )
+  ) {
     return [];
+  }
 
-  return phoneStr.split(';').map((part) => {
-    const colonIndex = part.indexOf(':');
-    if (colonIndex !== -1) {
-      const nameAndRole = part.substring(0, colonIndex).trim();
-      const number = part.substring(colonIndex + 1).trim();
-      return {
-        contactName: nameAndRole,
-        phoneNumber: number,
-        platform: 'phone',
-        role: 'Personnel',
-      };
-    }
-    return {
-      phoneNumber: part.trim(),
-      platform: 'phone',
-      role: 'Primary',
-      contactName: null,
-    };
-  });
+  return phoneStr
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .flatMap((segment): ParsedContact[] => {
+      const { label, value } = splitContactSegment(segment);
+      if (!value) return [];
+
+      const platform: ContactPlatform =
+        label?.toLowerCase() === 'email' || value.includes('@') ? 'email' : 'phone';
+      const { role, contactName } = deriveRoleAndName(label, platform);
+
+      if (platform === 'email') {
+        return [
+          {
+            contactName,
+            phoneNumber: value.trim(),
+            platform,
+            role,
+          },
+        ];
+      }
+
+      return expandPhoneRange(value).map((phoneNumber) => ({
+        contactName,
+        phoneNumber,
+        platform,
+        role,
+      }));
+    });
 }
 
 /**

@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Button, Switch, useTheme, Surface } from 'react-native-paper';
+import { Switch, useTheme, Surface } from 'react-native-paper';
 import { useAppSelector } from '../../../hooks/reduxHooks';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../../common/Text';
 import { useNavigation } from '@react-navigation/native';
+import { Button } from '../../common';
 
 export const DigitalIDCard: React.FC = () => {
   const theme = useTheme();
@@ -19,30 +20,41 @@ export const DigitalIDCard: React.FC = () => {
   const qrSize = 140;
   const scanHintMinWidth = qrSize + 32;
 
-  const qrValue = JSON.stringify({
-    n: profile.fullName,
-    d: profile.dob,
-    b: profile.bloodType,
-    p: profile.philHealthId,
-    v: 1, // Versioning for future schema updates
-  });
+  const qrPayload = useMemo(() => {
+    const payload: Record<string, unknown> = { version: 2 };
+
+    const addTextField = (key: string, value?: string | null) => {
+      const normalized = sanitizeText(value);
+      if (normalized) {
+        payload[key] = normalized;
+      }
+    };
+
+    addTextField('name', profile.fullName);
+    addTextField('date of birth', profile.dob);
+    addTextField('blood type', profile.bloodType);
+    addTextField('philhealth id', profile.philHealthId);
+
+    const snapshotData = buildHealthSnapshot(profile);
+    if (Object.keys(snapshotData).length) {
+      payload['health snapshot'] = snapshotData;
+    }
+
+    return payload;
+  }, [profile]);
+
+  const qrValue = JSON.stringify(qrPayload);
 
   const hasName = !!profile.fullName?.trim();
   const hasDob = !!profile.dob?.trim();
   const formattedDob = hasDob ? formatDobForDisplay(profile.dob) : '---';
 
-  const healthIdRows = [
-    [
-      { label: 'Full Name', value: hasName ? profile.fullName : '---' },
-      { label: 'Date of Birth', value: formattedDob || '---' },
-    ],
-    [
-      { label: 'Blood Type', value: profile.bloodType || '---' },
-      { label: 'PhilHealth ID', value: profile.philHealthId || '---' },
-    ],
+  const basicInfoEntries = [
+    { label: 'Full Name', value: hasName ? profile.fullName : '---' },
+    { label: 'Date of Birth', value: formattedDob || '---' },
+    { label: 'Blood Type', value: profile.bloodType || '---' },
+    { label: 'PhilHealth ID', value: profile.philHealthId || '---' },
   ];
-  const detailColumnStyle =
-    cardWidth >= 420 ? styles.detailGridItemHalf : styles.detailGridItemFull;
 
   return (
     <Surface style={[styles.card, { backgroundColor: theme.colors.surface }]} elevation={2}>
@@ -58,11 +70,10 @@ export const DigitalIDCard: React.FC = () => {
           <Text style={styles.headerTitle}>NAGA CITY HEALTH ID</Text>
         </View>
         <Button
-          mode="text"
+          variant="text"
           compact
           onPress={() => navigation.navigate('HealthProfileEdit')}
-          labelStyle={styles.editButtonLabel}
-          style={styles.editButton}
+          textColor={theme.colors.surface}
         >
           Edit
         </Button>
@@ -84,86 +95,90 @@ export const DigitalIDCard: React.FC = () => {
           </Text>
         </View>
 
-        <View style={styles.detailsGrid}>
-          {healthIdRows.map((row, rowIndex) => (
-            <View key={`health-row-${rowIndex}`} style={styles.detailGridRow}>
-              {row.map((entry) => (
-                <View key={entry.label} style={[styles.detailGridItem, detailColumnStyle]}>
-                  <Text variant="labelSmall" style={styles.detailGridLabel}>
-                    {entry.label}
-                  </Text>
-                  <Text variant="titleMedium" style={styles.detailGridValue} numberOfLines={2}>
-                    {entry.value}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.toggleRow}>
-          <Text variant="labelSmall" style={styles.toggleLabel}>
-            Show Health Snapshot
+        <Surface
+          style={[
+            styles.basicInfoCard,
+            {
+              backgroundColor: theme.colors.surface,
+              borderColor: theme.colors.outlineVariant,
+            },
+          ]}
+          elevation={1}
+        >
+          <Text variant="labelSmall" style={styles.basicInfoHeader}>
+            BASIC INFORMATION
           </Text>
-          <Switch
-            value={showSnapshot}
-            onValueChange={setShowSnapshot}
-            color={theme.colors.primary}
-            style={styles.switch}
-          />
-        </View>
-
-        {showSnapshot && (
-          <View style={styles.medicalSection}>
-            <Text
-              variant="labelSmall"
-              style={[styles.medicalHeader, { color: theme.colors.primary }]}
-            >
-              Health Snapshots
-            </Text>
-            <View style={styles.medicalGrid}>
-              {[
-                {
-                  label: 'Chronic conditions',
-                  value: formatListForDisplay(profile.chronicConditions),
-                },
-                {
-                  label: 'Allergies',
-                  value: formatListForDisplay(profile.allergies),
-                },
-                {
-                  label: 'Current medications',
-                  value: formatListForDisplay(profile.currentMedications),
-                },
-                {
-                  label: 'Surgical history',
-                  value: formatTextValue(profile.surgicalHistory),
-                },
-                {
-                  label: 'Family history',
-                  value: formatTextValue(profile.familyHistory),
-                },
-              ].map((entry) => {
-                const columnStyle =
-                  cardWidth >= 420 ? styles.medicalItemHalf : styles.medicalItemFull;
-                return (
-                  <View key={entry.label} style={[styles.medicalItem, columnStyle]}>
-                    <Text variant="labelSmall" style={styles.medicalLabel}>
-                      {entry.label.toUpperCase()}
-                    </Text>
-                    <Text
-                      variant="bodySmall"
-                      style={[styles.medicalValue, { color: theme.colors.onSurface }]}
-                      numberOfLines={4}
-                    >
-                      {entry.value}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
+          <View style={styles.basicInfoGrid}>
+            {basicInfoEntries.map((entry) => (
+              <View key={entry.label} style={styles.basicInfoItem}>
+                <Text variant="labelSmall" style={styles.detailGridLabel}>
+                  {entry.label}
+                </Text>
+                <Text variant="titleMedium" style={styles.detailGridValue} numberOfLines={2}>
+                  {entry.value}
+                </Text>
+              </View>
+            ))}
           </View>
-        )}
+
+          <View style={styles.toggleRow}>
+            <Text variant="labelSmall" style={styles.toggleLabel}>
+              Show Health Snapshot
+            </Text>
+            <Switch
+              value={showSnapshot}
+              onValueChange={setShowSnapshot}
+              color={theme.colors.primary}
+              style={styles.switch}
+            />
+          </View>
+
+          {showSnapshot && (
+            <View style={styles.medicalSection}>
+              <View style={styles.medicalGrid}>
+                {[
+                  {
+                    label: 'Chronic conditions',
+                    value: formatListForDisplay(profile.chronicConditions),
+                  },
+                  {
+                    label: 'Allergies',
+                    value: formatListForDisplay(profile.allergies),
+                  },
+                  {
+                    label: 'Current medications',
+                    value: formatListForDisplay(profile.currentMedications),
+                  },
+                  {
+                    label: 'Surgical history',
+                    value: formatTextValue(profile.surgicalHistory),
+                  },
+                  {
+                    label: 'Family history',
+                    value: formatTextValue(profile.familyHistory),
+                  },
+                ].map((entry) => {
+                  const columnStyle =
+                    cardWidth >= 420 ? styles.medicalItemHalf : styles.medicalItemFull;
+                  return (
+                    <View key={entry.label} style={[styles.medicalItem, columnStyle]}>
+                      <Text variant="labelSmall" style={styles.detailGridLabel}>
+                        {entry.label.toUpperCase()}
+                      </Text>
+                      <Text
+                        variant="titleMedium"
+                        style={[styles.detailGridValue, { color: theme.colors.onSurface }]}
+                        numberOfLines={4}
+                      >
+                        {entry.value}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
+        </Surface>
       </View>
 
       {/* Footer Decoration */}
@@ -200,15 +215,6 @@ const styles = StyleSheet.create({
   },
   headerIcon: {
     marginRight: 10,
-  },
-  editButton: {
-    paddingHorizontal: 0,
-    minHeight: 0,
-  },
-  editButtonLabel: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
   },
   content: {
     padding: 16,
@@ -281,10 +287,6 @@ const styles = StyleSheet.create({
   medicalSection: {
     marginTop: 12,
   },
-  medicalHeader: {
-    letterSpacing: 0.5,
-    fontWeight: '700',
-  },
   medicalGrid: {
     marginTop: 10,
     flexDirection: 'row',
@@ -299,20 +301,32 @@ const styles = StyleSheet.create({
   medicalItemFull: {
     flexBasis: '100%',
   },
-  medicalLabel: {
-    fontSize: 9,
-    opacity: 0.65,
-    fontWeight: '700',
-  },
-  medicalValue: {
-    marginTop: 4,
-    fontWeight: '400',
-    lineHeight: 18,
-  },
   hiddenMessage: {
     marginTop: 8,
     fontWeight: '500',
     opacity: 0.7,
+  },
+  basicInfoCard: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 0.5,
+    marginTop: 16,
+  },
+  basicInfoHeader: {
+    fontSize: 10,
+    letterSpacing: 0.5,
+    fontWeight: '700',
+    marginBottom: 8,
+    color: '#5D5F63',
+  },
+  basicInfoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  basicInfoItem: {
+    width: '50%',
+    paddingVertical: 6,
+    paddingRight: 12,
   },
 });
 
@@ -350,4 +364,41 @@ function formatListForDisplay(items?: string[] | null): string {
 
 function formatTextValue(value?: string | null): string {
   return value && value.trim() ? value : 'Not recorded';
+}
+
+function sanitizeText(value?: string | null): string | null {
+  const trimmedValue = value?.trim();
+  return trimmedValue ? trimmedValue : null;
+}
+
+function buildHealthSnapshot(profile: {
+  chronicConditions?: string[];
+  allergies?: string[];
+  currentMedications?: string[];
+  surgicalHistory?: string | null;
+  familyHistory?: string | null;
+}): Record<string, string | string[]> {
+  const snapshot: Record<string, string | string[]> = {};
+
+  const addList = (label: string, list?: string[]) => {
+    const normalized = (list ?? []).map((item) => item.trim()).filter((item) => item.length > 0);
+    if (normalized.length) {
+      snapshot[label] = normalized;
+    }
+  };
+
+  const addText = (label: string, value?: string | null) => {
+    const normalized = sanitizeText(value);
+    if (normalized) {
+      snapshot[label] = normalized;
+    }
+  };
+
+  addList('chronic conditions', profile.chronicConditions);
+  addList('allergies', profile.allergies);
+  addList('current medications', profile.currentMedications);
+  addText('surgical history', profile.surgicalHistory);
+  addText('family history', profile.familyHistory);
+
+  return snapshot;
 }

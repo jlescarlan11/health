@@ -1,18 +1,24 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Card, useTheme } from 'react-native-paper';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Card, useTheme, TextInput } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { selectLatestClinicalNote } from '../store/offlineSlice';
 import { RootState } from '../store';
-import { Button, YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text, ScreenSafeArea } from '../components/common';
+import { Button, YakapLogo, CheckSymptomsLogo, FacilityDirectoryLogo, Text, ScreenSafeArea, Modal } from '../components/common';
 import { theme as appTheme } from '../theme';
 import { FeedItem, FeedItemData } from '../components/features/feed/FeedItem';
 
 // Import the new components
 import HomeHero from '../components/heroes/HomeHero';
+import { submitFeedbackReport } from '../services/apiConfig';
+
+type FeedbackReportStatus = {
+  type: 'success' | 'error';
+  message: string;
+};
 
 type MainHomeNavigationProp = RootStackScreenProps<'Home'>['navigation'];
 
@@ -23,6 +29,68 @@ export const MainHomeScreen = () => {
   const { items } = useSelector((state: RootState) => state.feed);
   const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const homeBottomPadding = spacing.lg * 2;
+  const [isReportModalVisible, setReportModalVisible] = useState(false);
+  const [reportSubject, setReportSubject] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const [reportEmail, setReportEmail] = useState('');
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [reportStatus, setReportStatus] = useState<FeedbackReportStatus | null>(null);
+  const openReportModal = () => {
+    setReportStatus(null);
+    setReportModalVisible(true);
+  };
+
+  const closeReportModal = () => {
+    if (!reportSubmitting) {
+      setReportModalVisible(false);
+    }
+  };
+
+  const handleSubmitReport = async () => {
+    const trimmedMessage = reportDetails.trim();
+    if (!trimmedMessage) {
+      setReportStatus({
+        type: 'error',
+        message: 'Please describe the issue so we can help.',
+      });
+      return;
+    }
+
+    setReportSubmitting(true);
+    setReportStatus(null);
+
+    try {
+      await submitFeedbackReport({
+        subject: reportSubject.trim() || 'Main home feedback',
+        message: trimmedMessage,
+        contactEmail: reportEmail.trim() || undefined,
+        context: { screen: 'MainHome' },
+      });
+
+      setReportStatus({
+        type: 'success',
+        message: 'Thank you! Your mock report is captured.',
+      });
+
+      setReportSubject('');
+      setReportDetails('');
+      setReportEmail('');
+    } catch (_error) {
+      setReportStatus({
+        type: 'error',
+        message: 'Something went wrong. Please try again in a moment.',
+      });
+    } finally {
+      setReportSubmitting(false);
+    }
+  };
+
+  const handleViewReports = () => {
+    Alert.alert(
+      'Reports coming soon',
+      'The admin reporting dashboard is not live yet, but this action will open it once available.',
+    );
+  };
 
   const FeatureCard = ({
     title,
@@ -99,6 +167,69 @@ export const MainHomeScreen = () => {
     );
   };
 
+  const FeedbackCard = ({
+    onReportIssuePress,
+    onViewReportsPress,
+  }: {
+    onReportIssuePress: () => void;
+    onViewReportsPress: () => void;
+  }) => {
+    return (
+      <Card
+        style={[
+          styles.card,
+          styles.cardWide,
+          styles.feedbackCard,
+          {
+            backgroundColor: theme.colors.surface,
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 12 },
+            shadowOpacity: 0.04,
+            shadowRadius: 24,
+            elevation: 3,
+            borderWidth: 1,
+            borderColor: 'rgba(255, 255, 255, 0.6)',
+          },
+        ]}
+        accessible
+        accessibilityLabel="Help us improve our app card"
+      >
+        <Card.Content style={styles.feedbackCardContent}>
+          <View style={styles.feedbackCardText}>
+            <Text
+              variant="titleLarge"
+              numberOfLines={2}
+              style={[styles.feedbackCardTitle, { color: theme.colors.onSurface }]}
+            >
+              Help us improve our app
+            </Text>
+            <Text
+              variant="bodyMedium"
+              style={[styles.feedbackCardDescription, { color: theme.colors.onSurfaceVariant }]}
+            >
+              Share feedback, request improvements, or report bugs so we can prioritize fixes for you.
+            </Text>
+          </View>
+          <View style={styles.feedbackCardActions}>
+            <Button
+              variant="outline"
+              title="View reports"
+              onPress={onViewReportsPress}
+              accessibilityLabel="View reports"
+              style={styles.feedbackCardButton}
+            />
+            <Button
+              title="Report an issue"
+              onPress={onReportIssuePress}
+              accessibilityLabel="Report an issue"
+              style={styles.feedbackCardButton}
+            />
+          </View>
+        </Card.Content>
+      </Card>
+    );
+  };
+
   const MOCK_PREVIEW: FeedItemData[] = [
     {
       id: '1',
@@ -168,6 +299,13 @@ export const MainHomeScreen = () => {
             </View>
           </View>
 
+          <View style={styles.feedbackCardWrapper}>
+            <FeedbackCard
+              onReportIssuePress={openReportModal}
+              onViewReportsPress={handleViewReports}
+            />
+          </View>
+
           <View style={styles.feedSection}>
             <View style={styles.sectionHeader}>
               <Text variant="titleLarge" style={styles.sectionTitle}>
@@ -189,13 +327,87 @@ export const MainHomeScreen = () => {
                 title="See More"
                 onPress={() => navigation.navigate('Home', { screen: 'HealthHub' })}
                 style={styles.seeMoreButton}
-                contentStyle={styles.seeMoreButtonContent}
                 accessibilityLabel="See more news"
               />
             </View>
           </View>
         </View>
       </ScrollView>
+      <Modal
+        visible={isReportModalVisible}
+        onDismiss={closeReportModal}
+        contentContainerStyle={styles.reportModalContainer}
+      >
+        <View style={styles.reportModalBody}>
+          <Text variant="titleLarge" style={styles.reportModalTitle}>
+            Report an issue
+          </Text>
+          <Text
+            variant="bodyMedium"
+            style={[styles.reportModalDescription, { color: theme.colors.onSurfaceVariant }]}
+          >
+            Share details about bugs, confusing flows, or missing content so we can improve faster.
+          </Text>
+          <TextInput
+            mode="outlined"
+            label="Subject (optional)"
+            value={reportSubject}
+            onChangeText={setReportSubject}
+            style={styles.reportModalField}
+            outlineStyle={[
+              styles.reportModalFieldOutline,
+              { borderColor: theme.colors.outline },
+            ]}
+            dense
+          />
+          <TextInput
+            mode="outlined"
+            label="Email (optional)"
+            value={reportEmail}
+            onChangeText={setReportEmail}
+            style={styles.reportModalField}
+            outlineStyle={[
+              styles.reportModalFieldOutline,
+              { borderColor: theme.colors.outline },
+            ]}
+            dense
+          />
+          <TextInput
+            mode="outlined"
+            label="Describe the issue"
+            value={reportDetails}
+            onChangeText={setReportDetails}
+            style={[styles.reportModalField, styles.reportModalDetails]}
+            outlineStyle={[
+              styles.reportModalFieldOutline,
+              { borderColor: theme.colors.outline },
+            ]}
+            multiline
+            numberOfLines={5}
+            dense
+          />
+          {reportStatus && (
+            <Text
+              variant="bodySmall"
+              style={[
+                styles.reportModalStatus,
+                reportStatus.type === 'success'
+                  ? styles.reportModalStatusSuccess
+                  : styles.reportModalStatusError,
+              ]}
+            >
+              {reportStatus.message}
+            </Text>
+          )}
+          <Button
+            title="Submit report"
+            onPress={handleSubmitReport}
+            loading={reportSubmitting}
+            disabled={reportSubmitting}
+            style={styles.reportModalSubmit}
+          />
+        </View>
+      </Modal>
     </ScreenSafeArea>
   );
 };
@@ -242,9 +454,6 @@ const styles = StyleSheet.create({
   seeMoreButton: {
     alignSelf: 'flex-start',
   },
-  seeMoreButtonContent: {
-    paddingHorizontal: 0,
-  },
   card: {
     borderRadius: 24,
     borderWidth: 0,
@@ -254,14 +463,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   cardContent: {
-    padding: 20,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 24, // Squircle
+    width: 48,
+    height: 48,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -273,11 +482,74 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.5,
-    lineHeight: 24,
+    lineHeight: 22,
   },
   cardSubtitle: {
     fontSize: 14,
     opacity: 0.7,
     marginTop: 0,
+  },
+  feedbackCardWrapper: {
+    marginTop: 24,
+  },
+  feedbackCard: {
+    paddingVertical: 8,
+  },
+  feedbackCardContent: {
+    gap: 12,
+  },
+  feedbackCardText: {
+    gap: 6,
+  },
+  feedbackCardTitle: {
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  feedbackCardDescription: {
+    lineHeight: 20,
+  },
+  feedbackCardActions: {
+    flexDirection: 'column',
+    gap: 12,
+    marginTop: 8,
+  },
+  feedbackCardButton: {
+    width: '100%',
+  },
+  reportModalContainer: {
+    width: '100%',
+    maxWidth: 520,
+    paddingHorizontal: 24,
+  },
+  reportModalBody: {
+    gap: 12,
+  },
+  reportModalTitle: {
+    fontWeight: '800',
+  },
+  reportModalDescription: {
+    color: '#4B5563',
+  },
+  reportModalField: {
+    width: '100%',
+  },
+  reportModalDetails: {
+    minHeight: 120,
+  },
+  reportModalFieldOutline: {
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  reportModalStatus: {
+    fontSize: 14,
+  },
+  reportModalStatusSuccess: {
+    color: '#047857',
+  },
+  reportModalStatusError: {
+    color: '#B91C1C',
+  },
+  reportModalSubmit: {
+    marginTop: 4,
   },
 });

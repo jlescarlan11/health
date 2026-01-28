@@ -19,7 +19,6 @@ module.exports = {
       bundleIdentifier: 'com.health.app',
       googleServicesFile: './GoogleService-Info.plist',
       infoPlist: {
-        UIBackgroundModes: ['remote-notification'],
         LSApplicationQueriesSchemes: ['viber', 'fb-messenger'],
       },
     },
@@ -40,8 +39,6 @@ module.exports = {
       'expo-sqlite',
       '@react-native-firebase/app',
       'expo-system-ui',
-      '@react-native-voice/voice',
-      'expo-notifications',
       './plugins/withGradleMemory',
       './plugins/withAndroidXManifest',
       [

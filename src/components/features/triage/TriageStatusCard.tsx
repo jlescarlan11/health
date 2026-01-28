@@ -26,6 +26,7 @@ export const getLevelLabel = (level: TriageLevel) => LEVEL_LABELS[level] ?? leve
 
 export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
   level,
+  intro,
   instruction,
   onEmergencyAction,
 }) => {

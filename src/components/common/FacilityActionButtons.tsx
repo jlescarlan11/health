@@ -75,8 +75,6 @@ const styles = StyleSheet.create({
   },
   sharedButton: {
     flex: 1,
-    minHeight: 48,
-    marginVertical: 0,
   },
   pwdSharedButton: {
     marginVertical: 6,

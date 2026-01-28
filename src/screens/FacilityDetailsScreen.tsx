@@ -338,11 +338,11 @@ export const FacilityDetailsScreen = () => {
             </View>
           </View>
 
-          {/* Phone */}
+          {/* Contacts */}
           <View style={styles.infoSection}>
             <View style={styles.iconContainer}>
               <Ionicons
-                name="call-outline"
+                name="chatbubbles-outline"
                 size={24 * scaleFactor}
                 color={
                   facility.contacts?.length || facility.phone
@@ -352,23 +352,33 @@ export const FacilityDetailsScreen = () => {
               />
             </View>
             <View style={styles.infoTextContainer}>
-              <Text style={infoLabelStyle}>Phone</Text>
+              <Text style={infoLabelStyle}>Contacts</Text>
 
-              {facility.contacts &&
-              facility.contacts.filter((c) => c.platform === 'phone').length > 0 ? (
+              {facility.contacts && facility.contacts.length > 0 ? (
                 facility.contacts
-                  .filter((c) => c.platform === 'phone')
+                  .filter((c) => c.platform === 'phone' || c.platform === 'email')
                   .map((contact, index) => (
                     <TouchableOpacity
                       key={contact.id || index}
-                      onPress={() => Linking.openURL(`tel:${contact.phoneNumber}`)}
+                      onPress={() => {
+                        const url = contact.platform === 'email' ? `mailto:${contact.phoneNumber}` : `tel:${contact.phoneNumber}`;
+                        Linking.openURL(url);
+                      }}
                       style={styles.contactItem}
                     >
                       <View style={styles.contactInfo}>
-                        <Text style={contactPhoneTextStyle}>{contact.phoneNumber}</Text>
-                        {contact.role && (
-                          <Text style={[styles.metaItem, { fontSize: 14 * scaleFactor }]}>
-                            {contact.role} {contact.contactName ? `• ${contact.contactName}` : ''}
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Ionicons 
+                            name={contact.platform === 'email' ? 'mail-outline' : 'call-outline'} 
+                            size={16 * scaleFactor} 
+                            color={theme.colors.primary} 
+                            style={{ marginRight: 8 }}
+                          />
+                          <Text style={contactPhoneTextStyle}>{contact.phoneNumber}</Text>
+                        </View>
+                        {contact.contactName && (
+                          <Text style={[styles.metaItem, { fontSize: 14 * scaleFactor, marginLeft: 24 }]}>
+                            {contact.contactName}
                           </Text>
                         )}
                       </View>
@@ -379,15 +389,23 @@ export const FacilityDetailsScreen = () => {
                   onPress={() => facility.phone && Linking.openURL(`tel:${facility.phone}`)}
                   disabled={!facility.phone}
                 >
-                  <Text
-                    style={
-                      facility.phone
-                        ? contactPhoneTextStyle
-                        : contactPhoneDisabledTextStyle
-                    }
-                  >
-                    {facility.phone || 'Not available'}
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons 
+                      name="call-outline" 
+                      size={16 * scaleFactor} 
+                      color={facility.phone ? theme.colors.primary : theme.colors.onSurfaceVariant} 
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text
+                      style={
+                        facility.phone
+                          ? contactPhoneTextStyle
+                          : contactPhoneDisabledTextStyle
+                      }
+                    >
+                      {facility.phone || 'Not available'}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               )}
             </View>

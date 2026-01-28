@@ -8,12 +8,12 @@ import {
   Linking,
   Pressable,
 } from 'react-native';
-import { Searchbar, Chip, useTheme } from 'react-native-paper';
+import { Menu, Searchbar, Chip, useTheme } from 'react-native-paper';
 import { Text } from '../../components/common/Text';
 import { useDispatch } from 'react-redux';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import { debounce } from 'lodash';
-import { ScreenSafeArea } from '../../components/common';
+import { ScreenSafeArea, Button } from '../../components/common';
 import { ScrollView } from 'react-native';
 
 import { AppDispatch } from '../../store';
@@ -35,7 +35,6 @@ const FILTERS = [
   { id: 'telemedicine', label: 'Telemedicine', facet: 'telemedicine' },
 ];
 
-import { Menu, Button as PaperButton } from 'react-native-paper';
 import { NAGA_CITY_DISTRICTS } from '../../constants/location';
 
 export const FacilityDirectoryScreen = () => {
@@ -281,15 +280,15 @@ export const FacilityDirectoryScreen = () => {
                       visible={districtMenuVisible}
                       onDismiss={() => setDistrictMenuVisible(false)}
                       anchor={
-                        <PaperButton
-                          mode="text"
+                        <Button
+                          variant="ghost"
                           compact
                           onPress={() => setDistrictMenuVisible(true)}
                           icon="chevron-down"
                           contentStyle={{ flexDirection: 'row-reverse' }}
                         >
                           {selectedDistrict ? selectedDistrict.name : 'Select District'}
-                        </PaperButton>
+                        </Button>
                       }
                     >
                       {NAGA_CITY_DISTRICTS.map((district) => (
@@ -311,15 +310,15 @@ export const FacilityDirectoryScreen = () => {
                     visible={districtMenuVisible}
                     onDismiss={() => setDistrictMenuVisible(false)}
                     anchor={
-                      <PaperButton
-                        mode="text"
+                      <Button
+                        variant="ghost"
                         compact
                         onPress={() => setDistrictMenuVisible(true)}
                         icon="chevron-down"
                         contentStyle={{ flexDirection: 'row-reverse' }}
                       >
                         {selectedDistrict.name}
-                      </PaperButton>
+                      </Button>
                     }
                   >
                     {NAGA_CITY_DISTRICTS.map((district) => (

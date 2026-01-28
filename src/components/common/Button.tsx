@@ -1,9 +1,19 @@
 import React from 'react';
-import { StyleSheet, ViewStyle, TextStyle, StyleProp } from 'react-native';
+import { StyleSheet, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { Button as PaperButton, useTheme } from 'react-native-paper';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
+import { buttonSystem } from '../../theme';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'outline' | 'text';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'text' | 'danger' | 'outline';
+
+const variantAlias: Record<ButtonVariant, keyof typeof buttonSystem.variants> = {
+  primary: 'primary',
+  secondary: 'secondary',
+  ghost: 'ghost',
+  text: 'text',
+  danger: 'danger',
+  outline: 'ghost',
+};
 
 interface ButtonProps extends Omit<React.ComponentProps<typeof PaperButton>, 'children' | 'mode'> {
   onPress: () => void;
@@ -35,63 +45,59 @@ export const Button: React.FC<ButtonProps> = ({
   accessibilityLabel,
   accessibilityHint,
   accessibilityRole = 'button',
+  buttonColor: buttonColorProp,
+  textColor: textColorProp,
   ...props
 }) => {
   const theme = useTheme();
-  const { scaleFactor, isPWDMode, touchTargetScale } = useAdaptiveUI();
+  const { scaleFactor, isPWDMode, touchTargetScale, borderRadius } = useAdaptiveUI();
 
-  let mode: 'text' | 'outlined' | 'contained' | 'elevated' | 'contained-tonal' = 'contained';
-  let buttonColor: string | undefined = undefined;
-  let textColor: string | undefined = undefined;
+  const normalizedVariant = variantAlias[variant] ?? 'primary';
+  const variantConfig = buttonSystem.variants[normalizedVariant];
 
-  switch (variant) {
-    case 'primary':
-      mode = 'contained';
-      buttonColor = theme.colors.primary;
-      break;
-    case 'secondary':
-      mode = 'contained-tonal';
-      buttonColor = theme.colors.secondaryContainer;
-      textColor = theme.colors.onSecondaryContainer;
-      break;
-    case 'danger':
-      mode = 'contained';
-      buttonColor = theme.colors.error;
-      textColor = theme.colors.onError;
-      break;
-    case 'outline':
-      mode = 'outlined';
-      textColor = theme.colors.primary;
-      break;
-    case 'text':
-      mode = 'text';
-      textColor = theme.colors.primary;
-      break;
-  }
+  const resolvedButtonColor =
+    buttonColorProp ?? (variantConfig.backgroundColorKey ? theme.colors[variantConfig.backgroundColorKey] : undefined);
+  const resolvedTextColor =
+    textColorProp ?? (variantConfig.textColorKey ? theme.colors[variantConfig.textColorKey] : undefined);
 
-  const finalMode = modeProp || mode;
-
+  const finalMode = modeProp || variantConfig.mode;
+  const borderColor =
+    variantConfig.borderColorKey && finalMode === 'outlined'
+      ? theme.colors[variantConfig.borderColorKey]
+      : undefined;
   const labelScale = isPWDMode ? 1.1 : 1;
+  const buttonBorderRadius = isPWDMode
+    ? Math.max(borderRadius, buttonSystem.base.borderRadius)
+    : buttonSystem.base.borderRadius;
+
   const buttonStyle = [
     styles.button,
-    variant === 'outline' && {
-      borderColor: disabled ? theme.colors.outline : theme.colors.primary,
+    finalMode === 'outlined' && borderColor ? { borderColor } : null,
+    {
+      minHeight: buttonSystem.base.minHeight * touchTargetScale,
+      borderRadius: buttonBorderRadius,
     },
-    isPWDMode && styles.pwdButton,
-    { minHeight: 48 * touchTargetScale },
     style,
   ];
 
   const scaledLabelStyle = [
     styles.label,
     {
-      fontSize: 16 * scaleFactor * labelScale,
-      lineHeight: 24 * scaleFactor * labelScale,
+      fontSize: buttonSystem.base.fontSize * scaleFactor * labelScale,
+      lineHeight: buttonSystem.base.lineHeight * scaleFactor * labelScale,
+      letterSpacing: buttonSystem.base.letterSpacing,
     },
     labelStyle,
   ];
 
-  const finalContentStyle = [styles.content, isPWDMode && styles.pwdContent, contentStyle];
+  const finalContentStyle = [
+    styles.content,
+    {
+      paddingVertical: buttonSystem.base.paddingVertical * scaleFactor * (isPWDMode ? 1.1 : 1),
+      paddingHorizontal: buttonSystem.base.paddingHorizontal * scaleFactor,
+    },
+    contentStyle,
+  ];
 
   return (
     <PaperButton
@@ -100,8 +106,8 @@ export const Button: React.FC<ButtonProps> = ({
       loading={loading}
       disabled={disabled}
       icon={icon}
-      buttonColor={buttonColor}
-      textColor={textColor}
+      buttonColor={resolvedButtonColor}
+      textColor={resolvedTextColor}
       style={buttonStyle}
       labelStyle={scaledLabelStyle}
       contentStyle={finalContentStyle}
@@ -117,23 +123,15 @@ export const Button: React.FC<ButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    marginVertical: 4,
-    borderRadius: 8,
     justifyContent: 'center',
   },
   label: {
-    fontSize: 16,
     fontWeight: '600',
-    paddingVertical: 4,
+    textTransform: 'none',
   },
   content: {
-    paddingVertical: 4,
-  },
-  pwdButton: {
-    marginVertical: 8,
-    borderRadius: 18,
-  },
-  pwdContent: {
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

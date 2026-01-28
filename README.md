@@ -15,7 +15,7 @@ HEALTH is an AI-powered mobile healthcare navigation application designed for Na
 
 ## Features
 
-- **AI-Powered Navigation Assistant**: Voice and text symptom input to recommend appropriate care levels (Self-Care, Health Center, Hospital, Emergency).
+- **AI-Powered Navigation Assistant**: Text symptom input to recommend appropriate care levels (Self-Care, Health Center, Hospital, Emergency).
 - **Facility Directory**: Comprehensive list of Naga City's 29 healthcare facilities with services, hours, and YAKAP status.
 - **YAKAP Enrollment Navigator**: Guided support for enrolling in the free YAKAP program.
 - **Offline Functionality**: Core features work without internet.

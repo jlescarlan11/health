@@ -16,16 +16,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.health.app",
       "googleServicesFile": "./GoogleService-Info.plist",
-      "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"],
-        "NSMicrophoneUsageDescription": "This app needs access to your microphone for voice commands and symptom description.",
-        "NSSpeechRecognitionUsageDescription": "This app uses speech recognition to convert your spoken symptoms into text."
-      }
     },
     "android": {
       "package": "com.health.app",
       "googleServicesFile": "./google-services.json",
-      "permissions": ["RECORD_AUDIO"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -36,7 +30,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-sqlite", "@react-native-voice/voice"],
+    "plugins": ["expo-sqlite"],
     "extra": {
       "backendUrl": "process.env.BACKEND_API_URL",
       "geminiApiKey": "process.env.GEMINI_API_KEY"

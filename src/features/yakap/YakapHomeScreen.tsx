@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {},
   heroSection: {
-    paddingVertical: 48,
+    paddingVertical: 32,
     paddingHorizontal: 24,
     marginBottom: 16,
   },
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   section: {
-    marginTop: 40,
+    marginTop: 24,
     paddingHorizontal: 24,
   },
   sectionHeader: {

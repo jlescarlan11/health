@@ -48,6 +48,25 @@ const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
+export interface FeedbackReportPayload {
+  subject?: string;
+  message: string;
+  contactEmail?: string;
+  context?: Record<string, unknown>;
+}
+
+export const submitFeedbackReport = async (payload: FeedbackReportPayload) => {
+  // Mock implementation: resolve quickly so the UI can simulate success/failure.
+  // Replace this stub with a POST to `${API_URL}/admin/feedback` when the real endpoint is ready.
+  await new Promise<void>((resolve) => setTimeout(resolve, 600));
+
+  return {
+    status: 'mock',
+    submittedAt: new Date().toISOString(),
+    payload,
+  };
+};
+
 export const transferAssessmentResult = async (
   targetUsername: string,
   assessmentData: unknown,

@@ -47,7 +47,13 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
       </View>
 
       <Surface
-        style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
+        style={[
+          styles.contactCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
         elevation={1}
       >
         <View style={styles.contactInfo}>
@@ -68,7 +74,13 @@ export const EmergencyActions: React.FC<EmergencyActionsProps> = ({
       </Surface>
 
       <Surface
-        style={[styles.contactCard, { backgroundColor: theme.colors.surface }]}
+        style={[
+          styles.contactCard,
+          {
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.colors.outlineVariant,
+          },
+        ]}
         elevation={1}
       >
         <View style={styles.contactInfo}>
@@ -116,7 +128,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 16,
     paddingRight: 8,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderRadius: 12,
     marginBottom: 8,
     borderWidth: 0.5,

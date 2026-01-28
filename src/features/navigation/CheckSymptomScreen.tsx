@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, Card } from 'react-native-paper';
 import { Text } from '../../components/common/Text';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { speechService } from '../../services/speechService';
 import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { CheckStackScreenProps } from '../../types/navigation';
@@ -44,8 +43,6 @@ const CheckSymptomScreen = () => {
   const keyboardHeight = keyboardHeightRef.current;
 
   const [symptom, setSymptom] = useState(savedDraft || '');
-  const [isRecording, setIsRecording] = useState(false);
-  const [volume, setVolume] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Persist draft to Redux
@@ -87,7 +84,6 @@ const CheckSymptomScreen = () => {
     return () => {
       keyboardWillShow.remove();
       keyboardWillHide.remove();
-      speechService.stopListening();
     };
   }, [keyboardHeight]);
 
@@ -113,54 +109,6 @@ const CheckSymptomScreen = () => {
       if (newSymptom.length > 500) return prev; // Length check
       return newSymptom;
     });
-  };
-
-  const startRecording = async () => {
-    if (!speechService.isAvailable) {
-      Alert.alert(
-        'Voice Unavailable',
-        'Voice recognition is not available on this device/simulator. Please type your symptoms.',
-      );
-      return;
-    }
-
-    try {
-      setIsRecording(true);
-      setVolume(0);
-      await speechService.startListening(
-        (text) => {
-          setSymptom(text);
-        },
-        (error: any) => {
-          console.error('STT Error:', error);
-          setIsRecording(false);
-          setVolume(0);
-          Alert.alert(
-            'Speech Error',
-            error?.message || 'Could not recognize speech. Please try again.',
-          );
-        },
-        (vol) => {
-          setVolume(vol);
-        },
-      );
-    } catch (err) {
-      console.error('Failed to start recording', err);
-      setIsRecording(false);
-      setVolume(0);
-      Alert.alert('Error', 'Failed to start voice recognition.');
-    }
-  };
-
-  const stopRecording = async () => {
-    setIsRecording(false);
-    setVolume(0);
-    try {
-      await speechService.stopListening();
-    } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Failed to stop recording.');
-    }
   };
 
   const handleSubmit = () => {
@@ -377,9 +325,6 @@ const CheckSymptomScreen = () => {
           label="Type your symptoms here"
           placeholder=""
           maxLength={500}
-          isRecording={isRecording}
-          volume={volume}
-          onVoicePress={isRecording ? stopRecording : startRecording}
         />
       </Animated.View>
     </View>
