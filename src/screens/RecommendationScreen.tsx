@@ -221,6 +221,10 @@ const RecommendationScreen = () => {
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
+  const [narratives, setNarratives] = useState<{
+    recommendationNarrative: string;
+    handoverNarrative: string;
+  } | null>(null);
   const level = recommendation
     ? mapCareLevelToTriageLevel(recommendation.recommended_level)
     : 'self-care';
@@ -262,6 +266,22 @@ const RecommendationScreen = () => {
     () => summarizeInitialSymptom(assessmentData.symptoms),
     [assessmentData.symptoms],
   );
+
+  const answersLog = useMemo(() => {
+    const lines = assessmentData.answers
+      .map((entry) => `${entry.question}: ${entry.answer}`)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return lines.length ? lines.join('\n') : 'No answers recorded.';
+  }, [assessmentData.answers]);
+
+  const selectedOptionsSummary = useMemo(() => {
+    const options = assessmentData.answers
+      .map((entry) => entry.answer?.trim())
+      .filter((value): value is string => Boolean(value));
+    const unique = Array.from(new Set(options));
+    return unique.length ? unique.join('; ') : 'No selected options recorded.';
+  }, [assessmentData.answers]);
 
   // Refs for stabilizing analyzeSymptoms dependencies
   const symptomsRef = useRef(assessmentData.symptoms);
@@ -605,6 +625,49 @@ const RecommendationScreen = () => {
     }
   }, [facilities.length, isFacilitiesLoading, analysisCompleted, analyzeSymptoms]);
 
+  useEffect(() => {
+    if (!recommendation) return;
+
+    let isActive = true;
+
+    const fetchNarratives = async () => {
+      setNarratives(null);
+
+      try {
+        const profileSummary = formatClinicalSummary(assessmentData.extractedProfile);
+        const narrative = await geminiClient.generateRecommendationNarratives({
+          initialSymptom: assessmentData.symptoms,
+          profileSummary,
+          answers: answersLog,
+          selectedOptions: selectedOptionsSummary,
+          recommendedLevel: recommendation.recommended_level,
+          keyConcerns: recommendation.key_concerns ?? [],
+          relevantServices: recommendation.relevant_services,
+          redFlags: recommendation.red_flags,
+          clinicalSoap: recommendation.clinical_soap,
+        });
+
+        if (isActive) {
+          setNarratives(narrative);
+        }
+      } catch (error) {
+        console.error('Narrative generation failed:', error);
+      }
+    };
+
+    fetchNarratives();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    recommendation,
+    assessmentData.symptoms,
+    assessmentData.extractedProfile,
+    answersLog,
+    selectedOptionsSummary,
+  ]);
+
   const filterFacilities = useCallback(() => {
     if (!recommendation) return;
 
@@ -716,7 +779,8 @@ const RecommendationScreen = () => {
   const isEmergency = recommendation.recommended_level === 'emergency';
   const triageLevel = mapCareLevelToTriageLevel(recommendation.recommended_level);
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
-  const displayAdvice = recommendation.user_advice;
+  const recommendationNarrative =
+    narratives?.recommendationNarrative ?? recommendation.user_advice ?? '';
 
   const guardAdjustments = recommendation.triage_logic?.adjustments ?? [];
 
@@ -742,11 +806,17 @@ const RecommendationScreen = () => {
         : undefined;
 
   const empatheticAdvice = formatEmpatheticResponse({
-    body: displayAdvice,
+    body: recommendationNarrative,
     reason: reasonForAdvice,
     reasonSource,
     nextAction: getNextActionForLevel(recommendation.recommended_level),
+    tone: 'neutral',
   }).text;
+
+  const handoverNarrativeText =
+    narratives?.handoverNarrative ||
+    recommendation.medical_justification ||
+    'Share this clinical note with the facility team for a smooth handover.';
 
   const instructionWithGuardrail = empatheticAdvice;
 
@@ -903,8 +973,7 @@ const RecommendationScreen = () => {
               </Text>
             </View>
             <Text variant="bodySmall" style={styles.handoverSubtitle}>
-              If you are at the facility, you can share this clinical handover report with the nurse
-              or doctor.
+              {handoverNarrativeText}
             </Text>
             <Button
               title={handoverButtonLabelText}

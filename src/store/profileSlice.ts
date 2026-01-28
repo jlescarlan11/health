@@ -131,6 +131,13 @@ const normalizeText = (value: string | null): string | null => {
   return trimmed ? trimmed : null;
 };
 
+const extractFirstName = (fullName?: string | null): string | null => {
+  const normalized = fullName?.trim();
+  if (!normalized) return null;
+  const [firstName] = normalized.split(/\s+/).filter(Boolean);
+  return firstName || null;
+};
+
 const buildClinicalSegments = (profile: ProfileState): string[] => {
   const segments: string[] = [];
 
@@ -171,3 +178,9 @@ export const selectClinicalContext = createSelector(
 );
 
 export const selectFullName = (state: { profile: ProfileState }) => state.profile.fullName;
+
+export const selectProfileDob = (state: { profile: ProfileState }) => state.profile.dob;
+export const selectFirstName = createSelector(
+  (state: { profile: ProfileState }) => state.profile.fullName,
+  (fullName) => extractFirstName(fullName),
+);

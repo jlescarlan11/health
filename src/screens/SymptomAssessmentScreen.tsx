@@ -36,7 +36,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { geminiClient } from '../api/geminiClient';
-import { selectClinicalContext, selectFullName } from '../store/profileSlice';
+import {
+  selectClinicalContext,
+  selectFullName,
+  selectProfileDob,
+} from '../store/profileSlice';
 import { detectEmergency, type EmergencyDetectionResult } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import {
@@ -57,6 +61,7 @@ import {
 } from '../types/triage';
 import {
   ClinicalSlots,
+  calculateAgeFromDob,
   computeUnresolvedSlotGoals,
   createClinicalSlotParser,
   reconcileClinicalProfileWithSlots,
@@ -387,6 +392,7 @@ const SymptomAssessmentScreen = () => {
   const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
   const clinicalContext = useSelector(selectClinicalContext);
   const fullName = useSelector(selectFullName);
+  const profileDob = useSelector(selectProfileDob);
   const theme = useTheme();
   const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const chatBottomPadding = spacing.lg * 2;
@@ -919,6 +925,23 @@ const SymptomAssessmentScreen = () => {
       return;
     }
 
+    const derivedAgeValue = !isGuest ? calculateAgeFromDob(profileDob) : null;
+    const derivedAgeString = derivedAgeValue !== null ? derivedAgeValue.toString() : null;
+    const trimmedPatientContext = patientContext?.trim() || '';
+    const contextAlreadyHasAge =
+      trimmedPatientContext.length > 0 ? /\bage\s*:/i.test(trimmedPatientContext) : false;
+    let patientContextWithAge = trimmedPatientContext;
+
+    if (!isGuest && derivedAgeString && !contextAlreadyHasAge) {
+      const ageSegment = `Age: ${derivedAgeString}`;
+      patientContextWithAge = trimmedPatientContext
+        ? `${ageSegment}. ${trimmedPatientContext}`
+        : ageSegment;
+    }
+
+    const planContext =
+      !isGuest && patientContextWithAge.trim() ? patientContextWithAge.trim() : undefined;
+
     // 2. Fetch Questions (Call #1)
     try {
       setLoading(true);
@@ -927,7 +950,7 @@ const SymptomAssessmentScreen = () => {
 
       const { questions: plan, intro } = await geminiClient.generateAssessmentPlan(
         initialSymptom || '',
-        patientContext,
+        planContext,
         patientName,
       );
       setFullPlan(plan);
@@ -935,7 +958,13 @@ const SymptomAssessmentScreen = () => {
       // --- NEW: Dynamic Question Pruning ---
       // Use deterministic slot extraction to identify if Tier 1 questions are already answered
       const initialSlotResult = slotParserRef.current.parseTurn(initialSymptom || '');
-      const slots = initialSlotResult.aggregated;
+      let slots = initialSlotResult.aggregated;
+
+      if (!slots.age && derivedAgeString) {
+        const derivedSlotResult = slotParserRef.current.parseTurn(`Age ${derivedAgeString}`);
+        slots = derivedSlotResult.aggregated;
+      }
+
       setIncrementalSlots(slots);
       const initialAnswers: Record<string, string> = {};
 
@@ -975,16 +1004,16 @@ const SymptomAssessmentScreen = () => {
         return true;
       });
 
-          const annotatedPlan = annotateQuestionsWithSlotMetadata(
-            prunedPlan,
-            undefined,
-            undefined,
-            slots,
-          );
-          setQuestions(annotatedPlan);
-          setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
+      const annotatedPlan = annotateQuestionsWithSlotMetadata(
+        prunedPlan,
+        undefined,
+        undefined,
+        slots,
+      );
+      setQuestions(annotatedPlan);
+      setAnswers(initialAnswers); // Preserve answers for pruned questions for the final report
 
-          // Add Intro & First Question
+      // Add Intro & First Question
       const firstQ = prunedPlan[0];
       const fallbackIntro = firstQ?.text?.trim();
       const introText =

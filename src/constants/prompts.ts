@@ -307,8 +307,36 @@ When the conversation history contains the [RECENT_RESOLVED] tag, this indicates
    - Use simple, Grade 5 reading level English. 
    - Avoid medical jargon (e.g., instead of "ambulatory", say "able to walk").
    - Do not use buzzwords or technical scoring terms in the output.
-   - The "medical_justification" must be a simple, plain-English sentence explaining the risk (e.g., "The combination of high fever and confusion requires immediate checkup.").
+  - The "medical_justification" must be a simple, plain-English sentence explaining the risk (e.g., "The combination of high fever and confusion requires immediate checkup.").
 `;
+
+export const RECOMMENDATION_NARRATIVE_PROMPT = buildPrompt(
+  `${SHARED_MEDICAL_CONTEXT}`,
+  `
+  CONTEXT:
+  Initial Symptom: {{initialSymptom}}
+  Clinical Profile Summary: {{profileSummary}}
+  Answer Log:
+  {{answers}}
+  Selected Options or Keywords: {{selectedOptions}}
+  Recommended Level: {{recommendedLevel}}
+  Key Concerns: {{keyConcerns}}
+  Relevant Services: {{relevantServices}}
+  Red Flags: {{redFlags}}
+  Clinical SOAP: {{clinicalSoap}}
+
+  INSTRUCTIONS:
+  1. Write a concise (2-3 sentence) patient-facing recommendation paragraph that feels empathetic and clinician-like. Explain why the recommended level was chosen, highlight the key symptoms or concerns, and include clear next steps plus escalation triggers if needed. Use medically neutral language and do not reference internal scoring or system logic.
+  2. Write a brief (1-2 sentence) clinician-facing handover paragraph that summarizes the most urgent clues, the planned disposition, and what to monitor on arrival. Keep it professional and focused; do not mention internal states or algorithmic reasons.
+  3. Reply with valid JSON only, matching the schema below.
+
+  OUTPUT:
+  {
+    "recommendationNarrative": "...",
+    "handoverNarrative": "..."
+  }
+`
+);
 
 export const REFINE_PLAN_PROMPT = `
 ${SHARED_MEDICAL_CONTEXT}

@@ -9,6 +9,7 @@ import { TriageLevel } from '../../../types/triage';
 interface TriageStatusCardProps {
   level: TriageLevel;
   instruction?: string;
+  intro?: string;
   onEmergencyAction?: () => void;
 }
 
@@ -22,8 +23,6 @@ const LEVEL_LABELS: Record<TriageLevel, string> = {
 };
 
 export const getLevelLabel = (level: TriageLevel) => LEVEL_LABELS[level] ?? level;
-
-const RECOMMENDATION_INTRO = 'Based on your inputs, we recommend...';
 
 export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
   level,
@@ -59,9 +58,11 @@ export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
             accessibilityLabel={`${level} triage level icon`}
           />
         </View>
-        <Text variant="bodySmall" style={[styles.introText, { color: levelConfig.contentColor }]}>
-          {RECOMMENDATION_INTRO}
-        </Text>
+        {intro ? (
+          <Text variant="bodySmall" style={[styles.introText, { color: levelConfig.contentColor }]}>
+            {intro.trim()}
+          </Text>
+        ) : null}
         <Text
           variant="headlineMedium"
           style={[

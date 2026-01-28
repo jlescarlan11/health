@@ -15,6 +15,7 @@ import {
   REFINE_PLAN_PROMPT,
   IMMEDIATE_FOLLOW_UP_PROMPT,
   BRIDGE_PROMPT,
+  RECOMMENDATION_NARRATIVE_PROMPT,
 } from '../constants/prompts';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
@@ -107,6 +108,29 @@ interface AssessmentPlanCacheEntry {
   timestamp: number;
   version: number;
 }
+
+interface RecommendationNarrativeInput {
+  initialSymptom?: string;
+  profileSummary?: string;
+  answers?: string;
+  selectedOptions?: string;
+  recommendedLevel?: string;
+  keyConcerns?: string[];
+  relevantServices?: string[];
+  redFlags?: string[];
+  clinicalSoap?: string;
+}
+
+interface RecommendationNarrativeOutput {
+  recommendationNarrative: string;
+  handoverNarrative: string;
+}
+
+const describePromptList = (items?: string[]): string =>
+  items && items.length ? items.join(', ') : 'None noted.';
+
+const sanitizePromptValue = (value?: string, fallback = 'Not provided.'): string =>
+  value && value.trim().length > 0 ? value.trim() : fallback;
 
 type SafetyFallbackContext = 'maternal' | 'trauma' | 'general';
 
@@ -335,6 +359,13 @@ export class GeminiClient {
     }
 
     return key;
+  }
+
+  private fillNarrativePrompt(
+    template: string,
+    replacements: Record<string, string>,
+  ): string {
+    return template.replace(/{{\s*([^}]+)\s*}}/g, (_, key) => replacements[key] ?? 'Not provided.');
   }
 
   /**
@@ -786,6 +817,37 @@ export class GeminiClient {
 
     const responseText = await this.generateContentWithRetry(prompt, { temperature: 0 });
     return responseText.trim();
+  }
+
+  public async generateRecommendationNarratives(
+    input: RecommendationNarrativeInput,
+  ): Promise<RecommendationNarrativeOutput> {
+    const replacements: Record<string, string> = {
+      initialSymptom: sanitizePromptValue(input.initialSymptom, 'No initial symptom provided.'),
+      profileSummary: sanitizePromptValue(input.profileSummary, 'No clinical summary provided.'),
+      answers: sanitizePromptValue(input.answers, 'No answer log available.'),
+      selectedOptions: sanitizePromptValue(input.selectedOptions, 'No selected options recorded.'),
+      recommendedLevel: sanitizePromptValue(input.recommendedLevel, 'Not specified'),
+      keyConcerns: describePromptList(input.keyConcerns),
+      relevantServices: describePromptList(input.relevantServices),
+      redFlags: describePromptList(input.redFlags),
+      clinicalSoap: sanitizePromptValue(input.clinicalSoap, 'Clinical SOAP not provided.'),
+    };
+
+    const prompt = this.fillNarrativePrompt(RECOMMENDATION_NARRATIVE_PROMPT, replacements);
+
+    const responseText = await this.generateContentWithRetry(prompt, { temperature: 0.45 });
+
+    try {
+      const parsed = JSON.parse(responseText);
+      return {
+        recommendationNarrative: (parsed.recommendationNarrative ?? '').trim(),
+        handoverNarrative: (parsed.handoverNarrative ?? '').trim(),
+      };
+    } catch (error) {
+      console.error('[GeminiClient] Failed to parse narrative response:', error);
+      throw new Error('Invalid AI narrative response format.');
+    }
   }
 
   /**
