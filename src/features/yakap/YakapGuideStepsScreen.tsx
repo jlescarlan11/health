@@ -7,12 +7,13 @@ import { ProgressBar, useTheme } from 'react-native-paper';
 
 import StandardHeader from '../../components/common/StandardHeader';
 import { Button } from '../../components/common/Button';
-import { ENROLLMENT_PATHWAYS } from './yakapContent';
+import { YAKAP_GUIDE_PATHWAYS } from './yakapContent';
 import { RootStackParamList } from '../../types/navigation';
+import { theme as appTheme } from '../../theme';
 
-const EnrollmentGuideScreen = () => {
+const YakapGuideStepsScreen = () => {
   const navigation = useNavigation();
-  const route = useRoute<RouteProp<RootStackParamList, 'EnrollmentGuide'>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'YakapGuideSteps'>>();
   const theme = useTheme();
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const scrollContentPaddingBottom = (themeSpacing.lg ?? 16) * 2;
@@ -21,7 +22,7 @@ const EnrollmentGuideScreen = () => {
 
   const [currentStep, setCurrentStep] = useState(0);
 
-  const pathway = ENROLLMENT_PATHWAYS.find((p) => p.id === pathwayId);
+  const pathway = YAKAP_GUIDE_PATHWAYS.find((p) => p.id === pathwayId);
 
   useEffect(() => {
     if (!pathway) {
@@ -39,8 +40,7 @@ const EnrollmentGuideScreen = () => {
     if (currentStep < totalSteps - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // @ts-expect-error - navigation to completion
-      navigation.navigate('EnrollmentCompletion');
+      navigation.goBack();
     }
   };
 
@@ -57,7 +57,7 @@ const EnrollmentGuideScreen = () => {
           handlePrevious();
           return true;
         } else {
-          Alert.alert('Exit Guide', 'Are you sure you want to exit the enrollment guide?', [
+          Alert.alert('Exit Guide', 'Are you sure you want to exit the YAKAP guide?', [
             { text: 'Cancel', style: 'cancel' },
             {
               text: 'Exit',
@@ -81,13 +81,13 @@ const EnrollmentGuideScreen = () => {
       edges={['left', 'right', 'bottom']}
     >
       <StandardHeader
-        title="Enrollment Guide"
+        title="YAKAP Guide"
         showBackButton
         onBackPress={() => {
           if (currentStep > 0) {
             handlePrevious();
           } else {
-            Alert.alert('Exit Guide', 'Are you sure you want to exit the enrollment guide?', [
+            Alert.alert('Exit Guide', 'Are you sure you want to exit the YAKAP guide?', [
               { text: 'Cancel', style: 'cancel' },
               {
                 text: 'Exit',
@@ -162,7 +162,7 @@ const EnrollmentGuideScreen = () => {
             variant="primary"
             onPress={handleNext}
             style={styles.navButton}
-            title={currentStep === totalSteps - 1 ? 'Finish' : 'Next'}
+            title={currentStep === totalSteps - 1 ? 'Close' : 'Next'}
           />
         </View>
       </ScrollView>
@@ -252,4 +252,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EnrollmentGuideScreen;
+export default YakapGuideStepsScreen;

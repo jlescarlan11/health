@@ -20,7 +20,7 @@ export type YakapStackParamList = {
 // Define the parameters for the main tab navigator
 export type MainTabParamList = {
   HomeFeed: undefined;
-  HealthFeed: undefined;
+  HealthHub: undefined;
   Settings: undefined;
 };
 
@@ -43,10 +43,8 @@ export type RootStackParamList = {
   FacilityDetails: { facilityId: string };
   CrisisSupport: undefined;
   YakapFaq: undefined;
-  EligibilityChecker: undefined;
-  EnrollmentPathway: undefined;
-  EnrollmentGuide: { pathwayId: string };
-  EnrollmentCompletion: undefined;
+  YakapGuidePaths: undefined;
+  YakapGuideSteps: { pathwayId: string };
   NotFound: undefined;
   PrivacyPolicy: undefined;
   TermsOfService: undefined;

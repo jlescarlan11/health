@@ -32,4 +32,4 @@ The mobile app now consumes a single backend endpoint for the Naga City health n
 ## Client Considerations
 
 - The mobile `healthFeedService` now only calls `/api/feed/health`; it no longer calls the WordPress REST API or performs HTML scraping.
-- `HealthFeedScreen` still drives loading, error, and empty states through the Redux slice. Errors surface in the banner, and an empty set shows the "No Updates Yet" view while the backend keeps trying to replenish the cache.
+- `HealthHubScreen` still drives loading, error, and empty states through the Redux slice. Errors surface in the banner, and an empty set shows the "No Updates Yet" view while the backend keeps trying to replenish the cache.

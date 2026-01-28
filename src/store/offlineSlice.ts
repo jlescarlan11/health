@@ -8,6 +8,7 @@ export interface LatestAssessment {
   medical_justification?: string;
   initial_symptoms: string;
   timestamp: number;
+  isGuest?: boolean;
 }
 
 interface OfflineState {
@@ -39,7 +40,13 @@ export const saveClinicalNote = createAsyncThunk(
   async (
     payload: Omit<LatestAssessment, 'id' | 'timestamp'>,
     { dispatch },
-  ): Promise<LatestAssessment> => {
+  ): Promise<LatestAssessment | null> => {
+    // SECURITY GUARD: Never persist guest-mode data to local storage or history.
+    if (payload.isGuest) {
+      console.log('[Offline] Guest mode assessment detected. Skipping persistence.');
+      return null;
+    }
+
     const record: LatestAssessment = {
       ...payload,
       id: generateUUID(),

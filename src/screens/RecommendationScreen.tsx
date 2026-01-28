@@ -221,6 +221,10 @@ const RecommendationScreen = () => {
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
+  const [narratives, setNarratives] = useState<{
+    recommendationNarrative: string;
+    handoverNarrative: string;
+  } | null>(null);
   const level = recommendation
     ? mapCareLevelToTriageLevel(recommendation.recommended_level)
     : 'self-care';
@@ -262,6 +266,22 @@ const RecommendationScreen = () => {
     () => summarizeInitialSymptom(assessmentData.symptoms),
     [assessmentData.symptoms],
   );
+
+  const answersLog = useMemo(() => {
+    const lines = assessmentData.answers
+      .map((entry) => `${entry.question}: ${entry.answer}`)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return lines.length ? lines.join('\n') : 'No answers recorded.';
+  }, [assessmentData.answers]);
+
+  const selectedOptionsSummary = useMemo(() => {
+    const options = assessmentData.answers
+      .map((entry) => entry.answer?.trim())
+      .filter((value): value is string => Boolean(value));
+    const unique = Array.from(new Set(options));
+    return unique.length ? unique.join('; ') : 'No selected options recorded.';
+  }, [assessmentData.answers]);
 
   // Refs for stabilizing analyzeSymptoms dependencies
   const symptomsRef = useRef(assessmentData.symptoms);
@@ -445,6 +465,7 @@ const RecommendationScreen = () => {
         }),
       );
 
+      // SECURITY GUARD: Never save clinical history for guest assessments.
       if (!guestMode && response.clinical_soap) {
         dispatch(
           saveClinicalNote({
@@ -452,12 +473,13 @@ const RecommendationScreen = () => {
             recommended_level: response.recommended_level,
             medical_justification: response.medical_justification,
             initial_symptoms: symptomsRef.current,
+            isGuest: false,
           }),
         );
       }
 
-      // If emergency, set high risk status for persistence
-      if (response.recommended_level === 'emergency') {
+      // SECURITY GUARD: Only set high-risk status for personal assessments.
+      if (!guestMode && response.recommended_level === 'emergency') {
         dispatch(setHighRisk(true));
       }
     } catch (error) {
@@ -603,6 +625,49 @@ const RecommendationScreen = () => {
     }
   }, [facilities.length, isFacilitiesLoading, analysisCompleted, analyzeSymptoms]);
 
+  useEffect(() => {
+    if (!recommendation) return;
+
+    let isActive = true;
+
+    const fetchNarratives = async () => {
+      setNarratives(null);
+
+      try {
+        const profileSummary = formatClinicalSummary(assessmentData.extractedProfile);
+        const narrative = await geminiClient.generateRecommendationNarratives({
+          initialSymptom: assessmentData.symptoms,
+          profileSummary,
+          answers: answersLog,
+          selectedOptions: selectedOptionsSummary,
+          recommendedLevel: recommendation.recommended_level,
+          keyConcerns: recommendation.key_concerns ?? [],
+          relevantServices: recommendation.relevant_services,
+          redFlags: recommendation.red_flags,
+          clinicalSoap: recommendation.clinical_soap,
+        });
+
+        if (isActive) {
+          setNarratives(narrative);
+        }
+      } catch (error) {
+        console.error('Narrative generation failed:', error);
+      }
+    };
+
+    fetchNarratives();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    recommendation,
+    assessmentData.symptoms,
+    assessmentData.extractedProfile,
+    answersLog,
+    selectedOptionsSummary,
+  ]);
+
   const filterFacilities = useCallback(() => {
     if (!recommendation) return;
 
@@ -714,7 +779,8 @@ const RecommendationScreen = () => {
   const isEmergency = recommendation.recommended_level === 'emergency';
   const triageLevel = mapCareLevelToTriageLevel(recommendation.recommended_level);
   const careInfo = getCareLevelInfo(recommendation.recommended_level);
-  const displayAdvice = recommendation.user_advice;
+  const recommendationNarrative =
+    narratives?.recommendationNarrative ?? recommendation.user_advice ?? '';
 
   const guardAdjustments = recommendation.triage_logic?.adjustments ?? [];
 
@@ -740,11 +806,17 @@ const RecommendationScreen = () => {
         : undefined;
 
   const empatheticAdvice = formatEmpatheticResponse({
-    body: displayAdvice,
+    body: recommendationNarrative,
     reason: reasonForAdvice,
     reasonSource,
     nextAction: getNextActionForLevel(recommendation.recommended_level),
+    tone: 'neutral',
   }).text;
+
+  const handoverNarrativeText =
+    narratives?.handoverNarrative ||
+    recommendation.medical_justification ||
+    'Share this clinical note with the facility team for a smooth handover.';
 
   const instructionWithGuardrail = empatheticAdvice;
 
@@ -834,21 +906,29 @@ const RecommendationScreen = () => {
             <Surface
               style={[
                 styles.transferCard,
-                { backgroundColor: theme.colors.surfaceVariant ?? theme.colors.surface },
+                { backgroundColor: applyOpacity(theme.colors.primary, 0.05) },
               ]}
-              elevation={1}
+              elevation={0}
             >
+              <View style={styles.badgeRow}>
+                <Surface style={[styles.handoverBadge, { backgroundColor: theme.colors.primary }]}>
+                  <Text variant="labelSmall" style={styles.badgeText}>
+                    GUEST HANDOVER
+                  </Text>
+                </Surface>
+              </View>
               <View style={styles.handoverHeader}>
                 <Text variant="titleLarge" style={styles.handoverTitle}>
                   Transfer to Patient Record
                 </Text>
               </View>
               <Text variant="bodySmall" style={styles.transferSubtitle}>
-                Send this completed guest assessment directly to a registered user’s profile for follow-up care.
+                Send this completed guest assessment directly to a registered user’s profile for
+                follow-up care.
               </Text>
               <TextInput
                 mode="outlined"
-                label="Username"
+                label="Target Username"
                 placeholder="e.g., john.doe"
                 value={transferUsername}
                 onChangeText={(value) => {
@@ -860,14 +940,18 @@ const RecommendationScreen = () => {
                 autoCapitalize="none"
                 autoComplete="username"
                 disabled={transferLoading}
+                outlineStyle={{ borderRadius: 8 }}
               />
               {transferError && (
-                <Text variant="bodySmall" style={[styles.transferMessage, { color: theme.colors.error }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[styles.transferMessage, { color: theme.colors.error }]}
+                >
                   {transferError}
                 </Text>
               )}
               <Button
-                title="Send"
+                title="Send Transfer"
                 variant="primary"
                 loading={transferLoading}
                 onPress={handleTransferAssessment}
@@ -889,8 +973,7 @@ const RecommendationScreen = () => {
               </Text>
             </View>
             <Text variant="bodySmall" style={styles.handoverSubtitle}>
-              If you are at the facility, you can share this clinical handover report with the nurse
-              or doctor.
+              {handoverNarrativeText}
             </Text>
             <Button
               title={handoverButtonLabelText}
@@ -1162,6 +1245,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     elevation: 0,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 151, 119, 0.15)', // primary with low opacity
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  handoverBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 10,
   },
 
   emptyState: {

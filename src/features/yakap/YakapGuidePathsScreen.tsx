@@ -10,18 +10,18 @@ import { Modal } from '../../components/common/Modal';
 import { Button, ScreenSafeArea } from '../../components/common';
 import { RootStackParamList } from '../../types/navigation';
 import { theme as appTheme } from '../../theme';
-import { ENROLLMENT_PATHWAYS, EnrollmentPathway as Pathway } from './yakapContent';
+import { YAKAP_GUIDE_PATHWAYS, YakapGuidePathway as Pathway } from './yakapContent';
 
 import StandardHeader from '../../components/common/StandardHeader';
 
-type EnrollmentPathwayScreenNavigationProp = StackNavigationProp<
+type YakapGuidePathsScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
-  'EnrollmentPathway'
+  'YakapGuidePaths'
 >;
 
-export const EnrollmentPathwayScreen = () => {
+const YakapGuidePathsScreen = () => {
   const theme = useTheme();
-  const navigation = useNavigation<EnrollmentPathwayScreenNavigationProp>();
+  const navigation = useNavigation<YakapGuidePathsScreenNavigationProp>();
   const [selectedPathway, setSelectedPathway] = useState<Pathway | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
@@ -35,7 +35,7 @@ export const EnrollmentPathwayScreen = () => {
   const handleProceed = () => {
     if (selectedPathway) {
       setModalVisible(false);
-      navigation.navigate('EnrollmentGuide', { pathwayId: selectedPathway.id });
+      navigation.navigate('YakapGuideSteps', { pathwayId: selectedPathway.id });
     }
   };
 
@@ -65,25 +65,25 @@ export const EnrollmentPathwayScreen = () => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
     >
-      <StandardHeader title="Enrollment Path" showBackButton />
+      <StandardHeader title="YAKAP Guide" showBackButton />
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollContentPaddingBottom }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerContainer}>
           <Text variant="bodyLarge" style={[styles.headerText, { color: theme.colors.onSurface }]}>
-            Choose the enrollment method that works best for you.
+            Choose the guide path that works best for you.
           </Text>
         </View>
 
-        {ENROLLMENT_PATHWAYS.map((pathway) => (
+        {YAKAP_GUIDE_PATHWAYS.map((pathway) => (
           <Card
             key={pathway.id}
             onPress={() => handlePathwaySelect(pathway)}
             mode="contained"
             rippleColor={theme.colors.primary + '15'}
             accessibilityLabel={`${pathway.name} pathway`}
-            accessibilityHint={`Double tap to select the ${pathway.name} enrollment method`}
+              accessibilityHint={`Double tap to select the ${pathway.name} guide path`}
             style={[
               styles.card,
               {
@@ -224,15 +224,15 @@ export const EnrollmentPathwayScreen = () => {
         >
           Confirm Pathway
         </Text>
-        <Text
-          variant="bodyMedium"
-          style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}
-        >
-          You have chosen{' '}
-          <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>
-            {selectedPathway?.name}
-          </Text>
-          . Do you want to proceed with this enrollment guide?
+          <Text
+            variant="bodyMedium"
+            style={[styles.modalText, { color: theme.colors.onSurfaceVariant }]}
+          >
+            You have chosen{' '}
+            <Text style={{ fontWeight: 'bold', color: theme.colors.primary }}>
+              {selectedPathway?.name}
+            </Text>
+            . Do you want to proceed with this guide path?
         </Text>
 
         <View style={styles.modalButtons}>
@@ -413,3 +413,5 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
 });
+
+export default YakapGuidePathsScreen;

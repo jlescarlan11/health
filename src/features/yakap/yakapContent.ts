@@ -6,7 +6,7 @@ export interface YakapBenefit {
   icon: string;
 }
 
-export interface EnrollmentPathway {
+export interface YakapGuidePathway {
   id: string;
   name: string;
   description: string;
@@ -80,7 +80,7 @@ export const YAKAP_BENEFITS: YakapBenefit[] = [
   },
 ];
 
-export const ENROLLMENT_PATHWAYS: EnrollmentPathway[] = [
+export const YAKAP_GUIDE_PATHWAYS: YakapGuidePathway[] = [
   {
     id: 'egovph',
     name: 'eGovPH App',

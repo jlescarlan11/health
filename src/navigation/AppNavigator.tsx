@@ -17,10 +17,8 @@ import CrisisSupportScreen from '../screens/CrisisSupportScreen';
 import FacilityDetailsScreen from '../screens/FacilityDetailsScreen';
 import {
   YakapFaqScreen,
-  EligibilityCheckerScreen,
-  EnrollmentPathwayScreen,
-  EnrollmentGuideScreen,
-  EnrollmentCompletionScreen,
+  YakapGuidePathsScreen,
+  YakapGuideStepsScreen,
 } from '../features/yakap';
 import StandardHeader from '../components/common/StandardHeader';
 import MedicationTrackerScreen from '../screens/MedicationTrackerScreen';
@@ -67,10 +65,8 @@ const AppNavigator = () => {
 
       {/* YAKAP Flow */}
       <Stack.Screen name="YakapFaq" component={YakapFaqScreen} />
-      <Stack.Screen name="EligibilityChecker" component={EligibilityCheckerScreen} />
-      <Stack.Screen name="EnrollmentPathway" component={EnrollmentPathwayScreen} />
-      <Stack.Screen name="EnrollmentGuide" component={EnrollmentGuideScreen} />
-      <Stack.Screen name="EnrollmentCompletion" component={EnrollmentCompletionScreen} />
+      <Stack.Screen name="YakapGuidePaths" component={YakapGuidePathsScreen} />
+      <Stack.Screen name="YakapGuideSteps" component={YakapGuideStepsScreen} />
 
       <Stack.Screen name="NotFound" component={NotFoundScreen} options={{ title: 'Oops!' }} />
       <Stack.Screen

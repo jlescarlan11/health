@@ -12,11 +12,11 @@ import { RootState, AppDispatch } from '../store';
 import { FeedItem as FeedItemType } from '../types/feed';
 import { theme as appTheme } from '../theme';
 
-type Props = MainTabScreenProps<'HealthFeed'>;
+type Props = MainTabScreenProps<'HealthHub'>;
 
 const PAGE_SIZE = 10;
 
-export const HealthFeedScreen = () => {
+export const HealthHubScreen = () => {
   const theme = useTheme();
   const dispatch = useDispatch<AppDispatch>();
   const { items, loading, error, currentPage, hasMore } = useSelector((state: RootState) => state.feed);
@@ -74,7 +74,7 @@ export const HealthFeedScreen = () => {
       edges={['left', 'right', 'bottom']}
       disableBottomInset
     >
-      <StandardHeader title="Health Promotion Feed" showBackButton={false} />
+      <StandardHeader title="Hub" showBackButton={false} />
 
       <FlatList
         data={items}
@@ -119,7 +119,7 @@ export const HealthFeedScreen = () => {
                 Check back later for the latest health promotions and news.
               </Text>
               <Button mode="contained" onPress={() => loadFeed(1)} style={{ marginTop: 20 }}>
-                Refresh Feed
+                Refresh Hub
               </Button>
             </View>
           ) : (

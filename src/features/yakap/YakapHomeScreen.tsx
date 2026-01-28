@@ -17,8 +17,8 @@ const YakapHomeScreen = () => {
   const benefitCardPadding = themeSpacing.lg ?? 16;
   const navigation = useNavigation<YakapStackScreenProps<'YakapHome'>['navigation']>();
 
-  const navigateToEnrollment = () => {
-    navigation.navigate('EligibilityChecker');
+  const navigateToGuidePaths = () => {
+    navigation.navigate('YakapGuidePaths');
   };
 
   const navigateToFacilities = () => {
@@ -101,7 +101,7 @@ const YakapHomeScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionButtonsContainer}>
-          <Button variant="primary" onPress={navigateToEnrollment} title="Start Enrollment Guide" />
+          <Button variant="primary" onPress={navigateToGuidePaths} title="Open YAKAP Guide" />
           <Button variant="text" onPress={navigateToFacilities} title="Find YAKAP Clinics" />
         </View>
 

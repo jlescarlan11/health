@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import prisma from '../lib/prisma';
 import { Facility, Prisma } from '../../generated/prisma';
-import { VALID_SERVICES } from '../utils/constants';
+import { VALID_SERVICES, resolveServiceAlias } from '../utils/constants';
 
 const apiKey = process.env.GEMINI_API_KEY || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -42,9 +42,9 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
 
     Task:
     1. Analyze the symptoms and severity to determine the appropriate level of care (Self-Care, Health Center, Hospital, or Emergency).
-    2. Provide 2-3 "relevant_services" that align with the high-level facility categories such as General, Trauma, Pediatrics, Mental Health, Maternal Care, or Diagnostics (Radiology/Lab). Do not repeat the entire VALID_SERVICES list; the backend will validate your selections.
-    3. Optionally include "facility_type_constraints" if the case needs a specific facility type (for example, "Hospital with trauma services").
-    4. Provide a clear reasoning for your recommendation.
+    2. Identify 2-3 relevant medical services or specialties required for this case.
+    3. Optionally include specific facility type constraints.
+    4. Provide clear reasoning for your recommendation.
 
     Output Schema (JSON only):
     {
@@ -52,8 +52,8 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
       "triage_readiness_score": 0.0 to 1.0,
       "ambiguity_detected": boolean,
       "reasoning": "Brief explanation...",
-      "relevant_services": ["Service 1", "Service 2"],
-      "facility_type_constraints": ["Hospital with trauma services"]
+      "relevant_services": ["string", "string"], // Use standard medical specialty names (e.g., Pediatrics, Surgery, Mental Health)
+      "facility_type_constraints": ["string"] // e.g., "Hospital with trauma services"
     }
     
     Return ONLY valid JSON.
@@ -82,9 +82,10 @@ export const navigate = async (data: AIRequest): Promise<AIResponse> => {
   }
 
   if (parsedResponse.relevant_services) {
-    parsedResponse.relevant_services = parsedResponse.relevant_services.filter((s: string) =>
-      VALID_SERVICES.includes(s),
-    );
+    // Map suggested services to canonical names and filter by VALID_SERVICES
+    parsedResponse.relevant_services = parsedResponse.relevant_services
+      .map((s: string) => resolveServiceAlias(s))
+      .filter((s: string) => VALID_SERVICES.includes(s));
   }
 
   // --- Conservative Fallback Logic ---

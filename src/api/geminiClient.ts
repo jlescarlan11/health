@@ -15,6 +15,7 @@ import {
   REFINE_PLAN_PROMPT,
   IMMEDIATE_FOLLOW_UP_PROMPT,
   BRIDGE_PROMPT,
+  RECOMMENDATION_NARRATIVE_PROMPT,
 } from '../constants/prompts';
 import { DEFAULT_RED_FLAG_QUESTION } from '../constants/clinical';
 import { detectEmergency, isNegated } from '../services/emergencyDetector';
@@ -63,10 +64,20 @@ const PLAN_CACHE_VERSION = 1;
 const normalizeCacheInput = (value: string): string =>
   value.replace(/\s+/g, ' ').trim().toLowerCase();
 
-const getAssessmentPlanCacheKey = (symptom: string, patientContext?: string): string => {
+const getAssessmentPlanCacheKey = (
+  symptom: string,
+  patientContext?: string,
+  fullName?: string | null,
+): string => {
   const base = normalizeCacheInput(symptom || '');
-  if (!patientContext || !patientContext.trim()) return `${PLAN_CACHE_PREFIX}${base}`;
-  return `${PLAN_CACHE_PREFIX}${base}|ctx:${simpleHash(normalizeCacheInput(patientContext))}`;
+  let key = `${PLAN_CACHE_PREFIX}${base}`;
+  if (patientContext && patientContext.trim()) {
+    key += `|ctx:${simpleHash(normalizeCacheInput(patientContext))}`;
+  }
+  if (fullName && fullName.trim()) {
+    key += `|name:${simpleHash(normalizeCacheInput(fullName))}`;
+  }
+  return key;
 };
 
 const simpleHash = (value: string): string => {
@@ -97,6 +108,29 @@ interface AssessmentPlanCacheEntry {
   timestamp: number;
   version: number;
 }
+
+interface RecommendationNarrativeInput {
+  initialSymptom?: string;
+  profileSummary?: string;
+  answers?: string;
+  selectedOptions?: string;
+  recommendedLevel?: string;
+  keyConcerns?: string[];
+  relevantServices?: string[];
+  redFlags?: string[];
+  clinicalSoap?: string;
+}
+
+interface RecommendationNarrativeOutput {
+  recommendationNarrative: string;
+  handoverNarrative: string;
+}
+
+const describePromptList = (items?: string[]): string =>
+  items && items.length ? items.join(', ') : 'None noted.';
+
+const sanitizePromptValue = (value?: string, fallback = 'Not provided.'): string =>
+  value && value.trim().length > 0 ? value.trim() : fallback;
 
 type SafetyFallbackContext = 'maternal' | 'trauma' | 'general';
 
@@ -327,6 +361,13 @@ export class GeminiClient {
     return key;
   }
 
+  private fillNarrativePrompt(
+    template: string,
+    replacements: Record<string, string>,
+  ): string {
+    return template.replace(/{{\s*([^}]+)\s*}}/g, (_, key) => replacements[key] ?? 'Not provided.');
+  }
+
   /**
    * Simple hash function for generating fixed-length cache keys.
    */
@@ -548,7 +589,7 @@ export class GeminiClient {
       | string
       | (string | { inlineData: { data: string; mimeType: string } })[]
       | GenerateContentRequest,
-    generationConfig?: { responseMimeType?: string },
+    generationConfig?: { responseMimeType?: string; temperature?: number },
   ): Promise<string> {
     let attempt = 0;
 
@@ -607,8 +648,9 @@ export class GeminiClient {
   public async generateAssessmentPlan(
     initialSymptom: string,
     patientContext?: string,
+    fullName?: string | null,
   ): Promise<{ questions: AssessmentQuestion[]; intro?: string }> {
-    const cacheKey = getAssessmentPlanCacheKey(initialSymptom, patientContext);
+    const cacheKey = getAssessmentPlanCacheKey(initialSymptom, patientContext, fullName);
 
     try {
       const cachedJson = await AsyncStorage.getItem(cacheKey);
@@ -633,6 +675,11 @@ export class GeminiClient {
         '{{initialSymptom}}',
         initialSymptom,
       );
+
+      if (fullName && fullName.trim()) {
+        prompt = `The patient's name is ${fullName.trim()}.\n\n${prompt}`;
+      }
+
       prompt = this.applyPatientContext(prompt, patientContext);
 
       const responseText = await this.generateContentWithRetry(prompt);
@@ -764,12 +811,43 @@ export class GeminiClient {
     nextQuestion: string;
   }): Promise<string> {
     const prompt = BRIDGE_PROMPT.replace('{{lastUserAnswer}}', args.lastUserAnswer || '').replace(
-      '{{nextQuestion}}',
+      '{{nextQuestionText}}',
       args.nextQuestion,
     );
 
-    const responseText = await this.generateContentWithRetry(prompt);
+    const responseText = await this.generateContentWithRetry(prompt, { temperature: 0 });
     return responseText.trim();
+  }
+
+  public async generateRecommendationNarratives(
+    input: RecommendationNarrativeInput,
+  ): Promise<RecommendationNarrativeOutput> {
+    const replacements: Record<string, string> = {
+      initialSymptom: sanitizePromptValue(input.initialSymptom, 'No initial symptom provided.'),
+      profileSummary: sanitizePromptValue(input.profileSummary, 'No clinical summary provided.'),
+      answers: sanitizePromptValue(input.answers, 'No answer log available.'),
+      selectedOptions: sanitizePromptValue(input.selectedOptions, 'No selected options recorded.'),
+      recommendedLevel: sanitizePromptValue(input.recommendedLevel, 'Not specified'),
+      keyConcerns: describePromptList(input.keyConcerns),
+      relevantServices: describePromptList(input.relevantServices),
+      redFlags: describePromptList(input.redFlags),
+      clinicalSoap: sanitizePromptValue(input.clinicalSoap, 'Clinical SOAP not provided.'),
+    };
+
+    const prompt = this.fillNarrativePrompt(RECOMMENDATION_NARRATIVE_PROMPT, replacements);
+
+    const responseText = await this.generateContentWithRetry(prompt, { temperature: 0.45 });
+
+    try {
+      const parsed = JSON.parse(responseText);
+      return {
+        recommendationNarrative: (parsed.recommendationNarrative ?? '').trim(),
+        handoverNarrative: (parsed.handoverNarrative ?? '').trim(),
+      };
+    } catch (error) {
+      console.error('[GeminiClient] Failed to parse narrative response:', error);
+      throw new Error('Invalid AI narrative response format.');
+    }
   }
 
   /**
@@ -781,14 +859,19 @@ export class GeminiClient {
       currentProfileSummary?: string;
     },
   ): Promise<AssessmentProfile> {
-    const meaningfulMessages = history.filter((msg) => msg.text && msg.text.trim());
-    const recentMessages = meaningfulMessages.slice(-CLINICAL_PROFILE_CONTEXT_MESSAGE_LIMIT);
+    const profileSummary =
+      options?.currentProfileSummary?.trim() || 'No previous profile summary is available.';
+
+    // Prune history to last 6 messages (3 user-AI turns)
+    const recentMessages = history
+      .filter((msg) => msg.text && msg.text.trim())
+      .slice(-CLINICAL_PROFILE_CONTEXT_MESSAGE_LIMIT);
+
     const formattedRecentMessages = recentMessages
       .map((msg) => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}: ${msg.text}`)
       .join('\n');
+
     const recentMessagesPrompt = formattedRecentMessages || 'No recent conversation is available.';
-    const profileSummary =
-      options?.currentProfileSummary?.trim() || 'No previous profile summary is available.';
 
     const historyHash = getHistoryHash(`${profileSummary}||${formattedRecentMessages}`);
     const versionedHistoryKey = `${historyHash}|v${PROFILE_CACHE_VERSION}`;
@@ -836,9 +919,9 @@ export class GeminiClient {
     const requestPromise = (async () => {
       try {
         const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace(
-          '{{currentProfileSummary}}',
+          '{{current_profile_summary}}',
           profileSummary,
-        ).replace('{{recentMessages}}', recentMessagesPrompt);
+        ).replace('{{recent_messages}}', recentMessagesPrompt);
 
         const responseText = await this.generateContentWithRetry(prompt, {
           responseMimeType: 'application/json',

@@ -160,7 +160,7 @@ export const MainHomeScreen = () => {
             <View style={styles.bottomStackItem}>
               <FeatureCard
                 title="YAKAP Guide"
-                subtitle="Enrollment guide for free healthcare"
+                subtitle="Guided steps for free healthcare"
                 customIcon={<YakapLogo width={44} height={44} />}
                 color={theme.colors.primary}
                 onPress={() => navigation.navigate('YAKAP', { screen: 'YakapHome' })}
@@ -180,14 +180,14 @@ export const MainHomeScreen = () => {
                 <FeedItem
                   key={item.id}
                   item={item}
-                  onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
+                  onPress={() => navigation.navigate('Home', { screen: 'HealthHub' })}
                 />
               ))}
             </View>
             <View style={styles.seeMoreButtonContainer}>
               <Button
                 title="See More"
-                onPress={() => navigation.navigate('Home', { screen: 'HealthFeed' })}
+                onPress={() => navigation.navigate('Home', { screen: 'HealthHub' })}
                 style={styles.seeMoreButton}
                 contentStyle={styles.seeMoreButtonContent}
                 accessibilityLabel="See more news"
