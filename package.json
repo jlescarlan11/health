@@ -7,7 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint": "eslint .",
     "format": "prettier --write .",
     "postinstall": "jetifier"
   },
@@ -28,6 +28,7 @@
     "expo": "~54.0.30",
     "expo-av": "^16.0.8",
     "expo-build-properties": "^1.0.10",
+    "expo-calendar": "~15.0.8",
     "expo-clipboard": "~8.0.8",
     "expo-constants": "~18.0.12",
     "expo-dev-client": "~6.0.20",
@@ -36,6 +37,7 @@
     "expo-location": "~19.0.8",
     "expo-print": "~15.0.8",
     "expo-router": "~6.0.21",
+    "expo-secure-store": "~15.0.8",
     "expo-sharing": "~14.0.8",
     "expo-sqlite": "~16.0.10",
     "expo-status-bar": "~3.0.9",
@@ -60,6 +62,7 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@expo/config-plugins": "^54.0.4",
     "@types/lodash": "^4.17.21",
     "@types/react": "~19.1.0",
     "@types/react-native-vector-icons": "^6.4.18",

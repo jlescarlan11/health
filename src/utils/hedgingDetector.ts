@@ -57,6 +57,9 @@ const HEDGING_PATTERNS = {
     /\b(could\s+be)\b/i,
     /\b(chance)\b/i,
     /\b(perhaps)\b/i,
+    /\b(daw)\b/i,
+    /\b(yata)\b/i,
+    /\b(siguro)\b/i,
   ],
 
   /**

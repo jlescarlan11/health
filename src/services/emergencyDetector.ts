@@ -147,6 +147,11 @@ const OTHER_EMERGENCY_KEYWORDS: Record<string, number> = {
   kalentura: 5, // fever
 };
 
+// --- CONSTANTS ---
+const EMERGENCY_SCORE_THRESHOLD = 7; // Scores strictly greater than this trigger emergency level
+const MAX_NON_EMERGENCY_SCORE = 7;
+const ABSOLUTE_EMERGENCY_THRESHOLD = 10;
+
 // Consolidated map for the base detector
 const ALL_EMERGENCY_KEYWORDS: Record<string, number> = {
   ...CARDIAC_KEYWORDS,
@@ -259,6 +264,7 @@ export interface EmergencyDebugLog {
   affectedSystems: string[];
   reasoning: string;
   contextualExclusions?: string[];
+  denial_confidence?: string;
 }
 
 class EmergencyDetector extends KeywordDetector {
@@ -390,149 +396,319 @@ class EmergencyDetector extends KeywordDetector {
       };
     }
 
-    // --- CONTEXT-AWARE SCORE ADJUSTMENT ---
-    let finalScore = score;
-    const reasoningParts: string[] = [];
+        // --- CONTEXT-AWARE SCORE ADJUSTMENT ---
 
-    // Check if we have an absolute emergency (10/10)
-    const hasAbsoluteEmergency = matchedKeywords.some((k) => ALL_EMERGENCY_KEYWORDS[k] === 10);
+        let finalScore = score;
 
-    if (!hasAbsoluteEmergency && finalScore > 0) {
-      let scoreModifier = 0;
+        const reasoningParts: string[] = [];
 
-      // 1. Danger Indicators (Multipliers/Adders)
-      const activeDanger = Object.keys(DANGER_INDICATORS).filter((dk) => {
-        // Find segment containing this danger indicator
-        const segment = segmentAnalyses.find((s) => s.text.toLowerCase().includes(dk));
-        if (!segment) return false;
+    
 
-        // If it's a keyword match in this segment, check if it was suppressed (negated)
-        const suppressed = segment.suppressedMatches.some((m) =>
-          m.keyword.toLowerCase().includes(dk),
+        // Check if we have an absolute emergency (10/10)
+
+        const hasAbsoluteEmergency = matchedKeywords.some(
+
+          (k) => ALL_EMERGENCY_KEYWORDS[k] === ABSOLUTE_EMERGENCY_THRESHOLD,
+
         );
-        if (suppressed) return false;
 
-        return true;
-      });
+    
 
-      activeDanger.forEach((dk) => {
-        scoreModifier += DANGER_INDICATORS[dk];
-        reasoningParts.push(`Danger indicator (+${DANGER_INDICATORS[dk]}): ${dk}.`);
-      });
+        if (!hasAbsoluteEmergency && finalScore > 0) {
 
-      // 2. Viral Indicators (De-escalation)
-      // Only de-escalate if the primary symptoms are "Serious" but not "Absolute"
-      const hasViralSymptoms = VIRAL_INDICATORS.some((vk) => sanitized.toLowerCase().includes(vk));
-      const isRedFlagQuestion = questionId === 'red_flags' || questionId === 'q_emergency_signs';
+          let scoreModifier = 0;
 
-      if (hasViralSymptoms && finalScore <= 7 && !isRedFlagQuestion) {
-        scoreModifier -= 2;
-        reasoningParts.push('Viral indicators detected (-2): cough/runny nose/cold symptoms.');
-      }
+    
 
-      // 3. Duration/Profile Adjustments
-      const urgency = this.parseDurationUrgency(profile?.duration || null);
-      if (urgency === 'chronic' && finalScore < 8) {
-        scoreModifier += 1; // Chronic is serious but often less acute
-        reasoningParts.push('Chronic duration (+1).');
-      }
+          // 1. Danger Indicators (Multipliers/Adders)
 
-      const initialScore = finalScore;
-      finalScore = Math.max(0, Math.min(10, finalScore + scoreModifier));
+          const activeDanger = Object.keys(DANGER_INDICATORS).filter((dk) => {
 
-      if (finalScore !== initialScore) {
-        console.log(
-          `  [Scoring] Modified score from ${initialScore} to ${finalScore} based on context.`,
-        );
-      }
-    } else if (hasAbsoluteEmergency) {
-      finalScore = 10;
-      reasoningParts.push('Absolute emergency detected.');
-    }
+            // Find segment containing this danger indicator
 
-    // 4. System Overlap Logic
-    if (affectedSystems.includes('Cardiac') && affectedSystems.includes('Respiratory')) {
-      finalScore = Math.min(10, finalScore + 3);
-      reasoningParts.push('Multi-system risk (Cardiac + Respiratory).');
-    }
+            const segment = segmentAnalyses.find((s) => s.text.toLowerCase().includes(dk));
 
-    if (affectedSystems.includes('Neurological') && affectedSystems.includes('Trauma')) {
-      finalScore = 10;
-      reasoningParts.push('Critical multi-system risk (Neuro + Trauma).');
-    }
+            if (!segment) return false;
 
-    // 5. Combination Risks (Fallback/Secondary check)
-    let combinationReason = '';
+    
 
-    for (const risk of COMBINATION_RISKS) {
-      const hasAllSymptoms = risk.symptoms.every((s) => matchedKeywords.includes(s));
-      if (hasAllSymptoms) {
-        finalScore = Math.max(finalScore, risk.severity);
-        combinationReason = risk.reason;
-        reasoningParts.push(
-          `Risk combination detected: ${risk.symptoms.join(' + ')} (${risk.reason}).`,
-        );
-        break; // Prioritize the first high-risk combination found
-      }
-    }
+            // If it's a keyword match in this segment, check if it was suppressed (negated)
 
-    // 6. Safety Check: If AI marked case as complex/critical, we slightly weight the score up,
-    // but if red flags are RESOLVED/DENIED, we never force an emergency just based on serious keywords.
-    if (profile?.symptom_category === 'critical' && finalScore < 8 && !hasAbsoluteEmergency) {
-      // AI thinks it's critical, but detector didn't find absolute keywords.
-      // We might upgrade to 8 if there are serious keywords.
-      if (finalScore >= 6) {
-        finalScore = 8;
-        reasoningParts.push('Upgraded based on AI category assessment.');
-      }
-    }
+            const suppressed = segment.suppressedMatches.some((m) =>
 
-    let isEmergency = finalScore > 7;
+              m.keyword.toLowerCase().includes(dk),
 
-    // --- AUTHORITY ENFORCEMENT: Profile Constraints ---
-    // If red flags are explicitly resolved and DENIED, block Emergency escalation
-    // unless there is an absolute (10/10) emergency keyword detected in user input.
-    if (profile?.red_flags_resolved === true) {
-      const denials = (profile.red_flag_denials || '').toLowerCase();
+            );
 
-      // 1. Check for explicit denial prefixes (safeguards)
-      const explicitDenialPrefixes = [
-        'no',
-        'none',
-        'wala',
-        'hindi',
-        'dae',
-        'dai',
-        'wara',
-        'nothing',
-        'bako',
-      ];
-      const isExplicitDenial = explicitDenialPrefixes.some(
-        (prefix) =>
-          denials === prefix ||
-          denials.startsWith(`${prefix} `) ||
-          denials.startsWith(`${prefix},`) ||
-          denials.startsWith(`${prefix}.`),
-      );
+            if (suppressed) return false;
 
-      // 2. Strengthened validation using isNegated for any matched keywords
-      const areKeywordsNegated =
-        matchedKeywords.length > 0 &&
-        matchedKeywords.every((k) => this.isNegated(denials, k).negated);
+    
 
-      const hasValidatedDenial = isExplicitDenial || areKeywordsNegated;
+            return true;
 
-      if (hasValidatedDenial && isEmergency && !hasAbsoluteEmergency) {
-        console.log(
-          '  [Authority] Emergency blocked: Red flags were explicitly denied in structured profile.',
-        );
-        isEmergency = false;
-        finalScore = 7; // Cap at maximum non-emergency score
-        reasoningParts.push(
-          `Authority block: Red flags denied in profile (Explicit: ${isExplicitDenial}, Negated: ${areKeywordsNegated}). Capping at non-emergency.`,
-        );
-      }
-    }
+          });
+
+    
+
+          activeDanger.forEach((dk) => {
+
+            scoreModifier += DANGER_INDICATORS[dk];
+
+            reasoningParts.push(`Danger indicator (+${DANGER_INDICATORS[dk]}): ${dk}.`);
+
+          });
+
+    
+
+          // 2. Viral Indicators (De-escalation)
+
+          // Only de-escalate if the primary symptoms are "Serious" but not "Absolute"
+
+          const hasViralSymptoms = VIRAL_INDICATORS.some((vk) => sanitized.toLowerCase().includes(vk));
+
+          const isRedFlagQuestion = questionId === 'red_flags' || questionId === 'q_emergency_signs';
+
+    
+
+                if (hasViralSymptoms && finalScore <= MAX_NON_EMERGENCY_SCORE && !isRedFlagQuestion) {
+
+    
+
+                  scoreModifier -= 2;
+
+    
+
+                  reasoningParts.push('Viral indicators detected (-2): cough/runny nose/cold symptoms.');
+
+    
+
+                }
+
+    
+
+                // 3. Duration/Profile Adjustments
+
+    
+
+                const urgency = this.parseDurationUrgency(profile?.duration || null);
+
+    
+
+                if (urgency === 'chronic' && finalScore <= EMERGENCY_SCORE_THRESHOLD) {
+
+    
+
+                  scoreModifier += 1; // Chronic is serious but often less acute
+
+    
+
+                  reasoningParts.push('Chronic duration (+1).');
+
+    
+
+                }
+
+    
+
+          const initialScore = finalScore;
+
+          finalScore = Math.max(0, Math.min(ABSOLUTE_EMERGENCY_THRESHOLD, finalScore + scoreModifier));
+
+    
+
+          if (finalScore !== initialScore) {
+
+            console.log(
+
+              `  [Scoring] Modified score from ${initialScore} to ${finalScore} based on context.`,
+
+            );
+
+          }
+
+        } else if (hasAbsoluteEmergency) {
+
+          finalScore = ABSOLUTE_EMERGENCY_THRESHOLD;
+
+          reasoningParts.push('Absolute emergency detected.');
+
+        }
+
+    
+
+        // 4. System Overlap Logic
+
+        if (affectedSystems.includes('Cardiac') && affectedSystems.includes('Respiratory')) {
+
+          finalScore = Math.min(ABSOLUTE_EMERGENCY_THRESHOLD, finalScore + 3);
+
+          reasoningParts.push('Multi-system risk (Cardiac + Respiratory).');
+
+        }
+
+    
+
+        if (affectedSystems.includes('Neurological') && affectedSystems.includes('Trauma')) {
+
+          finalScore = ABSOLUTE_EMERGENCY_THRESHOLD;
+
+          reasoningParts.push('Critical multi-system risk (Neuro + Trauma).');
+
+        }
+
+    
+
+        // 5. Combination Risks (Fallback/Secondary check)
+
+        let combinationReason = '';
+
+    
+
+        for (const risk of COMBINATION_RISKS) {
+
+          const hasAllSymptoms = risk.symptoms.every((s) => matchedKeywords.includes(s));
+
+          if (hasAllSymptoms) {
+
+            finalScore = Math.max(finalScore, risk.severity);
+
+            combinationReason = risk.reason;
+
+            reasoningParts.push(
+
+              `Risk combination detected: ${risk.symptoms.join(' + ')} (${risk.reason}).`,
+
+            );
+
+            break; // Prioritize the first high-risk combination found
+
+          }
+
+        }
+
+    
+
+        // 6. Safety Check: If AI marked case as complex/critical, we slightly weight the score up,
+
+        // but if red flags are RESOLVED/DENIED, we never force an emergency just based on serious keywords.
+
+                if (
+
+                  profile?.symptom_category === 'critical' &&
+
+                  finalScore <= EMERGENCY_SCORE_THRESHOLD &&
+
+                  !hasAbsoluteEmergency
+
+                ) {
+
+                  // AI thinks it's critical, but detector didn't find absolute keywords.
+
+                  // We might upgrade to 8 if there are serious keywords.
+
+                  if (finalScore >= 6) {
+
+                    finalScore = EMERGENCY_SCORE_THRESHOLD + 1;
+
+                    reasoningParts.push('Upgraded based on AI category assessment.');
+
+                  }
+
+                }
+
+    
+
+        let isEmergency = finalScore > EMERGENCY_SCORE_THRESHOLD;
+
+    
+
+        // --- AUTHORITY ENFORCEMENT: Profile Constraints ---
+
+        // If red flags are explicitly resolved and DENIED, block Emergency escalation
+
+        // unless there is an absolute (10/10) emergency keyword detected in user input.
+
+        if (profile?.red_flags_resolved === true) {
+
+          const denials = (profile.red_flag_denials || '').toLowerCase();
+
+    
+
+          // 1. Check for explicit denial prefixes (safeguards)
+
+          const explicitDenialPrefixes = [
+
+            'no',
+
+            'none',
+
+            'wala',
+
+            'hindi',
+
+            'dae',
+
+            'dai',
+
+            'wara',
+
+            'nothing',
+
+            'bako',
+
+          ];
+
+          const isExplicitDenial = explicitDenialPrefixes.some(
+
+            (prefix) =>
+
+              denials === prefix ||
+
+              denials.startsWith(`${prefix} `) ||
+
+              denials.startsWith(`${prefix},`) ||
+
+              denials.startsWith(`${prefix}.`),
+
+          );
+
+    
+
+          // 2. Strengthened validation using isNegated for any matched keywords
+
+          const areKeywordsNegated =
+
+            matchedKeywords.length > 0 &&
+
+            matchedKeywords.every((k) => this.isNegated(denials, k).negated);
+
+    
+
+          const hasValidatedDenial = isExplicitDenial || areKeywordsNegated;
+
+    
+
+          if (hasValidatedDenial && isEmergency && !hasAbsoluteEmergency) {
+
+            console.log(
+
+              '  [Authority] Emergency blocked: Red flags were explicitly denied in structured profile.',
+
+            );
+
+            isEmergency = false;
+
+            finalScore = MAX_NON_EMERGENCY_SCORE; // Cap at maximum non-emergency score
+
+            reasoningParts.push(
+
+              `Authority block: Red flags denied in profile (Explicit: ${isExplicitDenial}, Negated: ${areKeywordsNegated}, Confidence: ${profile.denial_confidence || 'unknown'}). Capping at non-emergency.`,
+
+            );
+
+          }
+
+        }
 
     // Build reasoning
     let reasoning = '';
@@ -588,6 +764,7 @@ class EmergencyDetector extends KeywordDetector {
       affectedSystems,
       reasoning,
       contextualExclusions: excludedKeywords,
+      denial_confidence: profile?.denial_confidence,
     };
 
     let overrideResponse: AssessmentResponse | undefined;
