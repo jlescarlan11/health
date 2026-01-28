@@ -238,11 +238,11 @@ export function prioritizeQuestions(questions: AssessmentQuestion[]): Assessment
 /**
  * Parses and validates LLM response.
  */
-export function parseAndValidateLLMResponse<T = any>(rawResponse: string): T {
+export function parseAndValidateLLMResponse<T = unknown>(rawResponse: string): T {
   try {
     const cleaned = rawResponse.replace(/```json\n?|\n?```/g, '').trim();
     return JSON.parse(cleaned) as T;
-  } catch (error) {
+  } catch {
     const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {

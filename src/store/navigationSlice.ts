@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TriageSnapshot } from '../types/triage';
+import { TriageSnapshot, AssessmentQuestion, AssessmentProfile } from '../types/triage';
 import { ClinicalSlots } from '../utils/clinicalUtils';
+import { EmergencyDetectionResult } from '../services/emergencyDetector';
 
 interface Message {
   id: string;
@@ -36,16 +37,16 @@ interface NavigationState {
   lastRiskTimestamp: number;
   symptomDraft: string;
   assessmentState: {
-    messages: any[];
-    questions: any[];
-    fullPlan: any[];
+    messages: Message[];
+    questions: AssessmentQuestion[];
+    fullPlan: AssessmentQuestion[];
     currentQuestionIndex: number;
     answers: Record<string, string>;
     expansionCount: number;
     readiness: number;
     assessmentStage: string;
     symptomCategory: string | null;
-    previousProfile: any | undefined;
+    previousProfile: AssessmentProfile | undefined;
     clarificationCount: number;
     suppressedKeywords: string[];
     isRecentResolved: boolean;
@@ -54,7 +55,12 @@ interface NavigationState {
     isOfflineMode: boolean;
     currentOfflineNodeId: string | null;
     isVerifyingEmergency: boolean;
-    emergencyVerificationData: any | null;
+    emergencyVerificationData: {
+      keyword: string;
+      answer: string;
+      currentQ: AssessmentQuestion;
+      safetyCheck: EmergencyDetectionResult;
+    } | null;
     pendingRedFlag: string | null;
     sessionBuffer: Message[];
     outOfScopeBuffer: string[];
@@ -114,7 +120,34 @@ const navigationSlice = createSlice({
       action: PayloadAction<Partial<NavigationState['assessmentState']>>,
     ) => {
       if (!state.assessmentState && action.payload) {
-        state.assessmentState = action.payload as any;
+        state.assessmentState = {
+          messages: [],
+          questions: [],
+          fullPlan: [],
+          currentQuestionIndex: 0,
+          answers: {},
+          expansionCount: 0,
+          readiness: 0,
+          assessmentStage: 'intake',
+          symptomCategory: null,
+          previousProfile: undefined,
+          clarificationCount: 0,
+          suppressedKeywords: [],
+          isRecentResolved: false,
+          resolvedKeyword: null,
+          initialSymptom: '',
+          isOfflineMode: false,
+          currentOfflineNodeId: null,
+          isVerifyingEmergency: false,
+          emergencyVerificationData: null,
+          pendingRedFlag: null,
+          sessionBuffer: [],
+          outOfScopeBuffer: [],
+          triageSnapshot: null,
+          incrementalSlots: {},
+          isGuestMode: false,
+          ...action.payload,
+        } as NavigationState['assessmentState'];
       } else if (state.assessmentState && action.payload) {
         state.assessmentState = { ...state.assessmentState, ...action.payload };
       }

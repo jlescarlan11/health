@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { TextInput, HelperText, useTheme, Snackbar } from 'react-native-paper';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { View, StyleSheet, Alert, BackHandler } from 'react-native';
+import { TextInput, HelperText, useTheme, Snackbar, SegmentedButtons } from 'react-native-paper';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import StandardHeader from '../components/common/StandardHeader';
@@ -13,6 +14,7 @@ import { theme as appTheme } from '../theme';
 
 export const HealthProfileEditScreen = () => {
   const theme = useTheme();
+  const navigation = useNavigation();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.profile);
   const insets = useSafeAreaInsets();
@@ -21,42 +23,117 @@ export const HealthProfileEditScreen = () => {
   const scrollBottomPadding = baseBottomPadding * 2;
   const snackbarBottomSpacing = insets.bottom + (themeSpacing.sm ?? 8);
 
-  const initialDobDigits = convertIsoDateToDigits(profile.dob);
+  const initialDobDigits = useMemo(() => convertIsoDateToDigits(profile.dob), [profile.dob]);
   const [fullName, setFullName] = useState(profile.fullName || '');
   const [dobDigits, setDobDigits] = useState(initialDobDigits);
-  const [displayDob, setDisplayDob] = useState(formatMmDisplay(initialDobDigits));
-  const [normalizedDob, setNormalizedDob] = useState(profile.dob || '');
+  const displayDob = useMemo(() => formatMmDisplay(dobDigits), [dobDigits]);
+  const [sex, setSex] = useState(profile.sex || '');
   const [bloodType, setBloodType] = useState(profile.bloodType || '');
   const [philHealthId, setPhilHealthId] = useState(profile.philHealthId || '');
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [dobError, setDobError] = useState('');
+  const [sexError, setSexError] = useState('');
   const [dobTouched, setDobTouched] = useState(false);
-  const lastDisplayRef = useRef(formatMmDisplay(initialDobDigits));
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle');
   const statusResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [chronicConditionsInput, setChronicConditionsInput] = useState(
     joinList(profile.chronicConditions),
   );
   const [allergiesInput, setAllergiesInput] = useState(joinList(profile.allergies));
-  const [medicationsInput, setMedicationsInput] = useState(joinList(profile.currentMedications));
   const [surgicalHistoryInput, setSurgicalHistoryInput] = useState(profile.surgicalHistory || '');
   const [familyHistoryInput, setFamilyHistoryInput] = useState(profile.familyHistory || '');
+
+  const hasUnsavedChanges = useMemo(() => {
+    const currentDob = normalizeDigitsToIso(dobDigits) || null;
+    const initialDob = profile.dob || null;
+
+    return (
+      fullName !== (profile.fullName || '') ||
+      currentDob !== initialDob ||
+      sex !== (profile.sex || '') ||
+      bloodType !== (profile.bloodType || '') ||
+      philHealthId !== (profile.philHealthId || '') ||
+      chronicConditionsInput !== joinList(profile.chronicConditions) ||
+      allergiesInput !== joinList(profile.allergies) ||
+      surgicalHistoryInput !== (profile.surgicalHistory || '') ||
+      familyHistoryInput !== (profile.familyHistory || '')
+    );
+  }, [
+    fullName,
+    dobDigits,
+    sex,
+    bloodType,
+    philHealthId,
+    chronicConditionsInput,
+    allergiesInput,
+    surgicalHistoryInput,
+    familyHistoryInput,
+    profile,
+  ]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      if (!hasUnsavedChanges || saveState === 'saved') {
+        return;
+      }
+
+      e.preventDefault();
+
+      Alert.alert(
+        'Discard changes?',
+        'You have unsaved changes. Are you sure you want to leave and discard them?',
+        [
+          { text: "Don't leave", style: 'cancel', onPress: () => {} },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => navigation.dispatch(e.data.action),
+          },
+        ],
+      );
+    });
+
+    return unsubscribe;
+  }, [navigation, hasUnsavedChanges, saveState]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (hasUnsavedChanges && saveState !== 'saved') {
+          Alert.alert(
+            'Discard changes?',
+            'You have unsaved changes. Are you sure you want to leave and discard them?',
+            [
+              { text: "Don't leave", style: 'cancel', onPress: () => {} },
+              {
+                text: 'Discard',
+                style: 'destructive',
+                onPress: () => navigation.goBack(),
+              },
+            ],
+          );
+          return true;
+        }
+        return false;
+      };
+
+      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    }, [hasUnsavedChanges, saveState, navigation]),
+  );
 
   useEffect(() => {
     setFullName(profile.fullName || '');
     const digitsFromProfile = convertIsoDateToDigits(profile.dob);
     setDobDigits(digitsFromProfile);
-    const reformatted = formatMmDisplay(digitsFromProfile);
-    setDisplayDob(reformatted);
-    lastDisplayRef.current = reformatted;
-    setNormalizedDob(profile.dob || '');
+    setSex(profile.sex || '');
     setBloodType(profile.bloodType || '');
     setPhilHealthId(profile.philHealthId || '');
     setDobError('');
     setDobTouched(false);
     setChronicConditionsInput(joinList(profile.chronicConditions));
     setAllergiesInput(joinList(profile.allergies));
-    setMedicationsInput(joinList(profile.currentMedications));
     setSurgicalHistoryInput(profile.surgicalHistory || '');
     setFamilyHistoryInput(profile.familyHistory || '');
   }, [profile]);
@@ -71,14 +148,20 @@ export const HealthProfileEditScreen = () => {
 
   const handleSave = () => {
     setDobTouched(true);
-    const error = getDobError(dobDigits);
-    setDobError(error);
-    if (error) {
+    const dobErr = getDobError(dobDigits);
+    setDobError(dobErr);
+
+    if (!sex) {
+      setSexError('Please select your sex.');
+    } else {
+      setSexError('');
+    }
+
+    if (dobErr || !sex) {
       return;
     }
 
-    const normalized = dobDigits.length === 8 ? normalizeDigitsToIso(dobDigits) : '';
-    if (dobDigits.length && !normalized) {
+    if (dobDigits.length === 8 && !normalizeDigitsToIso(dobDigits)) {
       setDobError('Enter a valid past date (MM/DD/YYYY).');
       return;
     }
@@ -87,12 +170,12 @@ export const HealthProfileEditScreen = () => {
     dispatch(
       updateProfile({
         fullName: fullName.trim() || null,
-        dob: normalized || null,
+        dob: (dobDigits.length === 8 ? normalizeDigitsToIso(dobDigits) : '') || null,
+        sex: sex || null,
         bloodType: bloodType.trim() || null,
         philHealthId: philHealthId.trim() || null,
         chronicConditions: parseList(chronicConditionsInput),
         allergies: parseList(allergiesInput),
-        currentMedications: parseList(medicationsInput),
         surgicalHistory: surgicalHistoryInput.trim() || null,
         familyHistory: familyHistoryInput.trim() || null,
       }),
@@ -109,34 +192,17 @@ export const HealthProfileEditScreen = () => {
 
   const handleDobBlur = () => {
     setDobTouched(true);
-    const error = getDobError(dobDigits);
-    setDobError(error);
-    if (!error && dobDigits.length === 8) {
-      const normalized = normalizeDigitsToIso(dobDigits);
-      setNormalizedDob(normalized || '');
-    } else if (error) {
-      setNormalizedDob('');
-    }
+    setDobError(getDobError(dobDigits));
   };
 
   const handleDobChange = (value: string) => {
-    const isDeleting = value.length < lastDisplayRef.current.length;
     const digitsOnly = value.replace(/\D/g, '').slice(0, 8);
-
-    const nextDisplay = isDeleting ? value : formatMmDisplay(digitsOnly);
     setDobDigits(digitsOnly);
-    setDisplayDob(nextDisplay);
-    lastDisplayRef.current = nextDisplay;
 
     if (digitsOnly.length === 8) {
-      const normalized = normalizeDigitsToIso(digitsOnly);
-      setNormalizedDob(normalized || '');
-    } else {
-      setNormalizedDob('');
-    }
-
-    if (dobTouched) {
       setDobError(getDobError(digitsOnly));
+    } else if (dobTouched && digitsOnly.length > 0) {
+      setDobError('Complete the date as MM/DD/YYYY.');
     } else if (dobError) {
       setDobError('');
     }
@@ -198,6 +264,31 @@ export const HealthProfileEditScreen = () => {
             <HelperText type="error" visible={!!dobError} style={styles.helperText}>
               {dobError}
             </HelperText>
+          </View>
+
+          <View style={styles.field}>
+            <Text variant="bodyMedium" style={[styles.fieldLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Sex
+            </Text>
+            <SegmentedButtons
+              value={sex}
+              onValueChange={(val) => {
+                setSex(val);
+                if (val) setSexError('');
+              }}
+              buttons={[
+                { value: 'Male', label: 'Male' },
+                { value: 'Female', label: 'Female' },
+                { value: 'Other', label: 'Other' },
+              ]}
+              style={styles.segmentedButton}
+              density="medium"
+            />
+            {!!sexError && (
+              <HelperText type="error" visible={!!sexError} style={styles.helperText}>
+                {sexError}
+              </HelperText>
+            )}
           </View>
         </View>
 
@@ -280,21 +371,9 @@ export const HealthProfileEditScreen = () => {
           </View>
 
           <View style={styles.field}>
-            <TextInput
-              mode="outlined"
-              label="Current medications"
-              placeholder="e.g. metformin, lisinopril"
-              value={medicationsInput}
-              onChangeText={setMedicationsInput}
-              style={styles.input}
-              outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
-              cursorColor={theme.colors.primary}
-              selectionColor={theme.colors.primary + '40'}
-              dense
-              multiline
-              numberOfLines={2}
-              accessibilityHint="Tell the AI what you take so it can avoid interactions and redundant suggestions"
-            />
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, paddingVertical: 8 }}>
+              To manage your medications, please use the Medication Tracker from the main menu.
+            </Text>
           </View>
 
           <View style={styles.field}>
@@ -398,6 +477,14 @@ const styles = StyleSheet.create({
   },
   field: {
     marginTop: 18,
+  },
+  fieldLabel: {
+    marginBottom: 8,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  segmentedButton: {
+    marginTop: 4,
   },
   input: {
     backgroundColor: 'transparent',

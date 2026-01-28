@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import * as DB from '../services/database';
+import { RootState } from './index';
 
 export interface LatestAssessment {
   id: string;
@@ -9,6 +10,7 @@ export interface LatestAssessment {
   initial_symptoms: string;
   timestamp: number;
   isGuest?: boolean;
+  profile_snapshot?: string;
 }
 
 interface OfflineState {
@@ -38,8 +40,8 @@ const generateUUID = () => {
 export const saveClinicalNote = createAsyncThunk(
   'offline/saveClinicalNote',
   async (
-    payload: Omit<LatestAssessment, 'id' | 'timestamp'>,
-    { dispatch },
+    payload: Omit<LatestAssessment, 'id' | 'timestamp' | 'profile_snapshot'>,
+    { dispatch, getState },
   ): Promise<LatestAssessment | null> => {
     // SECURITY GUARD: Never persist guest-mode data to local storage or history.
     if (payload.isGuest) {
@@ -47,10 +49,26 @@ export const saveClinicalNote = createAsyncThunk(
       return null;
     }
 
+    const state = getState() as RootState;
+    const profile = state.profile;
+    const medications = state.medication?.items?.filter((m) => m.is_active) || [];
+
+    // VALIDATION: Ensure the profile is non-empty (at least Name or DOB)
+    if (!profile.fullName && !profile.dob) {
+      console.warn(
+        '[Offline] Profile is empty (missing Name and DOB). Skipping clinical history persistence to prevent anonymous records.',
+      );
+      return null;
+    }
+
     const record: LatestAssessment = {
       ...payload,
       id: generateUUID(),
       timestamp: Date.now(),
+      profile_snapshot: JSON.stringify({
+        ...profile,
+        medications,
+      }),
     };
 
     try {
@@ -62,6 +80,7 @@ export const saveClinicalNote = createAsyncThunk(
         recommended_level: record.recommended_level,
         clinical_soap: record.clinical_soap,
         medical_justification: record.medical_justification || '',
+        profile_snapshot: record.profile_snapshot,
       });
 
       // Update Redux state via reducer

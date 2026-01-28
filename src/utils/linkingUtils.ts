@@ -10,11 +10,6 @@ export type OpenExternalMapsParams = {
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
-const cleanPhoneNumber = (phone: string): string => {
-  // Remove all non-numeric characters except +
-  return phone.replace(/[^\d+]/g, '');
-};
-
 export const openViber = async (phone: string): Promise<boolean> => {
   if (!phone) return false;
 

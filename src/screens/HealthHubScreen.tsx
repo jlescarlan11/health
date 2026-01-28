@@ -3,7 +3,6 @@ import { View, StyleSheet, FlatList, RefreshControl, Linking, ActivityIndicator 
 import { Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { MainTabScreenProps } from '../types/navigation';
 import StandardHeader from '../components/common/StandardHeader';
 import { ScreenSafeArea } from '../components/common';
 import { FeedItem } from '../components/features/feed/FeedItem';
@@ -12,8 +11,6 @@ import { RootState, AppDispatch } from '../store';
 import { FeedItem as FeedItemType } from '../types/feed';
 import { theme as appTheme } from '../theme';
 import { Button } from '../components/common';
-
-type Props = MainTabScreenProps<'HealthHub'>;
 
 const PAGE_SIZE = 10;
 

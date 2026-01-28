@@ -5,9 +5,8 @@ import {
   ScrollView,
   Alert,
   BackHandler,
-  useWindowDimensions,
 } from 'react-native';
-import { useTheme, Surface, Divider, ActivityIndicator, TextInput, Snackbar } from 'react-native-paper';
+import { useTheme, Surface, Divider, ActivityIndicator, TextInput, Snackbar, MD3Theme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import {
   useRoute,
@@ -46,14 +45,6 @@ import { OFFLINE_SELF_CARE_THRESHOLD } from '../constants/clinical';
 import { theme as appTheme } from '../theme';
 
 type ScreenProps = RootStackScreenProps<'Recommendation'>;
-
-const SYSTEM_INSTRUCTIONS: Record<string, string> = {
-  Cardiac: 'Keep patient calm and seated. Loosen tight clothing.',
-  Respiratory: 'Help patient sit upright. Keep them calm.',
-  Trauma: 'Apply firm pressure to bleeding. Do not move if neck injury suspected.',
-  Neurological: 'Check breathing. Place in recovery position if unconscious.',
-  Other: 'Keep patient comfortable. Monitor breathing.',
-};
 
 const TRIAGE_RULE_LABELS: Record<TriageAdjustmentRule, string> = {
   RED_FLAG_UPGRADE: 'Red flag escalation',
@@ -193,10 +184,9 @@ const summarizeInitialSymptom = (symptom?: string) => {
 const RecommendationScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'Recommendation'>>();
   const navigation = useNavigation<ScreenProps['navigation']>();
-  const theme = useTheme() as any;
-  const { width: screenWidth } = useWindowDimensions();
+  const theme = useTheme() as MD3Theme & { spacing: Record<string, number> };
   const dispatch = useDispatch<AppDispatch>();
-  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const spacing = theme.spacing ?? appTheme.spacing;
   const recommendationBottomPadding = spacing.lg * 2;
 
   // Try to get location to improve sorting
@@ -221,7 +211,7 @@ const RecommendationScreen = () => {
   const [recommendedFacilities, setRecommendedFacilities] = useState<Facility[]>([]);
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);
   const [analysisCompleted, setAnalysisCompleted] = useState(false);
-  const [narratives, setNarratives] = useState<{
+  const [narratives, setNarratives] = useState<{ 
     recommendationNarrative: string;
     handoverNarrative: string;
   } | null>(null);
@@ -392,11 +382,11 @@ const RecommendationScreen = () => {
 
       const hcDistStr =
         nearestDistances.nearestHealthCenterDist !== Infinity
-          ? `${nearestDistances.nearestHealthCenterDist.toFixed(1)}km`
+          ? `${nearestDistances.nearestHealthCenterDist.toFixed(1)}km` 
           : 'Unknown';
       const hospDistStr =
         nearestDistances.nearestHospitalDist !== Infinity
-          ? `${nearestDistances.nearestHospitalDist.toFixed(1)}km`
+          ? `${nearestDistances.nearestHospitalDist.toFixed(1)}km` 
           : 'Unknown';
       const distanceContext = `Nearest Health Center: ${hcDistStr}, Nearest Hospital: ${hospDistStr}`;
 
@@ -608,7 +598,7 @@ const RecommendationScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [nearestDistances, dispatch]);
+  }, [nearestDistances, dispatch, assessmentData, guestMode, userLocation, facilities]);
 
   useEffect(() => {
     // Load facilities if they aren't in the store
@@ -849,11 +839,11 @@ const RecommendationScreen = () => {
 
   return (
     <ScreenSafeArea
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[styles.container, { backgroundColor: theme.colors.background }]} 
       edges={['left', 'right', 'bottom']}
     >
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: recommendationBottomPadding }]}
+        contentContainerStyle={[styles.content, { paddingBottom: recommendationBottomPadding }]} 
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.statusCardWrapper}>
@@ -865,8 +855,8 @@ const RecommendationScreen = () => {
           />
         </View>
 
-        {/* Key Observations Section - Neutral/Informational */}
-        {recommendation.key_concerns.length > 0 && (
+        {/* Key Observations Section - Neutral/Informational */} 
+        {recommendation.key_concerns && recommendation.key_concerns.length > 0 && (
           <View style={styles.observationsSection}>
             <Divider style={styles.restartDivider} />
             <View style={styles.sectionHeaderRow}>
@@ -896,7 +886,7 @@ const RecommendationScreen = () => {
           <View style={styles.transferSection}>
             <Divider style={styles.restartDivider} />
             <Surface
-              style={[
+              style={[ 
                 styles.transferCard,
                 { backgroundColor: applyOpacity(theme.colors.primary, 0.05) },
               ]}
@@ -990,7 +980,7 @@ const RecommendationScreen = () => {
           />
         )}
 
-        {/* Facilities Section */}
+        {/* Facilities Section */} 
         {showFacilities && (
           <View style={styles.facilitiesSection}>
             <Divider style={styles.restartDivider} />
@@ -1071,7 +1061,7 @@ const RecommendationScreen = () => {
           </View>
         )}
 
-        {/* Restart Section */}
+        {/* Restart Section */} 
         <View style={styles.restartSection}>
           <Divider style={styles.restartDivider} />
           <Text
@@ -1209,7 +1199,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     lineHeight: 18,
   },
-  handoverButton: {},
+  handoverButton: {}, 
   transferSection: {
     marginBottom: 24,
     paddingHorizontal: 2,

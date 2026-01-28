@@ -207,7 +207,6 @@ export const useUserLocation = (options: UseUserLocationOptions = { watch: false
         subscription.remove();
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watch, requestOnMount]); // Only re-run if core watch/mount options change
 
   return {

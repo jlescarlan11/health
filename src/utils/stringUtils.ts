@@ -170,7 +170,6 @@ export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] 
 
     // Only generate n-grams for the actual word count needed
     const ngrams = getNgrams(textData, wordCount);
-    let matched = false;
 
     for (const ngram of ngrams) {
       // Early exit: length filter
@@ -193,7 +192,6 @@ export const findAllFuzzyMatches = (text: string, keywords: string[]): string[] 
 
       if (distance <= threshold) {
         found.add(original);
-        matched = true;
         break;
       }
     }

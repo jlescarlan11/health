@@ -37,6 +37,7 @@ export interface ClinicalHistoryRecord {
   recommended_level: string;
   clinical_soap: string;
   medical_justification: string;
+  profile_snapshot?: string;
 }
 
 export const initDatabase = async () => {
@@ -97,7 +98,8 @@ export const initDatabase = async () => {
           initial_symptoms TEXT,
           recommended_level TEXT,
           clinical_soap TEXT,
-          medical_justification TEXT
+          medical_justification TEXT,
+          profile_snapshot TEXT
         );
       `);
 
@@ -108,6 +110,7 @@ export const initDatabase = async () => {
         { name: 'recommended_level', type: 'TEXT' },
         { name: 'clinical_soap', type: 'TEXT' },
         { name: 'medical_justification', type: 'TEXT' },
+        { name: 'profile_snapshot', type: 'TEXT' },
       ]);
 
       // Create Medications Table
@@ -129,6 +132,24 @@ export const initDatabase = async () => {
         { name: 'scheduled_time', type: 'TEXT' },
         { name: 'is_active', type: 'INTEGER' },
         { name: 'days_of_week', type: 'TEXT' },
+      ]);
+
+      // Create Medication Logs Table
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS medication_logs (
+          id TEXT PRIMARY KEY,
+          medication_id TEXT NOT NULL,
+          timestamp INTEGER NOT NULL,
+          status TEXT NOT NULL,
+          FOREIGN KEY (medication_id) REFERENCES medications (id)
+        );
+      `);
+
+      // Migrate medication_logs schema
+      await migrateTableSchema('medication_logs', [
+        { name: 'medication_id', type: 'TEXT' },
+        { name: 'timestamp', type: 'INTEGER' },
+        { name: 'status', type: 'TEXT' },
       ]);
 
       console.log('Database initialized successfully');
@@ -413,8 +434,8 @@ export const saveClinicalHistory = async (record: ClinicalHistoryRecord) => {
     await db.execAsync('BEGIN TRANSACTION');
 
     const statement = await db.prepareAsync(
-      `INSERT OR REPLACE INTO clinical_history (id, timestamp, initial_symptoms, recommended_level, clinical_soap, medical_justification) 
-       VALUES ($id, $timestamp, $initial_symptoms, $recommended_level, $clinical_soap, $medical_justification)`,
+      `INSERT OR REPLACE INTO clinical_history (id, timestamp, initial_symptoms, recommended_level, clinical_soap, medical_justification, profile_snapshot) 
+       VALUES ($id, $timestamp, $initial_symptoms, $recommended_level, $clinical_soap, $medical_justification, $profile_snapshot)`,
     );
 
     try {
@@ -425,6 +446,7 @@ export const saveClinicalHistory = async (record: ClinicalHistoryRecord) => {
         $recommended_level: record.recommended_level,
         $clinical_soap: record.clinical_soap,
         $medical_justification: record.medical_justification,
+        $profile_snapshot: record.profile_snapshot || null,
       });
 
       await db.execAsync('COMMIT');
@@ -557,6 +579,67 @@ export const deleteMedication = async (id: string) => {
     }
   } catch (error) {
     console.error('Error in deleteMedication:', error);
+    throw error;
+  }
+};
+
+export interface MedicationLogRecord {
+  id: string;
+  medication_id: string;
+  timestamp: number;
+  status: string;
+}
+
+export const saveMedicationLog = async (log: MedicationLogRecord) => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    await db.execAsync('BEGIN TRANSACTION');
+
+    const statement = await db.prepareAsync(
+      `INSERT OR REPLACE INTO medication_logs (id, medication_id, timestamp, status)
+       VALUES ($id, $medication_id, $timestamp, $status)`,
+    );
+
+    try {
+      await statement.executeAsync({
+        $id: log.id,
+        $medication_id: log.medication_id,
+        $timestamp: log.timestamp,
+        $status: log.status,
+      });
+
+      await db.execAsync('COMMIT');
+      console.log(`Saved medication log: ${log.id}`);
+    } catch (innerError) {
+      console.error('Error during medication log save:', innerError);
+      try {
+        await db.execAsync('ROLLBACK');
+      } catch (rollbackError) {
+        console.error('Failed to rollback medication log transaction:', rollbackError);
+      }
+      throw innerError;
+    } finally {
+      await statement.finalizeAsync();
+    }
+  } catch (error) {
+    console.error('Error in saveMedicationLog:', error);
+    throw error;
+  }
+};
+
+export const getMedicationLogs = async (): Promise<MedicationLogRecord[]> => {
+  if (!db) await initDatabase();
+  if (!db) throw new Error('Database not initialized');
+
+  try {
+    const result = await db.getAllAsync<MedicationLogRecord>(
+      'SELECT * FROM medication_logs ORDER BY timestamp DESC',
+    );
+    return result;
+  } catch (error) {
+    console.error('Error getting medication logs:', error);
     throw error;
   }
 };

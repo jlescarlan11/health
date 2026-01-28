@@ -55,7 +55,7 @@ export const sharingUtils = {
         `${description}${url}\n\n` +
         `Stay safe and informed! #NagaCityHealth`;
 
-      const result = await Share.share({
+      await Share.share({
         message,
         title: tip.title,
       });

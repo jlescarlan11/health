@@ -124,12 +124,12 @@ export const getScaledTheme = (scaleFactor: number) => {
 
   // Iterate through all font variants and scale their fontSize and lineHeight
   Object.keys(scaledTypography).forEach((key) => {
-    const variant = scaledTypography[key as keyof typeof scaledTypography] as any;
-    if (variant && typeof variant === 'object') {
+    const variant = scaledTypography[key as keyof typeof scaledTypography];
+    if (variant && typeof variant === 'object' && 'fontSize' in variant && 'lineHeight' in variant) {
       scaledTypography[key as keyof typeof scaledTypography] = {
         ...variant,
-        fontSize: variant.fontSize ? variant.fontSize * scaleFactor : variant.fontSize,
-        lineHeight: variant.lineHeight ? variant.lineHeight * scaleFactor : variant.lineHeight,
+        fontSize: variant.fontSize ? (variant.fontSize as number) * scaleFactor : (variant.fontSize as number),
+        lineHeight: variant.lineHeight ? (variant.lineHeight as number) * scaleFactor : (variant.lineHeight as number),
       };
     }
   });

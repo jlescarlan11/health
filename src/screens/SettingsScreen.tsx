@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, View, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import StandardHeader from '../components/common/StandardHeader';
 import { ScreenSafeArea } from '../components/common';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
@@ -12,7 +12,7 @@ import { theme as appTheme } from '../theme';
 
 export const SettingsScreen = () => {
   const theme = useTheme();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<Record<string, unknown>>>();
   const dispatch = useAppDispatch();
   const { scaleFactor, isPWDMode } = useAdaptiveUI();
   const settings = useAppSelector((state) => state.settings);

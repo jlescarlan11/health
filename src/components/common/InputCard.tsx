@@ -65,6 +65,7 @@ export const InputCard = forwardRef<InputCardRef, InputCardProps>((props, ref) =
           autoCapitalize={autoCapitalize}
           value={value}
           onChangeText={onChangeText}
+          onSubmitEditing={onSubmit}
           onFocus={onFocus}
           onBlur={onBlur}
           style={[styles.textInput, { backgroundColor: 'transparent' }]}

@@ -49,7 +49,6 @@ export const FacilityDirectoryScreen = () => {
   // It will automatically update the Redux store with the user's location
   const {
     permissionStatus,
-    requestPermission,
     getCurrentLocation,
     setManualLocation,
     manualDistrictId,

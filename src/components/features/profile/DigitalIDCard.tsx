@@ -2,16 +2,18 @@ import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Switch, useTheme, Surface } from 'react-native-paper';
 import { useAppSelector } from '../../../hooks/reduxHooks';
+import { selectAllMedications } from '../../../store/medicationSlice';
 import QRCode from 'react-native-qrcode-svg';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../../common/Text';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { Button } from '../../common';
 
 export const DigitalIDCard: React.FC = () => {
   const theme = useTheme();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<Record<string, unknown>>>();
   const profile = useAppSelector((state) => state.profile);
+  const medications = useAppSelector(selectAllMedications);
   const [showSnapshot, setShowSnapshot] = useState(false);
   const { width: screenWidth } = useWindowDimensions();
 
@@ -19,6 +21,16 @@ export const DigitalIDCard: React.FC = () => {
   const cardWidth = screenWidth - 48;
   const qrSize = 140;
   const scanHintMinWidth = qrSize + 32;
+
+  const activeMedicationStrings = useMemo(() => {
+    return medications
+      .filter((m) => m.is_active)
+      .map((m) => {
+        const parts = [m.name];
+        if (m.dosage) parts.push(m.dosage);
+        return parts.join(' ');
+      });
+  }, [medications]);
 
   const qrPayload = useMemo(() => {
     const payload: Record<string, unknown> = { version: 2 };
@@ -35,13 +47,13 @@ export const DigitalIDCard: React.FC = () => {
     addTextField('blood type', profile.bloodType);
     addTextField('philhealth id', profile.philHealthId);
 
-    const snapshotData = buildHealthSnapshot(profile);
+    const snapshotData = buildHealthSnapshot(profile, activeMedicationStrings);
     if (Object.keys(snapshotData).length) {
       payload['health snapshot'] = snapshotData;
     }
 
     return payload;
-  }, [profile]);
+  }, [profile, activeMedicationStrings]);
 
   const qrValue = JSON.stringify(qrPayload);
 
@@ -147,7 +159,7 @@ export const DigitalIDCard: React.FC = () => {
                   },
                   {
                     label: 'Current medications',
-                    value: formatListForDisplay(profile.currentMedications),
+                    value: formatListForDisplay(activeMedicationStrings),
                   },
                   {
                     label: 'Surgical history',
@@ -371,13 +383,15 @@ function sanitizeText(value?: string | null): string | null {
   return trimmedValue ? trimmedValue : null;
 }
 
-function buildHealthSnapshot(profile: {
-  chronicConditions?: string[];
-  allergies?: string[];
-  currentMedications?: string[];
-  surgicalHistory?: string | null;
-  familyHistory?: string | null;
-}): Record<string, string | string[]> {
+function buildHealthSnapshot(
+  profile: {
+    chronicConditions?: string[];
+    allergies?: string[];
+    surgicalHistory?: string | null;
+    familyHistory?: string | null;
+  },
+  activeMedications: string[],
+): Record<string, string | string[]> {
   const snapshot: Record<string, string | string[]> = {};
 
   const addList = (label: string, list?: string[]) => {
@@ -396,7 +410,7 @@ function buildHealthSnapshot(profile: {
 
   addList('chronic conditions', profile.chronicConditions);
   addList('allergies', profile.allergies);
-  addList('current medications', profile.currentMedications);
+  addList('current medications', activeMedications);
   addText('surgical history', profile.surgicalHistory);
   addText('family history', profile.familyHistory);
 

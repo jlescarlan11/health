@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Card, useTheme } from 'react-native-paper';
+import { Card, useTheme, MD3Theme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Button } from '../../common/Button';
 import { Text } from '../../common/Text';
@@ -13,7 +13,7 @@ interface TriageStatusCardProps {
   onEmergencyAction?: () => void;
 }
 
-type ThemeColors = any;
+type ThemeColors = MD3Theme['colors'];
 
 const LEVEL_LABELS: Record<TriageLevel, string> = {
   emergency: 'Emergency (Life-Threatening)',
@@ -30,7 +30,7 @@ export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
   instruction,
   onEmergencyAction,
 }) => {
-  const theme = useTheme() as any;
+  const theme = useTheme() as MD3Theme & { spacing: Record<string, number> };
   const spacing = theme.spacing;
   const levelConfig = getLevelConfig(level, theme.colors);
   const showEmergencyButton = level === 'emergency' && Boolean(onEmergencyAction);
@@ -61,7 +61,7 @@ export const TriageStatusCard: React.FC<TriageStatusCardProps> = ({
         </View>
         {intro ? (
           <Text variant="bodySmall" style={[styles.introText, { color: levelConfig.contentColor }]}>
-            {intro.trim()}
+            Based on your symptoms, we recommend:
           </Text>
         ) : null}
         <Text

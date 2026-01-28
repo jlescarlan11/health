@@ -21,12 +21,12 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental &&
-  !(global as any).nativeFabricUIManager
+  !(global as Record<string, unknown>).nativeFabricUIManager
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-import { ActivityIndicator, useTheme, Chip } from 'react-native-paper';
+import { ActivityIndicator, useTheme, Chip, MD3Theme } from 'react-native-paper';
 import { Text } from '../components/common/Text';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -36,10 +36,10 @@ import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { geminiClient } from '../api/geminiClient';
 import {
-  selectClinicalContext,
   selectFullName,
   selectProfileDob,
 } from '../store/profileSlice';
+import { selectAllMedications } from '../store/medicationSlice';
 import { detectEmergency, type EmergencyDetectionResult } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import {
@@ -65,6 +65,7 @@ import {
   createClinicalSlotParser,
   reconcileClinicalProfileWithSlots,
   detectProfileChanges,
+  formatProfileForAI,
 } from '../utils/clinicalUtils';
 import { calculateTriageScore } from '../utils/aiUtils';
 const triageFlow = require('../../assets/triage-flow.json') as TriageFlow;
@@ -79,12 +80,11 @@ import {
   MultiSelectChecklist,
   ScreenSafeArea,
 } from '../components/common';
+import { ChecklistOption, GroupedChecklistOption } from '../components/common/MultiSelectChecklist';
 import { DYNAMIC_CLARIFIER_PROMPT_TEMPLATE } from '../constants/prompts';
 import {
   formatEmpatheticResponse,
   derivePrimarySymptom,
-  formatSymptomReference,
-  parseSeverityScore,
 } from '../utils/empatheticResponses';
 import { theme as appTheme } from '../theme';
 
@@ -104,7 +104,6 @@ const SYSTEM_TRANSITION_REASON_SOURCES = new Set([
   'arbiter-expansion',
   'arbiter-reset',
   'escalation-pivot',
-  'arbiter-termination',
   'arbiter-finalize-safety',
   'finalizing',
   'finalize-assessment',
@@ -341,9 +340,9 @@ const buildClarifierPrompt = (context: ClarifierPromptContext) =>
     categoryLabel: context.categoryLabel,
   });
 
-const sanitizeClarifierQuestion = (raw: any): AssessmentQuestion => {
+const sanitizeClarifierQuestion = (raw: Record<string, unknown>): AssessmentQuestion => {
   const normalizedType =
-    raw?.type === 'single-select' || raw?.type === 'multi-select' ? raw.type : 'text';
+    raw?.type === 'single-select' || raw?.type === 'multi-select' ? (raw.type as 'single-select' | 'multi-select') : 'text';
   const tierValue = Number(raw?.tier);
   const tier = [1, 2, 3].includes(tierValue) ? tierValue : 3;
 
@@ -374,11 +373,16 @@ const SymptomAssessmentScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const dispatch = useDispatch();
   const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
-  const clinicalContext = useSelector(selectClinicalContext);
+  const profile = useSelector((state: RootState) => state.profile);
+  const medications = useSelector(selectAllMedications);
+  const clinicalContext = useMemo(
+    () => formatProfileForAI(profile, medications),
+    [profile, medications],
+  );
   const fullName = useSelector(selectFullName);
   const profileDob = useSelector(selectProfileDob);
-  const theme = useTheme();
-  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const theme = useTheme() as MD3Theme & { spacing: Record<string, number> };
+  const spacing = theme.spacing ?? appTheme.spacing;
   const chatBottomPadding = spacing.lg * 2;
   const flatListRef = useRef<FlatList>(null);
   const inputCardRef = useRef<InputCardRef>(null);
@@ -434,11 +438,11 @@ const SymptomAssessmentScreen = () => {
   );
   const [hasAdvancedBeyondIntake, setHasAdvancedBeyondIntake] = useState(
     savedState
-      ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers).length > 0
+      ? savedState.currentQuestionIndex > 0 || Object.keys(savedState.answers || {}).length > 0
       : false,
   );
   const [symptomCategory, setSymptomCategory] = useState<'simple' | 'complex' | 'critical' | null>(
-    (savedState?.symptomCategory as any) || null,
+    (savedState?.symptomCategory as 'simple' | 'complex' | 'critical' | null) || null,
   );
   const [previousProfile, setPreviousProfile] = useState<AssessmentProfile | undefined>(
     savedState?.previousProfile,
@@ -523,13 +527,17 @@ const SymptomAssessmentScreen = () => {
     keyword: string;
     answer: string;
     currentQ: AssessmentQuestion;
-    safetyCheck: any;
+    safetyCheck: EmergencyDetectionResult;
   } | null>(savedState?.emergencyVerificationData || null);
 
   // UI Interactions
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [streamingText, setStreamingText] = useState<string | null>(null);
+  
+  // Processing Lock (Ref for immediate synchronous blocking)
+  const processingRef = useRef(false);
+  
   const TYPING_INDICATOR_TIMEOUT_MS = 20000;
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelTypingTimeout = useCallback(() => {
@@ -544,6 +552,7 @@ const SymptomAssessmentScreen = () => {
       '[Assessment] Typing indicator timeout reached; clearing stuck transition/streaming state.',
     );
     setProcessing(false);
+    processingRef.current = false;
     setStreamingText(null);
     setIsTyping(false);
   }, [cancelTypingTimeout, setProcessing, setStreamingText, setIsTyping]);
@@ -594,6 +603,7 @@ const SymptomAssessmentScreen = () => {
       setCurrentOfflineNodeId(null);
       setLoading(false);
       setProcessing(false);
+      processingRef.current = false;
       setTypingState(false);
       setStreamingText(null);
       setInputText('');
@@ -887,7 +897,7 @@ const SymptomAssessmentScreen = () => {
     step: number,
     question: string,
     userAnswer: string,
-    emergencyCheck: any,
+    emergencyCheck: EmergencyDetectionResult,
   ) => {
     console.log(`\n╔═══ CONVERSATION STEP ${step} ═══╗`);
     console.log(`║ Q: ${question}`);
@@ -968,6 +978,9 @@ const SymptomAssessmentScreen = () => {
     patientContext?: string | null,
     patientName?: string | null,
   ) => {
+    // 0. Reset state for a fresh assessment
+    resetSessionScopedState([]);
+
     // 1. Initial Emergency Check (Locally)
     const emergencyCheck = detectEmergency(initialSymptom || '', { isUserInput: true });
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
@@ -1080,21 +1093,22 @@ const SymptomAssessmentScreen = () => {
         fallbackIntro ||
         'Thank you for sharing. Please tell me a bit more about how you are feeling.';
 
-      replaceMessagesDisplay([
-        composeAssistantMessage({
-          id: 'intro',
-          body: introText,
-          reason: 'Starting the assessment conversation.',
-          reasonSource: 'intro',
-          nextAction: 'Please answer the first question whenever you are ready.',
-          timestamp: Date.now(),
-        }),
-      ]);
+      const introMsg = composeAssistantMessage({
+        id: 'intro',
+        body: introText,
+        reason: 'Starting the assessment conversation.',
+        reasonSource: 'intro',
+        nextAction: 'Please answer the first question whenever you are ready.',
+        timestamp: Date.now(),
+      });
+
+      setMessages([introMsg]);
+      setSessionBuffer([introMsg]);
 
       setLoading(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Initialization Error:', err);
-      if (err.message === 'NETWORK_ERROR') {
+      if (err instanceof Error && err.message === 'NETWORK_ERROR') {
         startOfflineTriage();
       } else {
         setLoading(false);
@@ -1119,7 +1133,7 @@ const SymptomAssessmentScreen = () => {
   const handleNext = async (answerOverride?: string, skipEmergencyCheck = false) => {
     const answer = answerOverride || inputText;
     const trimmedAnswer = answer.trim();
-    if (!trimmedAnswer || processing) return;
+    if (!trimmedAnswer || processingRef.current) return;
 
     const consumePendingCorrection = () => {
       const correction = pendingCorrection;
@@ -1137,82 +1151,104 @@ const SymptomAssessmentScreen = () => {
     );
     let slotSnapshot: ClinicalSlots | undefined;
     if (!currentQ && !isOfflineMode) {
-      console.log('[DEBUG_TEST] Aborting: No currentQ and not offline.');
-      return;
-    }
-
-    setProcessing(true);
-    if (!skipEmergencyCheck) {
-      setInputText('');
-    }
-
-    // 1. Append User Message
-    let nextHistory = messages;
-    if (!skipEmergencyCheck) {
-      const turnMeta: AssessmentTurnMeta = {
-        questionId: currentQ?.id || 'free_text',
-        timestamp: Date.now(),
-        intentTag: deriveIntentTag(currentQ, isClarifyingDenial),
-      };
-      const userMsg: Message = {
-        id: `user-${turnMeta.timestamp}`,
-        text: answer,
-        sender: 'user',
-        isOffline: isOfflineMode,
-        timestamp: turnMeta.timestamp,
-        metadata: { currentTurnMeta: turnMeta },
-      };
-      setCurrentTurnMeta(turnMeta);
-      appendMessageToConversation(userMsg);
-      const parsedSlots = slotParserRef.current.parseTurn(answer);
-      slotSnapshot = parsedSlots.aggregated;
-      setIncrementalSlots(parsedSlots.aggregated);
-      nextHistory = [...messages, userMsg];
-    }
-    setTypingState(true);
-
-    let guardResult: EmergencyGuardResult | null = null;
-    if (!isOfflineMode && !skipEmergencyCheck) {
-      guardResult = runEmergencyGuard({
-        text: answer,
-        sender: 'user',
-        question: currentQ,
-        questionId: currentQ.id,
-        extraHistory: answer,
-      });
-
-      if (guardResult) {
-        logConversationStep(currentQuestionIndex, currentQ.text, answer, guardResult.safetyCheck);
-      }
-
-      if (guardResult?.triggered) {
-        setProcessing(false);
-        setTypingState(false);
+      if (currentQuestionIndex === 0 && questions.length === 0) {
+        console.log('[Assessment] Processing initial intake without plan.');
+      } else {
+        console.log('[DEBUG_TEST] Aborting: No currentQ and not offline.');
         return;
       }
     }
 
-    const shouldRedirectForOutOfScope =
-      !isOfflineMode &&
-      !skipEmergencyCheck &&
-      guardResult &&
-      !guardResult.triggered &&
-      (guardResult.safetyCheck?.matchedKeywords?.length || 0) === 0 &&
-      OUT_OF_SCOPE_PATTERN.test(trimmedAnswer);
+    setProcessing(true);
+    processingRef.current = true;
+    let keepLockForAsyncOp = false;
 
-    if (shouldRedirectForOutOfScope && currentQ && handleOutOfScopeFallback(answer, currentQ)) {
-      return;
-    }
+    try {
+      if (!skipEmergencyCheck) {
+        setInputText('');
+      }
 
-    // 3. Store Answer
-    if (!isOfflineMode) {
-      const newAnswers = { ...answers, [currentQ.id]: answer };
-      setAnswers(newAnswers);
-      setOutOfScopeBuffer([]);
+      // 1. Append User Message
+      let nextHistory = messages;
+      let profile: AssessmentProfile | undefined = previousProfile;
+      let primarySymptomForProfile: string | undefined =
+        derivePrimarySymptom(initialSymptom, profile?.summary) ?? defaultPrimarySymptom;
 
-      // 4. Progress or Finish
-      const nextIdx = currentQuestionIndex + 1;
-      const isAtEnd = nextIdx >= questions.length;
+      if (!skipEmergencyCheck) {
+        const turnMeta: AssessmentTurnMeta = {
+          questionId: currentQ?.id || 'free_text',
+          timestamp: Date.now(),
+          intentTag: deriveIntentTag(currentQ, isClarifyingDenial),
+        };
+        const userMsg: Message = {
+          id: `user-${turnMeta.timestamp}`,
+          text: answer,
+          sender: 'user',
+          isOffline: isOfflineMode,
+          timestamp: turnMeta.timestamp,
+          metadata: { currentTurnMeta: turnMeta },
+        };
+        setCurrentTurnMeta(turnMeta);
+        appendMessageToConversation(userMsg);
+        const parsedSlots = slotParserRef.current.parseTurn(answer);
+        slotSnapshot = parsedSlots.aggregated;
+        setIncrementalSlots(parsedSlots.aggregated);
+        nextHistory = [...messages, userMsg];
+      }
+      setTypingState(true);
+
+      let guardResult: EmergencyGuardResult | null = null;
+      if (!isOfflineMode && !skipEmergencyCheck) {
+        guardResult = runEmergencyGuard({
+          text: answer,
+          sender: 'user',
+          question: currentQ,
+          questionId: currentQ?.id || 'initial_intake',
+          extraHistory: answer,
+        });
+
+        if (guardResult) {
+          logConversationStep(
+            currentQuestionIndex,
+            currentQ?.text || 'Initial Symptom Description',
+            answer,
+            guardResult.safetyCheck,
+          );
+        }
+
+        if (guardResult?.triggered) {
+          setProcessing(false);
+          processingRef.current = false;
+          setTypingState(false);
+          return;
+        }
+      }
+
+      const shouldRedirectForOutOfScope =
+        !isOfflineMode &&
+        !skipEmergencyCheck &&
+        guardResult &&
+        !guardResult.triggered &&
+        (guardResult.safetyCheck?.matchedKeywords?.length || 0) === 0 &&
+        OUT_OF_SCOPE_PATTERN.test(trimmedAnswer);
+
+      if (shouldRedirectForOutOfScope && currentQ && handleOutOfScopeFallback(answer, currentQ)) {
+        processingRef.current = false;
+        return;
+      }
+
+      // 3. Store Answer
+      if (!isOfflineMode) {
+        let newAnswers = answers;
+        if (currentQ) {
+          newAnswers = { ...answers, [currentQ.id]: answer };
+          setAnswers(newAnswers);
+        }
+        setOutOfScopeBuffer([]);
+
+        // 4. Progress or Finish
+        const nextIdx = currentQuestionIndex + (currentQ ? 1 : 0);
+        const isAtEnd = nextIdx >= questions.length;
 
       // --- NEW: Unified Triage Arbiter Gate ---
       // The Arbiter now has authority over whether we continue or stop.
@@ -1234,14 +1270,11 @@ const SymptomAssessmentScreen = () => {
           });
 
           // Reconcile and Detect Changes
-          const profile = reconcileClinicalProfileWithSlots(
+          profile = reconcileClinicalProfileWithSlots(
             extractedProfile,
             slotSnapshot ?? incrementalSlots,
           );
-          const primarySymptomForProfile = derivePrimarySymptom(initialSymptom, profile.summary);
-          const severityScoreForProfile = parseSeverityScore(profile.severity);
-          const bridgeSymptomCategory =
-            profile.symptom_category || symptomCategory || 'simple';
+          primarySymptomForProfile = derivePrimarySymptom(initialSymptom, profile.summary);
 
           // --- Mid-Stream Category Escalation Detection ---
           // Triggers when clinical extraction elevates the acuity level during an active session.
@@ -1484,6 +1517,7 @@ const SymptomAssessmentScreen = () => {
               ]);
             }
             setProcessing(false);
+            processingRef.current = false;
             return;
           }
 
@@ -1510,7 +1544,7 @@ const SymptomAssessmentScreen = () => {
                 appendMessagesToConversation([
                   composeAssistantMessage({
                     id: 'early-exit',
-                    body: '',
+                    body: 'I have collected all the necessary information. Please wait a moment while I prepare your personalized care recommendations.',
                     header: clarificationHeader,
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-termination',
@@ -1521,7 +1555,9 @@ const SymptomAssessmentScreen = () => {
                     timestamp: terminationTimestamp,
                   }),
                 ]);
-            setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
+            keepLockForAsyncOp = true;
+            setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 2000);
+            // Note: processingRef logic handled in finalizeAssessment/catch or implicit navigation
             return;
           }
 
@@ -1615,7 +1651,6 @@ Recent User Answer: ${trimmedAnswer}
 
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
-              setProcessing(false);
               return;
             } catch (err) {
               console.error('[Assessment] Failed to generate drill-down question:', err);
@@ -1769,6 +1804,7 @@ Recent User Answer: ${trimmedAnswer}
                   setStreamingText(null);
                   setTypingState(false);
                   setProcessing(false);
+                  processingRef.current = false;
                   return;
                 }
 
@@ -1826,7 +1862,6 @@ Recent User Answer: ${trimmedAnswer}
                     // Clear streaming state AFTER committing message to avoid flicker
                     setStreamingText(null);
                     setTypingState(false);
-                    setProcessing(false);
                     return;
                   }
                 } else {
@@ -1866,6 +1901,7 @@ Recent User Answer: ${trimmedAnswer}
                   primarySymptom: primarySymptomForProfile ?? defaultPrimarySymptom,
                 }),
               ]);
+            keepLockForAsyncOp = true;
             setTimeout(() => finalizeAssessment(newAnswers, nextHistory, profile), 1000);
             return;
           }
@@ -1918,7 +1954,6 @@ Recent User Answer: ${trimmedAnswer}
               }
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
-              setProcessing(false);
               return;
             }
 
@@ -1947,12 +1982,12 @@ Recent User Answer: ${trimmedAnswer}
               }
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
-              setProcessing(false);
               return;
             }
 
             // Default behavior if readiness <= 0.4
             setTypingState(true);
+            keepLockForAsyncOp = true;
             const inlineAck = consumePendingCorrection();
             setTimeout(() => {
               const defaultTimestamp = Date.now();
@@ -1974,6 +2009,7 @@ Recent User Answer: ${trimmedAnswer}
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
               setProcessing(false);
+              processingRef.current = false;
             }, 600);
             return;
           }
@@ -1988,6 +2024,7 @@ Recent User Answer: ${trimmedAnswer}
       if (!isAtEnd) {
         // Next Question (Fallback if Arbiter check fails or is skipped)
         setTypingState(true);
+        keepLockForAsyncOp = true;
         const inlineAck = consumePendingCorrection();
         setTimeout(() => {
           const nextQ = questions[nextIdx];
@@ -2010,6 +2047,7 @@ Recent User Answer: ${trimmedAnswer}
           setCurrentQuestionIndex(nextIdx);
           setTypingState(false);
           setProcessing(false);
+          processingRef.current = false;
         }, 600);
       } else {
         // EXHAUSTED QUESTIONS -> Finalize
@@ -2029,16 +2067,25 @@ Recent User Answer: ${trimmedAnswer}
             }),
           ]);
         }
-        setTimeout(() => {
-          finalizeAssessment(newAnswers, nextHistory);
-        }, 1500);
-      }
-    } else {
-      // Offline Flow Handling
-      handleOfflineLogic(answer);
-    }
-  };
-
+                keepLockForAsyncOp = true;
+                setTimeout(() => {
+                  finalizeAssessment(newAnswers, nextHistory);
+                }, 1500);
+              }
+            } else {            // Offline Flow Handling
+            keepLockForAsyncOp = true;
+            handleOfflineLogic(answer);
+          }
+        } catch (error) {
+          console.error('[Assessment] Unexpected error in handleNext:', error);
+        } finally {
+          if (!keepLockForAsyncOp) {
+            setProcessing(false);
+            processingRef.current = false;
+            setTypingState(false);
+          }
+        }
+      };
   const handleEmergencyVerification = (status: 'emergency' | 'recent' | 'denied') => {
     if (!emergencyVerificationData) return;
 
@@ -2182,7 +2229,7 @@ Recent User Answer: ${trimmedAnswer}
           guestMode: isGuestMode,
         });
       }, 1500);
-    } catch (_) {
+    } catch {
       Alert.alert('Error', 'Could not process results. Please try again.');
       setProcessing(false);
       setTypingState(false);
@@ -2225,6 +2272,8 @@ Recent User Answer: ${trimmedAnswer}
       const result = TriageEngine.processStep(triageFlow, currentOfflineNodeId, answer);
       if (result.isOutcome) {
         setTypingState(false);
+        setProcessing(false);
+        processingRef.current = false;
         navigation.replace('Recommendation', {
           assessmentData: {
             symptoms: initialSymptom || '',
@@ -2254,6 +2303,7 @@ Recent User Answer: ${trimmedAnswer}
         setCurrentOfflineNodeId(nextNode.id);
         setTypingState(false);
         setProcessing(false);
+        processingRef.current = false;
       }
     }, 500);
   };
@@ -2299,6 +2349,11 @@ Recent User Answer: ${trimmedAnswer}
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => subscription.remove();
     }, [handleBack]),
+  );
+
+  const visibleMessages = useMemo(
+    () => messages.filter((msg) => !msg.metadata?.isSystemTransition),
+    [messages],
   );
 
   // --- RENDER ---
@@ -2417,10 +2472,6 @@ Recent User Answer: ${trimmedAnswer}
 
   // Determine current options if offline
   const currentQuestion = questions[currentQuestionIndex];
-  const visibleMessages = useMemo(
-    () => messages.filter((msg) => !msg.metadata?.isSystemTransition),
-    [messages],
-  );
   const offlineOptions =
     isOfflineMode && currentOfflineNodeId ? triageFlow.nodes[currentOfflineNodeId]?.options : null;
 
@@ -2469,13 +2520,15 @@ Recent User Answer: ${trimmedAnswer}
   // Determine if current question has a "None" option and if it's mandatory
   const currentOptions =
     currentQuestion?.options || (currentQuestion ? parseRedFlags(currentQuestion.text) : []);
-  const hasNoneOptionInCurrent = currentOptions.some((opt: any) => {
+  const hasNoneOptionInCurrent = currentOptions.some((opt: unknown) => {
     if (typeof opt === 'string') return isNoneOption(opt);
-    if (opt && typeof opt === 'object' && 'label' in opt) return isNoneOption((opt as any).label);
-    if (opt && typeof opt === 'object' && 'items' in opt) {
-      return (opt as any).items.some((i: any) =>
-        isNoneOption(typeof i === 'string' ? i : i.id || i.label || ''),
-      );
+    if (opt && typeof opt === 'object') {
+      if ('label' in opt) return isNoneOption((opt as { label: string }).label);
+      if ('items' in opt) {
+        return (opt as { items: unknown[] }).items.some((i: unknown) =>
+          isNoneOption(typeof i === 'string' ? i : (i as { id?: string; label?: string }).id || (i as { id?: string; label?: string }).label || ''),
+        );
+      }
     }
     return false;
   });
@@ -2717,24 +2770,24 @@ Recent User Answer: ${trimmedAnswer}
                             };
                           })
                         : parseRedFlags(currentQuestion.text)
-                    ) as any;
+                    );
 
                     if (hasNoneOptionInCurrent && !isMandatory) {
                       return mapped
-                        .map((opt: any) => {
-                          if ('id' in opt) return isNoneOption(opt.id) ? null : opt;
+                        .map((opt) => {
+                          if ('id' in opt) return isNoneOption((opt as ChecklistOption).id) ? null : opt;
                           return {
                             ...opt,
-                            items: opt.items.filter((i: any) => !isNoneOption(i.id)),
+                            items: (opt as GroupedChecklistOption).items.filter((i) => !isNoneOption(i.id)),
                           };
                         })
-                        .filter((opt: any) => {
+                        .filter((opt) => {
                           if (!opt) return false;
-                          if ('items' in opt) return opt.items.length > 0;
+                          if ('items' in opt) return (opt as GroupedChecklistOption).items.length > 0;
                           return true;
-                        });
+                        }) as ChecklistOption[] | GroupedChecklistOption[];
                     }
-                    return mapped;
+                    return mapped as ChecklistOption[] | GroupedChecklistOption[];
                   })()}
                   selectedIds={selectedRedFlags}
                   singleSelection={false}

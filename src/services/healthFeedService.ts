@@ -4,11 +4,11 @@ import { API_URL } from './apiConfig';
 
 const TIMEOUT = 10000;
 
-const mapBackendItem = (item: any): FeedItem => ({
-  id: item.id?.toString() ?? item.externalId ?? '',
+const mapBackendItem = (item: Record<string, unknown>): FeedItem => ({
+  id: (item.id as string | number)?.toString() ?? (item.externalId as string) ?? '',
   title: typeof item.title === 'string' ? item.title : 'Health News',
   excerpt: typeof item.excerpt === 'string' ? item.excerpt : '',
-  dateISO: item.dateISO ? new Date(item.dateISO).toISOString() : new Date().toISOString(),
+  dateISO: item.dateISO ? new Date(item.dateISO as string).toISOString() : new Date().toISOString(),
   author: typeof item.author === 'string' ? item.author : 'Naga City Health',
   categories: ['Health', 'News'],
   url: typeof item.url === 'string' ? item.url : '',
@@ -22,7 +22,7 @@ export interface FetchHealthFeedParams {
 }
 
 export const healthFeedService = {
-  fetchHealthFeed: async (_params: FetchHealthFeedParams): Promise<FeedItem[]> => {
+  fetchHealthFeed: async (): Promise<FeedItem[]> => {
     const response = await axios.get(`${API_URL}/feed/health`, {
       timeout: TIMEOUT,
     });

@@ -14,9 +14,12 @@ import {
   addMedication,
   deleteMedication,
   fetchMedications,
+  fetchTodaysLogs,
+  logMedicationTaken,
   selectAllMedications,
   selectMedicationStatus,
   selectMedicationError,
+  selectTodaysLogs,
 } from '../store/medicationSlice';
 import { AppDispatch } from '../store';
 import { Medication } from '../types';
@@ -175,16 +178,17 @@ const MemoizedMedicationFormHeader = React.memo(MedicationFormHeader);
 export default function MedicationTrackerScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const theme = useTheme();
-  const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
+  const spacing = theme?.spacing || appTheme?.spacing || { lg: 16 };
   const listBottomPadding = spacing.lg * 2;
   const medications = useSelector(selectAllMedications);
+  const todaysLogs = useSelector(selectTodaysLogs);
   const status = useSelector(selectMedicationStatus);
   const error = useSelector(selectMedicationError);
 
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
   const [time, setTime] = useState('');
-  const [takenState, setTakenState] = useState<Record<string, boolean>>({});
+  // Removed local takenState
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleAddMedication = useCallback(async () => {
@@ -222,6 +226,9 @@ export default function MedicationTrackerScreen() {
   }, [name, dosage, time, dispatch]);
 
   useEffect(() => {
+    // Always fetch logs on mount/focus to ensure we have the latest status
+    dispatch(fetchTodaysLogs());
+
     if (status === 'idle') {
       dispatch(fetchMedications());
     }
@@ -234,12 +241,6 @@ export default function MedicationTrackerScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: () => {
-          // Clear taken state for this item
-          setTakenState((prev) => {
-            const next = { ...prev };
-            delete next[id];
-            return next;
-          });
           dispatch(deleteMedication(id));
         },
       },
@@ -247,10 +248,8 @@ export default function MedicationTrackerScreen() {
   };
 
   const handleToggleTaken = (id: string) => {
-    setTakenState((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    const currentStatus = !!todaysLogs[id];
+    dispatch(logMedicationTaken({ medicationId: id, isTaken: !currentStatus }));
   };
 
   const renderEmpty = () => (
@@ -302,7 +301,7 @@ export default function MedicationTrackerScreen() {
         renderItem={({ item }) => (
           <MedicationCard
             medication={item}
-            isTaken={!!takenState[item.id]}
+            isTaken={!!todaysLogs[item.id]}
             onToggleTaken={handleToggleTaken}
             onDelete={handleDelete}
           />

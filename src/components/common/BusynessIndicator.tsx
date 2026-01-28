@@ -4,6 +4,8 @@ import { Text } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FacilityBusyness } from '../../types';
 
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
 interface BusynessIndicatorProps {
   busyness?: FacilityBusyness;
   showSeparator?: boolean;
@@ -19,7 +21,7 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
 }) => {
   if (!isVisible || !busyness || !busyness.status) return null;
 
-  const getBusynessConfig = (status: string) => {
+  const getBusynessConfig = (status: string): { label: string; color: string; icon?: IconName } | null => {
     switch (status) {
       case 'quiet':
         return { label: 'Not Busy', color: '#379777', icon: undefined };
@@ -45,7 +47,7 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
       >
         {config.icon && (
           <MaterialCommunityIcons
-            name={config.icon as any}
+            name={config.icon}
             size={16}
             color={config.color}
             style={{ marginRight: 6 }}
@@ -70,7 +72,7 @@ export const BusynessIndicator: React.FC<BusynessIndicatorProps> = ({
       )}
       {config.icon && (
         <MaterialCommunityIcons
-          name={config.icon as any}
+          name={config.icon}
           size={14}
           color={config.color}
           style={{ marginRight: 4 }}

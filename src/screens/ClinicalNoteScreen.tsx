@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,17 +7,29 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { IconButton, Divider, useTheme } from 'react-native-paper';
+import { IconButton, Divider, useTheme, Surface } from 'react-native-paper';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootState } from '../store';
 import { RootStackParamList } from '../types/navigation';
-import { StandardHeader, Button, Text, ScreenSafeArea } from '../components/common';
-import { parseSoap, formatClinicalShareText } from '../utils/clinicalUtils';
+import { Medication } from '../types';
+import {
+  StandardHeader,
+  Button,
+  Text,
+  ScreenSafeArea,
+} from '../components/common';
+import {
+  parseSoap,
+  formatClinicalShareText,
+  calculateAgeFromDob,
+  serializeClinicalSnapshot,
+} from '../utils/clinicalUtils';
 import * as Print from 'expo-print';
 import { sharingUtils } from '../utils/sharingUtils';
 import QRCode from 'react-native-qrcode-svg';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DB from '../services/database';
 import { theme as appTheme } from '../theme';
 
@@ -57,6 +69,18 @@ export const ClinicalNoteScreen = () => {
   }, [recordId]);
 
   const assessmentData = recordId ? historicalRecord : latestAssessmentRedux;
+
+  const snapshotProfile = useMemo(() => {
+    if (assessmentData?.profile_snapshot) {
+      try {
+        return JSON.parse(assessmentData.profile_snapshot);
+      } catch (e) {
+        console.error('Failed to parse profile snapshot in note:', e);
+        return null;
+      }
+    }
+    return null;
+  }, [assessmentData?.profile_snapshot]);
 
   if (loading) {
     return (
@@ -102,8 +126,18 @@ export const ClinicalNoteScreen = () => {
   const shareText = formatClinicalShareText(
     assessmentData.clinical_soap,
     assessmentData.timestamp,
-    assessmentData.medical_justification,
+    snapshotProfile,
   );
+
+  const qrPayload = useMemo(() => {
+    return serializeClinicalSnapshot(
+      assessmentData.clinical_soap,
+      assessmentData.timestamp,
+      snapshotProfile
+    );
+  }, [assessmentData.clinical_soap, assessmentData.timestamp, snapshotProfile]);
+
+  const isPayloadTooLarge = qrPayload.length > 500;
 
   const handleSocialShare = async () => {
     await sharingUtils.shareReport('Clinical Referral Report', shareText);
@@ -120,6 +154,8 @@ export const ClinicalNoteScreen = () => {
               .header { border-bottom: 2px solid #379777; padding-bottom: 10px; margin-bottom: 30px; }
               .title { font-size: 24px; font-weight: bold; color: #379777; }
               .date { font-size: 14px; color: #666; }
+              .patient-info { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+              .patient-name { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
               .section { margin-bottom: 20px; }
               .section-title { font-size: 16px; font-weight: bold; text-transform: uppercase; color: #379777; margin-bottom: 5px; }
               .content { font-size: 14px; line-height: 1.6; }
@@ -131,6 +167,42 @@ export const ClinicalNoteScreen = () => {
               <div class="title">Medical Referral Report</div>
               <div class="date">${formattedDate}</div>
             </div>
+            ${
+              snapshotProfile
+                ? `
+              <div class="patient-info">
+                <div class="patient-name">${snapshotProfile.fullName || 'Patient'}</div>
+                <div>${snapshotProfile.sex ? snapshotProfile.sex + ', ' : ''}${
+                    snapshotProfile.dob ? calculateAgeFromDob(snapshotProfile.dob) + ' years old' : ''
+                  }</div>
+                ${
+                  snapshotProfile.philHealthId
+                    ? `<div>PhilHealth ID: ${snapshotProfile.philHealthId}</div>`
+                    : ''
+                }
+                ${
+                  snapshotProfile.bloodType
+                    ? `<div>Blood Type: ${snapshotProfile.bloodType}</div>`
+                    : ''
+                }
+                ${
+                  snapshotProfile.allergies && snapshotProfile.allergies.length > 0
+                    ? `<div style="margin-top: 5px;"><strong>Allergies:</strong> ${snapshotProfile.allergies.join(
+                        ', ',
+                      )}</div>`
+                    : ''
+                }
+                ${
+                  snapshotProfile.medications && snapshotProfile.medications.length > 0
+                    ? `<div style="margin-top: 5px;"><strong>Medications:</strong> ${snapshotProfile.medications
+                        .map((m: Medication) => `${m.name} (${m.dosage})`)
+                        .join('; ')}</div>`
+                    : ''
+                }
+              </div>
+            `
+                : ''
+            }
             ${
               sections.s
                 ? `
@@ -238,6 +310,25 @@ export const ClinicalNoteScreen = () => {
           <Divider style={styles.divider} />
         </View>
 
+        {snapshotProfile && (
+          <Surface
+            style={[styles.patientCard, { backgroundColor: theme.colors.surfaceVariant }]}
+            elevation={0}
+          >
+            <View style={styles.patientHeader}>
+              <MaterialCommunityIcons name="account" size={20} color={theme.colors.primary} />
+              <Text variant="titleMedium" style={styles.patientName}>
+                {snapshotProfile.fullName || 'Registered Patient'}
+              </Text>
+            </View>
+            <Text variant="bodyMedium" style={styles.patientDetail}>
+              {snapshotProfile.sex ? `${snapshotProfile.sex} · ` : ''}
+              {snapshotProfile.dob ? `${calculateAgeFromDob(snapshotProfile.dob)} years old` : ''}
+              {snapshotProfile.bloodType ? ` · Blood: ${snapshotProfile.bloodType}` : ''}
+            </Text>
+          </Surface>
+        )}
+
         {sections.s || sections.o || sections.a || sections.p ? (
           <>
             <Section title="SUBJECTIVE (History)" content={sections.s} />
@@ -259,9 +350,26 @@ export const ClinicalNoteScreen = () => {
           <Text variant="bodySmall" style={styles.qrSubtitle}>
             Clinic staff can scan this code to instantly view your clinical report.
           </Text>
+
+          <View style={[styles.privacyNotice, { backgroundColor: theme.colors.surfaceVariant }]}>
+            <MaterialCommunityIcons name="information-outline" size={16} color={theme.colors.onSurfaceVariant} />
+            <Text variant="bodySmall" style={[styles.privacyText, { color: theme.colors.onSurfaceVariant }]}>
+              Note: This QR code contains medical information stored in plain text and is readable by any standard QR scanner.
+            </Text>
+          </View>
+
+          {isPayloadTooLarge && (
+            <View style={styles.warningContainer}>
+              <MaterialCommunityIcons name="alert" size={16} color={theme.colors.error} />
+              <Text variant="bodySmall" style={[styles.warningText, { color: theme.colors.error }]}>
+                Payload is large. Scan reliability may be reduced.
+              </Text>
+            </View>
+          )}
+
           <View style={styles.qrContainer}>
             <QRCode
-              value={shareText}
+              value={qrPayload}
               size={screenWidth - 80}
               color="black"
               backgroundColor="white"
@@ -332,6 +440,23 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
   },
+  patientCard: {
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+  },
+  patientHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  patientName: {
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  patientDetail: {
+    opacity: 0.8,
+  },
   section: {
     marginBottom: 24,
   },
@@ -359,6 +484,28 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     opacity: 0.7,
   },
+  privacyNotice: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  privacyText: {
+    marginLeft: 8,
+    flex: 1,
+    lineHeight: 16,
+  },
+  warningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  warningText: {
+    marginLeft: 8,
+    fontWeight: '600',
+  },
   qrContainer: {
     padding: 16,
     backgroundColor: 'white',
@@ -382,3 +529,4 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+

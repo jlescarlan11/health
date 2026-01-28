@@ -155,10 +155,11 @@ export interface Medication {
 export interface HealthProfile {
   fullName?: string | null;
   dob?: string | null;
+  sex?: string | null;
   bloodType?: string | null;
+  philHealthId?: string | null;
   chronicConditions?: string[];
   allergies?: string[];
-  currentMedications?: string[];
   surgicalHistory?: string | null;
   familyHistory?: string | null;
 }

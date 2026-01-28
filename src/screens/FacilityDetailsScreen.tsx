@@ -8,9 +8,6 @@ import {
   Linking,
   Dimensions,
   Alert,
-  Modal,
-  FlatList,
-  Platform,
 } from 'react-native';
 import { useNavigation, useRoute, NavigationProp } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
@@ -114,8 +111,8 @@ export const FacilityDetailsScreen = () => {
     // Add specialized_services to Specialized Services category if they exist
     if (facility.specialized_services) {
       facility.specialized_services.forEach((s) => {
-        if (!allServices.includes(s as any)) {
-          allServices.push(s as any);
+        if (!allServices.includes(s as string)) {
+          allServices.push(s as string);
         }
       });
     }
@@ -156,20 +153,6 @@ export const FacilityDetailsScreen = () => {
 
   const infoValueTextStyle = [
     styles.infoText,
-    infoValueTypography,
-    { color: theme.colors.onSurfaceVariant },
-  ];
-
-  const contactPhoneTextStyle = [
-    styles.infoText,
-    styles.linkText,
-    infoValueTypography,
-    { color: theme.colors.primary },
-  ];
-
-  const contactPhoneDisabledTextStyle = [
-    styles.infoText,
-    styles.linkText,
     infoValueTypography,
     { color: theme.colors.onSurfaceVariant },
   ];

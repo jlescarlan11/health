@@ -15,8 +15,8 @@ import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
-import { theme, navigationTheme, getScaledTheme } from './src/theme';
-import { useAppDispatch, useAppSelector, useAdaptiveUI } from './src/hooks';
+import { navigationTheme, getScaledTheme } from './src/theme';
+import { useAppSelector, useAdaptiveUI } from './src/hooks';
 
 const prefix = Linking.createURL('/');
 
@@ -58,7 +58,6 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 const AppContent = () => {
-  const dispatch = useAppDispatch();
   const isHighRisk = useAppSelector((state) => state.navigation.isHighRisk);
   const { scaleFactor, isPWDMode, layoutPadding } = useAdaptiveUI();
   const [safetyModalVisible, setSafetyModalVisible] = useState(false);

@@ -212,17 +212,17 @@ export const normalizeFacility = (value: unknown): Facility | null => {
   const phone = typeof record.phone === 'string' ? record.phone.trim() : undefined;
 
   const contacts = Array.isArray(record.contacts)
-    ? (record.contacts as any[]).map((c) => ({
-        id: c.id,
-        phoneNumber: c.phoneNumber,
+    ? (record.contacts as Record<string, unknown>[]).map((c) => ({
+        id: c.id as string | undefined,
+        phoneNumber: c.phoneNumber as string,
         platform:
           c.platform === 'viber' || c.platform === 'messenger' || c.platform === 'email'
             ? c.platform
             : 'phone',
-        teleconsultUrl: c.teleconsultUrl,
-        contactName: c.contactName,
-        role: c.role,
-        facilityId: c.facilityId,
+        teleconsultUrl: c.teleconsultUrl as string | undefined,
+        contactName: c.contactName as string | undefined,
+        role: c.role as string | undefined,
+        facilityId: c.facilityId as string | undefined,
       }))
     : undefined;
 

@@ -21,6 +21,8 @@ import { Button } from './Button';
 import { FacilityContact } from '../../types';
 import { openViber, openMessenger } from '../../utils/linkingUtils';
 
+type IconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
 interface CommunicationHubProps {
   contacts?: FacilityContact[];
   primaryPhone?: string;
@@ -177,7 +179,7 @@ export const CommunicationHub: React.FC<CommunicationHubProps> = ({
               onPress={handleViberAction}
               activeOpacity={0.7}
             >
-              <MaterialCommunityIcons name={'viber' as any} size={24} color="#fff" />
+              <MaterialCommunityIcons name={'phone' as IconName} size={24} color="#fff" />
             </TouchableOpacity>
           )}
 

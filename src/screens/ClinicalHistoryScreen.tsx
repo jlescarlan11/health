@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
-import { useTheme, Card } from 'react-native-paper';
+import { useTheme, Card, Surface } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSelector } from 'react-redux';
 import { RootStackScreenProps } from '../types/navigation';
+import { RootState } from '../store';
 import * as DB from '../services/database';
 import { ClinicalHistoryRecord } from '../services/database';
 import StandardHeader from '../components/common/StandardHeader';
@@ -15,6 +17,7 @@ type Props = RootStackScreenProps<'ClinicalHistory'>;
 export const ClinicalHistoryScreen = () => {
   const navigation = useNavigation<Props['navigation']>();
   const theme = useTheme();
+  const currentProfile = useSelector((state: RootState) => state.profile);
   const [history, setHistory] = useState<ClinicalHistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
@@ -54,6 +57,31 @@ export const ClinicalHistoryScreen = () => {
     }
   };
 
+  const isArchivedContext = useCallback(
+    (snapshotStr?: string) => {
+      if (!snapshotStr) return false;
+      try {
+        const snapshot = JSON.parse(snapshotStr);
+
+        // Conservative comparison: Birth Year or Sex
+        const currentYear = currentProfile.dob ? new Date(currentProfile.dob).getFullYear() : null;
+        const snapshotYear = snapshot.dob ? new Date(snapshot.dob).getFullYear() : null;
+
+        const yearChanged = currentYear !== snapshotYear;
+        const sexChanged =
+          currentProfile.sex?.toLowerCase() !== snapshot.sex?.toLowerCase() &&
+          Boolean(currentProfile.sex) &&
+          Boolean(snapshot.sex);
+
+        return yearChanged || sexChanged;
+      } catch (e) {
+        console.error('Failed to parse profile snapshot:', e);
+        return false;
+      }
+    },
+    [currentProfile.dob, currentProfile.sex],
+  );
+
   const renderItem = ({ item }: { item: ClinicalHistoryRecord }) => {
     const levelInfo = getLevelInfo(item.recommended_level);
     const date = new Date(item.timestamp).toLocaleDateString('en-US', {
@@ -66,20 +94,31 @@ export const ClinicalHistoryScreen = () => {
       minute: '2-digit',
     });
 
+    const isArchived = isArchivedContext(item.profile_snapshot);
+
     return (
       <Card
         style={styles.card}
         onPress={() => navigation.navigate('ClinicalNote', { recordId: item.id })}
         accessible={true}
-        accessibilityLabel={`Assessment from ${date}, ${item.recommended_level.replace('_', ' ')}. Symptoms: ${item.initial_symptoms}`}
+        accessibilityLabel={`Assessment from ${date}, ${item.recommended_level.replace('_', ' ')}. Symptoms: ${item.initial_symptoms}${isArchived ? '. Archived profile context' : ''}`}
         accessibilityRole="button"
         accessibilityHint="Double tap to view the full clinical report"
       >
         <Card.Content style={styles.cardContent}>
           <View style={styles.textContainer}>
-            <Text variant="titleMedium" numberOfLines={1} style={styles.symptomText}>
-              {item.initial_symptoms}
-            </Text>
+            <View style={styles.titleRow}>
+              <Text variant="titleMedium" numberOfLines={1} style={styles.symptomText}>
+                {item.initial_symptoms}
+              </Text>
+              {isArchived && (
+                <Surface style={styles.archivedBadge} elevation={0}>
+                  <Text variant="labelSmall" style={styles.archivedBadgeText}>
+                    ARCHIVED CONTEXT
+                  </Text>
+                </Surface>
+              )}
+            </View>
             <Text variant="bodySmall" numberOfLines={1} style={styles.detailText}>
               {date} · {time} ·{' '}
               <Text style={[styles.levelText, { color: levelInfo.color }]}>
@@ -130,7 +169,7 @@ export const ClinicalHistoryScreen = () => {
               <Button
                 title="Start New Assessment"
                 variant="primary"
-                onPress={() => navigation.navigate('Check', { screen: 'CheckSymptom' } as any)}
+                onPress={() => navigation.navigate('Check', { screen: 'CheckSymptom' } as never)}
                 style={styles.ctaButton}
               />
             </View>
@@ -169,9 +208,27 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 8,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
   symptomText: {
     fontWeight: '700',
-    marginBottom: 2,
+    flex: 1,
+    marginRight: 8,
+  },
+  archivedBadge: {
+    backgroundColor: '#E0E0E0',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  archivedBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#666',
   },
   detailText: {
     color: '#666',

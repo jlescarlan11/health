@@ -1,8 +1,6 @@
 import { AssessmentProfile, AssessmentResponse } from '../types';
 import {
   KeywordDetector,
-  SYSTEM_INDICATORS,
-  KeywordMatch as _KeywordMatch,
   SegmentAnalysis,
 } from './base/KeywordDetector';
 

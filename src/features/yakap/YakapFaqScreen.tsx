@@ -20,7 +20,7 @@ import { theme as appTheme } from '../../theme';
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental &&
-  !(global as any).nativeFabricUIManager
+  !(global as Record<string, unknown>).nativeFabricUIManager
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }

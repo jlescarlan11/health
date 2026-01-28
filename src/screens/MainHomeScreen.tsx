@@ -75,7 +75,7 @@ export const MainHomeScreen = () => {
       setReportSubject('');
       setReportDetails('');
       setReportEmail('');
-    } catch (_error) {
+    } catch {
       setReportStatus({
         type: 'error',
         message: 'Something went wrong. Please try again in a moment.',

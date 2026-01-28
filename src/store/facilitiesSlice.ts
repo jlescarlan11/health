@@ -251,7 +251,7 @@ const facilitiesSlice = createSlice({
 
         // Normalize busyness data from API response
         newFacilities = newFacilities.map((f) => {
-          const score = (f as any).busyness_score ?? (f.busyness?.score || 0);
+          const score = (f as Record<string, unknown>).busyness_score as number ?? (f.busyness?.score || 0);
           let status: 'quiet' | 'moderate' | 'busy' = 'quiet';
           if (score >= 0.7) status = 'busy';
           else if (score >= 0.4) status = 'moderate';

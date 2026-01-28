@@ -400,7 +400,10 @@ export const getFacilityServiceMatches = (
 };
 
 /**
- * Calculates a priority score for a facility based on care level, service matches, and distance.
+ * Calculates a priority score for a facility based on three strict factors:
+ * 1. Alignment (Services and Level Match)
+ * 2. Distance
+ * 3. Operating Status (Open/Closed)
  * Higher score = higher priority.
  */
 export const scoreFacility = (
@@ -410,7 +413,8 @@ export const scoreFacility = (
 ) => {
   let score = 0;
 
-  // 1. Level match (Primary weight)
+  // 1. Alignment (Services and Level Match)
+  // Level match
   const type = facility.type?.toLowerCase() || '';
   const isEmergencyTarget = targetLevel === 'emergency' || targetLevel === 'hospital';
   const isHealthCenterTarget = targetLevel === 'health_center';
@@ -424,7 +428,7 @@ export const scoreFacility = (
     score += 1000;
   }
 
-  // 2. Service matches (Secondary weight)
+  // Service matches
   if (requiredServices.length > 0) {
     const matchedServices = getFacilityServiceMatches(facility, requiredServices);
     score += (matchedServices.length / requiredServices.length) * 500;
@@ -434,10 +438,15 @@ export const scoreFacility = (
     }
   }
 
-  // 3. Distance (Tertiary weight - subtractive)
-  // Each km subtracts 1 point, so closer facilities win tie-breakers
+  // 2. Distance (Closer = Higher Score)
   const distance = facility.distance || 0;
-  score -= Math.min(distance, 100); // Max penalty 100 points
+  score -= Math.min(distance * 10, 500); // 10 points penalty per km, capped at 500
+
+  // 3. Operating Status (Open = Higher Score)
+  const status = getOpenStatus(facility);
+  if (status.isOpen) {
+    score += 2000; // Heavy prioritization for open facilities
+  }
 
   return score;
 };

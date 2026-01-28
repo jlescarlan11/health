@@ -38,9 +38,9 @@ INSTRUCTIONS:
 1. **Safety First**: Include a "red_flags" question. Set its "id" to "red_flags" and "type" to "multi-select". Include "None" as an option. Use the exact wording: "Do you have any of the following serious symptoms?"
 2. **Question Types**:
    - **"type": "number"**: For Age or numeric values. Set "options" to '[]'.
-   - **"type": "text"**: For open-ended descriptions (Duration, Progression). Set "options" to '[]'. DO NOT provide examples as options.
-   - **"type": "multi-select"**: For lists of symptoms. Structure "options" as grouped categories: \`[{"category": "Name", "items": ["A", "B"]}]\`.
-   - **"type": "single-select"**: For mutually exclusive choices (e.g., Yes/No). Structure "options" as a simple string array: \`["Yes", "No"]\`.
+   - **"type": "single-select"**: Preferred for most questions (including Duration, Progression, and Severity) to reduce friction and improve data consistency. Structure "options" as a simple string array of clear, descriptive choices. Only use "text" type if the answer is highly unpredictable.
+   - **"type": "multi-select"**: For lists of symptoms. Structure "options" as grouped categories: `[{"category": "Name", "items": ["A", "B"]}]`.
+   - **"type": "text"**: For open-ended descriptions that cannot be categorized easily. Set "options" to '[]'.
 3. **Context Awareness & Known Data**: Begin by acknowledging any patient history or prior assessment data included in the prompt context, either in the intro or immediately before questions. Define "already known" data as any explicit mention of a Tier 1 slot (Age, Onset/Duration, Severity/Progression) or contextual descriptors such as Character, associated symptoms, or previously resolved red flags. Skip Tier 1 questions that cover information already known and move directly to Tier 2 (or Tier 3, if applicable) to avoid redundant baseline questioning. When all Tier 1 slots are already provided, omit Tier 1 entirely while preserving the tier order. Do not change behavior when no prior context exists.
 4. **Language & Tone (CRITICAL - PLAIN ENGLISH ONLY)**:
    - **No Medical Jargon**: Use simple, Grade 5 reading level language.
@@ -182,6 +182,7 @@ Instructions:
 3. Prioritize unresolved red flags before any Tier 3 diagnostics. If red flags are outstanding, include at least one "is_red_flag": true question before lower-tier follow-ups.
 4. Tag each question with "tier" (1=core, 2=context, 3=rule-out) and "is_red_flag" (true/false). Ensure red-flag questions are listed before other entries.
 5. Keep tone calm, neutral, and simple (Grade 5 reading level). Avoid emotional language and medical jargon.
+6. Prefer "single-select" or "multi-select" types with helpful, descriptive options to reduce user friction, using "text" only when necessary for unpredictable descriptions.
 
 Context:
 {{resolvedTag}} The assessment for "{{initialSymptom}}" is still in progress. The patient last described it as "{{symptomContext}}".
@@ -367,7 +368,7 @@ OUTPUT FORMAT (JSON ONLY):
       "id": "string",
       "type": "text" | "single-select" | "multi-select" | "number",
       "text": "Question text (Grade 5 reading level)",
-      "options": ["Option 1", "Option 2"],
+      "options": ["Option 1", "Option 2"], // Prefer providing structured options via single-select/multi-select to reduce user friction.
       "tier": 1 | 2 | 3,
       "is_red_flag": boolean
     }

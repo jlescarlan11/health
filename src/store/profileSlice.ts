@@ -2,7 +2,9 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ProfileState {
   fullName: string | null;
+  /** @deprecated Use for cloud sync/future features only; currently unmanaged in UI */
   username: string | null;
+  /** @deprecated Use for cloud sync/future features only; currently unmanaged in UI */
   phoneNumber: string | null;
   dob: string | null;
   sex: string | null;
@@ -10,7 +12,6 @@ interface ProfileState {
   philHealthId: string | null;
   chronicConditions: string[];
   allergies: string[];
-  currentMedications: string[];
   surgicalHistory: string | null;
   familyHistory: string | null;
 }
@@ -25,7 +26,6 @@ const initialState: ProfileState = {
   philHealthId: null,
   chronicConditions: [],
   allergies: [],
-  currentMedications: [],
   surgicalHistory: null,
   familyHistory: null,
 };
@@ -40,9 +40,11 @@ const profileSlice = createSlice({
     setFullName: (state, action: PayloadAction<string | null>) => {
       state.fullName = action.payload;
     },
+    /** @deprecated */
     setUsername: (state, action: PayloadAction<string | null>) => {
       state.username = action.payload;
     },
+    /** @deprecated */
     setPhoneNumber: (state, action: PayloadAction<string | null>) => {
       state.phoneNumber = action.payload;
     },
@@ -61,11 +63,26 @@ const profileSlice = createSlice({
     setChronicConditions: (state, action: PayloadAction<string[]>) => {
       state.chronicConditions = action.payload;
     },
+    addChronicCondition: (state, action: PayloadAction<string>) => {
+      const condition = action.payload.trim();
+      if (condition && !state.chronicConditions.includes(condition)) {
+        state.chronicConditions.push(condition);
+      }
+    },
+    removeChronicCondition: (state, action: PayloadAction<string>) => {
+      state.chronicConditions = state.chronicConditions.filter((c) => c !== action.payload);
+    },
     setAllergies: (state, action: PayloadAction<string[]>) => {
       state.allergies = action.payload;
     },
-    setCurrentMedications: (state, action: PayloadAction<string[]>) => {
-      state.currentMedications = action.payload;
+    addAllergy: (state, action: PayloadAction<string>) => {
+      const allergy = action.payload.trim();
+      if (allergy && !state.allergies.includes(allergy)) {
+        state.allergies.push(allergy);
+      }
+    },
+    removeAllergy: (state, action: PayloadAction<string>) => {
+      state.allergies = state.allergies.filter((a) => a !== action.payload);
     },
     setSurgicalHistory: (state, action: PayloadAction<string | null>) => {
       state.surgicalHistory = action.payload;
@@ -80,10 +97,8 @@ const profileSlice = createSlice({
       state.dob = null;
       state.sex = null;
       state.bloodType = null;
-      state.philHealthId = null;
       state.chronicConditions = [];
       state.allergies = [];
-      state.currentMedications = [];
       state.surgicalHistory = null;
       state.familyHistory = null;
     },
@@ -100,8 +115,11 @@ export const {
   setBloodType,
   setPhilHealthId,
   setChronicConditions,
+  addChronicCondition,
+  removeChronicCondition,
   setAllergies,
-  setCurrentMedications,
+  addAllergy,
+  removeAllergy,
   setSurgicalHistory,
   setFamilyHistory,
   clearProfile,
@@ -113,11 +131,7 @@ const parseAge = (dob: string | null): number | null => {
   const birthday = new Date(dob);
   if (Number.isNaN(birthday.getTime())) return null;
   const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const monthDiff = today.getMonth() - birthday.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthday.getDate())) {
-    age -= 1;
-  }
+  const age = today.getFullYear() - birthday.getFullYear();
   return age >= 0 ? age : null;
 };
 
@@ -152,9 +166,6 @@ const buildClinicalSegments = (profile: ProfileState): string[] => {
 
   const cond = formatList(profile.chronicConditions);
   if (cond) segments.push(`Cond: ${cond}`);
-
-  const meds = formatList(profile.currentMedications);
-  if (meds) segments.push(`Meds: ${meds}`);
 
   const allergies = formatList(profile.allergies);
   if (allergies) segments.push(`Allergies: ${allergies}`);

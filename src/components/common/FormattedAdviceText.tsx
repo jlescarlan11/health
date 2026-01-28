@@ -57,15 +57,19 @@ const parseAdvice = (advice?: string | null): ContentChunk[] => {
   return results;
 };
 
+import { theme as appTheme } from '../../theme';
+
+// ... (rest of imports)
+
 const FormattedAdviceText: React.FC<FormattedAdviceTextProps> = ({ advice }) => {
   const theme = useTheme();
   const chunks = useMemo(() => parseAdvice(advice), [advice]);
 
-  const spacing = (theme as any).spacing as Record<string, number> | undefined;
-  const paragraphSpacing = spacing?.medium ?? spacing?.md ?? 12;
-  const listSpacing = spacing?.small ?? spacing?.sm ?? 8;
-  const indent = spacing?.medium ?? spacing?.md ?? 12;
-  const markerMargin = spacing?.small ?? spacing?.sm ?? 8;
+  const spacing = (theme as typeof appTheme).spacing;
+  const paragraphSpacing = spacing?.md ?? 12;
+  const listSpacing = spacing?.sm ?? 8;
+  const indent = spacing?.md ?? 12;
+  const markerMargin = spacing?.sm ?? 8;
   const textColor = theme.colors.onSurface ?? theme.colors.onBackground;
   const fallbackText = 'No advice available.';
 

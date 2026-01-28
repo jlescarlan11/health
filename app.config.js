@@ -37,6 +37,7 @@ module.exports = {
     },
     plugins: [
       'expo-sqlite',
+      'expo-secure-store',
       '@react-native-firebase/app',
       'expo-system-ui',
       './plugins/withGradleMemory',

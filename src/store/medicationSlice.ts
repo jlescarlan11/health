@@ -1,14 +1,18 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import * as DB from '../services/database';
 import { Medication } from '../types';
+import { scheduleMedicationReminders, removeMedicationReminders } from '../services/calendarService';
+
 interface MedicationState {
   items: Medication[];
+  todaysLogs: Record<string, boolean>;
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
 const initialState: MedicationState = {
   items: [],
+  todaysLogs: {},
   status: 'idle',
   error: null,
 };
@@ -39,8 +43,71 @@ export const fetchMedications = createAsyncThunk(
     try {
       const records = await DB.getMedications();
       return records.map(mapRecordToMedication);
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch medications');
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to fetch medications');
+    }
+  },
+);
+
+export const fetchTodaysLogs = createAsyncThunk(
+  'medication/fetchTodaysLogs',
+  async (_, { rejectWithValue }) => {
+    try {
+      const logs = await DB.getMedicationLogs();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayTimestamp = today.getTime();
+
+      // Filter logs for today
+      const todaysRecords = (logs || []).filter(log => log.timestamp >= todayTimestamp);
+
+      // Group by medication_id and find latest
+      const latestStatus: Record<string, { timestamp: number; status: string }> = {};
+      
+      todaysRecords.forEach(log => {
+        if (!latestStatus[log.medication_id] || log.timestamp > latestStatus[log.medication_id].timestamp) {
+          latestStatus[log.medication_id] = { timestamp: log.timestamp, status: log.status };
+        }
+      });
+
+      const todaysLogs: Record<string, boolean> = {};
+      Object.keys(latestStatus).forEach(id => {
+        todaysLogs[id] = latestStatus[id].status === 'taken';
+      });
+
+      return todaysLogs;
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to fetch medication logs');
+    }
+  },
+);
+
+export const logMedicationTaken = createAsyncThunk(
+  'medication/logMedicationTaken',
+  async ({ medicationId, isTaken }: { medicationId: string; isTaken: boolean }, { rejectWithValue }) => {
+    try {
+      const timestamp = Date.now();
+      const id = `${medicationId}_${timestamp}`; // Simple unique ID
+      
+      if (isTaken) {
+         await DB.saveMedicationLog({
+          id,
+          medication_id: medicationId,
+          timestamp,
+          status: 'taken',
+        });
+      } else {
+        await DB.saveMedicationLog({
+          id,
+          medication_id: medicationId,
+          timestamp,
+          status: 'not_taken', // distinct status
+        });
+      }
+
+      return { medicationId, isTaken };
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to log medication');
     }
   },
 );
@@ -52,9 +119,17 @@ export const addMedication = createAsyncThunk(
       const record = mapMedicationToRecord(medication);
       await DB.saveMedication(record);
 
+      // Sync with Calendar
+      try {
+        await scheduleMedicationReminders(medication);
+      } catch (calError) {
+        console.warn('[MedicationSlice] Calendar sync failed:', calError);
+        // We continue even if calendar fails
+      }
+
       return medication;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to add medication');
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to add medication');
     }
   },
 );
@@ -65,9 +140,16 @@ export const deleteMedication = createAsyncThunk(
     try {
       await DB.deleteMedication(id);
 
+      // Clean up Calendar
+      try {
+        await removeMedicationReminders(id);
+      } catch (calError) {
+        console.warn('[MedicationSlice] Calendar cleanup failed:', calError);
+      }
+
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to delete medication');
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to delete medication');
     }
   },
 );
@@ -120,17 +202,27 @@ const medicationSlice = createSlice({
       .addCase(deleteMedication.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload as string;
+      })
+      // Fetch Todays Logs
+      .addCase(fetchTodaysLogs.fulfilled, (state, action) => {
+         state.todaysLogs = action.payload;
+      })
+      // Log Medication Taken
+      .addCase(logMedicationTaken.fulfilled, (state, action) => {
+        state.todaysLogs[action.payload.medicationId] = action.payload.isTaken;
       });
   },
 });
 
 export const selectAllMedications = (state: { medication: MedicationState }) =>
-  state.medication.items;
+  state.medication?.items || [];
 export const selectMedicationById = (state: { medication: MedicationState }, id: string) =>
-  state.medication.items.find((m) => m.id === id);
+  state.medication?.items?.find((m) => m.id === id);
 export const selectMedicationStatus = (state: { medication: MedicationState }) =>
-  state.medication.status;
+  state.medication?.status || 'idle';
 export const selectMedicationError = (state: { medication: MedicationState }) =>
-  state.medication.error;
+  state.medication?.error;
+export const selectTodaysLogs = (state: { medication: MedicationState }) =>
+  state.medication?.todaysLogs || {};
 
 export default medicationSlice.reducer;

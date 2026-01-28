@@ -1,13 +1,13 @@
 import React from 'react';
 import { Text as PaperText, TextProps } from 'react-native-paper';
-import { StyleSheet, TextStyle, StyleProp } from 'react-native';
+import { StyleSheet, TextStyle } from 'react-native';
 import { useAdaptiveUI } from '../../hooks/useAdaptiveUI';
 
 /**
  * A wrapper around React Native Paper's Text component that automatically
  * applies a global scale factor for Senior/Adaptive UI modes.
  */
-interface CustomTextProps extends TextProps<any> {
+interface CustomTextProps extends TextProps<unknown> {
   children: React.ReactNode;
 }
 

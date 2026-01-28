@@ -1,6 +1,6 @@
 import { normalizeNumericValue } from './stringUtils';
 import type { AssessmentProfile, QuestionSlotGoal } from '../types/triage';
-import type { HealthProfile } from '../types';
+import type { HealthProfile, Medication } from '../types';
 
 export interface SoapSections {
   s?: string;
@@ -32,7 +32,7 @@ export const parseSoap = (text: string): SoapSections => {
           p: json.plan,
         };
       }
-    } catch (_) {
+    } catch {
       // Not JSON, fall back to undefined sections
     }
   }
@@ -51,7 +51,13 @@ export const parseSoap = (text: string): SoapSections => {
 export const formatClinicalShareText = (
   clinicalSoap: string,
   timestamp: number,
-  medicalJustification?: string,
+  profile?: {
+    fullName?: string;
+    dob?: string;
+    allergies?: string[];
+    medications?: Medication[];
+    philHealthId?: string | null;
+  } | null,
 ): string => {
   const formattedDate = new Date(timestamp).toLocaleString('en-US', {
     dateStyle: 'medium',
@@ -61,7 +67,34 @@ export const formatClinicalShareText = (
   const sections = parseSoap(clinicalSoap);
   const hasSections = !!(sections.s || sections.o || sections.a || sections.p);
 
-  let shareText = `CLINICAL HANDOVER REPORT\nDate: ${formattedDate}\n\n`;
+  let shareText = `CLINICAL HANDOVER REPORT\nDate: ${formattedDate}\n`;
+
+  if (profile) {
+    const age = calculateAgeFromDob(profile.dob);
+    shareText += `Patient: ${profile.fullName || 'Registered Patient'}${
+      age !== null ? ` (${age} yrs)` : ''
+    }\n`;
+
+    if (profile.allergies && profile.allergies.length > 0) {
+      shareText += `Allergies: ${profile.allergies.join(', ')}\n`;
+    }
+
+    if (profile.medications && profile.medications.length > 0) {
+      const activeMeds = profile.medications
+        .filter((m: Medication) => m.is_active)
+        .map((m: Medication) => `${m.name} (${m.dosage})`)
+        .join(', ');
+      if (activeMeds) {
+        shareText += `Medications: ${activeMeds}\n`;
+      }
+    }
+
+    if (profile.philHealthId) {
+      shareText += `PhilHealth ID: ${profile.philHealthId}\n`;
+    }
+  }
+
+  shareText += '\n';
 
   if (hasSections) {
     if (sections.s) shareText += `SUBJECTIVE (History):\n${sections.s}\n\n`;
@@ -210,7 +243,7 @@ const TRAUMA_KEYWORDS = {
 
 const TRAUMA_KEYWORD_LIST = Object.values(TRAUMA_KEYWORDS).flat();
 
-const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\\]/g, '\\$&');
 
 const buildKeywordPattern = (keyword: string): string => {
   const parts = keyword.trim().split(/\s+/).map(escapeRegex);
@@ -425,7 +458,7 @@ export const detectProfileChanges = (
 };
 
 /**
- * Calculates age from a date of birth string (YYYY-MM-DD).
+ * Calculates age from a date of birth string (YYYY-MM-DD) based strictly on the year component.
  */
 export const calculateAgeFromDob = (dob: string | null | undefined): number | null => {
   if (!dob) return null;
@@ -433,67 +466,223 @@ export const calculateAgeFromDob = (dob: string | null | undefined): number | nu
   if (isNaN(birthDate.getTime())) return null;
 
   const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
+  return today.getFullYear() - birthDate.getFullYear();
 };
 
 /**
  * Formats the user's health profile into a deterministic, human-readable, and LLM-friendly string.
  * Used as a preamble for AI prompts to provide clinical context while omitting empty fields.
+ * 
+ * @param profile - The user's basic health profile (conditions, allergies, etc.)
+ * @param medications - Structured medication data from the medication slice (for checking interactions)
  */
-export const formatProfileForAI = (profile: HealthProfile | undefined | null): string => {
-  if (!profile) return '';
+export const formatProfileForAI = (
+  profile: HealthProfile | undefined | null,
+  medications: Medication[] = []
+): string => {
+  const hasProfile = !!profile;
+  const hasMeds = medications && medications.length > 0;
+
+  if (!hasProfile && !hasMeds) return '';
 
   const lines: string[] = [];
 
-  // 1. Age (Clinically most important)
-  if (profile.dob) {
+  // 1. Age & Sex (Clinically most important)
+  const profileParts: string[] = [];
+  if (profile?.dob) {
     const age = calculateAgeFromDob(profile.dob);
     if (age !== null) {
-      lines.push(`- Age: ${age} (DOB: ${profile.dob})`);
-    } else {
-      lines.push(`- DOB: ${profile.dob}`);
+      profileParts.push(`Age: ${age}`);
     }
+  }
+  if (profile?.sex) {
+    profileParts.push(`Sex: ${profile.sex}`);
+  }
+
+  if (profileParts.length > 0) {
+    lines.push(`- ${profileParts.join(', ')}${profile?.dob ? ` (DOB: ${profile.dob})` : ''}`);
   }
 
   // 2. Blood Type
-  if (profile.bloodType) {
+  if (profile?.bloodType) {
     lines.push(`- Blood Type: ${profile.bloodType}`);
   }
 
   // 3. Chronic Conditions
-  if (profile.chronicConditions && profile.chronicConditions.length > 0) {
+  if (profile?.chronicConditions && profile.chronicConditions.length > 0) {
     const sorted = [...profile.chronicConditions].sort();
     lines.push(`- Chronic Conditions: ${sorted.join(', ')}`);
   }
 
   // 4. Allergies
-  if (profile.allergies && profile.allergies.length > 0) {
+  if (profile?.allergies && profile.allergies.length > 0) {
     const sorted = [...profile.allergies].sort();
     lines.push(`- Allergies: ${sorted.join(', ')}`);
   }
 
-  // 5. Current Medications
-  if (profile.currentMedications && profile.currentMedications.length > 0) {
-    const sorted = [...profile.currentMedications].sort();
-    lines.push(`- Medications: ${sorted.join(', ')}`);
+  // 5. Medications (Merged from Profile strings and MedicationSlice objects)
+  const medDescriptions: string[] = [];
+  const processedMedNames = new Set<string>();
+
+  // 5a. Structured Medications (Primary Source)
+  if (hasMeds) {
+    // Sort for determinism
+    const activeMeds = medications
+      .filter(m => m.is_active)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    activeMeds.forEach(med => {
+      let desc = med.name.trim();
+      if (med.dosage) desc += ` ${med.dosage}`;
+      
+      const scheduleDetails: string[] = [];
+      if (med.scheduled_time) scheduleDetails.push(`at ${med.scheduled_time}`);
+      
+      if (med.days_of_week && med.days_of_week.length > 0) {
+        // Check for "Daily" (assuming 7 days means daily)
+        if (med.days_of_week.length === 7) {
+          scheduleDetails.push('Daily');
+        } else {
+          // Join days (e.g., "Mon, Wed, Fri")
+          scheduleDetails.push(med.days_of_week.join(', '));
+        }
+      }
+
+      if (scheduleDetails.length > 0) {
+        desc += ` (${scheduleDetails.join(' ')})`;
+      }
+
+      medDescriptions.push(desc);
+      processedMedNames.add(med.name.toLowerCase().trim());
+    });
+  }
+
+  if (medDescriptions.length > 0) {
+    // Sort the combined list for determinism
+    lines.push(`- Medications: ${medDescriptions.sort().join('; ')}`);
   }
 
   // 6. Surgical History
-  if (profile.surgicalHistory?.trim()) {
+  if (profile?.surgicalHistory?.trim()) {
     lines.push(`- Surgical History: ${profile.surgicalHistory.trim()}`);
   }
 
   // 7. Family History
-  if (profile.familyHistory?.trim()) {
+  if (profile?.familyHistory?.trim()) {
     lines.push(`- Family History: ${profile.familyHistory.trim()}`);
   }
 
   if (lines.length === 0) return '';
 
-  return `USER HEALTH PROFILE:\n${lines.join('\n')}`;
+    return `USER HEALTH PROFILE:\n${lines.join('\n')}`;
+
+  };
+
+  
+
+interface SnapshotPayload {
+  v: number;
+  t: number;
+  s?: string;
+  o?: string;
+  a?: string;
+  p?: string;
+  pr?: {
+    n?: string;
+    s?: string;
+    a?: number | null;
+    b?: string;
+    al?: string[];
+    ph?: string | null;
+    m?: { n: string; d: string }[];
+  };
+}
+
+/**
+ * Serializes clinical data into a compact, key-mapped JSON format (Version 4).
+ * Designed to minimize QR code density while remaining human-readable if scanned by a standard app.
+ * Includes size-limiting logic to ensure scan reliability by dropping secondary fields.
+ */
+export const serializeClinicalSnapshot = (
+  clinicalSoap: string,
+  timestamp: number,
+  profile?: {
+    fullName?: string;
+    sex?: string;
+    dob?: string;
+    bloodType?: string;
+    allergies?: string[];
+    philHealthId?: string | null;
+    medications?: Medication[];
+  } | null,
+): string => {
+  const sections = parseSoap(clinicalSoap);
+
+  const payload: SnapshotPayload = {
+    v: 4,
+    t: timestamp,
+    s: sections.s,
+    o: sections.o,
+    a: sections.a,
+    p: sections.p,
+    pr: profile
+      ? {
+          n: profile.fullName || undefined,
+          s: profile.sex || undefined,
+          a: calculateAgeFromDob(profile.dob),
+          b: profile.bloodType || undefined,
+          al: profile.allergies,
+          ph: profile.philHealthId,
+          m: profile.medications?.map((m: Medication) => ({ n: m.name, d: m.dosage })),
+        }
+      : undefined,
+  };
+
+  const serialize = (p: SnapshotPayload) =>
+    JSON.stringify(p, (_, value) => {
+      if (
+        value === undefined ||
+        value === null ||
+        value === '' ||
+        (Array.isArray(value) && value.length === 0)
+      ) {
+        return undefined;
+      }
+      return value;
+    });
+
+  let json = serialize(payload);
+  const MAX_SAFE_SIZE = 750;
+
+  if (json.length > MAX_SAFE_SIZE) {
+    // Stage 1: Drop secondary clinical info (Medications)
+    if (payload.pr?.m) {
+      delete payload.pr.m;
+      json = serialize(payload);
+    }
+
+    // Stage 2: Drop non-critical demographics
+    if (json.length > MAX_SAFE_SIZE) {
+      if (payload.pr?.ph) delete payload.pr.ph;
+      if (payload.pr?.b) delete payload.pr.b;
+      json = serialize(payload);
+    }
+
+    // Stage 3: Drop sex and age
+    if (json.length > MAX_SAFE_SIZE) {
+      if (payload.pr?.s) delete payload.pr.s;
+      if (payload.pr?.a) delete payload.pr.a;
+      json = serialize(payload);
+    }
+
+    // Stage 4: Drop Name (Preserving Clinical Findings s,o,a,p and Allergies al)
+    if (json.length > MAX_SAFE_SIZE) {
+      if (payload.pr?.n) delete payload.pr.n;
+      json = serialize(payload);
+    }
+  }
+
+  return json;
 };
+
+  

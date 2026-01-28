@@ -16,6 +16,10 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.health.app",
       "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "NSCalendarsUsageDescription": "This app uses your calendar to schedule medication reminders.",
+        "NSRemindersUsageDescription": "This app uses your reminders to schedule medication alerts."
+      }
     },
     "android": {
       "package": "com.health.app",
@@ -24,6 +28,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "permissions": ["READ_CALENDAR", "WRITE_CALENDAR"],
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },

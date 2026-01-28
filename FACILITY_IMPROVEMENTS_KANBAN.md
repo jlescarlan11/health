@@ -1,46 +1,22 @@
-# Facility UI/UX Improvement Kanban
+# Facility Recommendation & Assessment Flow Improvements Kanban
 
-## Column 1: High Priority (Trust & Access)
+## Phase 1: Ranking & Selection Logic
+- [x] Update `scoreFacility` in `src/utils/facilityUtils.ts` to strictly use service alignment, distance, and operating status.
+- [x] Integrate `getOpenStatus` into the scoring algorithm to prioritize open facilities.
+- [x] Refine distance penalty in `scoreFacility` for better granularity.
 
-- [ ] **Task 1: Optimize Action Hierarchy for Thumb Zone**
-  - **Ref:** `src/screens/FacilityDetailsScreen.tsx`
-  - **Principle:** Thumb Zone / Fitts's Law.
-  - **Action:** Move "Directions" to primary `actionButtons` row.
-- [ ] **Task 2: Accessibility Check for Status Meaning**
-  - **Ref:** `src/components/common/FacilityCard.tsx`
-  - **Principle:** WCAG 2.1 SC 1.4.1.
-  - **Action:** Add icons to status indicators (Clock/Check).
-- [ ] **Task 3: Standardize Emergency Visual Cue**
-  - **Ref:** `src/components/common/FacilityCard.tsx`
-  - **Principle:** Visual Hierarchy (Salience).
-  - **Action:** Add high-contrast "24/7 EMERGENCY" badge for relevant facilities.
+## Phase 2: Assessment Flow Enhancements
+- [x] Add a deterministic closing message in `src/screens/SymptomAssessmentScreen.tsx` within the `canTerminate` block.
+- [x] Adjust `composeAssistantMessage` to ensure the final closing message is visible to the user.
+- [x] Update `GENERATE_ASSESSMENT_QUESTIONS_PROMPT` in `src/constants/prompts.ts` to favor `single-select` and `multi-select` question types.
+- [x] Update `DYNAMIC_CLARIFIER_PROMPT_TEMPLATE` and `REFINE_PLAN_PROMPT` to encourage structured response options.
 
-## Column 2: Medium Priority (Navigation & Discovery)
+## Phase 3: Age Logic Standardization
+- [x] Update `calculateAgeFromDob` in `src/utils/clinicalUtils.ts` to use `CurrentYear - BirthYear`.
+- [x] Update `parseAge` in `src/store/profileSlice.ts` to use `CurrentYear - BirthYear`.
+- [x] Verify consistent usage of computed age throughout the assessment and recommendation process.
 
-- [ ] **Task 4: Enable Multi-Facet Filtering**
-  - **Ref:** `src/store/facilitiesSlice.ts` & `FacilityDirectoryScreen.tsx`
-  - **Principle:** ISO 9241-110 (Controllability).
-  - **Action:** Refactor filtering to allow multiple active facets.
-- [ ] **Task 5: Implement Manual Location Fallback**
-  - **Ref:** `src/hooks/useUserLocation.ts`
-  - **Principle:** Graceful Degradation.
-  - **Action:** Add "Select District" dropdown for approximate sorting.
-- [ ] **Task 6: Group Services by Care Level**
-  - **Ref:** `src/screens/FacilityDetailsScreen.tsx`
-  - **Principle:** Miller's Law (Chunking).
-  - **Action:** Group services into semantic sub-sections.
-
-## Column 3: Low Priority (Polish & Reassurance)
-
-- [ ] **Task 7: Refine Skeleton Loading for Trust**
-  - **Ref:** `src/components/features/facilities/FacilityCardSkeleton.tsx`
-  - **Principle:** Perceived Latency Anxiety.
-  - **Action:** Match skeleton layout perfectly to `FacilityCard`.
-- [ ] **Task 8: "Opening Soon" Nuance**
-  - **Ref:** `src/utils/facilityUtils.ts`
-  - **Principle:** Calm Design (Clarity).
-  - **Action:** Return "Opens at [Time]" for facilities opening within 4 hours.
-- [ ] **Task 9: Data Freshness Signal**
-  - **Ref:** `src/screens/FacilityDetailsScreen.tsx`
-  - **Principle:** Credibility (Trust).
-  - **Action:** Add "Data verified as of [Date]" label.
+## Phase 4: Verification & Documentation
+- [x] Scan codebase for any residual manual age calculations using `getFullYear`.
+- [x] Verify facility ranking results on the Recommendation Screen.
+- [x] Update `GEMINI.md` to reflect the new ranking criteria and age calculation logic.

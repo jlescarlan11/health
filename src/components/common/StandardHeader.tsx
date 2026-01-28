@@ -44,7 +44,7 @@ export const StandardHeader: React.FC<StandardHeaderProps> = ({
     } else if (navigation.canGoBack()) {
       navigation.goBack();
     } else if (backRoute) {
-      navigation.navigate(backRoute as any);
+      navigation.navigate(backRoute as never);
     }
   };
 

@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { FeedItem } from '../types/feed';
 import { healthFeedService } from '../services/healthFeedService';
 
@@ -26,8 +26,8 @@ export const fetchFeed = createAsyncThunk(
     try {
       const results = await healthFeedService.fetchHealthFeed({ page, pageSize });
       return { items: results, page };
-    } catch (error: any) {
-      return rejectWithValue(error.message || 'Failed to fetch health feed');
+    } catch (error: unknown) {
+      return rejectWithValue((error as Error).message || 'Failed to fetch health feed');
     }
   }
 );

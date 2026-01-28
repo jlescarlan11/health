@@ -21,8 +21,14 @@ interface MultiSelectChecklistProps {
 }
 
 // Moved outside component to avoid recreation on every render
-const isGroupedOptions = (opts: any[]): opts is GroupedChecklistOption[] => {
-  return opts.length > 0 && 'category' in opts[0];
+const isGroupedOptions = (opts: unknown[]): opts is GroupedChecklistOption[] => {
+  return (
+    Array.isArray(opts) &&
+    opts.length > 0 &&
+    typeof opts[0] === 'object' &&
+    opts[0] !== null &&
+    'category' in opts[0]
+  );
 };
 
 // Memoized option item component to prevent unnecessary re-renders

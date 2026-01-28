@@ -38,7 +38,7 @@ export const FeedItem: React.FC<FeedItemProps> = ({ item, onPress }) => {
   } else if (item.dateISO) {
     try {
       timestamp = formatDistanceToNow(parseISO(item.dateISO), { addSuffix: true });
-    } catch (e) {
+    } catch {
       timestamp = item.dateISO.split('T')[0];
     }
   }
