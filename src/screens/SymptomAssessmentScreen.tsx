@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
+  FlatList,
   Alert,
   Platform,
   UIManager,
@@ -11,6 +11,7 @@ import {
   BackHandler,
   Dimensions,
   Modal,
+  ScrollView,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -35,7 +36,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { RootStackScreenProps } from '../types/navigation';
 import { RootState } from '../store';
 import { geminiClient } from '../api/geminiClient';
-import { selectClinicalContext } from '../store/profileSlice';
+import { selectClinicalContext, selectFullName } from '../store/profileSlice';
 import { detectEmergency, type EmergencyDetectionResult } from '../services/emergencyDetector';
 import { detectMentalHealthCrisis } from '../services/mentalHealthDetector';
 import {
@@ -114,6 +115,10 @@ const SYSTEM_TRANSITION_REASON_SOURCES = new Set([
   'arbiter-expansion',
   'arbiter-reset',
   'escalation-pivot',
+  'arbiter-termination',
+  'arbiter-finalize-safety',
+  'finalizing',
+  'finalize-assessment',
 ]);
 
 const composeAssistantMessage = ({
@@ -168,6 +173,9 @@ const composeAssistantMessage = ({
     // nextAction, // OMITTED to prevent display in user-facing text
     metadata: safeMetadata,
   });
+
+  // When isSystemTransition is true, we strictly prohibit user-visible content.
+  // The message body is limited to an empty string to ensure nothing is rendered or spoken.
   const displayText = isSystemTransition ? '' : formatted.text || '';
   const messageMetadata = {
     ...(formatted.metadata || {}),
@@ -378,10 +386,11 @@ const SymptomAssessmentScreen = () => {
   const dispatch = useDispatch();
   const savedState = useSelector((state: RootState) => state.navigation.assessmentState);
   const clinicalContext = useSelector(selectClinicalContext);
+  const fullName = useSelector(selectFullName);
   const theme = useTheme();
   const spacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const chatBottomPadding = spacing.lg * 2;
-  const scrollViewRef = useRef<ScrollView>(null);
+  const flatListRef = useRef<FlatList>(null);
   const inputCardRef = useRef<InputCardRef>(null);
   const hasShownClarificationHeader = useRef(false);
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -415,7 +424,7 @@ const SymptomAssessmentScreen = () => {
     savedState?.currentQuestionIndex || 0,
   );
   const [answers, setAnswers] = useState<Record<string, string>>(savedState?.answers || {}); // Map question ID -> User Answer
-  const [loading, setLoading] = useState(!savedState);
+  const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [selectedRedFlags, setSelectedRedFlags] = useState<string[]>([]);
   const [expansionCount, setExpansionCount] = useState(savedState?.expansionCount || 0);
@@ -477,7 +486,7 @@ const SymptomAssessmentScreen = () => {
   const [pendingRedFlag, setPendingRedFlag] = useState<string | null>(
     savedState?.pendingRedFlag || null,
   );
-  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [isGuestMode, setIsGuestMode] = useState(savedState?.isGuestMode || false);
   const [isModeModalVisible, setIsModeModalVisible] = useState(!savedState);
 
   // Ref sync to prevent closure staleness in setTimeout callbacks
@@ -736,6 +745,7 @@ const SymptomAssessmentScreen = () => {
         triageSnapshot,
         incrementalSlots,
         isQueueSuspended,
+        isGuestMode,
       }),
     );
   }, [
@@ -766,6 +776,7 @@ const SymptomAssessmentScreen = () => {
     triageSnapshot,
     incrementalSlots,
     isQueueSuspended,
+    isGuestMode,
     dispatch,
     loading,
   ]);
@@ -826,7 +837,7 @@ const SymptomAssessmentScreen = () => {
         cancelAnimationFrame(keyboardScrollRaf.current);
       }
       keyboardScrollRaf.current = requestAnimationFrame(() => {
-        scrollViewRef.current?.scrollToEnd({ animated });
+        flatListRef.current?.scrollToEnd({ animated });
       });
     };
 
@@ -879,12 +890,17 @@ const SymptomAssessmentScreen = () => {
   // --- AUTO-SCROLL LOGIC ---
   useEffect(() => {
     const scrollTimer = setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
+      flatListRef.current?.scrollToEnd({ animated: true });
     }, 100); // Small delay to allow layout to settle
     return () => clearTimeout(scrollTimer);
   }, [messages, isTyping, isVerifyingEmergency]);
 
-  const initializeAssessment = async (mode: AssessmentMode, patientContext?: string | null) => {
+  const initializeAssessment = async (
+    mode: AssessmentMode,
+    isGuest: boolean,
+    patientContext?: string | null,
+    patientName?: string | null,
+  ) => {
     // 1. Initial Emergency Check (Locally)
     const emergencyCheck = detectEmergency(initialSymptom || '', { isUserInput: true });
     const mentalHealthCheck = detectMentalHealthCrisis(initialSymptom || '');
@@ -893,10 +909,12 @@ const SymptomAssessmentScreen = () => {
       console.log(
         '[Assessment] IMMEDIATE ESCALATION - Emergency/Crisis detected in initial symptom',
       );
-      dispatch(setHighRisk(true));
+      if (!isGuest) {
+        dispatch(setHighRisk(true));
+      }
       navigation.replace('Recommendation', {
         assessmentData: { symptoms: initialSymptom || '', answers: [] },
-        guestMode: isGuestMode,
+        guestMode: isGuest,
       });
       return;
     }
@@ -910,6 +928,7 @@ const SymptomAssessmentScreen = () => {
       const { questions: plan, intro } = await geminiClient.generateAssessmentPlan(
         initialSymptom || '',
         patientContext,
+        patientName,
       );
       setFullPlan(plan);
 
@@ -967,14 +986,11 @@ const SymptomAssessmentScreen = () => {
 
           // Add Intro & First Question
       const firstQ = prunedPlan[0];
-      const baseIntro = intro
-        ? `${intro}\n\n${firstQ.text}`
-        : `Recorded your report of "${initialSymptom}". Answer the first question to continue.\n\n${firstQ.text}`;
-      const modeContextMessage =
-        mode === 'forMe'
-          ? 'I will ask about your symptoms directly so I can understand how you are feeling.'
-          : 'Tell me about the person you are helping so I can tailor the questions to them.';
-      const introText = `${modeContextMessage}\n\n${baseIntro}`;
+      const fallbackIntro = firstQ?.text?.trim();
+      const introText =
+        intro?.trim() ||
+        fallbackIntro ||
+        'Thank you for sharing. Please tell me a bit more about how you are feeling.';
 
       replaceMessagesDisplay([
         composeAssistantMessage({
@@ -999,17 +1015,15 @@ const SymptomAssessmentScreen = () => {
   };
 
   const handleModeSelection = (mode: AssessmentMode) => {
-    const isGuestSelection = mode === 'forSomeoneElse';
-    if (isGuestSelection) {
-      setIsGuestMode(true);
-      setIsModeModalVisible(false);
-      initializeAssessment(mode, null);
-      return;
-    }
-
-    setIsGuestMode(false);
+    const isGuest = mode === 'forSomeoneElse';
+    setIsGuestMode(isGuest);
     setIsModeModalVisible(false);
-    initializeAssessment(mode, clinicalContext);
+
+    if (isGuest) {
+      initializeAssessment(mode, true, null, null);
+    } else {
+      initializeAssessment(mode, false, clinicalContext, fullName);
+    }
   };
 
   // --- INTERACTION LOGIC ---
@@ -1408,7 +1422,7 @@ const SymptomAssessmentScreen = () => {
                 appendMessagesToConversation([
                   composeAssistantMessage({
                     id: 'early-exit',
-                    body: 'Collected the required data; finalizing the recommendation now.',
+                    body: '',
                     header: clarificationHeader,
                     reason: arbiterResult.reason,
                     reasonSource: 'arbiter-termination',
@@ -1754,7 +1768,7 @@ Recent User Answer: ${trimmedAnswer}
                 composeAssistantMessage({
                   id: 'finalizing-safety-fallback',
                   header: clarificationHeader,
-                  body: 'Collected enough initial detail; preparing your recommendation now.',
+                  body: '',
                   reason: arbiterResult.reason,
                   reasonSource: 'arbiter-finalize-safety',
                   nextAction: 'Please wait while I prepare the recommendation for you.',
@@ -1918,7 +1932,7 @@ Recent User Answer: ${trimmedAnswer}
           appendMessagesToConversation([
             composeAssistantMessage({
               id: 'finalizing',
-              body: 'All responses recorded; analyzing them now to finalize your recommendation.',
+              body: '',
               reason: 'Assessment complete and ready for final review.',
               reasonSource: 'finalizing',
               nextAction: 'Please wait while I synthesize the recommendation for you.',
@@ -1949,7 +1963,9 @@ Recent User Answer: ${trimmedAnswer}
        * Action: Immediate escalation to 911/Emergency recommendation, bypassing assessment.
        */
       console.log(`[Assessment] EMERGENCY CONFIRMED: ${keyword}. Escalating.`);
-      dispatch(setHighRisk(true));
+      if (!isGuestMode) {
+        dispatch(setHighRisk(true));
+      }
       navigation.replace('Recommendation', {
         assessmentData: {
           symptoms: initialSymptom || '',
@@ -2047,7 +2063,7 @@ Recent User Answer: ${trimmedAnswer}
         appendMessagesToConversation([
           composeAssistantMessage({
             id: `finalize-${finalizeTimestamp}`,
-            body: 'Captured the clinical picture; I have generated a care plan based on your symptoms and am ready to share it.',
+            body: '',
             reason: 'Assessment complete and ready for handover.',
             reasonSource: 'finalize-assessment',
             nextAction: 'Please stay tuned while I prepare the recommendation for you.',
@@ -2322,6 +2338,18 @@ Recent User Answer: ${trimmedAnswer}
     );
   };
 
+  if (isModeModalVisible) {
+    return (
+      <ScreenSafeArea
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+        edges={['left', 'right', 'bottom']}
+      >
+        <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
+        {renderModeSelectionModal()}
+      </ScreenSafeArea>
+    );
+  }
+
   if (loading) {
     return (
       <ScreenSafeArea
@@ -2330,7 +2358,6 @@ Recent User Answer: ${trimmedAnswer}
       >
         <ActivityIndicator size="large" color={theme.colors.primary} />
         <Text style={{ marginTop: 16 }}>Preparing your assessment...</Text>
-        {renderModeSelectionModal()}
       </ScreenSafeArea>
     );
   }
@@ -2407,6 +2434,71 @@ Recent User Answer: ${trimmedAnswer}
 
   console.log(`[DEBUG_RENDER] isVerifyingEmergency: ${isVerifyingEmergency}`);
 
+  const renderListFooter = () => (
+    <>
+      {/* Streaming Message Bubble */}
+      {streamingText && (
+        <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+          <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+            <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+          </View>
+          <View
+            style={[
+              styles.bubble,
+              styles.assistantBubble,
+              { backgroundColor: theme.colors.surface },
+            ]}
+          >
+            <Text style={[styles.messageText, { color: theme.colors.onSurface }]}>
+              {streamingText}
+            </Text>
+          </View>
+        </View>
+      )}
+      {isTyping && !streamingText && (
+        <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+          <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
+            <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
+          </View>
+          <View
+            style={[
+              styles.bubble,
+              styles.assistantBubble,
+              { backgroundColor: theme.colors.surface, padding: 12 },
+            ]}
+          >
+            <TypingIndicator />
+          </View>
+        </View>
+      )}
+      {isVerifyingEmergency && emergencyVerificationData && (
+        <View style={[styles.messageWrapper, styles.assistantWrapper]}>
+          <View style={[styles.avatar, { backgroundColor: theme.colors.errorContainer }]}>
+            <MaterialCommunityIcons name="alert" size={18} color={theme.colors.error} />
+          </View>
+          <View
+            style={[
+              styles.bubble,
+              styles.assistantBubble,
+              {
+                backgroundColor: theme.colors.surface,
+                borderColor: theme.colors.error,
+                borderWidth: 0.5,
+              },
+            ]}
+          >
+            <Text style={[styles.messageText, { color: theme.colors.onSurface }]}>
+              I noticed you mentioned{' '}
+              <Text style={{ fontWeight: 'bold' }}>{emergencyVerificationData.keyword}</Text>. To
+              be safe, is this happening to you right now, or are you describing a past
+              event/concern?
+            </Text>
+          </View>
+        </View>
+      )}
+    </>
+  );
+
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -2434,75 +2526,17 @@ Recent User Answer: ${trimmedAnswer}
         />
       </View>
 
-      <ScrollView
-        ref={scrollViewRef}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => renderMessage(item)}
         style={styles.messagesContainer}
         contentContainerStyle={{ padding: 16, paddingBottom: chatBottomPadding }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-      >
-        {messages.map(renderMessage)}
-        {/* Streaming Message Bubble */}
-        {streamingText && (
-          <View style={[styles.messageWrapper, styles.assistantWrapper]}>
-            <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
-              <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
-            </View>
-            <View
-              style={[
-                styles.bubble,
-                styles.assistantBubble,
-                { backgroundColor: theme.colors.surface },
-              ]}
-            >
-              <Text style={[styles.messageText, { color: theme.colors.onSurface }]}>
-                {streamingText}
-              </Text>
-            </View>
-          </View>
-        )}
-        {isTyping && !streamingText && (
-          <View style={[styles.messageWrapper, styles.assistantWrapper]}>
-            <View style={[styles.avatar, { backgroundColor: theme.colors.primaryContainer }]}>
-              <MaterialCommunityIcons name="robot" size={18} color={theme.colors.primary} />
-            </View>
-            <View
-              style={[
-                styles.bubble,
-                styles.assistantBubble,
-                { backgroundColor: theme.colors.surface, padding: 12 },
-              ]}
-            >
-              <TypingIndicator />
-            </View>
-          </View>
-        )}
-        {isVerifyingEmergency && emergencyVerificationData && (
-          <View style={[styles.messageWrapper, styles.assistantWrapper]}>
-            <View style={[styles.avatar, { backgroundColor: theme.colors.errorContainer }]}>
-              <MaterialCommunityIcons name="alert" size={18} color={theme.colors.error} />
-            </View>
-            <View
-              style={[
-                styles.bubble,
-                styles.assistantBubble,
-                {
-                  backgroundColor: theme.colors.surface,
-                  borderColor: theme.colors.error,
-                  borderWidth: 0.5,
-                },
-              ]}
-            >
-              <Text style={[styles.messageText, { color: theme.colors.onSurface }]}>
-                I noticed you mentioned{' '}
-                <Text style={{ fontWeight: 'bold' }}>{emergencyVerificationData.keyword}</Text>. To
-                be safe, is this happening to you right now, or are you describing a past
-                event/concern?
-              </Text>
-            </View>
-          </View>
-        )}
-      </ScrollView>
+        ListFooterComponent={renderListFooter}
+      />
 
       <Animated.View
         style={[
@@ -2757,7 +2791,6 @@ Recent User Answer: ${trimmedAnswer}
           </>
         )}
       </Animated.View>
-      {renderModeSelectionModal()}
     </ScreenSafeArea>
   );
 };

@@ -445,6 +445,7 @@ const RecommendationScreen = () => {
         }),
       );
 
+      // SECURITY GUARD: Never save clinical history for guest assessments.
       if (!guestMode && response.clinical_soap) {
         dispatch(
           saveClinicalNote({
@@ -452,12 +453,13 @@ const RecommendationScreen = () => {
             recommended_level: response.recommended_level,
             medical_justification: response.medical_justification,
             initial_symptoms: symptomsRef.current,
+            isGuest: false,
           }),
         );
       }
 
-      // If emergency, set high risk status for persistence
-      if (response.recommended_level === 'emergency') {
+      // SECURITY GUARD: Only set high-risk status for personal assessments.
+      if (!guestMode && response.recommended_level === 'emergency') {
         dispatch(setHighRisk(true));
       }
     } catch (error) {
@@ -834,21 +836,29 @@ const RecommendationScreen = () => {
             <Surface
               style={[
                 styles.transferCard,
-                { backgroundColor: theme.colors.surfaceVariant ?? theme.colors.surface },
+                { backgroundColor: applyOpacity(theme.colors.primary, 0.05) },
               ]}
-              elevation={1}
+              elevation={0}
             >
+              <View style={styles.badgeRow}>
+                <Surface style={[styles.handoverBadge, { backgroundColor: theme.colors.primary }]}>
+                  <Text variant="labelSmall" style={styles.badgeText}>
+                    GUEST HANDOVER
+                  </Text>
+                </Surface>
+              </View>
               <View style={styles.handoverHeader}>
                 <Text variant="titleLarge" style={styles.handoverTitle}>
                   Transfer to Patient Record
                 </Text>
               </View>
               <Text variant="bodySmall" style={styles.transferSubtitle}>
-                Send this completed guest assessment directly to a registered user’s profile for follow-up care.
+                Send this completed guest assessment directly to a registered user’s profile for
+                follow-up care.
               </Text>
               <TextInput
                 mode="outlined"
-                label="Username"
+                label="Target Username"
                 placeholder="e.g., john.doe"
                 value={transferUsername}
                 onChangeText={(value) => {
@@ -860,14 +870,18 @@ const RecommendationScreen = () => {
                 autoCapitalize="none"
                 autoComplete="username"
                 disabled={transferLoading}
+                outlineStyle={{ borderRadius: 8 }}
               />
               {transferError && (
-                <Text variant="bodySmall" style={[styles.transferMessage, { color: theme.colors.error }]}>
+                <Text
+                  variant="bodySmall"
+                  style={[styles.transferMessage, { color: theme.colors.error }]}
+                >
                   {transferError}
                 </Text>
               )}
               <Button
-                title="Send"
+                title="Send Transfer"
                 variant="primary"
                 loading={transferLoading}
                 onPress={handleTransferAssessment}
@@ -1162,6 +1176,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     elevation: 0,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(55, 151, 119, 0.15)', // primary with low opacity
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  handoverBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 10,
   },
 
   emptyState: {

@@ -70,38 +70,39 @@ model Symptom {
   @@index([category])
 }
 
-model UserEnrollment {
-  id                  String   @id @default(cuid())
-  user_id             String   @unique
-  username            String   @unique
-  phone_number        String   @unique
-  enrollment_pathway  String?
-  progress_step       Int      @default(0)
-  completed           Boolean  @default(false)
-  documents_uploaded  Json?
-  chronic_conditions  String[] @default([])
-  allergies           String[] @default([])
-  current_medications String[] @default([])
-  surgical_history    String?
-  family_history      String?
-  dob                 DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  clinicalHistories   ClinicalHistory[]
+model User {
+  id               String           @id @default(cuid())
+  username         String           @unique
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  healthProfile    HealthProfile?
+  medications      Medication[]
+}
 
-  @@index([user_id])
-  @@index([phone_number])
+model HealthProfile {
+  id                 String          @id @default(cuid())
+  userId             String          @unique
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chronic_conditions String[]        @default([])
+  allergies          String[]        @default([])
+  current_medications String[]       @default([])
+  surgical_history   String?
+  family_history     String?
+  dob                DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  clinicalHistories  ClinicalHistory[]
 }
 
 model ClinicalHistory {
-  id                 String           @id @default(cuid())
-  userEnrollmentId   String
-  userEnrollment     UserEnrollment   @relation(fields: [userEnrollmentId], references: [id], onDelete: Cascade)
-  payload            Json
-  createdAt          DateTime         @default(now())
-  updatedAt          DateTime         @updatedAt
+  id              String         @id @default(cuid())
+  healthProfileId String
+  healthProfile   HealthProfile  @relation(fields: [healthProfileId], references: [id], onDelete: Cascade)
+  payload         Json
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
-  @@index([userEnrollmentId])
+  @@index([healthProfileId])
 }
 
 model EmergencyContact {
@@ -115,27 +116,19 @@ model EmergencyContact {
 }
 
 model Medication {
-
   id             String   @id @default(cuid())
-
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
   name           String
-
   dosage         String?
-
   scheduled_time String?
-
   is_active      Boolean  @default(true)
-
   days_of_week   String[] @default([])
-
   createdAt      DateTime @default(now())
-
   updatedAt      DateTime @updatedAt
 
-
-
   @@index([name])
-
+  @@index([userId])
 }
 
 

@@ -3,7 +3,7 @@ export * from './ClinicalHistoryScreen';
 export * from './ClinicalNoteScreen';
 export * from './CrisisSupportScreen';
 export * from './FacilityDetailsScreen';
-export * from './HealthFeedScreen';
+export * from './HealthHubScreen';
 export * from './HealthProfileEditScreen';
 export * from './MainHomeScreen';
 export * from './MedicationTrackerScreen';

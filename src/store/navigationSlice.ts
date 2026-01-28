@@ -63,6 +63,7 @@ interface NavigationState {
     isQueueSuspended?: boolean;
     pendingCorrection?: string | null;
     incrementalSlots: ClinicalSlots;
+    isGuestMode: boolean;
   } | null;
 }
 

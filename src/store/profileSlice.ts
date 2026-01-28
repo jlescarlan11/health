@@ -2,7 +2,10 @@ import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 interface ProfileState {
   fullName: string | null;
+  username: string | null;
+  phoneNumber: string | null;
   dob: string | null;
+  sex: string | null;
   bloodType: string | null;
   philHealthId: string | null;
   chronicConditions: string[];
@@ -14,7 +17,10 @@ interface ProfileState {
 
 const initialState: ProfileState = {
   fullName: null,
+  username: null,
+  phoneNumber: null,
   dob: null,
+  sex: null,
   bloodType: null,
   philHealthId: null,
   chronicConditions: [],
@@ -31,9 +37,48 @@ const profileSlice = createSlice({
     updateProfile: (state, action: PayloadAction<Partial<ProfileState>>) => {
       Object.assign(state, action.payload);
     },
+    setFullName: (state, action: PayloadAction<string | null>) => {
+      state.fullName = action.payload;
+    },
+    setUsername: (state, action: PayloadAction<string | null>) => {
+      state.username = action.payload;
+    },
+    setPhoneNumber: (state, action: PayloadAction<string | null>) => {
+      state.phoneNumber = action.payload;
+    },
+    setDob: (state, action: PayloadAction<string | null>) => {
+      state.dob = action.payload;
+    },
+    setSex: (state, action: PayloadAction<string | null>) => {
+      state.sex = action.payload;
+    },
+    setBloodType: (state, action: PayloadAction<string | null>) => {
+      state.bloodType = action.payload;
+    },
+    setPhilHealthId: (state, action: PayloadAction<string | null>) => {
+      state.philHealthId = action.payload;
+    },
+    setChronicConditions: (state, action: PayloadAction<string[]>) => {
+      state.chronicConditions = action.payload;
+    },
+    setAllergies: (state, action: PayloadAction<string[]>) => {
+      state.allergies = action.payload;
+    },
+    setCurrentMedications: (state, action: PayloadAction<string[]>) => {
+      state.currentMedications = action.payload;
+    },
+    setSurgicalHistory: (state, action: PayloadAction<string | null>) => {
+      state.surgicalHistory = action.payload;
+    },
+    setFamilyHistory: (state, action: PayloadAction<string | null>) => {
+      state.familyHistory = action.payload;
+    },
     clearProfile: (state) => {
       state.fullName = null;
+      state.username = null;
+      state.phoneNumber = null;
       state.dob = null;
+      state.sex = null;
       state.bloodType = null;
       state.philHealthId = null;
       state.chronicConditions = [];
@@ -45,7 +90,22 @@ const profileSlice = createSlice({
   },
 });
 
-export const { updateProfile, clearProfile } = profileSlice.actions;
+export const {
+  updateProfile,
+  setFullName,
+  setUsername,
+  setPhoneNumber,
+  setDob,
+  setSex,
+  setBloodType,
+  setPhilHealthId,
+  setChronicConditions,
+  setAllergies,
+  setCurrentMedications,
+  setSurgicalHistory,
+  setFamilyHistory,
+  clearProfile,
+} = profileSlice.actions;
 export default profileSlice.reducer;
 
 const parseAge = (dob: string | null): number | null => {
@@ -75,38 +135,28 @@ const buildClinicalSegments = (profile: ProfileState): string[] => {
   const segments: string[] = [];
 
   const age = parseAge(profile.dob);
-  if (age !== null) {
-    segments.push(`Age: ${age}yo`);
-  }
+  if (age !== null) segments.push(`Age: ${age}`);
 
-  if (profile.bloodType) {
-    segments.push(`Blood: ${profile.bloodType}`);
-  }
+  const sex = normalizeText(profile.sex);
+  if (sex) segments.push(`Sex: ${sex}`);
 
-  const conditions = formatList(profile.chronicConditions);
-  if (conditions) {
-    segments.push(`Conditions: ${conditions}`);
-  }
+  const blood = normalizeText(profile.bloodType);
+  if (blood) segments.push(`Blood: ${blood}`);
 
-  const medications = formatList(profile.currentMedications);
-  if (medications) {
-    segments.push(`Meds: ${medications}`);
-  }
+  const cond = formatList(profile.chronicConditions);
+  if (cond) segments.push(`Cond: ${cond}`);
+
+  const meds = formatList(profile.currentMedications);
+  if (meds) segments.push(`Meds: ${meds}`);
 
   const allergies = formatList(profile.allergies);
-  if (allergies) {
-    segments.push(`Allergies: ${allergies}`);
-  }
+  if (allergies) segments.push(`Allergies: ${allergies}`);
 
-  const surgicalHistory = normalizeText(profile.surgicalHistory);
-  if (surgicalHistory) {
-    segments.push(`Surgical: ${surgicalHistory}`);
-  }
+  const surg = normalizeText(profile.surgicalHistory);
+  if (surg) segments.push(`Surg: ${surg}`);
 
-  const familyHistory = normalizeText(profile.familyHistory);
-  if (familyHistory) {
-    segments.push(`Family: ${familyHistory}`);
-  }
+  const fam = normalizeText(profile.familyHistory);
+  if (fam) segments.push(`FamHx: ${fam}`);
 
   return segments;
 };
@@ -116,6 +166,8 @@ export const selectClinicalContext = createSelector(
   (profile) => {
     const segments = buildClinicalSegments(profile);
     if (!segments.length) return null;
-    return segments.map((segment) => `${segment}.`).join(' ');
+    return segments.join('. ');
   },
 );
+
+export const selectFullName = (state: { profile: ProfileState }) => state.profile.fullName;

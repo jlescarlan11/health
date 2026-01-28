@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { transferAssessmentResult } from '../services/assessmentService';
+import * as historyService from '../services/historyService';
 
 export const transferAssessment = async (req: Request, res: Response) => {
   try {
@@ -19,7 +19,7 @@ export const transferAssessment = async (req: Request, res: Response) => {
       });
     }
 
-    const result = await transferAssessmentResult(targetUsername, assessmentData);
+    const result = await historyService.transferAssessmentResult(targetUsername, assessmentData);
 
     if (!result.success) {
       return res.status(result.statusCode ?? 500).json({

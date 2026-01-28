@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { MainHomeScreen, HealthFeedScreen, SettingsScreen } from '../screens';
+import { MainHomeScreen, HealthHubScreen, SettingsScreen } from '../screens';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MainTabParamList } from '../types/navigation';
@@ -49,10 +49,10 @@ export const BottomTabNavigator = () => {
         }}
       />
       <Tab.Screen
-        name="HealthFeed"
-        component={HealthFeedScreen}
+        name="HealthHub"
+        component={HealthHubScreen}
         options={{
-          tabBarLabel: 'Feed',
+          tabBarLabel: 'Hub',
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="newspaper-variant" size={28} color={color} />
           ),

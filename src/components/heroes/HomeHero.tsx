@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from 'react-native-paper';
+import { useSelector } from 'react-redux';
 import { Text } from '../common';
 import HeroSection from './HeroSection';
+import { selectFullName } from '../../store/profileSlice';
 
 interface HomeHeroProps {
   hasClinicalReport?: boolean;
@@ -11,6 +13,7 @@ interface HomeHeroProps {
 
 const HomeHero: React.FC<HomeHeroProps> = ({ hasClinicalReport, onClinicalReportPress }) => {
   const theme = useTheme();
+  const fullName = useSelector(selectFullName);
 
   const today = new Date();
   const formattedDate = today.toLocaleDateString('en-US', {
@@ -20,7 +23,8 @@ const HomeHero: React.FC<HomeHeroProps> = ({ hasClinicalReport, onClinicalReport
     day: 'numeric',
   });
 
-  const greeting = 'Kumusta!';
+  const normalizedFullName = fullName?.trim();
+  const greeting = normalizedFullName ? `Kamusta, ${normalizedFullName}!` : 'Kamusta!';
 
   return (
     <HeroSection colors={[theme.colors.secondaryContainer, theme.colors.background]} height={280}>

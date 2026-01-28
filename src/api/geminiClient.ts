@@ -63,10 +63,20 @@ const PLAN_CACHE_VERSION = 1;
 const normalizeCacheInput = (value: string): string =>
   value.replace(/\s+/g, ' ').trim().toLowerCase();
 
-const getAssessmentPlanCacheKey = (symptom: string, patientContext?: string): string => {
+const getAssessmentPlanCacheKey = (
+  symptom: string,
+  patientContext?: string,
+  fullName?: string | null,
+): string => {
   const base = normalizeCacheInput(symptom || '');
-  if (!patientContext || !patientContext.trim()) return `${PLAN_CACHE_PREFIX}${base}`;
-  return `${PLAN_CACHE_PREFIX}${base}|ctx:${simpleHash(normalizeCacheInput(patientContext))}`;
+  let key = `${PLAN_CACHE_PREFIX}${base}`;
+  if (patientContext && patientContext.trim()) {
+    key += `|ctx:${simpleHash(normalizeCacheInput(patientContext))}`;
+  }
+  if (fullName && fullName.trim()) {
+    key += `|name:${simpleHash(normalizeCacheInput(fullName))}`;
+  }
+  return key;
 };
 
 const simpleHash = (value: string): string => {
@@ -548,7 +558,7 @@ export class GeminiClient {
       | string
       | (string | { inlineData: { data: string; mimeType: string } })[]
       | GenerateContentRequest,
-    generationConfig?: { responseMimeType?: string },
+    generationConfig?: { responseMimeType?: string; temperature?: number },
   ): Promise<string> {
     let attempt = 0;
 
@@ -607,8 +617,9 @@ export class GeminiClient {
   public async generateAssessmentPlan(
     initialSymptom: string,
     patientContext?: string,
+    fullName?: string | null,
   ): Promise<{ questions: AssessmentQuestion[]; intro?: string }> {
-    const cacheKey = getAssessmentPlanCacheKey(initialSymptom, patientContext);
+    const cacheKey = getAssessmentPlanCacheKey(initialSymptom, patientContext, fullName);
 
     try {
       const cachedJson = await AsyncStorage.getItem(cacheKey);
@@ -633,6 +644,11 @@ export class GeminiClient {
         '{{initialSymptom}}',
         initialSymptom,
       );
+
+      if (fullName && fullName.trim()) {
+        prompt = `The patient's name is ${fullName.trim()}.\n\n${prompt}`;
+      }
+
       prompt = this.applyPatientContext(prompt, patientContext);
 
       const responseText = await this.generateContentWithRetry(prompt);
@@ -764,11 +780,11 @@ export class GeminiClient {
     nextQuestion: string;
   }): Promise<string> {
     const prompt = BRIDGE_PROMPT.replace('{{lastUserAnswer}}', args.lastUserAnswer || '').replace(
-      '{{nextQuestion}}',
+      '{{nextQuestionText}}',
       args.nextQuestion,
     );
 
-    const responseText = await this.generateContentWithRetry(prompt);
+    const responseText = await this.generateContentWithRetry(prompt, { temperature: 0 });
     return responseText.trim();
   }
 
@@ -781,14 +797,19 @@ export class GeminiClient {
       currentProfileSummary?: string;
     },
   ): Promise<AssessmentProfile> {
-    const meaningfulMessages = history.filter((msg) => msg.text && msg.text.trim());
-    const recentMessages = meaningfulMessages.slice(-CLINICAL_PROFILE_CONTEXT_MESSAGE_LIMIT);
+    const profileSummary =
+      options?.currentProfileSummary?.trim() || 'No previous profile summary is available.';
+
+    // Prune history to last 6 messages (3 user-AI turns)
+    const recentMessages = history
+      .filter((msg) => msg.text && msg.text.trim())
+      .slice(-CLINICAL_PROFILE_CONTEXT_MESSAGE_LIMIT);
+
     const formattedRecentMessages = recentMessages
       .map((msg) => `${msg.role === 'user' ? 'USER' : 'ASSISTANT'}: ${msg.text}`)
       .join('\n');
+
     const recentMessagesPrompt = formattedRecentMessages || 'No recent conversation is available.';
-    const profileSummary =
-      options?.currentProfileSummary?.trim() || 'No previous profile summary is available.';
 
     const historyHash = getHistoryHash(`${profileSummary}||${formattedRecentMessages}`);
     const versionedHistoryKey = `${historyHash}|v${PROFILE_CACHE_VERSION}`;
@@ -836,9 +857,9 @@ export class GeminiClient {
     const requestPromise = (async () => {
       try {
         const prompt = FINAL_SLOT_EXTRACTION_PROMPT.replace(
-          '{{currentProfileSummary}}',
+          '{{current_profile_summary}}',
           profileSummary,
-        ).replace('{{recentMessages}}', recentMessagesPrompt);
+        ).replace('{{recent_messages}}', recentMessagesPrompt);
 
         const responseText = await this.generateContentWithRetry(prompt, {
           responseMimeType: 'application/json',
