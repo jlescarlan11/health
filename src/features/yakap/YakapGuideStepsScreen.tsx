@@ -78,7 +78,7 @@ const YakapGuideStepsScreen = () => {
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['left', 'right']}
     >
       <StandardHeader
         title="YAKAP Guide"

@@ -167,7 +167,7 @@ const CheckSymptomScreen = () => {
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: 24 + insets.top + adaptivePadding,
+            paddingTop: 16 + adaptivePadding,
           },
         ]}
         keyboardShouldPersistTaps="handled"

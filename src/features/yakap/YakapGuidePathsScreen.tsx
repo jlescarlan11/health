@@ -63,11 +63,14 @@ const YakapGuidePathsScreen = () => {
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['left', 'right']}
     >
       <StandardHeader title="YAKAP Guide" showBackButton />
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: scrollContentPaddingBottom }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: scrollContentPaddingBottom },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerContainer}>
@@ -83,7 +86,7 @@ const YakapGuidePathsScreen = () => {
             mode="contained"
             rippleColor={theme.colors.primary + '15'}
             accessibilityLabel={`${pathway.name} pathway`}
-              accessibilityHint={`Double tap to select the ${pathway.name} guide path`}
+            accessibilityHint={`Double tap to select the ${pathway.name} guide path`}
             style={[
               styles.card,
               {
@@ -210,7 +213,6 @@ const YakapGuidePathsScreen = () => {
             </View>
           </Card>
         ))}
-        <View style={{ height: 40 }} />
       </ScrollView>
 
       <Modal

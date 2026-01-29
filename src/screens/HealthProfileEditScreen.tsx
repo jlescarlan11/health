@@ -182,12 +182,11 @@ export const HealthProfileEditScreen = () => {
     );
     setSaveState('saved');
     setSnackbarVisible(true);
-    if (statusResetRef.current) {
-      clearTimeout(statusResetRef.current);
-    }
+
+    // Navigate back to settings after a short delay to allow the user to see the success message
     statusResetRef.current = setTimeout(() => {
-      setSaveState('idle');
-    }, 2200);
+      navigation.goBack();
+    }, 1500);
   };
 
   const handleDobBlur = () => {
@@ -420,16 +419,6 @@ export const HealthProfileEditScreen = () => {
             accessibilityHint="Save your updated health record details"
             style={styles.saveButton}
           />
-          {saveState === 'saving' && (
-            <Text variant="bodySmall" style={styles.statusMessage}>
-              Saving updates... hang tight.
-            </Text>
-          )}
-          {saveState === 'saved' && (
-            <Text variant="bodySmall" style={[styles.statusMessage, styles.statusSuccess]}>
-              Saved - the care team now sees your latest info.
-            </Text>
-          )}
         </View>
       </KeyboardAwareScrollView>
 
@@ -500,13 +489,6 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     borderRadius: 16,
-  },
-  statusMessage: {
-    marginTop: 8,
-    color: '#5C5F66',
-  },
-  statusSuccess: {
-    color: '#1E7E34',
   },
   snackbarWrapper: {
     position: 'absolute',

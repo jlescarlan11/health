@@ -194,12 +194,12 @@ export const FacilityDetailsScreen = () => {
 
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const baseBottomPadding = themeSpacing.lg ?? 16;
-  const scrollBottomPadding = baseBottomPadding * 2;
+  const scrollBottomPadding = baseBottomPadding;
 
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['left', 'right']}
     >
       <StandardHeader
         title={facility.name}
@@ -520,7 +520,9 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   contentContainer: {
-    padding: 20,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
   headerSection: {
     marginBottom: 24,
@@ -575,7 +577,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   servicesSection: {
-    marginBottom: 24,
+    marginBottom: 0,
   },
   servicesHeaderRow: {
     flexDirection: 'row',

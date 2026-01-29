@@ -275,6 +275,7 @@ export const ClinicalNoteScreen = () => {
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       edges={['left', 'right', 'bottom']}
+      disableBottomInset={true}
     >
       <StandardHeader
         title="Clinical Handover"
