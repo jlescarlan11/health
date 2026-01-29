@@ -1,12 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
   Platform,
-  Keyboard,
   ScrollView,
-  Animated,
   Pressable,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, Card } from 'react-native-paper';
@@ -37,9 +36,6 @@ const CheckSymptomScreen = () => {
   const insets = useSafeAreaInsets();
   const { isPWDMode, layoutPadding } = useAdaptiveUI();
   const adaptivePadding = isPWDMode ? layoutPadding : 0;
-  const scrollViewRef = useRef<ScrollView>(null);
-  const keyboardHeightRef = useRef(new Animated.Value(0));
-  const keyboardHeight = keyboardHeightRef.current;
 
   const [symptom, setSymptom] = useState(savedDraft || '');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -53,38 +49,8 @@ const CheckSymptomScreen = () => {
   useEffect(() => {
     if (assessmentState && !isProcessing) {
       // If there is an ongoing assessment, we might want to redirect
-      // But let's allow the user to start a new one if they want by typing
     }
-  }, [assessmentState]);
-
-  useEffect(() => {
-    const keyboardWillShow = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => {
-        Animated.timing(keyboardHeight, {
-          toValue: e.endCoordinates.height,
-          duration: e.duration || 250,
-          useNativeDriver: false,
-        }).start();
-      },
-    );
-
-    const keyboardWillHide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      (e) => {
-        Animated.timing(keyboardHeight, {
-          toValue: 0,
-          duration: e.duration || 250,
-          useNativeDriver: false,
-        }).start();
-      },
-    );
-
-    return () => {
-      keyboardWillShow.remove();
-      keyboardWillHide.remove();
-    };
-  }, [keyboardHeight]);
+  }, [assessmentState, isProcessing]);
 
   const toggleSymptom = (currentSymptom: string) => {
     setSymptom((prev) => {
@@ -160,9 +126,12 @@ const CheckSymptomScreen = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
       <ScrollView
-        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
@@ -304,7 +273,7 @@ const CheckSymptomScreen = () => {
         </View>
       </ScrollView>
 
-      <Animated.View
+      <View
         style={[
           styles.anchoredInputContainer,
           {
@@ -313,7 +282,6 @@ const CheckSymptomScreen = () => {
             paddingLeft: Math.max(16, insets.left) + adaptivePadding,
             paddingRight: Math.max(16, insets.right) + adaptivePadding,
             backgroundColor: theme.colors.background,
-            marginBottom: keyboardHeight,
           },
         ]}
       >
@@ -325,8 +293,8 @@ const CheckSymptomScreen = () => {
           placeholder=""
           maxLength={500}
         />
-      </Animated.View>
-    </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 

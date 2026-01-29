@@ -7,6 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import NetInfo from '@react-native-community/netinfo';
+import * as SplashScreen from 'expo-splash-screen';
 
 import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -17,6 +18,11 @@ import { initDatabase } from './src/services/database';
 import { RootStackParamList } from './src/types/navigation';
 import { navigationTheme, getScaledTheme } from './src/theme';
 import { useAppSelector, useAdaptiveUI } from './src/hooks';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* reloading the app might cause this to error */
+});
 
 const prefix = Linking.createURL('/');
 
@@ -102,8 +108,13 @@ const AppContent = () => {
         syncFacilities().catch((err) =>
           console.log('Initial sync failed (likely offline or error):', err),
         );
+        
+        // Ensure the branded loading screen is visible for at least a moment
+        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (err) {
         console.error('Startup initialization failed:', err);
+      } finally {
+        await SplashScreen.hideAsync();
       }
     };
 

@@ -1,11 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { AppLogo } from './AppLogo';
 
 export const LoadingScreen: React.FC = () => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
+    // Hide native splash screen as soon as our React components are ready to show the logo
+    SplashScreen.hideAsync().catch(() => {});
+
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
@@ -40,9 +44,8 @@ export const LoadingScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7F8',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
-    alignSelf: 'center',
     alignItems: 'center',
     width: '100%',
     height: '100%',

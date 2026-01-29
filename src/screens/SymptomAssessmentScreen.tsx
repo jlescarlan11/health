@@ -614,6 +614,25 @@ const SymptomAssessmentScreen = () => {
     return () => cancelTypingTimeout();
   }, [cancelTypingTimeout]);
 
+  /**
+   * Log conversation step for debugging
+   */
+  const logConversationStep = (
+    step: number,
+    question: string,
+    userAnswer: string,
+    emergencyCheck: EmergencyDetectionResult,
+  ) => {
+    console.log(`\n╔═══ CONVERSATION STEP ${step} ═══╗`);
+    console.log(`║ Q: ${question}`);
+    console.log(`║ A: ${userAnswer}`);
+    console.log(`║ Emergency: ${emergencyCheck.isEmergency} (score: ${emergencyCheck.score})`);
+    if (emergencyCheck.matchedKeywords?.length > 0) {
+      console.log(`║ Keywords: ${emergencyCheck.matchedKeywords.join(', ')}`);
+    }
+    console.log(`╚${'═'.repeat(30)}╝\n`);
+  };
+
   interface SafetyGuardParams {
     text: string;
     sender: 'user' | 'assistant';
