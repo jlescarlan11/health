@@ -12,6 +12,7 @@ import {
   Dimensions,
   Modal,
   ScrollView,
+  KeyboardAvoidingView,
 } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -383,11 +384,10 @@ const SymptomAssessmentScreen = () => {
   const profileDob = useSelector(selectProfileDob);
   const theme = useTheme() as MD3Theme & { spacing: Record<string, number> };
   const spacing = theme.spacing ?? appTheme.spacing;
-  const chatBottomPadding = spacing.lg * 2;
+  const chatBottomPadding = spacing.lg;
   const flatListRef = useRef<FlatList>(null);
   const inputCardRef = useRef<InputCardRef>(null);
   const hasShownClarificationHeader = useRef(false);
-  const keyboardHeight = useRef(new Animated.Value(0)).current;
   const keyboardScrollRaf = useRef<number | null>(null);
   const { initialSymptom } = route.params || { initialSymptom: '' };
   const trimmedInitialSymptom = (initialSymptom || '').trim();
@@ -893,76 +893,6 @@ const SymptomAssessmentScreen = () => {
   /**
    * Log conversation step for debugging
    */
-  const logConversationStep = (
-    step: number,
-    question: string,
-    userAnswer: string,
-    emergencyCheck: EmergencyDetectionResult,
-  ) => {
-    console.log(`\n╔═══ CONVERSATION STEP ${step} ═══╗`);
-    console.log(`║ Q: ${question}`);
-    console.log(`║ A: ${userAnswer}`);
-    console.log(`║ Emergency: ${emergencyCheck.isEmergency} (score: ${emergencyCheck.score})`);
-    if (emergencyCheck.matchedKeywords?.length > 0) {
-      console.log(`║ Keywords: ${emergencyCheck.matchedKeywords.join(', ')}`);
-    }
-    console.log(`╚${'═'.repeat(30)}╝\n`);
-  };
-
-  useEffect(() => {
-    const scheduleScrollToEnd = (animated: boolean) => {
-      if (keyboardScrollRaf.current !== null) {
-        cancelAnimationFrame(keyboardScrollRaf.current);
-      }
-      keyboardScrollRaf.current = requestAnimationFrame(() => {
-        flatListRef.current?.scrollToEnd({ animated });
-      });
-    };
-
-    const keyboardWillShow = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => {
-        Animated.timing(keyboardHeight, {
-          toValue: e.endCoordinates.height,
-          duration: e.duration || 250,
-          useNativeDriver: false,
-        }).start();
-        scheduleScrollToEnd(true);
-      },
-    );
-
-    const keyboardWillHide = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      (e) => {
-        Animated.timing(keyboardHeight, {
-          toValue: 0,
-          duration: e.duration || 250,
-          useNativeDriver: false,
-        }).start();
-        scheduleScrollToEnd(true);
-      },
-    );
-
-    const keyboardWillChangeFrame =
-      Platform.OS === 'ios'
-        ? Keyboard.addListener('keyboardWillChangeFrame', (e) => {
-            const nextHeight = Math.max(0, SCREEN_HEIGHT - e.endCoordinates.screenY);
-            keyboardHeight.setValue(nextHeight);
-            scheduleScrollToEnd(false);
-          })
-        : null;
-
-    return () => {
-      keyboardWillShow.remove();
-      keyboardWillHide.remove();
-      if (keyboardWillChangeFrame) {
-        keyboardWillChangeFrame.remove();
-      }
-      if (keyboardScrollRaf.current !== null) {
-        cancelAnimationFrame(keyboardScrollRaf.current);
-      }
-    };
-  }, []);
 
   // --- AUTO-SCROLL LOGIC ---
   useEffect(() => {
@@ -1651,6 +1581,8 @@ Recent User Answer: ${trimmedAnswer}
 
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
+              setProcessing(false);
+              processingRef.current = false;
               return;
             } catch (err) {
               console.error('[Assessment] Failed to generate drill-down question:', err);
@@ -1843,7 +1775,7 @@ Recent User Answer: ${trimmedAnswer}
                           header: clarificationHeader,
                           body: nextQ.text,
                           reason: arbiterResult.reason,
-                          reasonSource: 'arbiter-expansion',
+                          reasonSource: 'arbiter-expansion-question',
                           nextAction:
                             'Please answer this follow-up so I can provide the most complete guidance.',
                           inlineAck: consumePendingCorrection(),
@@ -1862,6 +1794,8 @@ Recent User Answer: ${trimmedAnswer}
                     // Clear streaming state AFTER committing message to avoid flicker
                     setStreamingText(null);
                     setTypingState(false);
+                    setProcessing(false);
+                    processingRef.current = false;
                     return;
                   }
                 } else {
@@ -1954,6 +1888,8 @@ Recent User Answer: ${trimmedAnswer}
               }
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
+              setProcessing(false);
+              processingRef.current = false;
               return;
             }
 
@@ -1982,6 +1918,8 @@ Recent User Answer: ${trimmedAnswer}
               }
               setCurrentQuestionIndex(nextIdx);
               setTypingState(false);
+              setProcessing(false);
+              processingRef.current = false;
               return;
             }
 
@@ -2616,47 +2554,52 @@ Recent User Answer: ${trimmedAnswer}
     >
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
 
-      {isGuestMode && (
-        <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 }}>
-          <Text
-            variant="bodySmall"
-            style={{ color: theme.colors.onSurfaceVariant, letterSpacing: 0.5 }}
-          >
-            Guest mode is active. No personal profile data is included while you describe someone
-            else's symptoms.
-          </Text>
-        </View>
-      )}
-
-      <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
-        <ProgressBar
-          progress={assessmentProgress.value}
-          label={assessmentProgress.label}
-          color={assessmentProgress.color}
-        />
-      </View>
-
-      <FlatList
-        ref={flatListRef}
-        data={visibleMessages}
-        keyExtractor={(item) => item.id}
-        renderItem={renderMessage}
-        style={styles.messagesContainer}
-        contentContainerStyle={{ padding: 16, paddingBottom: chatBottomPadding }}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        ListFooterComponent={renderListFooter}
-      />
-
-      <Animated.View
-        style={[
-          styles.inputSection,
-          {
-            marginBottom: keyboardHeight,
-            backgroundColor: theme.colors.background,
-          },
-        ]}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+        keyboardVerticalOffset={0}
       >
+        {isGuestMode && (
+          <View style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 4 }}>
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant, letterSpacing: 0.5 }}
+            >
+              Guest mode is active. No personal profile data is included while you describe someone
+              else's symptoms.
+            </Text>
+          </View>
+        )}
+
+        <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+          <ProgressBar
+            progress={assessmentProgress.value}
+            label={assessmentProgress.label}
+            color={assessmentProgress.color}
+          />
+        </View>
+
+        <FlatList
+          ref={flatListRef}
+          data={visibleMessages}
+          keyExtractor={(item) => item.id}
+          renderItem={renderMessage}
+          style={styles.messagesContainer}
+          contentContainerStyle={{ padding: 16, paddingBottom: chatBottomPadding }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={renderListFooter}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        />
+
+        <View
+          style={[
+            styles.inputSection,
+            {
+              backgroundColor: theme.colors.background,
+            },
+          ]}
+        >
         {isVerifyingEmergency ? (
           <View testID="emergency-verification-buttons" style={{ gap: 8 }}>
             <Button
@@ -2897,7 +2840,8 @@ Recent User Answer: ${trimmedAnswer}
             />
           </>
         )}
-      </Animated.View>
+        </View>
+      </KeyboardAvoidingView>
     </ScreenSafeArea>
   );
 };

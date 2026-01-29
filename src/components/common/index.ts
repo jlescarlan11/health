@@ -14,6 +14,8 @@ export * from './MultiSelectChecklist';
 export * from './YakapLogo';
 export * from './CheckSymptomsLogo';
 export * from './FacilityDirectoryLogo';
+export * from './AppLogo';
+export * from './LoadingScreen';
 export * from './TeleconsultBadge';
 export * from './Text';
 export * from './FeatureChip';

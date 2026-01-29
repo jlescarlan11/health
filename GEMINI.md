@@ -312,5 +312,9 @@ The backend is a Node.js/Express application with TypeScript and Prisma.
   - **Ranking Logic:** Refactored `scoreFacility` in `src/utils/facilityUtils.ts` to rank facilities strictly based on (1) service alignment, (2) distance, and (3) current operating status. Open facilities are now heavily prioritized.
   - **Closing Step:** Enhanced `SymptomAssessmentScreen.tsx` with a deterministic closing message: "I have collected all the necessary information. Please wait a moment while I prepare your personalized care recommendations."
   - **Structured Input:** Updated `GENERATE_ASSESSMENT_QUESTIONS_PROMPT` and related prompts in `src/constants/prompts.ts` to favor `single-select` and `multi-select` question types, reducing reliance on free-text and improving data consistency.
-  - **Age Calculation:** Standardized age calculation in `src/utils/clinicalUtils.ts` and `src/store/profileSlice.ts` to use a dynamic `CurrentYear - BirthYear` formula, ensuring consistency between the user profile and the assessment logic.
-  - **Documentation:** Created `FACILITY_IMPROVEMENTS_KANBAN.md` to track these changes.
+- Age Calculation: Standardized age calculation in 'src/utils/clinicalUtils.ts' and 'src/store/profileSlice.ts' to use a dynamic 'CurrentYear - BirthYear' formula, ensuring consistency between the user profile and the assessment logic.
+- **Branded Loading Experience (Jan 29, 2026):**
+  - **New Components:** Implemented 'AppLogo.tsx' and 'LoadingScreen.tsx' utilizing the project's official SVG logo with an animated pulsing effect.
+  - **Integration:** Integrated 'LoadingScreen' as the fallback for 'PersistGate' in 'App.tsx', ensuring a professional branded experience during app initialization and state rehydration.
+  - **Cleanup:** Exported new components from 'src/components/common/index.ts' and verified build with linting.
+- **Documentation:** Created 'FACILITY_IMPROVEMENTS_KANBAN.md' to track these changes.

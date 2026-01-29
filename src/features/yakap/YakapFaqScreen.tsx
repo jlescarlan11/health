@@ -96,7 +96,7 @@ const YakapFaqScreen = () => {
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right']}
+      edges={['left', 'right', 'bottom']}
     >
       <StandardHeader title="Frequently Asked Questions" showBackButton />
       <ScrollView

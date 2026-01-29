@@ -1,41 +1,45 @@
-=== EMERGENCY DETECTION START ===
- LOG  Input: "when i pee, it is somewhat painful and this happens for 3 days consecutively. there are yimes that w..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "when i pee. it is somewhat painful and this happens for 3 days consecutively. there are yimes that when i pee. there arw only small amount of urine. i laso have a fever"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 4/10 | Emergency: NO
- LOG  Systems: Other
- LOG  Reasoning: Non-emergency (score 4/10). Symptoms: fever.
- LOG  Medical Justification: Potential concerns: fever.
+LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
  LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 1 ═══╗
+ LOG  ║ Q: Does your fever stay constant, or does it come and go?
+ LOG  ║ A: Constant (always present)
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 2 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 2, activeQuestions.length: 8
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=2, Required=7
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 39, "normalizedRight": 39}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": null, "match": false, "right": "paracetamol has helped a bit"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 2, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Readiness > 0.4 (0.6000000000000001). Generating an adaptive bridge message.
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "when i pee, it is somewhat painful and this happens for 3 days consecutively. there are yimes that w..."
- LOG  Input Type: USER INPUT
- LOG  
-Sanitization:
- LOG    Sanitized input: "when i pee. it is somewhat painful and this happens for 3 days consecutively. there are yimes that when i pee. there arw only small amount of urine. i laso have a fever"
+ LOG  Input: "Since it's constant, do you have any of the following serious symptoms?..."
+ LOG  Input Type: SYSTEM/METADATA
  LOG 
---- FINAL RESULT ---
- LOG  Score: 4/10 | Emergency: NO
- LOG  Systems: Other
- LOG  Reasoning: Non-emergency (score 4/10). Symptoms: fever.
- LOG  Medical Justification: Potential concerns: fever.
- LOG  === EMERGENCY DETECTION END ===
+Sanitization:
+ LOG    Sanitized input: "Since it's constant. any of the following serious symptoms"
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Do you have any of the following serious symptoms?, questions.length: 8, index: 2, isOffline: false
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "22..."
+ LOG  Input: "No, I don't have any of those...."
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: ""
+ LOG    Sanitized input: "No. I don't have any of those"
  LOG 
 --- FINAL RESULT ---
  LOG  Score: 0/10 | Emergency: NO
@@ -44,105 +48,12 @@ Sanitization:
  LOG  Medical Justification: No specific emergency signs detected.
  LOG  === EMERGENCY DETECTION END ===
  LOG 
-╔═══ CONVERSATION STEP 0 ═══╗
- LOG  ║ Q: How old are you?
- LOG  ║ A: 22
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 1 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 1, activeQuestions.length: 11
- WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=1, Required=7
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "I'm experiencing High fever (above 39°C or 102.2°F) that won't go down, Weakness or feeling faint, N..."
+ LOG  Input: "No, I don't have any of those...."
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "I'm experiencing High fever (above 39°C or 102. 2°F) that won't go down. Weakness or feeling faint. Not able to pee at all"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 5/10 | Emergency: NO
- LOG  Systems: Other
- LOG  Reasoning: Non-emergency (score 5/10). Symptoms: high fever, fever.
- LOG  Medical Justification: Potential concerns: high fever, fever.
- LOG  === EMERGENCY DETECTION END ===
- LOG  
-╔═══ CONVERSATION STEP 1 ═══╗
- LOG  ║ Q: Do you have any of the following serious symptoms?
- LOG  ║ A: I'm experiencing High fever (above 39°C or 102.2°F) that won't go down, Weakness or feeling faint, Not able to pee at all.
- LOG  ║ Emergency: false (score: 5)
- LOG  ║ Keywords: high fever, fever
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 2 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 2, activeQuestions.length: 11
- WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=2, Required=7
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "it is the same ..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "it is the same"
+ LOG    Sanitized input: "No. I don't have any of those"
  LOG 
 --- FINAL RESULT ---
  LOG  Score: 0/10 | Emergency: NO
@@ -152,347 +63,34 @@ Sanitization:
  LOG  === EMERGENCY DETECTION END ===
  LOG 
 ╔═══ CONVERSATION STEP 2 ═══╗
- LOG  ║ Q: You mentioned this has been happening for 3 days. Has the pain when you pee stayed the same, gotten worse, or gotten better since then?
- LOG  ║ A: it is the same
+ LOG  ║ Q: Do you have any of the following serious symptoms?
+ LOG  ║ A: No, I don't have any of those.
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
  LOG  [Assessment] Turn 3 reached. Consulting Arbiter...
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 3, activeQuestions.length: 11
- WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=3, Required=7
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 3, activeQuestions.length: 8
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=3, Required=7  
  DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "3 days", "match": false, "right": "three days"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 39, "normalizedRight": 39}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "constant, improving with paracetamol", "match": false, "right": null}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 3, Required: 7)
  LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Readiness > 0.4 (0.7000000000000001). Generating an adaptive bridge message.
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "8..."
- LOG  Input Type: USER INPUT
+ LOG  Input: "Have you traveled in the last few weeks to any areas where dengue, malaria, or other infections are ..."
+ LOG  Input Type: SYSTEM/METADATA
  LOG 
 Sanitization:
- LOG    Sanitized input: ""
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10 | Emergency: NO
- LOG  Systems:
- LOG  Reasoning: No emergency symptoms detected.
- LOG  Medical Justification: No specific emergency signs detected.
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 3 ═══╗
- LOG  ║ Q: On a scale of 1 to 10, where 1 is no pain and 10 is the worst pain possible, how bad is the pain when you pee?
- LOG  ║ A: 8
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 4 reached. Consulting Arbiter...
+ LOG    Sanitized input: "Have you traveled in the last few weeks to any areas where dengue. malaria. or other infections are common. or been around anyone sick"
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [SBL Override] Escalating complex -> critical based on system keywords.
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 4, activeQuestions.length: 11
- WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=4, Required=7
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "it feels like burning, and stinging. do i need to go to the health center?..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "it feels like burning. and stinging. do i need to go to the health center"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10 | Emergency: NO
- LOG  Systems:
- LOG  Reasoning: No emergency symptoms detected.
- LOG  Medical Justification: No specific emergency signs detected.
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 4 ═══╗
- LOG  ║ Q: How would you describe the pain when you pee?
- LOG  ║ A: it feels like burning, and stinging. do i need to go to the health center?
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 5 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 5, activeQuestions.length: 11
- WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=false
- WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=5, Required=7  
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "the same", "match": false, "right": "same"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: true, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "Feeling very tired or weak..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "Feeling very tired or weak"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10 | Emergency: NO
- LOG  Systems:
- LOG  Reasoning: No emergency symptoms detected.
- LOG  Medical Justification: No specific emergency signs detected.
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 5 ═══╗
- LOG  ║ Q: Besides the painful peeing, small amounts of urine, and fever, are you also feeling any of these?
- LOG  ║ A: Feeling very tired or weak
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 6 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 6, activeQuestions.length: 11
- WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=false
- WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=6, Required=7  
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "Same", "match": false, "right": "the same"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: true, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "Strong urge to pee..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "Strong urge to pee"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10 | Emergency: NO
- LOG  Systems:
- LOG  Reasoning: No emergency symptoms detected.
- LOG  Medical Justification: No specific emergency signs detected.
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 6 ═══╗
- LOG  ║ Q: Are you peeing more often than usual, or do you feel a strong urge to pee even when your bladder feels empty?
- LOG  ║ A: Strong urge to pee
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 7 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 7, activeQuestions.length: 11
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "stayed the same", "match": false, "right": "Same"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "Cloudy pee..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "Cloudy pee"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10 | Emergency: NO
- LOG  Systems:
- LOG  Reasoning: No emergency symptoms detected.
- LOG  Medical Justification: No specific emergency signs detected.
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 7 ═══╗
- LOG  ║ Q: Have you noticed any changes in the color of your pee, or does it look cloudy or have an unusual smell?
- LOG  ║ A: Cloudy pee
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 8 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 8, activeQuestions.length: 11
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "same", "match": false, "right": "stayed the same"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  
-=== EMERGENCY DETECTION START ===
- LOG  Input: "Yes..."
- LOG  Input Type: USER INPUT
- LOG 
-Sanitization:
- LOG    Sanitized input: "Yes"
- LOG 
---- FINAL RESULT ---
- LOG  Score: 0/10 | Emergency: NO
- LOG  Systems:
- LOG  Reasoning: No emergency symptoms detected.
- LOG  Medical Justification: No specific emergency signs detected.
- LOG  === EMERGENCY DETECTION END ===
- LOG 
-╔═══ CONVERSATION STEP 8 ═══╗
- LOG  ║ Q: Have you had similar problems with painful peeing or fever before?        
- LOG  ║ A: Yes
- LOG  ║ Emergency: false (score: 0)
- LOG  ╚══════════════════════════════╝
- LOG  [Assessment] Turn 9 reached. Consulting Arbiter...
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_NEXT_LOGIC] nextIdx: 9, activeQuestions.length: 11
- DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "the same", "match": false, "right": "same"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: In the last few weeks, have you traveled to any areas where dengue, malaria, or other infections are common, or been around anyone sick?, questions.length: 8, index: 3, isOffline: false
  LOG  
 === EMERGENCY DETECTION START ===
  LOG  Input: "No..."
@@ -508,33 +106,410 @@ Sanitization:
  LOG  Medical Justification: No specific emergency signs detected.
  LOG  === EMERGENCY DETECTION END ===
  LOG 
-╔═══ CONVERSATION STEP 9 ═══╗
- LOG  ║ Q: Are you pregnant or could you be pregnant?
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 3 ═══╗
+ LOG  ║ Q: In the last few weeks, have you traveled to any areas where dengue, malaria, or other infections are common, or been around anyone sick?
  LOG  ║ A: No
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 4 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 4, activeQuestions.length: 8
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=4, Required=7  
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 39, "normalizedRight": 39}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "constant, improved with paracetamol", "match": false, "right": "constant, improving with paracetamol"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 4, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Readiness > 0.4 (0.7000000000000001). Generating an adaptive bridge message.
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "And are you up to date with your COVID-19 and flu vaccinations?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "And are you up to date with your COVID-19 and flu vaccinations"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you up to date with your COVID-19 and flu vaccinations?, questions.length: 8, index: 4, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 4 ═══╗
+ LOG  ║ Q: Are you up to date with your COVID-19 and flu vaccinations?
+ LOG  ║ A: Yes
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 5 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 5, activeQuestions.length: 8
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=5, Required=7  
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 39, "normalizedRight": 39}
+ DEBUG  [TriageArbiter] Strict compare {"field": "red_flag_denials", "left": "denies serious symptoms, recent travel, exposure to sick individuals", "match": false, "right": "patient denies serious symptoms and denies recent travel or exposure to sick individuals."}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 5, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Readiness > 0.4 (0.7000000000000001). Generating an adaptive bridge message.
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Okay, are you having any pain or burning when you pee, or peeing more often than usual?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Okay. are you having any pain or burning when you pee. or peeing more often than usual"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you having any pain or burning when you pee, or peeing more often than usual?, questions.length: 8, index: 5, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 5 ═══╗
+ LOG  ║ Q: Are you having any pain or burning when you pee, or peeing more often than usual?
+ LOG  ║ A: No
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 6 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 6, activeQuestions.length: 8
+ WARN  [GUARDRAIL] TURN FLOOR LOCK ACTIVATED: Category=Complex, Turns=6, Required=7  
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 39, "normalizedRight": 39}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "improved with paracetamol", "match": false, "right": "constant, improved with paracetamol"}      
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: GUARDRAIL: Turn floor not reached for complex category. (Current: 6, Required: 7)
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: true, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Readiness > 0.4 (0.7000000000000001). Generating an adaptive bridge message.
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "How about a sore throat or pain when swallowing?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "How about a sore throat or pain when swallowing"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Do you have a sore throat or pain when swallowing?, questions.length: 8, index: 6, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 6 ═══╗
+ LOG  ║ Q: Do you have a sore throat or pain when swallowing?
+ LOG  ║ A: No
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 7 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 7, activeQuestions.length: 8
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 39, "normalizedRight": 39}
+ DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "peaking at 39C, improved with paracetamol", "match": false, "right": "improved with paracetamol"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: READINESS FAIL: Triage readiness score 0.7000000000000001 below 0.90 threshold
+ LOG  [Assessment] Effective Readiness: 0.7000000000000001 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Readiness > 0.4 (0.7000000000000001). Generating an adaptive bridge message.
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "What about muscle aches or joint pain that is more than just general body aches from fever?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "What about muscle aches or joint pain that is more than just general body aches from fever"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you experiencing muscle aches or joint pain that is more than just general body aches from fever?, questions.length: 8, index: 7, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 7 ═══╗
+ LOG  ║ Q: Are you experiencing muscle aches or joint pain that is more than just general body aches from fever?
+ LOG  ║ A: Yes
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 8 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 2 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 8, activeQuestions.length: 8
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "1 day", "match": false, "right": "since yesterday"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
+ LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Plan exhausted but safety criteria not met. Expansion 1/2. Fetching more questions.
+ LOG  [DEBUG_EXPANSION] resolvedTag: "", Ref: false, Keyword: null
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you seeing any new rashes on your skin, or having any unusual bleeding like from your gums or nose, or easy bruising?, questions.length: 11, index: 8, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No to all of these..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No to all of these"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No to all of these..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No to all of these"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 8 ═══╗
+ LOG  ║ Q: Are you seeing any new rashes on your skin, or having any unusual bleeding like from your gums or nose, or easy bruising?
+ LOG  ║ A: No to all of these
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 9 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 2 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 9, activeQuestions.length: 11
+ WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=true
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "since yesterday", "match": false, "right": "1 day"}
+ LOG  [Assessment] Arbiter Signal: PRIORITIZE_RED_FLAGS. Reason: MANDATORY SAFETY GATE: Unresolved red flags detected.
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Reordering queue based on Arbiter signal: PRIORITIZE_RED_FLAGS    
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Do you have a severe headache, a stiff neck, or does bright light bother your eyes?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "a severe headache. a stiff neck. or does bright light bother your eyes"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Do you have a severe headache, a stiff neck, or does bright light bother your eyes?, questions.length: 11, index: 9, isOffline: false        
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No to all of these..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No to all of these"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No to all of these..."
+ LOG  Input Type: USER INPUT
+ LOG  
+Sanitization:
+ LOG    Sanitized input: "No to all of these"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 9 ═══╗
+ LOG  ║ Q: Do you have a severe headache, a stiff neck, or does bright light bother your eyes?
+ LOG  ║ A: No to all of these
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
  LOG  [Assessment] Turn 10 reached. Consulting Arbiter...
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 2 corrections.
  LOG  [DEBUG_NEXT_LOGIC] nextIdx: 10, activeQuestions.length: 11
+ WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=true
  DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- DEBUG  [TriageArbiter] Strict compare {"field": "progression", "left": "same", "match": false, "right": "the same"}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: MANDATORY SAFETY GATE: Red flags remain unresolved
- LOG  [Assessment] Effective Readiness: 0.4 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "approximately 1 day", "match": false, "right": "since yesterday"}
+ LOG  [Assessment] Arbiter Signal: RESOLVE_AMBIGUITY. Reason: COHERENCE FAIL: Unresolved clinical ambiguity detected. Termination blocked.
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Reordering queue based on Arbiter signal: RESOLVE_AMBIGUITY       
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "no..."
+ LOG  Input: "Are you having severe stomach pain, or are you finding it hard to drink fluids or keep them down?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Are you having severe stomach pain. or are you finding it hard to drink fluids or keep them down"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you having severe stomach pain, or are you finding it hard to drink fluids or keep them down?, questions.length: 11, index: 10, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No to both of these..."
  LOG  Input Type: USER INPUT
  LOG 
 Sanitization:
- LOG    Sanitized input: "no"
+ LOG    Sanitized input: "No to both of these"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No to both of these..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No to both of these"
  LOG 
 --- FINAL RESULT ---
  LOG  Score: 0/10 | Emergency: NO
@@ -544,158 +519,197 @@ Sanitization:
  LOG  === EMERGENCY DETECTION END ===
  LOG 
 ╔═══ CONVERSATION STEP 10 ═══╗
- LOG  ║ Q: Do you have any other health conditions, like diabetes, or are you taking any medications regularly?
- LOG  ║ A: no
+ LOG  ║ Q: Are you having severe stomach pain, or are you finding it hard to drink fluids or keep them down?
+ LOG  ║ A: No to both of these
  LOG  ║ Emergency: false (score: 0)
  LOG  ╚══════════════════════════════╝
  LOG  [Assessment] Turn 11 reached. Consulting Arbiter...
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [Assessment] Detected 2 corrections.
  LOG  [DEBUG_NEXT_LOGIC] nextIdx: 11, activeQuestions.length: 11
+ WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=true, Friction=true, UnattemptedTier3=false
  DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
- DEBUG  [TriageArbiter] Semantic compare {"field": "severity", "match": true, "mode": "numeric", "normalizedLeft": 8, "normalizedRight": 8}
- LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: COMPLETENESS FAIL: Missing critical slots [Red Flag Assessment]
- LOG  [Assessment] Effective Readiness: 1 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
- LOG  [Assessment] Plan exhausted but safety criteria not met. Expansion 1/2. Fetching more questions.
+ DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "since yesterday", "match": false, "right": "approximately 1 day"}
+ LOG  [Assessment] Arbiter Signal: RESOLVE_AMBIGUITY. Reason: COHERENCE FAIL: Unresolved clinical ambiguity detected. Termination blocked.
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: true, Friction: true, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [Assessment] Reordering queue based on Arbiter signal: RESOLVE_AMBIGUITY       
+ LOG  [Assessment] Plan exhausted but safety criteria not met. Expansion 2/2. Fetching more questions.
  LOG  [DEBUG_EXPANSION] resolvedTag: "", Ref: false, Keyword: null
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [DEBUG_RENDER] isVerifyingEmergency: false
- LOG  [Assessment] Safety criteria not met (Readiness: 1) but plan cannot be expanded further. Finalizing with conservative fallback.
+ LOG  [DEBUG_TEST] currentQ: Do you have any rash on your skin?, questions.length: 14, index: 11, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No..."
+ LOG  Input Type: USER INPUT
+ LOG  
+Sanitization:
+ LOG    Sanitized input: "No"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 11 ═══╗
+ LOG  ║ Q: Do you have any rash on your skin?
+ LOG  ║ A: No
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 12 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ ERROR  [GeminiClient] Non-retryable generation error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 7.113644897s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"7s"}]
+ ERROR  [GeminiClient] Failed to extract profile: [Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 7.113644897s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"7s"}]]
+ LOG  [Assessment] Detected 1 corrections.
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 12, activeQuestions.length: 14
+ WARN  [GUARDRAIL] CONTRADICTION LOCK ACTIVATED: Ambiguity=false, Friction=false, UnattemptedTier3=true
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ DEBUG  [TriageArbiter] Strict compare {"field": "duration", "left": "yesterday", "match": false, "right": "since yesterday"}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: COHERENCE FAIL: Symptom progression (worsening/improving) is missing.
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 0, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Are you feeling nauseous or have you vomited?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Are you feeling nauseous or have you vomited"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you feeling nauseous or have you vomited?, questions.length: 14, index: 12, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes, I feel nauseous and have vomited..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes. I feel nauseous and have vomited"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Yes, I feel nauseous and have vomited..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Yes. I feel nauseous and have vomited"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 12 ═══╗
+ LOG  ║ Q: Are you feeling nauseous or have you vomited?
+ LOG  ║ A: Yes, I feel nauseous and have vomited
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 13 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ ERROR  [GeminiClient] Non-retryable generation error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 53.661790426s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"53s"}]
+ ERROR  [GeminiClient] Failed to extract profile: [Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 53.661790426s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"53s"}]]
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 13, activeQuestions.length: 14
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: COHERENCE FAIL: Symptom progression (worsening/improving) is missing.
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 1, Clarifications: 0)
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Are you having any muscle aches or joint pain?..."
+ LOG  Input Type: SYSTEM/METADATA
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "Are you having any muscle aches or joint pain"
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_TEST] currentQ: Are you having any muscle aches or joint pain?, questions.length: 14, index: 13, isOffline: false
+ LOG  
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No, I do not have muscle aches or joint pain..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No. I do not have muscle aches or joint pain"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "No, I do not have muscle aches or joint pain..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "No. I do not have muscle aches or joint pain"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 0/10 | Emergency: NO
+ LOG  Systems:
+ LOG  Reasoning: No emergency symptoms detected.
+ LOG  Medical Justification: No specific emergency signs detected.
+ LOG  === EMERGENCY DETECTION END ===
+ LOG 
+╔═══ CONVERSATION STEP 13 ═══╗
+ LOG  ║ Q: Are you having any muscle aches or joint pain?
+ LOG  ║ A: No, I do not have muscle aches or joint pain
+ LOG  ║ Emergency: false (score: 0)
+ LOG  ╚══════════════════════════════╝
+ LOG  [Assessment] Turn 14 reached. Consulting Arbiter...
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ LOG  [DEBUG_RENDER] isVerifyingEmergency: false
+ ERROR  [GeminiClient] Non-retryable generation error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 42.38021314s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.5-flash","location":"global"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"42s"}]
+ ERROR  [GeminiClient] Failed to extract profile: [Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 42.38021314s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.5-flash","location":"global"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"42s"}]]
+ LOG  [DEBUG_NEXT_LOGIC] nextIdx: 14, activeQuestions.length: 14
+ DEBUG  [TriageArbiter] Semantic compare {"field": "age", "match": true, "mode": "numeric", "normalizedLeft": 22, "normalizedRight": 22}
+ LOG  [Assessment] Arbiter Signal: CONTINUE. Reason: COHERENCE FAIL: Symptom progression (worsening/improving) is missing.
+ LOG  [Assessment] Effective Readiness: 0 (Ambiguity: false, Friction: false, BelowFloor: false, Saturation: 2, Clarifications: 0)
+ LOG  [Assessment] Safety criteria not met (Readiness: 0) but plan cannot be expanded further. Finalizing with conservative fallback.
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  [Assessment] Finalizing... Extracting Slots.
@@ -703,23 +717,12 @@ Sanitization:
 ╔═══ FINAL PROFILE EXTRACTION ═══╗
  LOG  {
   "age": "22",
-  "duration": "3 days",
-  "severity": "8/10",
-  "progression": "same",
+  "duration": "yesterday",
+  "severity": null,
+  "progression": null,
   "red_flag_denials": null,
-  "denial_confidence": null,
-  "summary": "A 22-year-old patient reports a 3-day history of painful (burning, stinging, 8/10, stable) and small amounts of urination, along with high fever (above 39°C, unresolving), weakness/feeling faint, inability to pee at all, persistent tiredness, strong urge to pee, and cloudy urine, having experienced similar issues previously.",
-  "ambiguity_detected": false,
-  "internal_inconsistency_detected": false,
-  "clinical_friction_detected": false,
-  "clinical_friction_details": null,
-  "is_complex_case": true,
-  "is_vulnerable": true,
-  "symptom_category": "critical",
-  "red_flags_resolved": true,
   "uncertainty_accepted": false,
-  "turn_count": 11,
-  "triage_readiness_score": 1
+  "summary": "USER: No to both of these\nUSER: No\nASSISTANT: Are you feeling nauseous or have you vomited?\nUSER: Yes, I feel nauseous and have vomited\nASSISTANT: Are you having any muscle aches or joint pain?\nUSER: No, I do not have muscle aches or joint pain"
 }
  LOG  ╚════════════════════════════════╝
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
@@ -727,34 +730,43 @@ Sanitization:
  LOG  [DEBUG_RENDER] isVerifyingEmergency: false
  LOG  
 === EMERGENCY DETECTION START ===
- LOG  Input: "Initial Symptom: when i pee, it is somewhat painful and this happens for 3 days consecutively. there..."
+ LOG  Input: "Initial Symptom: I have a fever since yesterday. My highest temperature is 39° celcius. I already ta..."
  LOG  Input Type: USER INPUT
  LOG  
 Sanitization:
- LOG    Sanitized input: "when i pee. it is somewhat painful and this happens for 3 days consecutively. there are yimes that when i pee. there arw only small amount of urine. i laso have a fever. I'm experiencing High fever (above 39°C or 102. 2°F) that won't go down. Weakness or feeling faint. Not able to pee at all. it is the same. it feels like burning. and stinging. do i need to go to the health center. Feeling very tired or weak. Strong urge to pee. Cloudy pee. Yes. No. no"
+ LOG    Sanitized input: "I have a fever since yesterday. My highest temperature is 39° celcius. I already taken a paracetamol. and it kinda working. No. I don't have any of those. Constant (always present). No. I don't have any of those. No. Yes. No. No. Yes. No to all of these. No to all of these. No to both of these. No. Yes. I feel nauseous and have vomited. No. I do not have muscle aches or joint pain"
  LOG 
 --- FINAL RESULT ---
- LOG  Score: 5/10 | Emergency: NO
+ LOG  Score: 4/10 | Emergency: NO
  LOG  Systems: Other
- LOG  Reasoning: Non-emergency (score 5/10). Symptoms: fever, high fever.
- LOG  Medical Justification: Potential concerns: fever, high fever.
+ LOG  Reasoning: Non-emergency (score 4/10). Symptoms: fever.
+ LOG  Medical Justification: fever
  LOG  === EMERGENCY DETECTION END ===
  LOG  [GeminiClient] Sending request (Attempt 1)...
- LOG  [GeminiClient] Red flags detected but not Emergency. Upgrading to Emergency.
- LOG  [GeminiClient] Authority Block: Bypassed. Red flag denials ("") did not pass strengthened validation.
+ ERROR  [GeminiClient] Non-transient failure; aborting retries: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 38.490772666s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.5-flash","location":"global"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"38s"}]
+ ERROR  Analysis Error: [Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 38.490772666s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"model":"gemini-2.5-flash","location":"global"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"38s"}]]
  LOG 
-╔════════════════════════════════════════════════════════════╗
- LOG  ║              FINAL ASSESSMENT & RECOMMENDATION             ║
- LOG  ╠════════════════════════════════════════════════════════════╣
- LOG  ║ CONTEXT: Initial Symptom: when i pee, it is somewhat pain... ║
- LOG  ╟────────────────────────────────────────────────────────────╢
- LOG  ║ RECOMMENDED LEVEL: EMERGENCY                                ║
- LOG  ║ READINESS: N/A        | AMBIGUITY: NO                      ║
- LOG  ╟────────────────────────────────────────────────────────────╢
- LOG  ║ ADVICE: I understand you've been experiencing painful urin ║
- LOG  ║         ation, very small amounts of urine, and at times a ║
- LOG  ╟────────────────────────────────────────────────────────────╢
- LOG  ║ RED FLAGS: High fever (>39°C, unresolving), Inability to p ║
- LOG  ╟────────────────────────────────────────────────────────────╢
- LOG  ║ CLINICAL SOAP: S: 22-year-old patient with 3-day history o ║
- LOG  ╚════════════════════════════════════════════════════════════╝
+=== EMERGENCY DETECTION START ===
+ LOG  Input: "Initial Symptom: I have a fever since yesterday. My highest temperature is 39° celcius. I already ta..."
+ LOG  Input Type: USER INPUT
+ LOG 
+Sanitization:
+ LOG    Sanitized input: "I have a fever since yesterday. My highest temperature is 39° celcius. I already taken a paracetamol. and it kinda working. No. I don't have any of those. Constant (always present). No. I don't have any of those. No. Yes. No. No. Yes. No to all of these. No to all of these. No to both of these. No. Yes. I feel nauseous and have vomited. No. I do not have muscle aches or joint pain"
+ LOG 
+--- FINAL RESULT ---
+ LOG  Score: 4/10 | Emergency: NO
+ LOG  Systems: Other
+ LOG  Reasoning: Non-emergency (score 4/10). Symptoms: fever.
+ LOG  Medical Justification: fever
+ LOG  === EMERGENCY DETECTION END ===
+ ERROR  [GeminiClient] Non-retryable generation error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 37.782494588s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"37s"}]
+ ERROR  Narrative generation failed: [Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent: [429 ] You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit.
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-2.5-flash
+Please retry in 37.782494588s. [{"@type":"type.googleapis.com/google.rpc.Help","links":[{"description":"Learn more about Gemini API quotas","url":"https://ai.google.dev/gemini-api/docs/rate-limits"}]},{"@type":"type.googleapis.com/google.rpc.QuotaFailure","violations":[{"quotaMetric":"generativelanguage.googleapis.com/generate_content_free_tier_requests","quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier","quotaDimensions":{"location":"global","model":"gemini-2.5-flash"},"quotaValue":"20"}]},{"@type":"type.googleapis.com/google.rpc.RetryInfo","retryDelay":"37s"}]]
+ LOG  Synced facilities offline storage (upserted 29, skipped 0, deleted 0)

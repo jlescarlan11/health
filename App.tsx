@@ -10,7 +10,7 @@ import NetInfo from '@react-native-community/netinfo';
 
 import { store, persistor } from './src/store';
 import AppNavigator from './src/navigation/AppNavigator';
-import { OfflineBanner, SafetyRecheckModal } from './src/components/common';
+import { OfflineBanner, SafetyRecheckModal, LoadingScreen } from './src/components/common';
 import { setOfflineStatus, setLastSync } from './src/store/offlineSlice';
 import { syncFacilities, getLastSyncTime } from './src/services/syncService';
 import { initDatabase } from './src/services/database';
@@ -187,7 +187,7 @@ export default function App() {
 
   return (
     <StoreProvider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate loading={<LoadingScreen />} persistor={persistor}>
         <SafeAreaProvider>
           <AppContent />
         </SafeAreaProvider>
