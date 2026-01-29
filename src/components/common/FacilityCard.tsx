@@ -19,7 +19,7 @@ interface FacilityCardProps {
   style?: ViewStyle;
   showDistance?: boolean;
   distance?: number;
-  showMatchIndicator?: boolean;
+  matchedServices?: string[];
 }
 
 export const FacilityCard: React.FC<FacilityCardProps> = ({
@@ -28,12 +28,11 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   style,
   showDistance = false,
   distance,
-  showMatchIndicator = false,
+  matchedServices = [],
 }) => {
   const theme = useTheme();
   const { scaleFactor, isPWDMode, simplifiedSpacing, borderRadius, touchTargetScale } = useAdaptiveUI();
   const { text: statusText } = getOpenStatus(facility);
-  const hasMatches = showMatchIndicator;
 
   const hasTeleconsult = React.useMemo(() => {
     return facility.contacts?.some((c) => !!c.teleconsultUrl);
@@ -42,7 +41,7 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
   const accessibilityLabel = `Facility: ${facility.name}, Type: ${
     facility.type
   }, Status: ${statusText}${facility.yakapAccredited ? ', YAKAP Accredited' : ''}${
-    hasMatches ? ', Matches Your Needs' : ''
+    matchedServices.length > 0 ? `, Matches Your Needs: ${matchedServices.join(', ')}` : ''
   }${
     showDistance
       ? `, Distance: ${
@@ -70,11 +69,6 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
     },
   ];
   const titleRowStyle = [styles.titleRow, isPWDMode && { marginBottom: 8 }];
-  const matchBadgeStyle = [
-    styles.matchBadge,
-    isPWDMode && styles.matchBadgePWD,
-    { backgroundColor: '#E8F5E9', marginLeft: 4 },
-  ];
   const teleconsultStyle = {
     marginLeft: 4,
     marginTop: isPWDMode ? 10 : 2,
@@ -158,17 +152,27 @@ export const FacilityCard: React.FC<FacilityCardProps> = ({
               </React.Fragment>
             ))}
 
-          {hasMatches && (
-            <View style={matchBadgeStyle}>
-              <MaterialCommunityIcons name="check-circle" size={12} color="#2E7D32" />
-              <Text style={[styles.matchText, { color: '#2E7D32' }]}>Matches Needs</Text>
-            </View>
-          )}
-
           {hasTeleconsult && <TeleconsultBadge style={teleconsultStyle} />}
         </View>
 
-        <FacilityStatusIndicator facility={facility} />
+        <FacilityStatusIndicator 
+          facility={facility} 
+          style={matchedServices.length > 0 ? { marginBottom: 8 } : undefined}
+        />
+
+        {matchedServices.length > 0 && (
+          <View style={styles.matchContainer}>
+            <MaterialCommunityIcons 
+              name="check-circle-outline" 
+              size={14} 
+              color={theme.colors.primary} 
+              style={styles.matchIcon} 
+            />
+            <Text variant="labelSmall" style={[styles.matchLabel, { color: theme.colors.onSurfaceVariant }]}>
+              Matches your needs: {matchedServices.join(', ')}
+            </Text>
+          </View>
+        )}
 
         <FacilityActionButtons
           contacts={facility.contacts}
@@ -233,23 +237,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
     color: '#94A3B8',
   },
-  matchBadge: {
+  matchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    marginBottom: 12,
   },
-  matchBadgePWD: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
+  matchIcon: {
+    marginRight: 6,
   },
-  matchText: {
-    fontSize: 10,
-    fontWeight: '800',
-    marginLeft: 4,
-    letterSpacing: 0.3,
+  matchLabel: {
+    fontWeight: '600',
+    letterSpacing: 0.1,
+    flex: 1,
   },
   actionsRow: {
     marginTop: 8,

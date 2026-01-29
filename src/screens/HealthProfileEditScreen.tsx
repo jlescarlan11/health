@@ -20,7 +20,7 @@ export const HealthProfileEditScreen = () => {
   const insets = useSafeAreaInsets();
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const baseBottomPadding = themeSpacing.lg ?? 16;
-  const scrollBottomPadding = baseBottomPadding * 2;
+  const scrollBottomPadding = baseBottomPadding * 4;
   const snackbarBottomSpacing = insets.bottom + (themeSpacing.sm ?? 8);
 
   const initialDobDigits = useMemo(() => convertIsoDateToDigits(profile.dob), [profile.dob]);
@@ -117,9 +117,9 @@ export const HealthProfileEditScreen = () => {
         return false;
       };
 
-      BackHandler.addEventListener('hardwareBackPress', onBackPress);
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-      return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+      return () => subscription.remove();
     }, [hasUnsavedChanges, saveState, navigation]),
   );
 
@@ -496,6 +496,7 @@ const styles = StyleSheet.create({
   },
   buttonArea: {
     marginTop: 30,
+    marginBottom: 20,
   },
   saveButton: {
     borderRadius: 16,

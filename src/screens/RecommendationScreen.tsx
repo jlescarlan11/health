@@ -29,8 +29,6 @@ import { detectEmergency, COMBINATION_RISKS } from '../services/emergencyDetecto
 import { FacilityCard } from '../components/common/FacilityCard';
 import { FacilityCardSkeleton } from '../components/features/facilities/FacilityCardSkeleton';
 import { Button, SafetyRecheckModal, Text, ScreenSafeArea } from '../components/common';
-import { FeatureChip } from '../components/common';
-import { chipLayoutStyles } from '../components/common/chipLayout';
 import { Facility, AssessmentResponse } from '../types';
 import { useUserLocation } from '../hooks';
 import { fetchFacilities } from '../store/facilitiesSlice';
@@ -664,34 +662,16 @@ const RecommendationScreen = () => {
     const targetLevel = recommendation.recommended_level;
     const requiredServices = recommendation.relevant_services || [];
 
-    // Single pass: score all facilities and separate precision matches
-    const precisionMatches: { facility: Facility; score: number }[] = [];
-    const otherFacilities: { facility: Facility; score: number }[] = [];
+    const scored = facilitiesWithDistance.map((facility) => ({
+      facility,
+      score: scoreFacility(facility, targetLevel, requiredServices),
+    }));
 
-    facilitiesWithDistance.forEach((facility) => {
-      const score = scoreFacility(facility, targetLevel, requiredServices);
-      const isPrecision =
-        requiredServices.length > 0 &&
-        requiredServices.every((s) => facility.services?.includes(s));
+    // Sort all facilities by the combined score formula
+    scored.sort((a, b) => b.score - a.score);
 
-      if (isPrecision) {
-        precisionMatches.push({ facility, score });
-      } else {
-        otherFacilities.push({ facility, score });
-      }
-    });
-
-    // Sort precision matches by score
-    precisionMatches.sort((a, b) => b.score - a.score);
-
-    const needed = Math.max(0, 3 - precisionMatches.length);
-    const topOthers =
-      needed > 0 ? otherFacilities.sort((a, b) => b.score - a.score).slice(0, needed) : [];
-
-    setRecommendedFacilities([
-      ...precisionMatches.slice(0, 3).map((s) => s.facility),
-      ...topOthers.map((s) => s.facility),
-    ]);
+    // Take the top 3 recommendations
+    setRecommendedFacilities(scored.slice(0, 3).map((s) => s.facility));
   }, [recommendation, facilitiesWithDistance]);
 
   useEffect(() => {
@@ -1006,26 +986,8 @@ const RecommendationScreen = () => {
                     showDistance={true}
                     distance={facility.distance}
                     onPress={() => handleViewDetails(facility.id)}
-                    showMatchIndicator={matchedServices.length > 0}
+                    matchedServices={matchedServices}
                   />
-                  {matchedServices.length > 0 && (
-                    <View style={styles.matchSummaryContainer}>
-                      <Text
-                        variant="bodySmall"
-                        style={[styles.matchSummaryLabel, { color: theme.colors.onSurfaceVariant }]}
-                      >
-                        Matches your needs:
-                      </Text>
-                      <View style={[chipLayoutStyles.chipContainer, styles.matchSummaryChips]}>
-                        {matchedServices.map((service) => (
-                          <FeatureChip
-                            key={`match-${facility.id}-${service}`}
-                            label={service}
-                          />
-                        ))}
-                      </View>
-                    </View>
-                  )}
                 </View>
               );
             })}
@@ -1162,19 +1124,6 @@ const styles = StyleSheet.create({
   facilitiesSection: { marginBottom: 24 },
   facilityEntry: {
     marginBottom: 4,
-  },
-  matchSummaryContainer: {
-    marginTop: 4,
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  matchSummaryLabel: {
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    fontSize: 12,
-  },
-  matchSummaryChips: {
-    marginTop: 6,
   },
   sectionHeader: { marginBottom: 16, marginTop: 8 },
   sectionHeading: { fontWeight: '800', fontSize: 22, color: '#333' },

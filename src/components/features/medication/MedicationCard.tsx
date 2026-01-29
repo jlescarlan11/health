@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Card, Text, IconButton, useTheme, Checkbox } from 'react-native-paper';
+import { Surface, Text, IconButton, useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Medication } from '../../../types';
 
 interface MedicationCardProps {
@@ -19,39 +20,44 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
   const theme = useTheme();
 
   return (
-    <Card style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-      <Card.Content style={styles.content}>
+    <Surface
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.colors.surface,
+          borderColor: theme.colors.outlineVariant,
+        },
+      ]}
+      elevation={1}
+    >
+      <View style={styles.content}>
         <View style={styles.leftSection}>
-          <Text variant="titleMedium" style={styles.name}>
+          <Text style={[styles.name, { color: theme.colors.onSurface }]}>
             {medication.name}
           </Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+          <Text style={[styles.details, { color: theme.colors.onSurfaceVariant }]}>
             {medication.dosage} • {medication.scheduled_time}
           </Text>
         </View>
 
         <View style={styles.rightSection}>
           <TouchableOpacity
-            style={[
-              styles.takenButton,
-              isTaken && { backgroundColor: theme.colors.primaryContainer },
-            ]}
+            style={styles.takenButton}
             onPress={() => onToggleTaken(medication.id)}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: isTaken }}
             accessibilityLabel={`Mark ${medication.name} as taken`}
           >
-            <Checkbox
-              status={isTaken ? 'checked' : 'unchecked'}
-              onPress={() => onToggleTaken(medication.id)}
-              color={theme.colors.primary}
+            <MaterialCommunityIcons
+              name={isTaken ? 'checkbox-marked' : 'checkbox-blank-outline'}
+              size={24}
+              color={isTaken ? theme.colors.primary : theme.colors.outline}
             />
             <Text
-              variant="labelSmall"
-              style={{
-                color: isTaken ? theme.colors.primary : theme.colors.onSurfaceVariant,
-                marginLeft: -4,
-              }}
+              style={[
+                styles.takenText,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
             >
               {isTaken ? 'Taken' : 'Mark'}
             </Text>
@@ -65,8 +71,8 @@ export const MedicationCard: React.FC<MedicationCardProps> = ({
             accessibilityLabel={`Delete ${medication.name}`}
           />
         </View>
-      </Card.Content>
-    </Card>
+      </View>
+    </Surface>
   );
 };
 
@@ -74,21 +80,26 @@ const styles = StyleSheet.create({
   card: {
     marginVertical: 6,
     marginHorizontal: 16,
-    elevation: 2,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 8,
   },
   content: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
   },
   leftSection: {
     flex: 1,
-    paddingRight: 8,
   },
   name: {
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  details: {
+    fontSize: 13,
+    marginTop: 2,
   },
   rightSection: {
     flexDirection: 'row',
@@ -99,5 +110,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingRight: 8,
     borderRadius: 16,
+  },
+  takenText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
   },
 });

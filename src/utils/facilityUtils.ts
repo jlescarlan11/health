@@ -400,10 +400,11 @@ export const getFacilityServiceMatches = (
 };
 
 /**
- * Calculates a priority score for a facility based on three strict factors:
- * 1. Alignment (Services and Level Match)
- * 2. Distance
- * 3. Operating Status (Open/Closed)
+ * Calculates a priority score for a facility based on the formula:
+ * 1. Service Alignment (Matches user needs) - Primary factor
+ * 2. Distance - Secondary factor
+ * 3. Operating Status (Open/Closed) - Tertiary factor
+ * 4. Yakap Accreditation - Plus points bonus
  * Higher score = higher priority.
  */
 export const scoreFacility = (
@@ -413,7 +414,7 @@ export const scoreFacility = (
 ) => {
   let score = 0;
 
-  // 1. Alignment (Services and Level Match)
+  // 1. Service Alignment (Primary)
   // Level match
   const type = facility.type?.toLowerCase() || '';
   const isEmergencyTarget = targetLevel === 'emergency' || targetLevel === 'hospital';
@@ -428,24 +429,32 @@ export const scoreFacility = (
     score += 1000;
   }
 
-  // Service matches
+  // Service matches (Very high weight to make it the primary factor)
   if (requiredServices.length > 0) {
     const matchedServices = getFacilityServiceMatches(facility, requiredServices);
-    score += (matchedServices.length / requiredServices.length) * 500;
+    // 2000 points for each service match
+    score += matchedServices.length * 2000;
 
-    if (matchedServices.length === requiredServices.length) {
-      score += 100;
+    // Bonus for matching all required services
+    if (matchedServices.length === requiredServices.length && requiredServices.length > 0) {
+      score += 500;
     }
   }
 
-  // 2. Distance (Closer = Higher Score)
+  // 2. Distance (Secondary)
   const distance = facility.distance || 0;
-  score -= Math.min(distance * 10, 500); // 10 points penalty per km, capped at 500
+  // Subtract points based on distance (100 points per km)
+  score -= distance * 100;
 
-  // 3. Operating Status (Open = Higher Score)
+  // 3. Operating Status (Tertiary)
   const status = getOpenStatus(facility);
   if (status.isOpen) {
-    score += 2000; // Heavy prioritization for open facilities
+    score += 1500; // Significant bonus for being open
+  }
+
+  // 4. Yakap Accreditation (Plus points)
+  if (facility.yakapAccredited) {
+    score += 800;
   }
 
   return score;

@@ -5,9 +5,8 @@ import {
   FlatList,
   Alert,
   Keyboard,
-  TextInput,
 } from 'react-native';
-import { ActivityIndicator, useTheme, Surface } from 'react-native-paper';
+import { ActivityIndicator, useTheme, Surface, TextInput } from 'react-native-paper';
 import { Text } from '../components/common/Text';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -63,27 +62,19 @@ const TimeInput = ({ value, onChangeText, error }: TimeInputProps) => {
 
   return (
     <View style={styles.timeInputContainer}>
-      <Text
-        variant="labelLarge"
-        style={{ marginBottom: 4, color: error ? theme.colors.error : theme.colors.onSurface }}
-      >
-        Time (24h)
-      </Text>
       <TextInput
-        style={[
-          styles.timeInput,
-          {
-            borderColor: error ? theme.colors.error : theme.colors.outline,
-            color: theme.colors.onSurface,
-            backgroundColor: theme.colors.surface,
-          },
-        ]}
+        mode="outlined"
+        label="Time (24h)"
         value={value}
         onChangeText={handleChange}
         placeholder="08:00"
         placeholderTextColor={theme.colors.onSurfaceVariant}
         keyboardType="number-pad"
         maxLength={5}
+        error={error}
+        style={styles.input}
+        outlineStyle={[styles.inputOutline, { borderColor: error ? theme.colors.error : theme.colors.outline }]}
+        dense
       />
     </View>
   );
@@ -116,49 +107,43 @@ const MedicationFormHeader: React.FC<MedicationFormHeaderProps> = ({
 
   return (
     <View style={styles.formContainer}>
-      <Text variant="headlineSmall" style={styles.headerTitle}>
+      <Text variant="titleMedium" style={styles.headerTitle}>
         Add Medication
       </Text>
 
       <TextInput
-        style={[
-          styles.input,
-          {
-            backgroundColor: theme.colors.surface,
-            borderColor: theme.colors.outline,
-            color: theme.colors.onSurface,
-          },
-        ]}
-        placeholder="Medication Name (e.g., Aspirin)"
+        mode="outlined"
+        label="Medication Name"
+        placeholder="e.g. Aspirin"
         placeholderTextColor={theme.colors.onSurfaceVariant}
         value={name}
         onChangeText={onNameChange}
+        style={styles.input}
+        outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+        dense
       />
 
       <View style={styles.row}>
         <View style={{ flex: 1, marginRight: 8 }}>
           <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.colors.outline,
-                color: theme.colors.onSurface,
-              },
-            ]}
-            placeholder="Dosage (e.g., 100mg)"
+            mode="outlined"
+            label="Dosage"
+            placeholder="e.g. 100mg"
             placeholderTextColor={theme.colors.onSurfaceVariant}
             value={dosage}
             onChangeText={onDosageChange}
+            style={styles.input}
+            outlineStyle={[styles.inputOutline, { borderColor: theme.colors.outline }]}
+            dense
           />
         </View>
-        <View style={{ width: 100 }}>
+        <View style={{ width: 120 }}>
           <TimeInput value={time} onChangeText={onTimeChange} error={!!validationError && !time} />
         </View>
       </View>
 
       {validationError && (
-        <Text style={{ color: theme.colors.error, marginBottom: 8 }}>{validationError}</Text>
+        <Text style={{ color: theme.colors.error, marginBottom: 8, fontSize: 12, marginLeft: 4 }}>{validationError}</Text>
       )}
 
       <Button
@@ -325,40 +310,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  listContent: {},
+  listContent: {
+    paddingBottom: 20,
+  },
   formContainer: {
-    padding: 12,
-    marginBottom: 8,
+    margin: 16,
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 1,
   },
   headerTitle: {
     marginBottom: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
   input: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
-    fontSize: 16,
+    backgroundColor: 'transparent',
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  inputOutline: {
+    borderRadius: 18,
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start', // Align to top
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginTop: 8,
   },
   timeInputContainer: {
-    //
-  },
-  timeInput: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    textAlign: 'center',
-    height: 48, // Match approximate height of other inputs
+    // 
   },
   addButton: {
-    marginTop: 4,
+    marginTop: 12,
+    borderRadius: 16,
   },
   emptyContainer: {
     alignItems: 'center',

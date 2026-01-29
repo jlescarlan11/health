@@ -29,6 +29,12 @@ const FALSE_POSITIVES: Record<string, string[]> = {
   shocking: ['choking'],
   clocking: ['choking'],
   booking: ['choking'],
+
+  // Medicine vs Muscle Pain (gamot vs gadot)
+  // Also common Bicolano words like 'gabot' (pull) and 'kadot' (pinch)
+  gamot: ['gadot'],
+  gabot: ['gadot'],
+  kadot: ['gadot'],
 };
 
 export const FUZZY_THRESHOLD = 2;
