@@ -108,9 +108,6 @@ const AppContent = () => {
         syncFacilities().catch((err) =>
           console.log('Initial sync failed (likely offline or error):', err),
         );
-        
-        // Ensure the branded loading screen is visible for at least a moment
-        await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (err) {
         console.error('Startup initialization failed:', err);
       } finally {

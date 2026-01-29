@@ -30,6 +30,7 @@ if (
 import { ActivityIndicator, useTheme, Chip, MD3Theme } from 'react-native-paper';
 import { Text } from '../components/common/Text';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -382,6 +383,7 @@ const SymptomAssessmentScreen = () => {
   );
   const fullName = useSelector(selectFullName);
   const profileDob = useSelector(selectProfileDob);
+  const insets = useSafeAreaInsets();
   const theme = useTheme() as MD3Theme & { spacing: Record<string, number> };
   const spacing = theme.spacing ?? appTheme.spacing;
   const chatBottomPadding = spacing.lg;
@@ -632,6 +634,22 @@ const SymptomAssessmentScreen = () => {
     }
     console.log(`╚${'═'.repeat(30)}╝\n`);
   };
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        // Small delay to allow KeyboardAvoidingView to resize the container
+        setTimeout(() => {
+          flatListRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      },
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
 
   interface SafetyGuardParams {
     text: string;
@@ -2407,7 +2425,7 @@ Recent User Answer: ${trimmedAnswer}
     return (
       <ScreenSafeArea
         style={[styles.container, { backgroundColor: theme.colors.background }]}
-        edges={['left', 'right', 'bottom']}
+        edges={['left', 'right']}
       >
         <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
         {renderModeSelectionModal()}
@@ -2569,7 +2587,7 @@ Recent User Answer: ${trimmedAnswer}
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      edges={['left', 'right', 'bottom']}
+      edges={['left', 'right']}
     >
       <StandardHeader title="Assessment" showBackButton onBackPress={handleBack} />
 
@@ -2616,6 +2634,7 @@ Recent User Answer: ${trimmedAnswer}
             styles.inputSection,
             {
               backgroundColor: theme.colors.background,
+              paddingBottom: Math.max(12, insets.bottom + 8),
             },
           ]}
         >
