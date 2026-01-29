@@ -145,6 +145,7 @@ const migrations = {
  */
 const profilePersistConfig = {
   key: 'profile',
+  keyPrefix: 'secure_',
   storage: secureStorage,
   getStoredState: async (config: PersistConfig<unknown>) => {
     try {

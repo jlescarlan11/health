@@ -82,6 +82,15 @@ export const ClinicalNoteScreen = () => {
     return null;
   }, [assessmentData?.profile_snapshot]);
 
+  const qrPayload = useMemo(() => {
+    if (!assessmentData) return '';
+    return serializeClinicalSnapshot(
+      assessmentData.clinical_soap,
+      assessmentData.timestamp,
+      snapshotProfile
+    );
+  }, [assessmentData?.clinical_soap, assessmentData?.timestamp, snapshotProfile]);
+
   if (loading) {
     return (
       <ScreenSafeArea
@@ -128,14 +137,6 @@ export const ClinicalNoteScreen = () => {
     assessmentData.timestamp,
     snapshotProfile,
   );
-
-  const qrPayload = useMemo(() => {
-    return serializeClinicalSnapshot(
-      assessmentData.clinical_soap,
-      assessmentData.timestamp,
-      snapshotProfile
-    );
-  }, [assessmentData.clinical_soap, assessmentData.timestamp, snapshotProfile]);
 
   const isPayloadTooLarge = qrPayload.length > 500;
 
@@ -270,20 +271,6 @@ export const ClinicalNoteScreen = () => {
     }
   };
 
-  const Section = ({ title, content }: { title: string; content?: string }) => {
-    if (!content) return null;
-    return (
-      <View style={styles.section}>
-        <Text variant="labelLarge" style={styles.sectionTitle}>
-          {title}
-        </Text>
-        <Text variant="bodyLarge" style={styles.sectionContent}>
-          {content}
-        </Text>
-      </View>
-    );
-  };
-
   return (
     <ScreenSafeArea
       style={[styles.container, { backgroundColor: theme.colors.background }]}
@@ -399,6 +386,20 @@ export const ClinicalNoteScreen = () => {
         </View>
       </View>
     </ScreenSafeArea>
+  );
+};
+
+const Section = ({ title, content }: { title: string; content?: string }) => {
+  if (!content) return null;
+  return (
+    <View style={styles.section}>
+      <Text variant="labelLarge" style={styles.sectionTitle}>
+        {title}
+      </Text>
+      <Text variant="bodyLarge" style={styles.sectionContent}>
+        {content}
+      </Text>
+    </View>
   );
 };
 

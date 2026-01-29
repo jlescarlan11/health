@@ -3,19 +3,29 @@ const SHARED_MEDICAL_CONTEXT = `You are a medical triage AI for Naga City, Phili
 Always output valid JSON without markdown formatting.
 Safety is paramount: red flag assessment is mandatory.`;
 
-const dedent = (value: string) => {
-  const lines = value.replace(/\r/g, '').split('\n');
-  while (lines.length && lines[0].trim() === '') {
-    lines.shift();
-  }
-  while (lines.length && lines[lines.length - 1].trim() === '') {
-    lines.pop();
-  }
-  const indentation = lines
-    .filter((line) => line.trim())
-    .map((line) => line.match(/^ */)?.[0].length ?? 0);
-  const minIndent = indentation.length ? Math.min(...indentation) : 0;
-  return lines.map((line) => (minIndent ? line.slice(minIndent) : line)).join('\n');
+const dedent = (value: string): string => {
+  if (!value) return '';
+
+  const lines = value.split('\n');
+
+  // Remove leading/trailing empty lines
+  while (lines.length && !lines[0].trim()) lines.shift();
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+
+  if (lines.length === 0) return '';
+
+  // Find minimum indentation
+  const minIndent = Math.min(
+    ...lines
+      .filter((line) => line.trim())
+      .map((line) => {
+        const match = line.match(/^[ ]*/);
+        return match ? match[0].length : 0;
+      }),
+  );
+
+  // Remove that indentation from all lines
+  return lines.map((line) => line.slice(minIndent)).join('\n');
 };
 
 const buildPrompt = (...segments: string[]) =>
@@ -39,7 +49,7 @@ INSTRUCTIONS:
 2. **Question Types**:
    - **"type": "number"**: For Age or numeric values. Set "options" to '[]'.
    - **"type": "single-select"**: Preferred for most questions (including Duration, Progression, and Severity) to reduce friction and improve data consistency. Structure "options" as a simple string array of clear, descriptive choices. Only use "text" type if the answer is highly unpredictable.
-   - **"type": "multi-select"**: For lists of symptoms. Structure "options" as grouped categories: `[{"category": "Name", "items": ["A", "B"]}]`.
+   - **"type": "multi-select"**: For lists of symptoms. Structure "options" as grouped categories: \`[{"category": "Name", "items": ["A", "B"]}]\`.
    - **"type": "text"**: For open-ended descriptions that cannot be categorized easily. Set "options" to '[]'.
 3. **Context Awareness & Known Data**: Begin by acknowledging any patient history or prior assessment data included in the prompt context, either in the intro or immediately before questions. Define "already known" data as any explicit mention of a Tier 1 slot (Age, Onset/Duration, Severity/Progression) or contextual descriptors such as Character, associated symptoms, or previously resolved red flags. Skip Tier 1 questions that cover information already known and move directly to Tier 2 (or Tier 3, if applicable) to avoid redundant baseline questioning. When all Tier 1 slots are already provided, omit Tier 1 entirely while preserving the tier order. Do not change behavior when no prior context exists.
 4. **Language & Tone (CRITICAL - PLAIN ENGLISH ONLY)**:
@@ -336,7 +346,7 @@ export const RECOMMENDATION_NARRATIVE_PROMPT = buildPrompt(
     "recommendationNarrative": "...",
     "handoverNarrative": "..."
   }
-`
+`,
 );
 
 export const REFINE_PLAN_PROMPT = `

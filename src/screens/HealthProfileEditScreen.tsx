@@ -267,7 +267,10 @@ export const HealthProfileEditScreen = () => {
           </View>
 
           <View style={styles.field}>
-            <Text variant="bodyMedium" style={[styles.fieldLabel, { color: theme.colors.onSurfaceVariant }]}>
+            <Text
+              variant="bodyMedium"
+              style={[styles.fieldLabel, { color: theme.colors.onSurfaceVariant }]}
+            >
               Sex
             </Text>
             <SegmentedButtons
@@ -368,12 +371,6 @@ export const HealthProfileEditScreen = () => {
               numberOfLines={2}
               accessibilityHint="List known allergies so the AI avoids unsafe recommendations"
             />
-          </View>
-
-          <View style={styles.field}>
-            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, paddingVertical: 8 }}>
-              To manage your medications, please use the Medication Tracker from the main menu.
-            </Text>
           </View>
 
           <View style={styles.field}>
