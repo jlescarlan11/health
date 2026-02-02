@@ -1,0 +1,223 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SymptomCategory {
+  simple
+  complex
+  critical
+}
+
+enum DenialConfidence {
+  high
+  medium
+  low
+}
+
+enum SystemCategory {
+  Cardiac
+  Respiratory
+  Neurological
+  AcuteAbdomen @map("Acute Abdomen")
+  Trauma
+}
+
+enum SexAtBirth {
+  male
+  female
+  intersex
+  not_specified
+}
+
+model Facility {
+  id               String   @id @default(cuid())
+  name             String
+  type             String
+  address          String
+  latitude         Float
+  longitude        Float
+  yakap_accredited Boolean  @default(false)
+  services         String[]
+  operating_hours  Json
+  photos           String[]
+  barangay         String?
+  specialized_services String[] @default([])
+  is_24_7          Boolean  @default(false)
+  capacity         Int      @default(50)
+  live_metrics     Json     @default("{}")
+  busy_patterns    Json     @default("{}")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  signals          FacilitySignal[]
+  contacts         FacilityContact[]
+
+  @@index([latitude, longitude])
+  @@index([type])
+}
+
+model FacilityContact {
+  id             String   @id @default(cuid())
+  phoneNumber    String
+  platform       String   @default("phone")
+  teleconsultUrl String?
+  contactName    String?
+  role           String?
+  facilityId     String
+  facility       Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId])
+}
+
+model FacilitySignal {
+  id           String   @id @default(cuid())
+  facilityId   String
+  facility     Facility @relation(fields: [facilityId], references: [id])
+  visitorHash  String
+  timestamp    DateTime @default(now())
+
+  @@index([facilityId, timestamp])
+}
+
+model Symptom {
+  id                  String   @id @default(cuid())
+  name                String
+  category            String
+  keywords            String[]
+  red_flags           String[]
+  recommended_care    String
+  follow_up_questions String[] @default([])
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([category])
+}
+
+model User {
+  id               String           @id @default(cuid())
+  firstName        String
+  lastName         String
+  phoneNumber      String           @unique
+  dateOfBirth      DateTime @db.Date
+  sexAtBirth       SexAtBirth
+  passwordHash     String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  healthProfile    HealthProfile?
+  medications      Medication[]
+}
+
+model HealthProfile {
+  id                  String                 @id @default(cuid())
+  userId              String                 @unique
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chronic_conditions  String[]               @default([])
+  allergies           String[]               @default([])
+  current_medications String[]               @default([])
+  surgical_history    String?
+  family_history      String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  clinicalHistories   ClinicalHistoryRecord[]
+}
+
+model ClinicalHistoryRecord {
+  id               String          @id @default(cuid())
+  healthProfileId  String
+  healthProfile    HealthProfile   @relation(fields: [healthProfileId], references: [id], onDelete: Cascade)
+  payload          Json
+  assessmentProfile AssessmentProfile?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@index([healthProfileId])
+  @@map("ClinicalHistory")
+}
+
+model AssessmentProfile {
+  id                         String          @id @default(cuid())
+  clinicalHistoryRecordId    String          @unique
+  clinicalHistoryRecord      ClinicalHistoryRecord @relation(fields: [clinicalHistoryRecordId], references: [id], onDelete: Cascade)
+  age                        String?
+  duration                   String?
+  severity                   String?
+  progression                String?
+  red_flag_denials           String?
+  summary                    String
+  triage_readiness_score     Float?
+  ambiguity_detected         Boolean?
+  internal_inconsistency_detected Boolean?
+  internal_consistency_score Float?
+  red_flags_resolved         Boolean?
+  uncertainty_accepted       Boolean?
+  clinical_friction_detected Boolean?
+  clinical_friction_details  String?
+  is_complex_case            Boolean?
+  is_vulnerable              Boolean?
+  symptom_category           SymptomCategory?
+  denial_confidence          DenialConfidence?
+  turn_count                 Int?
+  affected_systems           SystemCategory[] @default([])
+  is_recent_resolved         Boolean?
+  resolved_keyword           String?
+  denied_symptoms           String[] @default([])
+  covered_symptoms          String[] @default([])
+  specific_details           Json?
+  termination_reason         String?
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+
+  @@index([clinicalHistoryRecordId])
+}
+
+model EmergencyContact {
+  id            String   @id @default(cuid())
+  name          String
+  category      String
+  phone         String
+  available24x7 Boolean  @default(true)
+  description   String?
+  createdAt     DateTime @default(now())
+}
+
+model Medication {
+  id             String   @id @default(cuid())
+  userId         String?
+  user           User?    @relation(fields: [userId], references: [id])
+  name           String
+  dosage         String?
+  scheduled_time String?
+  is_active      Boolean  @default(true)
+  days_of_week   String[] @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([name])
+  @@index([userId])
+}
+
+
+
+model HealthFeed {
+
+  id        String   @id @default(cuid())
+  externalId String  @unique // Hash of URL or ID from WP
+  title     String
+  excerpt   String
+  url       String
+  imageUrl  String?
+  dateISO   DateTime
+
+  author    String   @default("Naga City Health")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([dateISO])
+
+}
+
+
