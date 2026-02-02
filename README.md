@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Placeholder for Logo -->
-<img src="assets/images/icon.png" alt="HEALTH Logo" width="120" height="120" />
+<img src="mobile/assets/images/icon.png" alt="HEALTH Logo" width="120" height="120" />
 
 # HEALTH (Help Everyone Access Local Treatment & Healthcare)
 
@@ -61,7 +61,7 @@ The system follows a **client-server architecture** that keeps the Expo mobile a
 graph TD
     User[User] --> Mobile[Expo Mobile App]
     Mobile -->|REST / auth| Backend[Node + Express Backend]
-    Mobile -->|Gemini requests| GeminiClient[Gemini Client (cache + rate limiting + overrides)]
+    Mobile -->|Gemini requests| GeminiClient[Gemini Client Cache]
     Mobile -->|Offline cache| SQLite[Local SQLite + AsyncStorage]
     SQLite -->|Background sync| SyncService[Sync Service + Offline Slice]
     Backend -->|Prisma| Postgres[(PostgreSQL)]
