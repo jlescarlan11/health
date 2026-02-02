@@ -3,12 +3,27 @@ import * as historyService from '../services/historyService';
 
 export const transferAssessment = async (req: Request, res: Response) => {
   try {
-    const { targetUsername, assessmentData } = req.body;
+    const { targetUsername, targetPhoneNumber, assessmentData } = req.body;
 
-    if (!targetUsername || typeof targetUsername !== 'string') {
+    const rawPhoneNumber =
+      typeof targetPhoneNumber === 'string'
+        ? targetPhoneNumber
+        : typeof targetUsername === 'string'
+        ? targetUsername
+        : undefined;
+
+    if (!rawPhoneNumber || typeof rawPhoneNumber !== 'string') {
       return res.status(400).json({
         success: false,
-        error: 'targetUsername (string) is required',
+        error: 'targetPhoneNumber (string) is required',
+      });
+    }
+
+    const normalizedPhone = rawPhoneNumber.trim();
+    if (!normalizedPhone) {
+      return res.status(400).json({
+        success: false,
+        error: 'targetPhoneNumber cannot be empty',
       });
     }
 
@@ -19,7 +34,7 @@ export const transferAssessment = async (req: Request, res: Response) => {
       });
     }
 
-    const result = await historyService.transferAssessmentResult(targetUsername, assessmentData);
+    const result = await historyService.transferAssessmentResult(normalizedPhone, assessmentData);
 
     if (!result.success) {
       return res.status(result.statusCode ?? 500).json({

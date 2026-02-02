@@ -1,0 +1,31 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const assessmentRoutes_1 = __importDefault(require("./assessmentRoutes"));
+const triageRoutes_1 = __importDefault(require("./triageRoutes"));
+const facilityRoutes_1 = __importDefault(require("./facilityRoutes"));
+const symptomRoutes_1 = __importDefault(require("./symptomRoutes"));
+const aiRoutes_1 = __importDefault(require("./aiRoutes"));
+const yakapRoutes_1 = __importDefault(require("./yakapRoutes"));
+const emergencyContactRoutes_1 = __importDefault(require("./emergencyContactRoutes"));
+const healthFeedRoutes_1 = __importDefault(require("./healthFeedRoutes"));
+const triageRoutes_2 = __importDefault(require("./v1/triageRoutes"));
+const authRoutes_1 = __importDefault(require("./authRoutes"));
+const historyRoutes_1 = __importDefault(require("./historyRoutes"));
+const router = (0, express_1.Router)();
+router.use('/v1/triage', triageRoutes_2.default);
+router.use('/assessments', assessmentRoutes_1.default);
+router.use('/triage', triageRoutes_1.default);
+router.use('/facilities', facilityRoutes_1.default);
+router.use('/symptoms', symptomRoutes_1.default);
+router.use('/ai', aiRoutes_1.default);
+router.use('/yakap', yakapRoutes_1.default);
+router.use('/emergency-contacts', emergencyContactRoutes_1.default);
+router.use('/feed', healthFeedRoutes_1.default);
+router.use('/auth', authRoutes_1.default);
+router.use('/history', historyRoutes_1.default);
+exports.default = router;
+//# sourceMappingURL=index.js.map

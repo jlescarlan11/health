@@ -7,6 +7,33 @@ datasource db {
   provider = "postgresql"
 }
 
+enum SymptomCategory {
+  simple
+  complex
+  critical
+}
+
+enum DenialConfidence {
+  high
+  medium
+  low
+}
+
+enum SystemCategory {
+  Cardiac
+  Respiratory
+  Neurological
+  AcuteAbdomen @map("Acute Abdomen")
+  Trauma
+}
+
+enum SexAtBirth {
+  male
+  female
+  intersex
+  not_specified
+}
+
 model Facility {
   id               String   @id @default(cuid())
   name             String
@@ -72,7 +99,12 @@ model Symptom {
 
 model User {
   id               String           @id @default(cuid())
-  username         String           @unique
+  firstName        String
+  lastName         String
+  phoneNumber      String           @unique
+  dateOfBirth      DateTime @db.Date
+  sexAtBirth       SexAtBirth
+  passwordHash     String
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
   healthProfile    HealthProfile?
@@ -80,29 +112,66 @@ model User {
 }
 
 model HealthProfile {
-  id                 String          @id @default(cuid())
-  userId             String          @unique
-  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  chronic_conditions String[]        @default([])
-  allergies          String[]        @default([])
-  current_medications String[]       @default([])
-  surgical_history   String?
-  family_history     String?
-  dob                DateTime?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  clinicalHistories  ClinicalHistory[]
+  id                  String                 @id @default(cuid())
+  userId              String                 @unique
+  user                User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chronic_conditions  String[]               @default([])
+  allergies           String[]               @default([])
+  current_medications String[]               @default([])
+  surgical_history    String?
+  family_history      String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  clinicalHistories   ClinicalHistoryRecord[]
 }
 
-model ClinicalHistory {
-  id              String         @id @default(cuid())
-  healthProfileId String
-  healthProfile   HealthProfile  @relation(fields: [healthProfileId], references: [id], onDelete: Cascade)
-  payload         Json
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+model ClinicalHistoryRecord {
+  id               String          @id @default(cuid())
+  healthProfileId  String
+  healthProfile    HealthProfile   @relation(fields: [healthProfileId], references: [id], onDelete: Cascade)
+  payload          Json
+  assessmentProfile AssessmentProfile?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@index([healthProfileId])
+  @@map("ClinicalHistory")
+}
+
+model AssessmentProfile {
+  id                         String          @id @default(cuid())
+  clinicalHistoryRecordId    String          @unique
+  clinicalHistoryRecord      ClinicalHistoryRecord @relation(fields: [clinicalHistoryRecordId], references: [id], onDelete: Cascade)
+  age                        String?
+  duration                   String?
+  severity                   String?
+  progression                String?
+  red_flag_denials           String?
+  summary                    String
+  triage_readiness_score     Float?
+  ambiguity_detected         Boolean?
+  internal_inconsistency_detected Boolean?
+  internal_consistency_score Float?
+  red_flags_resolved         Boolean?
+  uncertainty_accepted       Boolean?
+  clinical_friction_detected Boolean?
+  clinical_friction_details  String?
+  is_complex_case            Boolean?
+  is_vulnerable              Boolean?
+  symptom_category           SymptomCategory?
+  denial_confidence          DenialConfidence?
+  turn_count                 Int?
+  affected_systems           SystemCategory[] @default([])
+  is_recent_resolved         Boolean?
+  resolved_keyword           String?
+  denied_symptoms           String[] @default([])
+  covered_symptoms          String[] @default([])
+  specific_details           Json?
+  termination_reason         String?
+  createdAt                  DateTime        @default(now())
+  updatedAt                  DateTime        @updatedAt
+
+  @@index([clinicalHistoryRecordId])
 }
 
 model EmergencyContact {
@@ -136,26 +205,16 @@ model Medication {
 model HealthFeed {
 
   id        String   @id @default(cuid())
-
   externalId String  @unique // Hash of URL or ID from WP
-
   title     String
-
   excerpt   String
-
   url       String
-
   imageUrl  String?
-
   dateISO   DateTime
 
   author    String   @default("Naga City Health")
-
   createdAt DateTime @default(now())
-
   updatedAt DateTime @updatedAt
-
-
 
   @@index([dateISO])
 

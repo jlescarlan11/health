@@ -1,5 +1,29 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator';
+import { ZodSchema, ZodError, ZodIssue } from 'zod';
+
+export const validateSchema = (schema: ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
+  try {
+    schema.parse(req.body);
+    next();
+  } catch (error) {
+    if (error instanceof ZodError) {
+      const issues = error.issues.map((issue: ZodIssue) => ({
+        path: issue.path,
+        message: issue.message,
+      }));
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Schema validation failed:', issues);
+      }
+      res.status(400).json({
+        error: 'Validation failed',
+        details: issues,
+      });
+      return;
+    }
+    res.status(500).json({ error: 'Internal server error during validation' });
+  }
+};
 
 export const validatePagination = (req: Request, res: Response, next: NextFunction) => {
   const { limit, offset } = req.query;
