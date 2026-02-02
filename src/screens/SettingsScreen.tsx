@@ -1,16 +1,29 @@
-import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, View, StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { useTheme, List, Surface, Divider, Switch, ActivityIndicator } from 'react-native-paper';
+import React, { useMemo, useCallback, useState } from 'react';
+import {
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+  ScrollView,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleProp,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
+import { useTheme, List, Surface, Divider, Switch } from 'react-native-paper';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { StandardHeader } from '../components/common/StandardHeader';
 import { ScreenSafeArea } from '../components/common';
 import { useAppDispatch, useAppSelector } from '../hooks/reduxHooks';
 import { toggleSpecializedMode } from '../store/settingsSlice';
-import { signOutAsync } from '../store/authSlice';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { DigitalIDCard } from '../components';
-import { Text } from '../components/common/Text';
+import { AuthRequiredCard } from '../components/common';
 import { theme as appTheme } from '../theme';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { signOutAsync } from '../store/authSlice';
 
 export const SettingsScreen = () => {
   const theme = useTheme();
@@ -18,31 +31,7 @@ export const SettingsScreen = () => {
   const dispatch = useAppDispatch();
   const { scaleFactor, isPWDMode } = useAdaptiveUI();
   const settings = useAppSelector((state) => state.settings);
-  const authToken = useAppSelector((state) => state.auth.token);
-  const authUser = useAppSelector((state) => state.auth.user);
-  const authStatus = useAppSelector((state) => state.auth.status);
-  const authError = useAppSelector((state) => state.auth.error);
-  const isSignedIn = Boolean(authToken);
-  const isSigningOut = isSignedIn && authStatus === 'loading';
-  const signedInDescription = 'Token cached locally and will be reused for sync once the backend is active.';
-  const signedOutDescription = 'Sign in once /auth/login is configured to unlock clinical history sync.';
-  const accountStatusDescription = isSignedIn ? signedInDescription : signedOutDescription;
-  const signInDescription = 'Requires the /auth/login backend (see Sign In screen).';
-  const signUpDescription = 'Requires the /auth/signup backend (see Create Account screen).';
-  const signedInLabel = authUser
-    ? `${authUser.firstName || ''} ${authUser.lastName || ''}`.trim() || 'Signed in'
-    : 'Signed in';
-  const signedInSecondary = authUser
-    ? [authUser.phoneNumber, formatDobForDisplay(authUser.dateOfBirth)]
-        .filter(Boolean)
-        .join(' � ')
-    : accountStatusDescription;
-  const handleSignOut = useCallback(() => {
-    if (!isSignedIn || isSigningOut) {
-      return;
-    }
-    dispatch(signOutAsync());
-  }, [dispatch, isSignedIn, isSigningOut]);
+  const isSignedIn = useAppSelector((state) => Boolean(state.auth.token));
   const themeSpacing = (theme as typeof appTheme).spacing ?? appTheme.spacing;
   const scrollBottomPadding = themeSpacing.lg * 2;
   const specializedModes = settings?.specializedModes || {
@@ -50,6 +39,36 @@ export const SettingsScreen = () => {
     isPWD: false,
     isChronic: false,
   };
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const router = useRouter();
+
+  const performSignOut = useCallback(async () => {
+    setIsSigningOut(true);
+    try {
+      await dispatch(signOutAsync()).unwrap();
+      router.replace('/SignIn');
+    } catch (error) {
+      console.error('Sign out failed:', error);
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+    } finally {
+      setIsSigningOut(false);
+    }
+  }, [dispatch, router]);
+
+  const handleSignOut = useCallback(() => {
+    if (isSigningOut) {
+      return;
+    }
+
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: performSignOut,
+      },
+    ]);
+  }, [isSigningOut, performSignOut]);
 
   const scaledSubheaderStyle = [
     styles.subheader,
@@ -76,105 +95,45 @@ export const SettingsScreen = () => {
           { paddingBottom: scrollBottomPadding },
         ]}
       >
-        <DigitalIDCard />
-        <View style={styles.sectionWrapper}>
-          <List.Section>
-            <List.Subheader style={scaledSubheaderStyle}>Account</List.Subheader>
-            <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
-              {isSignedIn ? (
-                <>
-                  <List.Item
-                    title={signedInLabel}
-                    description={signedInSecondary}
-                    left={(props) => (
-                      <List.Icon {...props} icon="account-check-outline" color={theme.colors.primary} />
-                    )}
-                    titleStyle={scaledItemTitleStyle}
-                    descriptionStyle={scaledDescriptionStyle}
-                  />
-                  <Divider />
-                  <List.Item
-                    title="Sign Out"
-                    description="Clear the cached token and return to a signed-out state."
-                    left={(props) => (
-                      <List.Icon {...props} icon="logout" color={theme.colors.primary} />
-                    )}
-                    right={(props) =>
-                      isSigningOut ? (
-                        <ActivityIndicator animating size={20} color={theme.colors.primary} />
-                      ) : (
-                        <List.Icon {...props} icon="chevron-right" />
-                      )
-                    }
-                    onPress={handleSignOut}
-                    disabled={isSigningOut}
-                    titleStyle={scaledItemTitleStyle}
-                    descriptionStyle={scaledDescriptionStyle}
-                  />
-                </>
-              ) : (
-                <>
-                  <List.Item
-                    title="Sign In"
-                    description={signInDescription}
-                    left={(props) => (
-                      <List.Icon {...props} icon="login" color={theme.colors.primary} />
-                    )}
-                    right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                    onPress={() => navigation.navigate('SignIn')}
-                    titleStyle={scaledItemTitleStyle}
-                    descriptionStyle={scaledDescriptionStyle}
-                  />
-                  <Divider />
-                  <List.Item
-                    title="Create Account"
-                    description={signUpDescription}
-                    left={(props) => (
-                      <List.Icon {...props} icon="account-plus-outline" color={theme.colors.primary} />
-                    )}
-                    right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                    onPress={() => navigation.navigate('SignUp')}
-                    titleStyle={scaledItemTitleStyle}
-                    descriptionStyle={scaledDescriptionStyle}
-                  />
-                </>
-              )}
-            </Surface>
-            {authError && (
-              <Text style={[styles.authError, { color: theme.colors.error }]}>{authError}</Text>
-            )}
-          </List.Section>
-        </View>
-        <View style={styles.sectionWrapper}>
-          <List.Section>
-            <List.Subheader style={scaledSubheaderStyle}>My Account</List.Subheader>
-            <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
-              <List.Item
-                title="Edit Health Profile"
-                description="Update your personal health information"
-                left={(props) => (
-                  <List.Icon {...props} icon="account-edit-outline" color={theme.colors.primary} />
-                )}
-                right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                onPress={() => navigation.navigate('HealthProfileEdit')}
-                titleStyle={scaledItemTitleStyle}
-                descriptionStyle={scaledDescriptionStyle}
-              />
-              <Divider />
-              <List.Item
-                title="Health Records"
-                description="View your past assessment data"
-                left={(props) => (
-                  <List.Icon {...props} icon="folder-multiple-outline" color={theme.colors.primary} />
-                )}
-                right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                onPress={() => navigation.navigate('ClinicalHistory')}
-                titleStyle={scaledItemTitleStyle}
-                descriptionStyle={scaledDescriptionStyle}
-              />
-            </Surface>
-          </List.Section>
-        </View>
+        {isSignedIn ? (
+          <DigitalIDCard />
+        ) : (
+          <View style={styles.sectionWrapper}>
+            <AuthRequiredCard />
+          </View>
+        )}
+        {isSignedIn && (
+          <View style={styles.sectionWrapper}>
+            <List.Section>
+              <List.Subheader style={scaledSubheaderStyle}>My Account</List.Subheader>
+              <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
+                <List.Item
+                  title="Edit Health Profile"
+                  description="Update your personal health information"
+                  left={(props) => (
+                    <List.Icon {...props} icon="account-edit-outline" color={theme.colors.primary} />
+                  )}
+                  right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                  onPress={() => navigation.navigate('HealthProfileEdit')}
+                  titleStyle={scaledItemTitleStyle}
+                  descriptionStyle={scaledDescriptionStyle}
+                />
+                <Divider />
+                <List.Item
+                  title="Health Records"
+                  description="View your past assessment data"
+                  left={(props) => (
+                    <List.Icon {...props} icon="folder-multiple-outline" color={theme.colors.primary} />
+                  )}
+                  right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                  onPress={() => navigation.navigate('ClinicalHistory')}
+                  titleStyle={scaledItemTitleStyle}
+                  descriptionStyle={scaledDescriptionStyle}
+                />
+              </Surface>
+            </List.Section>
+          </View>
+        )}
 
         <View style={styles.sectionWrapper}>
           <List.Section>
@@ -192,22 +151,24 @@ export const SettingsScreen = () => {
           </List.Section>
         </View>
 
-        <View style={styles.sectionWrapper}>
-          <List.Section>
-            <List.Subheader style={scaledSubheaderStyle}>Care Tools</List.Subheader>
-            <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
-              <List.Item
-                title="Medication Tracker"
-                description="Log doses, track adherence, and set reminders"
-                left={(props) => <List.Icon {...props} icon="pill" color={theme.colors.primary} />}
-                right={(props) => <List.Icon {...props} icon="chevron-right" />}
-                onPress={() => navigation.navigate('MedicationTracker')}
-                titleStyle={scaledItemTitleStyle}
-                descriptionStyle={scaledDescriptionStyle}
-              />
-            </Surface>
-          </List.Section>
-        </View>
+        {isSignedIn && (
+          <View style={styles.sectionWrapper}>
+            <List.Section>
+              <List.Subheader style={scaledSubheaderStyle}>Care Tools</List.Subheader>
+              <Surface style={[styles.surface, styles.sectionSurfaceSpacing]} elevation={1}>
+                <List.Item
+                  title="Medication Tracker"
+                  description="Log doses, track adherence, and set reminders"
+                  left={(props) => <List.Icon {...props} icon="pill" color={theme.colors.primary} />}
+                  right={(props) => <List.Icon {...props} icon="chevron-right" />}
+                  onPress={() => navigation.navigate('MedicationTracker')}
+                  titleStyle={scaledItemTitleStyle}
+                  descriptionStyle={scaledDescriptionStyle}
+                />
+              </Surface>
+            </List.Section>
+          </View>
+        )}
 
         <View style={styles.sectionWrapper}>
           <List.Section>
@@ -233,6 +194,34 @@ export const SettingsScreen = () => {
             </Surface>
           </List.Section>
         </View>
+        {isSignedIn && (
+          <>
+            <View style={styles.signOutSpacer} />
+            <View style={styles.signOutSection}>
+              <TouchableOpacity
+                style={[styles.signOutCard, isSigningOut && styles.signOutCardDisabled]}
+                activeOpacity={0.9}
+                onPress={handleSignOut}
+                disabled={isSigningOut}
+              >
+                <View style={styles.signOutContent}>
+                  <MaterialCommunityIcons
+                    name="logout"
+                    size={24}
+                    color="#DC2626"
+                    style={styles.signOutIcon}
+                  />
+                  <Text style={styles.signOutText}>Sign Out</Text>
+                </View>
+                {isSigningOut ? (
+                  <ActivityIndicator size="small" color="#DC2626" />
+                ) : (
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#9CA3AF" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </ScrollView>
     </ScreenSafeArea>
   );
@@ -272,7 +261,7 @@ const CareProfileCard = React.memo<CareProfileCardProps>(
     const pwdDescription = useMemo(
       () =>
         isPWDMode
-          ? 'Simplified layout active — larger text, spacing, and touch targets across the app.'
+          ? 'Simplified layout active â€” larger text, spacing, and touch targets across the app.'
           : 'Optimize for accessibility needs',
       [isPWDMode],
     );
@@ -313,21 +302,6 @@ const CareProfileCard = React.memo<CareProfileCardProps>(
 
 CareProfileCard.displayName = 'CareProfileCard';
 
-const formatDobForDisplay = (dob?: string | null): string | null => {
-  if (!dob) {
-    return null;
-  }
-  const parts = dob.split('-');
-  if (parts.length !== 3) {
-    return dob;
-  }
-  const [year, month, day] = parts;
-  if (!month || !day || !year) {
-    return dob;
-  }
-  return `${month.padStart(2, '0')}/${day.padStart(2, '0')}/${year}`;
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -335,6 +309,7 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingTop: 8,
+    flexGrow: 1,
   },
   surface: {
     borderRadius: 16,
@@ -375,5 +350,37 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 12,
     fontWeight: '600',
+  },
+  signOutSpacer: {
+    flex: 1,
+  },
+  signOutSection: {
+    paddingTop: 24,
+    paddingBottom: 32,
+  },
+  signOutCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    borderRadius: 12,
+    padding: 16,
+  },
+  signOutCardDisabled: {
+    opacity: 0.6,
+  },
+  signOutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  signOutIcon: {
+    marginRight: 12,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC2626',
   },
 });

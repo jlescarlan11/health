@@ -1,7 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { TextInput, HelperText, useTheme } from 'react-native-paper';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { StandardHeader } from '../components/common/StandardHeader';
 import { ScreenSafeArea } from '../components/common/ScreenSafeArea';
 import { Button } from '../components/common/Button';
@@ -9,7 +18,7 @@ import { Text } from '../components/common/Text';
 import { useAdaptiveUI } from '../hooks/useAdaptiveUI';
 import { useAppDispatch } from '../hooks/reduxHooks';
 import { setAuthError, setAuthLoading, setAuthToken, setAuthUser } from '../store/authSlice';
-import { storeAuthToken } from '../services/authSession';
+import { storeAuthSession } from '../services/authSession';
 import { SignInFormPayload, signIn } from '../services/authApi';
 
 const MIN_PHONE_LENGTH = 7;
@@ -20,6 +29,7 @@ export const SignInScreen = () => {
   const navigation = useNavigation<NavigationProp<Record<string, unknown>>>();
   const dispatch = useAppDispatch();
   const { scaleFactor } = useAdaptiveUI();
+  const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,10 +56,17 @@ export const SignInScreen = () => {
     try {
       const payload: SignInFormPayload = { phoneNumber: trimmedPhoneNumber, password };
       const result = await signIn(payload);
-      await storeAuthToken(result.token);
-      dispatch(setAuthToken(result.token));
+      await storeAuthSession({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+      });
+      dispatch(setAuthToken(result.accessToken));
       dispatch(setAuthUser(result.user));
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        router.replace('/');
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to sign in at the moment.';
       dispatch(setAuthError(message));
@@ -62,74 +79,87 @@ export const SignInScreen = () => {
   return (
     <ScreenSafeArea style={styles.safeArea}>
       <StandardHeader title="Sign In" showBackButton />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
       >
-        <Text style={[styles.sectionTitle, { fontSize: 18 * scaleFactor }]}>Welcome back</Text>
-        <Text style={[styles.description, { fontSize: 14 * scaleFactor }]}>{integrationNotice}</Text>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={[styles.sectionTitle, { fontSize: 18 * scaleFactor }]}>Welcome back</Text>
+            <Text style={[styles.description, { fontSize: 14 * scaleFactor }]}>{integrationNotice}</Text>
 
-        {!!errorMessage && (
-          <View style={styles.errorPill}>
-            <Text style={{ color: theme.colors.error }}>{errorMessage}</Text>
-          </View>
-        )}
+            {!!errorMessage && (
+              <View style={styles.errorPill}>
+                <Text style={{ color: theme.colors.error }}>{errorMessage}</Text>
+              </View>
+            )}
 
-        <View style={styles.formField}>
-          <TextInput
-            label="Phone number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-            returnKeyType="next"
-            mode="outlined"
-          />
-          {!isPhoneValid && phoneNumber.length > 0 && (
-            <HelperText type="error">
-              Phone number must contain at least {MIN_PHONE_LENGTH} characters.
-            </HelperText>
-          )}
-        </View>
+            <View style={styles.formField}>
+              <TextInput
+                label="Phone number"
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+                returnKeyType="next"
+                mode="outlined"
+              />
+              {!isPhoneValid && phoneNumber.length > 0 && (
+                <HelperText type="error">
+                  Phone number must contain at least {MIN_PHONE_LENGTH} characters.
+                </HelperText>
+              )}
+            </View>
 
-        <View style={styles.formField}>
-          <TextInput
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            returnKeyType="done"
-            mode="outlined"
-          />
-          {!isPasswordValid && password.length > 0 && (
-            <HelperText type="error">Password must be at least {MIN_PASSWORD_LENGTH} characters.</HelperText>
-          )}
-        </View>
+            <View style={styles.formField}>
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                returnKeyType="done"
+                mode="outlined"
+              />
+              {!isPasswordValid && password.length > 0 && (
+                <HelperText type="error">Password must be at least {MIN_PASSWORD_LENGTH} characters.</HelperText>
+              )}
+            </View>
 
-        <Button
-          title="Sign In"
-          onPress={handleSubmit}
-          loading={isSubmitting}
-          disabled={!isFormValid || isSubmitting}
-          style={styles.submitButton}
-          accessibilityHint="Attempts to sign in with the provided phone number and password"
-        />
+            <Button
+              title="Sign In"
+              onPress={handleSubmit}
+              loading={isSubmitting}
+              disabled={!isFormValid || isSubmitting}
+              style={styles.submitButton}
+              accessibilityHint="Attempts to sign in with the provided phone number and password"
+            />
 
-        <View style={styles.linkRow}>
-          <Text style={{ fontSize: 14 * scaleFactor, marginRight: 8 }}>Don’t have an account?</Text>
-          <Button
-            title="Create Account"
-            variant="ghost"
-            onPress={() => navigation.navigate('SignUp')}
-          />
-        </View>
-      </ScrollView>
+            <View style={styles.linkRow}>
+              <Text style={{ fontSize: 14 * scaleFactor, marginRight: 8 }}>Donâ€™t have an account?</Text>
+              <Button
+                title="Create Account"
+                variant="ghost"
+                onPress={() => navigation.navigate('SignUp')}
+              />
+            </View>
+
+            <View style={styles.bottomSpacer} />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </ScreenSafeArea>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
+  },
+  keyboardAvoidingContainer: {
     flex: 1,
   },
   content: {
@@ -160,5 +190,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 24,
+  },
+  bottomSpacer: {
+    height: 120,
   },
 });
