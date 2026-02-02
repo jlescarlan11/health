@@ -67,12 +67,12 @@ graph TD
     Backend -->|Prisma| Postgres[(PostgreSQL)]
     Backend -->|Safety| Arbiter[Triage Arbiter]
     Backend -->|AI calls| GeminiAI[Google Gemini 2.5 Flash]
-    Cron[Node-cron Health Feed Cron] --> HealthFeedService[Health Feed Service]
+    Cron[Node-cron] --> HealthFeedService[Health Feed Service]
     HealthFeedService --> Postgres
-    Backend -->|Feeds & routes| HealthFeedRoutes[/feed/health]
+    Backend -->|Feeds & routes| HealthFeedRoutes[Health Feed API]
     SyncService --> Backend
     GeminiClient --> Backend
-    Mobile -->|Triage tree| FlowAsset[assets/triage-flow.json + TriageEngine]
+    Mobile -->|Triage tree| FlowAsset[Triage Flow Asset]
 ```
 
 **Data Flow:** Symptoms, location, and patient info flow through the Expo app, the deterministic triage tree (`mobile/assets/triage-flow.json`) and the local `TriageEngine`, while the backend validates each recommendation via Prisma-backed PostgreSQL, the Triager Arbiter, and Gemini before returning a conservative plan. Offline SQLite tables (facilities, clinical history, medications) capture every note in the clinical notebook, and the sync service plus Redux offline slice replay them to the backend only when the device is online and authenticated.
