@@ -205,7 +205,7 @@ npx expo start
 
 ## Team
 
-**Team CTRL+H**
+**CTRL+H**
 
 - John Lester Escarlan - Project and Technical Lead | [GitHub](https://github.com/jlescarlan1)
 - Nicolete Reine Guarin - Developer | [GitHub](https://github.com/aquaryasss)
