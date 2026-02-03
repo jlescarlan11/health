@@ -20,7 +20,7 @@ exports.AssessmentProfileSchema = zod_1.z.object({
     red_flags_resolved: zod_1.z.boolean().optional(),
     uncertainty_accepted: zod_1.z.boolean().optional(),
     clinical_friction_detected: zod_1.z.boolean().optional(),
-    clinical_friction_details: zod_1.z.string().optional(),
+    clinical_friction_details: zod_1.z.string().nullable().optional(),
     is_complex_case: zod_1.z.boolean().optional(),
     is_vulnerable: zod_1.z.boolean().optional(),
     symptom_category: zod_1.z.enum(['simple', 'complex', 'critical']).optional(),
@@ -42,6 +42,10 @@ exports.AssessmentQuestionSchema = zod_1.z.object({
     is_red_flag: zod_1.z.boolean().optional(),
     metadata: zod_1.z.any().optional(),
 });
+const SessionContextSchema = zod_1.z.object({
+    sessionId: zod_1.z.string().optional(),
+    stableTurnCount: zod_1.z.number().min(0).optional(),
+});
 exports.TriageAssessmentRequestSchema = zod_1.z.object({
     history: zod_1.z.array(exports.ChatHistoryItemSchema),
     profile: exports.AssessmentProfileSchema.optional(),
@@ -53,6 +57,7 @@ exports.TriageAssessmentRequestSchema = zod_1.z.object({
     patientContext: zod_1.z.string().optional(),
     initialSymptom: zod_1.z.string(),
     fullName: zod_1.z.string().optional(),
+    sessionContext: SessionContextSchema.optional(),
 });
 exports.AssessmentResponseSchema = zod_1.z.object({
     recommended_level: zod_1.z.enum(['self_care', 'health_center', 'hospital', 'emergency', 'self-care', 'health-center']),

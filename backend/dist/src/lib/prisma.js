@@ -1,8 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = __importDefault(require("dotenv"));
 const pg_1 = require("pg");
 const adapter_pg_1 = require("@prisma/adapter-pg");
 const prisma_1 = require("../../generated/prisma");
+dotenv_1.default.config();
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
     console.error('❌ DATABASE_URL environment variable is not set!');

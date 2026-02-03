@@ -10,12 +10,16 @@ const validateSchema = (schema) => (req, res, next) => {
     }
     catch (error) {
         if (error instanceof zod_1.ZodError) {
+            const issues = error.issues.map((issue) => ({
+                path: issue.path,
+                message: issue.message,
+            }));
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('Schema validation failed:', issues);
+            }
             res.status(400).json({
                 error: 'Validation failed',
-                details: error.issues.map((e) => ({
-                    path: e.path.join('.'),
-                    message: e.message
-                }))
+                details: issues,
             });
             return;
         }

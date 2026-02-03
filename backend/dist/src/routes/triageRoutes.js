@@ -35,7 +35,9 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const triageController = __importStar(require("../controllers/triageController"));
+const validation_1 = require("../middleware/validation");
+const triageSchema_1 = require("../schemas/triageSchema");
 const router = (0, express_1.Router)();
-router.post('/assess', triageController.assess);
+router.post('/assess', (0, validation_1.validateSchema)(triageSchema_1.TriageAssessmentRequestSchema), triageController.assess);
 exports.default = router;
 //# sourceMappingURL=triageRoutes.js.map

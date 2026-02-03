@@ -27,7 +27,10 @@ const isAuthPayload = (value: unknown): value is AuthTokenPayload =>
 export const requireAuth = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = extractToken(req.headers.authorization);
   if (!token) {
-    return res.status(401).json({ error: 'Authentication token is required' });
+    return res.status(401).json({
+      error: 'No token provided',
+      code: 'NO_TOKEN',
+    });
   }
 
   try {
@@ -38,7 +41,24 @@ export const requireAuth = (req: AuthenticatedRequest, res: Response, next: Next
     req.user = payload;
     return next();
   } catch (error) {
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({
+        error: 'Token expired',
+        code: 'TOKEN_EXPIRED',
+        expiredAt: error.expiredAt,
+      });
+    }
+
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({
+        error: 'Invalid token',
+        code: 'INVALID_TOKEN',
+      });
+    }
+
     console.error('JWT verification failed:', error);
-    return res.status(401).json({ error: 'Invalid or expired authentication token' });
+    return res.status(401).json({
+      error: 'Authentication failed',
+    });
   }
 };

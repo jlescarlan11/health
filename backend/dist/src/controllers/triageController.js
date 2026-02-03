@@ -6,10 +6,13 @@ const TriageArbiter_1 = require("../services/triage/TriageArbiter");
 const aiUtils_1 = require("../utils/aiUtils");
 const aiService_1 = require("../services/aiService");
 const triageSchema_1 = require("../schemas/triageSchema");
+const zod_1 = require("zod");
 const assessV1 = async (req, res) => {
     try {
         const body = req.body;
-        const { history, profile: currentProfile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts = 0, patientContext, initialSymptom } = body;
+        const { history, profile: currentProfile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts = 0, patientContext, initialSymptom, sessionContext, } = body;
+        const safeRemainingQuestions = Array.isArray(remainingQuestions) ? remainingQuestions : [];
+        const triageSessionContext = sessionContext ?? undefined;
         if (!history || !initialSymptom) {
             return res.status(400).json({ error: 'History and initialSymptom are required' });
         }
@@ -57,7 +60,7 @@ const assessV1 = async (req, res) => {
             };
         }
         else {
-            const arbiterResult = TriageArbiter_1.TriageArbiter.evaluateAssessmentState(history, extractedProfile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts, initialSymptom);
+            const arbiterResult = TriageArbiter_1.TriageArbiter.evaluateAssessmentState(history, extractedProfile, currentTurn, totalPlannedQuestions, safeRemainingQuestions, previousProfile, clarificationAttempts, initialSymptom, triageSessionContext);
             if (arbiterResult.signal === 'TERMINATE') {
                 const finalAssessment = await geminiService_1.geminiService.assessSymptoms(initialSymptom, history, patientContext);
                 const facilities = await (0, aiService_1.selectFacilitiesForRecommendation)({
@@ -95,7 +98,7 @@ const assessV1 = async (req, res) => {
                 };
             }
             else {
-                let nextQuestion = remainingQuestions[0];
+                const nextQuestion = safeRemainingQuestions[0] ?? null;
                 let aiText = nextQuestion?.text || 'Could you tell me more about your symptoms?';
                 if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' || arbiterResult.signal === 'RESOLVE_AMBIGUITY') {
                     const bridge = await geminiService_1.geminiService.generateBridgeMessage(history[history.length - 1]?.text || '', aiText);
@@ -124,6 +127,17 @@ const assessV1 = async (req, res) => {
         return res.json(validatedResponse);
     }
     catch (error) {
+        if (error instanceof zod_1.ZodError) {
+            const issues = error.issues.map((issue) => ({
+                path: issue.path.map((segment) => String(segment)).join('.') || 'response',
+                message: issue.message,
+            }));
+            console.warn('Triage Orchestrator V1 response validation failed:', issues);
+            return res.status(400).json({
+                error: 'Invalid triage response payload',
+                issues,
+            });
+        }
         console.error('Error in Triage Orchestrator V1:', error);
         return res.status(500).json({ error: 'Triage assessment failed' });
     }
@@ -132,7 +146,9 @@ exports.assessV1 = assessV1;
 const assess = async (req, res) => {
     try {
         const body = req.body;
-        const { history, profile: currentProfile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts = 0, patientContext, initialSymptom } = body;
+        const { history, profile: currentProfile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts = 0, patientContext, initialSymptom, sessionContext, } = body;
+        const safeRemainingQuestions = Array.isArray(remainingQuestions) ? remainingQuestions : [];
+        const triageSessionContext = sessionContext ?? undefined;
         if (!history || !initialSymptom) {
             return res.status(400).json({ error: 'History and initialSymptom are required' });
         }
@@ -179,7 +195,7 @@ const assess = async (req, res) => {
             };
             return res.json(response);
         }
-        const arbiterResult = TriageArbiter_1.TriageArbiter.evaluateAssessmentState(history, extractedProfile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts, initialSymptom);
+        const arbiterResult = TriageArbiter_1.TriageArbiter.evaluateAssessmentState(history, extractedProfile, currentTurn, totalPlannedQuestions, safeRemainingQuestions, previousProfile, clarificationAttempts, initialSymptom, triageSessionContext);
         if (arbiterResult.signal === 'TERMINATE') {
             const finalAssessment = await geminiService_1.geminiService.assessSymptoms(initialSymptom, history, patientContext);
             const facilities = await (0, aiService_1.selectFacilitiesForRecommendation)({
@@ -218,7 +234,7 @@ const assess = async (req, res) => {
             return res.json(response);
         }
         else {
-            let nextQuestion = remainingQuestions[0];
+            const nextQuestion = safeRemainingQuestions[0] ?? null;
             let aiText = nextQuestion?.text || 'Could you tell me more about your symptoms?';
             if (arbiterResult.signal === 'REQUIRE_CLARIFICATION' || arbiterResult.signal === 'RESOLVE_AMBIGUITY') {
                 const bridge = await geminiService_1.geminiService.generateBridgeMessage(history[history.length - 1]?.text || '', aiText);

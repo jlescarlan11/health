@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.signup = void 0;
+exports.refresh = exports.login = exports.signup = void 0;
 const authService = __importStar(require("../services/authService"));
 const formatError = (error) => {
     if (error instanceof Error && error.statusCode) {
@@ -53,7 +53,9 @@ const signup = async (req, res) => {
         const result = await authService.signup(payload);
         return res.status(201).json({
             success: true,
-            token: result.token,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            token: result.accessToken,
             user: result.user,
         });
     }
@@ -73,7 +75,9 @@ const login = async (req, res) => {
         const result = await authService.login(payload);
         return res.status(200).json({
             success: true,
-            token: result.token,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            token: result.accessToken,
             user: result.user,
         });
     }
@@ -87,4 +91,26 @@ const login = async (req, res) => {
     }
 };
 exports.login = login;
+const refresh = async (req, res) => {
+    try {
+        const payload = req.body;
+        const result = await authService.refreshSession(payload.refreshToken);
+        return res.status(200).json({
+            success: true,
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+            token: result.accessToken,
+            user: result.user,
+        });
+    }
+    catch (error) {
+        const formatted = formatError(error);
+        console.error('Refresh error:', error);
+        return res.status(formatted.status).json({
+            success: false,
+            error: formatted.message,
+        });
+    }
+};
+exports.refresh = refresh;
 //# sourceMappingURL=authController.js.map

@@ -27,7 +27,7 @@ export function normalizeSlot(
     return null;
   }
 
-  return value;
+  return trimmed;
 }
 
 export function normalizeDenialConfidence(

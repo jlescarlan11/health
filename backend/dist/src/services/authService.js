@@ -3,40 +3,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.login = exports.signup = void 0;
+exports.refreshSession = exports.login = exports.signup = void 0;
 const prisma_1 = require("../../generated/prisma");
 const argon2_1 = __importDefault(require("argon2"));
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const prisma_2 = __importDefault(require("../lib/prisma"));
-const jwtSecret = process.env.JWT_SECRET;
-const jwtExpiresIn = (process.env.JWT_EXPIRES_IN || '1h');
-const jwtSignOptions = {
-    expiresIn: jwtExpiresIn,
-};
-if (!jwtSecret) {
-    throw new Error('JWT_SECRET environment variable is required for authentication');
-}
-const createPublicUser = (user) => ({
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    phoneNumber: user.phoneNumber,
-    dateOfBirth: user.dateOfBirth.toISOString(),
-    sexAtBirth: user.sexAtBirth,
-});
-const createToken = (user) => jsonwebtoken_1.default.sign({
-    sub: user.id,
-    phoneNumber: user.phoneNumber,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    dateOfBirth: user.dateOfBirth,
-    sexAtBirth: user.sexAtBirth,
-}, jwtSecret, jwtSignOptions);
+const userMappers_1 = require("../utils/userMappers");
+const tokenService_1 = require("./tokenService");
 const buildError = (message, statusCode) => {
     const error = new Error(message);
     error.statusCode = statusCode;
     return error;
 };
+const DEFAULT_SEX_AT_BIRTH = 'not_specified';
 const sanitizePhoneNumber = (value) => value.trim();
 const isPhoneNumberUniqueError = (error) => error instanceof prisma_1.Prisma.PrismaClientKnownRequestError &&
     error.code === 'P2002';
@@ -49,17 +27,19 @@ const signup = async (payload) => {
                 lastName: payload.lastName.trim(),
                 phoneNumber: sanitizePhoneNumber(payload.phoneNumber),
                 dateOfBirth: payload.dateOfBirth,
-                sexAtBirth: payload.sexAtBirth,
+                sexAtBirth: payload.sexAtBirth ?? DEFAULT_SEX_AT_BIRTH,
                 passwordHash: hashedPassword,
                 healthProfile: {
                     create: {},
                 },
             },
         });
-        const publicUser = createPublicUser(user);
+        const publicUser = (0, userMappers_1.toPublicUser)(user);
+        const session = await (0, tokenService_1.createSessionForUser)(publicUser);
         return {
             user: publicUser,
-            token: createToken(publicUser),
+            accessToken: session.accessToken,
+            refreshToken: session.refreshToken,
         };
     }
     catch (error) {
@@ -84,11 +64,15 @@ const login = async (payload) => {
     if (!matches) {
         throw buildError('Invalid phone number or password', 401);
     }
-    const publicUser = createPublicUser(user);
+    const publicUser = (0, userMappers_1.toPublicUser)(user);
+    const session = await (0, tokenService_1.createSessionForUser)(publicUser);
     return {
         user: publicUser,
-        token: createToken(publicUser),
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
     };
 };
 exports.login = login;
+const refreshSession = (refreshToken) => (0, tokenService_1.refreshSession)(refreshToken);
+exports.refreshSession = refreshSession;
 //# sourceMappingURL=authService.js.map

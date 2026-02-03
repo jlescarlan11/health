@@ -6,17 +6,25 @@ const stringUtils_1 = require("../../utils/stringUtils");
 const aiUtils_1 = require("../../utils/aiUtils");
 const ProtocolRegistry_1 = require("./ProtocolRegistry");
 class TriageArbiter {
-    static evaluateAssessmentState(history, profile, currentTurn, totalPlannedQuestions, remainingQuestions = [], previousProfile, clarificationAttempts = 0, initialSymptom = '') {
+    constructor(initialStableTurnCount) {
+        const parsed = Number(initialStableTurnCount);
+        this.stableTurnCount = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    }
+    static evaluateAssessmentState(history, profile, currentTurn, totalPlannedQuestions, remainingQuestions = [], previousProfile, clarificationAttempts = 0, initialSymptom = '', sessionContext) {
+        const arbiter = new TriageArbiter(sessionContext?.stableTurnCount);
+        return arbiter.evaluateAssessmentStateInternal(history, profile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts, initialSymptom);
+    }
+    evaluateAssessmentStateInternal(history, profile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts = 0, initialSymptom = '') {
         const isSaturated = this.calculateSaturation(profile, previousProfile, profile.triage_readiness_score ?? 0);
         const newSaturationCount = this.stableTurnCount;
-        if (currentTurn >= this.MAX_QUESTIONS_HARD_CAP) {
+        if (currentTurn >= TriageArbiter.MAX_QUESTIONS_HARD_CAP) {
             return {
                 signal: 'TERMINATE',
                 reason: `HARD CAP REACHED: Terminating at ${currentTurn} turns.`,
                 saturation_count: newSaturationCount,
             };
         }
-        const isVulnerable = this.isVulnerableGroup(history, profile);
+        const isVulnerable = TriageArbiter.isVulnerableGroup(history, profile);
         if (isVulnerable && !profile.is_vulnerable) {
             profile.is_vulnerable = true;
         }
@@ -47,7 +55,7 @@ class TriageArbiter {
                 saturation_count: newSaturationCount,
             };
         }
-        const sanityResult = this.evaluateClinicalSanity(profile, remainingQuestions, previousProfile);
+        const sanityResult = TriageArbiter.evaluateClinicalSanity(profile, remainingQuestions, previousProfile);
         if (sanityResult.signal === 'RESOLVE_AMBIGUITY' ||
             sanityResult.signal === 'REQUIRE_CLARIFICATION' ||
             sanityResult.signal === 'DRILL_DOWN') {
@@ -64,7 +72,9 @@ class TriageArbiter {
             profile.symptom_category === 'critical' ||
             profile.is_complex_case ||
             profile.is_vulnerable;
-        const minTurnsRequired = isComplexCategory ? this.MIN_TURNS_COMPLEX : this.MIN_TURNS_SIMPLE;
+        const minTurnsRequired = isComplexCategory
+            ? TriageArbiter.MIN_TURNS_COMPLEX
+            : TriageArbiter.MIN_TURNS_SIMPLE;
         if (currentTurn < minTurnsRequired) {
             return {
                 signal: 'CONTINUE',
@@ -87,7 +97,7 @@ class TriageArbiter {
                 };
             }
         }
-        const completenessResult = this.evaluateDataCompleteness(profile, initialSymptom);
+        const completenessResult = TriageArbiter.evaluateDataCompleteness(profile, initialSymptom);
         if (completenessResult.signal === 'TERMINATE' &&
             profile.triage_readiness_score === 1.0 &&
             profile.internal_inconsistency_detected) {
@@ -116,12 +126,12 @@ class TriageArbiter {
             saturation_count: newSaturationCount,
         };
     }
-    static calculateSaturation(current, previous, readinessScore) {
+    calculateSaturation(current, previous, readinessScore) {
         if (!previous) {
             this.stableTurnCount = 0;
             return false;
         }
-        const slotsIdentical = this.areClinicalSlotsIdentical(current, previous);
+        const slotsIdentical = TriageArbiter.areClinicalSlotsIdentical(current, previous);
         const stableCount = slotsIdentical ? this.stableTurnCount + 1 : 0;
         this.stableTurnCount = stableCount;
         return readinessScore >= 1.0 && stableCount >= 2;
@@ -240,5 +250,4 @@ exports.TriageArbiter = TriageArbiter;
 TriageArbiter.MIN_TURNS_SIMPLE = 4;
 TriageArbiter.MIN_TURNS_COMPLEX = 7;
 TriageArbiter.MAX_QUESTIONS_HARD_CAP = 12;
-TriageArbiter.stableTurnCount = 0;
 //# sourceMappingURL=TriageArbiter.js.map

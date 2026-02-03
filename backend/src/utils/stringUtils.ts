@@ -117,9 +117,13 @@ const parseNumberWords = (text: string): number | null => {
   return flush();
 };
 
-export const normalizeNumericValue = (text: string | null | undefined): number | null => {
-  if (!text) return null;
-  const lowerText = text.trim().toLowerCase();
+export const normalizeNumericValue = (
+  text: string | number | null | undefined,
+): number | null => {
+  if (text === null || text === undefined) return null;
+  const normalizedInput = typeof text === 'string' ? text : String(text);
+  if (!normalizedInput) return null;
+  const lowerText = normalizedInput.trim().toLowerCase();
 
   const fractionMatch = lowerText.match(/\b(\d+(?:\.\d+)?)\s*\/\s*10\b/i);
   if (fractionMatch?.[1]) return Number(fractionMatch[1]);

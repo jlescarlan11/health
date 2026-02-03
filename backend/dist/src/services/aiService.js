@@ -82,17 +82,36 @@ const navigate = async (data) => {
     };
 };
 exports.navigate = navigate;
+const HEALTH_CENTER_KEYWORDS = ['Health Center', 'Center'];
+const HOSPITAL_KEYWORDS = ['Hospital'];
+const EMERGENCY_KEYWORDS = ['Emergency', 'Hospital'];
+const SELF_CARE_KEYWORDS = ['Health Center', 'Clinic', 'Community Clinic'];
 const FACILITY_LEVEL_KEYWORDS = {
-    'Health Center': ['Health Center', 'Center'],
-    Hospital: ['Hospital'],
-    Emergency: ['Emergency', 'Hospital'],
-    'Emergency Room': ['Emergency', 'Hospital'],
+    'SelfCare': SELF_CARE_KEYWORDS,
+    'self_care': SELF_CARE_KEYWORDS,
+    'self-care': SELF_CARE_KEYWORDS,
+    'Self-Care': SELF_CARE_KEYWORDS,
+    'Health Center': HEALTH_CENTER_KEYWORDS,
+    'health_center': HEALTH_CENTER_KEYWORDS,
+    'health-center': HEALTH_CENTER_KEYWORDS,
+    'HealthCenter': HEALTH_CENTER_KEYWORDS,
+    'Hospital': HOSPITAL_KEYWORDS,
+    'hospital': HOSPITAL_KEYWORDS,
+    'Emergency': EMERGENCY_KEYWORDS,
+    'emergency': EMERGENCY_KEYWORDS,
+    'Emergency Room': EMERGENCY_KEYWORDS,
+    'Emergency room': EMERGENCY_KEYWORDS,
+    'emergency_room': EMERGENCY_KEYWORDS,
 };
 const resolveFacilityTypeKeywords = (recommendation, facilityTypeConstraints) => {
     const normalizedLevel = recommendation?.trim();
-    const baseKeywords = FACILITY_LEVEL_KEYWORDS[normalizedLevel] ?? [];
+    const baseKeywords = FACILITY_LEVEL_KEYWORDS[normalizedLevel ?? ''] ?? [];
     const constraintKeywords = facilityTypeConstraints?.map((constraint) => constraint.trim()).filter(Boolean) ?? [];
     const allKeywords = [...constraintKeywords, ...baseKeywords].filter(Boolean);
+    if (allKeywords.length === 0 && normalizedLevel) {
+        console.warn(`[AI] No facility keywords mapped for recommendation "${normalizedLevel}". Defaulting to hospital keywords.`);
+        return Array.from(new Set(HOSPITAL_KEYWORDS));
+    }
     return Array.from(new Set(allKeywords));
 };
 const selectFacilitiesForRecommendation = async ({ recommendation, relevantServices, facilityTypeConstraints, }) => {
