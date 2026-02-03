@@ -28,6 +28,13 @@ import {
   parseIsoDateString,
   validateIsoDateValue,
 } from '../utils/dobUtils';
+import {
+  formatPhilippinesPhoneNumber,
+  sanitizePhilippinesPhoneInput,
+  MAX_PHILIPPINES_PHONE_DIGITS,
+  PHILIPPINES_COUNTRY_CODE,
+  PHILIPPINES_PHONE_PLACEHOLDER,
+} from '../utils/phoneNumberUtils';
 
 const REQUIRED_MIN_PASSWORD_LENGTH = 8;
 const FALLBACK_SIGNUP_ERROR = 'Could not create account. Please try again.';
@@ -60,10 +67,10 @@ export const SignUpScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const trimmedPhoneNumber = phoneNumber.trim();
   const trimmedDateOfBirth = dateOfBirth.trim();
   const hasValidName = firstName.trim().length > 0 && lastName.trim().length > 0;
-  const hasValidPhone = trimmedPhoneNumber.length >= 7;
+  const hasValidPhone = phoneNumber.length === MAX_PHILIPPINES_PHONE_DIGITS;
+  const formattedPhoneNumber = formatPhilippinesPhoneNumber(phoneNumber);
   const parsedDob = useMemo(() => {
     if (!trimmedDateOfBirth) {
       return null;
@@ -84,18 +91,19 @@ export const SignUpScreen = () => {
   const firstNameHelperText = fieldErrors.firstName ?? (!firstName.trim() ? 'First name is required.' : undefined);
   const lastNameHelperText = fieldErrors.lastName ?? (!lastName.trim() ? 'Last name is required.' : undefined);
   const phoneHelperText =
-    fieldErrors.phoneNumber ?? (!hasValidPhone && phoneNumber.length > 0 ? 'Phone number must contain at least 7 digits.' : undefined);
+    fieldErrors.phoneNumber ??
+    (!hasValidPhone && phoneNumber.length > 0
+      ? `Phone number must contain ${MAX_PHILIPPINES_PHONE_DIGITS} digits.`
+      : undefined);
   const dateOfBirthHelperText = fieldErrors.dateOfBirth ?? dobValidationError;
   const passwordHelperText =
     fieldErrors.password ?? (!isPasswordValid && password.length > 0 ? `Password must be at least ${REQUIRED_MIN_PASSWORD_LENGTH} characters.` : undefined);
   const confirmPasswordHelperText =
     fieldErrors.confirmPassword ?? (confirmPassword.length > 0 && !doPasswordsMatch ? 'Passwords must match.' : undefined);
 
-  const integrationWarning = useMemo(
-    () =>
-      'Signing up requires the backend /auth/signup endpoint. Any invalid fields will render inline messages so you can correct them before submitting again.',
-    [],
-  );
+  const handlePhoneNumberChange = (value: string) => {
+    setPhoneNumber(sanitizePhilippinesPhoneInput(value));
+  };
 
   const handleSubmit = async () => {
     if (!isFormValid || isSubmitting) {
@@ -109,7 +117,7 @@ export const SignUpScreen = () => {
       const payload: SignUpFormPayload = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        phoneNumber: trimmedPhoneNumber,
+        phoneNumber,
         dateOfBirth: parsedDob ? formatIsoDate(parsedDob) : trimmedDateOfBirth,
         password,
         confirmPassword,
@@ -141,7 +149,7 @@ export const SignUpScreen = () => {
   };
 
   return (
-    <ScreenSafeArea style={styles.safeArea}>
+    <ScreenSafeArea style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <StandardHeader title="Create Account" showBackButton />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingContainer}
@@ -154,9 +162,6 @@ export const SignUpScreen = () => {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text style={[styles.sectionTitle, { fontSize: 18 * scaleFactor }]}>Create your profile</Text>
-            <Text style={[styles.description, { fontSize: 14 * scaleFactor }]}>{integrationWarning}</Text>
-
             {!!errorMessage && (
               <View style={styles.errorPill}>
                 <Text style={{ color: theme.colors.error }}>{errorMessage}</Text>
@@ -188,10 +193,12 @@ export const SignUpScreen = () => {
             <View style={styles.formField}>
               <TextInput
                 label="Phone number"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                placeholder={PHILIPPINES_PHONE_PLACEHOLDER}
+                value={formattedPhoneNumber}
+                onChangeText={handlePhoneNumberChange}
                 keyboardType="phone-pad"
                 mode="outlined"
+                left={<TextInput.Affix text={PHILIPPINES_COUNTRY_CODE} />}
               />
               {phoneHelperText && <HelperText type="error">{phoneHelperText}</HelperText>}
             </View>
@@ -259,15 +266,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingTop: 8,
   },
   sectionTitle: {
     fontWeight: '700',
     marginBottom: 8,
-  },
-  description: {
-    color: '#4C566A',
-    marginBottom: 16,
   },
   formField: {
     marginBottom: 16,
