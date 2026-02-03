@@ -29,7 +29,7 @@ Naga City General Hospital (NCGH) is crowded with non-emergency cases, creating 
 
 ## Solution
 
-**HEALTH** is an AI-assisted mobile guide that acts as a digital triage officer. Residents enter symptoms, location, and context; offline and online components funnel that data through a deterministic triage tree, the Triager Arbiter safety layer, and Gemini 2.5 Flash before returning the least-invasive recommendation. The app also handles offline clinical history, medication logs, facility browsing, and YAKAP enrollment guidance so users can act immediately even without signal.
+**HEALTH** is an AI-assisted mobile guide that acts as a digital triage officer. Residents enter symptoms, and context; offline and online components funnel that data through a deterministic triage tree, the Triager Arbiter safety layer, and Gemini 2.5 Flash before returning the least-invasive recommendation. The app also handles offline clinical history, medication logs, facility browsing, and YAKAP enrollment guidance so users can act immediately even without signal.
 
 ---
 
