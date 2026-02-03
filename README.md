@@ -145,7 +145,7 @@ graph TD
 - Admin dashboard + predictive analytics built off the clinical history feed and health reports.
 - Signal-based health alerts/notifications derived from Health Hub and clinical summaries.
 - Private mode to keep sensitive entries local until explicit sync consent.
-- Community forum and expanded Health Hub articles surfaced through Yakap content.
+- Community forum and expanded Health Hub articles.
 - Telemedicine layer with live availability and richer booking on the facility directory.
 - Yakap articles & FAQs surfaced as a full knowledge base widget.
 
