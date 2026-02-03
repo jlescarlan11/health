@@ -46,7 +46,12 @@ export const isMaternalContext = (text: string): boolean => {
   return maternalKeywords.some((regex) => regex.test(text));
 };
 
-export const normalizeAge = (age: string | null): number | null => {
+export const normalizeAge = (age: string | number | null): number | null => {
+  if (age === null || age === undefined) return null;
+  if (typeof age === 'number') {
+    return Number.isFinite(age) ? Math.floor(age) : null;
+  }
+
   const normalized = normalizeNumericValue(age);
   if (normalized === null || Number.isNaN(normalized)) return null;
   return Math.floor(normalized);
