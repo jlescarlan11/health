@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Keyboard,
@@ -20,8 +20,14 @@ import { useAppDispatch } from '../hooks/reduxHooks';
 import { setAuthError, setAuthLoading, setAuthToken, setAuthUser } from '../store/authSlice';
 import { storeAuthSession } from '../services/authSession';
 import { SignInFormPayload, signIn } from '../services/authApi';
+import {
+  formatPhilippinesPhoneNumber,
+  sanitizePhilippinesPhoneInput,
+  MAX_PHILIPPINES_PHONE_DIGITS,
+  PHILIPPINES_COUNTRY_CODE,
+  PHILIPPINES_PHONE_PLACEHOLDER,
+} from '../utils/phoneNumberUtils';
 
-const MIN_PHONE_LENGTH = 7;
 const MIN_PASSWORD_LENGTH = 8;
 
 export const SignInScreen = () => {
@@ -35,16 +41,14 @@ export const SignInScreen = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const trimmedPhoneNumber = phoneNumber.trim();
-  const isPhoneValid = trimmedPhoneNumber.length >= MIN_PHONE_LENGTH;
+  const formattedPhoneNumber = formatPhilippinesPhoneNumber(phoneNumber);
+  const isPhoneValid = phoneNumber.length === MAX_PHILIPPINES_PHONE_DIGITS;
   const isPasswordValid = password.length >= MIN_PASSWORD_LENGTH;
   const isFormValid = isPhoneValid && isPasswordValid;
 
-  const integrationNotice = useMemo(
-    () =>
-      'Enter your phone number and password to sign in. The app sends your credentials to /auth/login once the backend is available.',
-    [],
-  );
+  const handlePhoneNumberChange = (value: string) => {
+    setPhoneNumber(sanitizePhilippinesPhoneInput(value));
+  };
 
   const handleSubmit = async () => {
     if (!isFormValid || isSubmitting) {
@@ -54,7 +58,7 @@ export const SignInScreen = () => {
     setErrorMessage(null);
     setIsSubmitting(true);
     try {
-      const payload: SignInFormPayload = { phoneNumber: trimmedPhoneNumber, password };
+      const payload: SignInFormPayload = { phoneNumber, password };
       const result = await signIn(payload);
       await storeAuthSession({
         accessToken: result.accessToken,
@@ -77,7 +81,7 @@ export const SignInScreen = () => {
   };
 
   return (
-    <ScreenSafeArea style={styles.safeArea}>
+    <ScreenSafeArea style={styles.safeArea} edges={['left', 'right', 'bottom']}>
       <StandardHeader title="Sign In" showBackButton />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingContainer}
@@ -90,9 +94,6 @@ export const SignInScreen = () => {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text style={[styles.sectionTitle, { fontSize: 18 * scaleFactor }]}>Welcome back</Text>
-            <Text style={[styles.description, { fontSize: 14 * scaleFactor }]}>{integrationNotice}</Text>
-
             {!!errorMessage && (
               <View style={styles.errorPill}>
                 <Text style={{ color: theme.colors.error }}>{errorMessage}</Text>
@@ -102,15 +103,17 @@ export const SignInScreen = () => {
             <View style={styles.formField}>
               <TextInput
                 label="Phone number"
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
+                placeholder={PHILIPPINES_PHONE_PLACEHOLDER}
+                value={formattedPhoneNumber}
+                onChangeText={handlePhoneNumberChange}
                 keyboardType="phone-pad"
                 returnKeyType="next"
                 mode="outlined"
+                left={<TextInput.Affix text={PHILIPPINES_COUNTRY_CODE} />}
               />
               {!isPhoneValid && phoneNumber.length > 0 && (
                 <HelperText type="error">
-                  Phone number must contain at least {MIN_PHONE_LENGTH} characters.
+                  Phone number must contain {MAX_PHILIPPINES_PHONE_DIGITS} digits.
                 </HelperText>
               )}
             </View>
@@ -164,15 +167,10 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingTop: 8,
   },
   sectionTitle: {
     fontWeight: '700',
     marginBottom: 8,
-  },
-  description: {
-    color: '#4C566A',
-    marginBottom: 16,
   },
   formField: {
     marginBottom: 16,
