@@ -3,7 +3,7 @@
 <!-- Placeholder for Logo -->
 <img src="mobile/assets/images/icon.png" alt="HEALTH Logo" width="120" height="120" />
 
-# HEALTH (Help Everyone Access Local Treatment & Healthcare)
+# HEALTH<br>(Help Everyone Access Local Treatment & Healthcare)
 
 **Healthcare Made Simple for Naga City.**
 
@@ -20,7 +20,6 @@
 - [Problem Statement](#problem-statement)
 - [Solution](#solution)
 - [Demo](#demo)
-- [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
