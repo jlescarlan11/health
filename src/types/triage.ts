@@ -177,7 +177,7 @@ export interface ArbiterResult {
 }
 
 export interface AssessmentProfile {
-  age: string | null;
+  age: string | number | null;
   duration: string | null;
   severity: string | null;
   progression: string | null;

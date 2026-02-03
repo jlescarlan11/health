@@ -218,7 +218,7 @@ export class TriageArbiter {
     return true;
   }
 
-  private static semanticNumericCompare(_field: string, valueA?: string | null, valueB?: string | null): boolean {
+  private static semanticNumericCompare(_field: string, valueA?: string | number | null, valueB?: string | number | null): boolean {
     const left = normalizeSlot(valueA);
     const right = normalizeSlot(valueB);
     if (!left && !right) return true;
