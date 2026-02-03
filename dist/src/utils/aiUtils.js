@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.normalizeSlot = normalizeSlot;
+exports.normalizeDenialConfidence = normalizeDenialConfidence;
 exports.normalizeBooleanResponse = normalizeBooleanResponse;
 exports.checkCriticalSystemKeywords = checkCriticalSystemKeywords;
 exports.calculateTriageScore = calculateTriageScore;
@@ -27,6 +28,31 @@ function normalizeSlot(value, options = {}) {
         return null;
     }
     return value;
+}
+function normalizeDenialConfidence(value) {
+    if (typeof value !== 'string' || !value.trim()) {
+        return undefined;
+    }
+    const normalized = value
+        .trim()
+        .toLowerCase()
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/[^a-z\s]/g, ' ');
+    const tokens = normalized
+        .split(/\s+/)
+        .map((token) => token.trim())
+        .filter(Boolean);
+    const hasToken = (target) => tokens.some((token) => token === target || token.startsWith(target));
+    if (hasToken('high')) {
+        return 'high';
+    }
+    if (hasToken('medium') || hasToken('moderate')) {
+        return 'medium';
+    }
+    if (hasToken('low')) {
+        return 'low';
+    }
+    return undefined;
 }
 function normalizeBooleanResponse(text) {
     if (!text)

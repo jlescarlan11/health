@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import * as authService from '../services/authService';
-import { LoginForm, SignupForm } from '../schemas/authSchema';
+import { LoginForm, RefreshForm, SignupForm } from '../schemas/authSchema';
 
 const formatError = (error: unknown) => {
   if (error instanceof Error && (error as any).statusCode) {
@@ -21,7 +21,9 @@ export const signup = async (req: Request, res: Response) => {
     const result = await authService.signup(payload);
     return res.status(201).json({
       success: true,
-      token: result.token,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      token: result.accessToken,
       user: result.user,
     });
   } catch (error) {
@@ -40,12 +42,35 @@ export const login = async (req: Request, res: Response) => {
     const result = await authService.login(payload);
     return res.status(200).json({
       success: true,
-      token: result.token,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      token: result.accessToken,
       user: result.user,
     });
   } catch (error) {
     const formatted = formatError(error);
     console.error('Login error:', error);
+    return res.status(formatted.status).json({
+      success: false,
+      error: formatted.message,
+    });
+  }
+};
+
+export const refresh = async (req: Request, res: Response) => {
+  try {
+    const payload = req.body as RefreshForm;
+    const result = await authService.refreshSession(payload.refreshToken);
+    return res.status(200).json({
+      success: true,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      token: result.accessToken,
+      user: result.user,
+    });
+  } catch (error) {
+    const formatted = formatError(error);
+    console.error('Refresh error:', error);
     return res.status(formatted.status).json({
       success: false,
       error: formatted.message,

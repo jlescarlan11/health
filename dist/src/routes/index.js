@@ -15,6 +15,7 @@ const healthFeedRoutes_1 = __importDefault(require("./healthFeedRoutes"));
 const triageRoutes_2 = __importDefault(require("./v1/triageRoutes"));
 const authRoutes_1 = __importDefault(require("./authRoutes"));
 const historyRoutes_1 = __importDefault(require("./historyRoutes"));
+const profileRoutes_1 = __importDefault(require("./profileRoutes"));
 const router = (0, express_1.Router)();
 router.use('/v1/triage', triageRoutes_2.default);
 router.use('/assessments', assessmentRoutes_1.default);
@@ -26,6 +27,7 @@ router.use('/yakap', yakapRoutes_1.default);
 router.use('/emergency-contacts', emergencyContactRoutes_1.default);
 router.use('/feed', healthFeedRoutes_1.default);
 router.use('/auth', authRoutes_1.default);
+router.use('/profile', profileRoutes_1.default);
 router.use('/history', historyRoutes_1.default);
 exports.default = router;
 //# sourceMappingURL=index.js.map

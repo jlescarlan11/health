@@ -25,7 +25,10 @@ const isAuthPayload = (value) => typeof value === 'object' &&
 const requireAuth = (req, res, next) => {
     const token = extractToken(req.headers.authorization);
     if (!token) {
-        return res.status(401).json({ error: 'Authentication token is required' });
+        return res.status(401).json({
+            error: 'No token provided',
+            code: 'NO_TOKEN',
+        });
     }
     try {
         const payload = jsonwebtoken_1.default.verify(token, jwtSecret);
@@ -36,8 +39,23 @@ const requireAuth = (req, res, next) => {
         return next();
     }
     catch (error) {
+        if (error instanceof jsonwebtoken_1.default.TokenExpiredError) {
+            return res.status(401).json({
+                error: 'Token expired',
+                code: 'TOKEN_EXPIRED',
+                expiredAt: error.expiredAt,
+            });
+        }
+        if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
+            return res.status(401).json({
+                error: 'Invalid token',
+                code: 'INVALID_TOKEN',
+            });
+        }
         console.error('JWT verification failed:', error);
-        return res.status(401).json({ error: 'Invalid or expired authentication token' });
+        return res.status(401).json({
+            error: 'Authentication failed',
+        });
     }
 };
 exports.requireAuth = requireAuth;

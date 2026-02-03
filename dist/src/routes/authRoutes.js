@@ -40,5 +40,6 @@ const authSchema_1 = require("../schemas/authSchema");
 const router = (0, express_1.Router)();
 router.post('/signup', (0, validation_1.validateSchema)(authSchema_1.SignupSchema), authController.signup);
 router.post('/login', (0, validation_1.validateSchema)(authSchema_1.LoginSchema), authController.login);
+router.post('/refresh', (0, validation_1.validateSchema)(authSchema_1.RefreshSchema), authController.refresh);
 exports.default = router;
 //# sourceMappingURL=authRoutes.js.map

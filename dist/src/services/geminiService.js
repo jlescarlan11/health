@@ -72,6 +72,15 @@ class GeminiService {
         const result = await this.model.generateContent(prompt);
         const responseText = result.response.text();
         const profile = (0, aiUtils_1.parseAndValidateLLMResponse)(responseText);
+        if (profile && typeof profile === 'object') {
+            const normalizedConfidence = (0, aiUtils_1.normalizeDenialConfidence)(profile.denial_confidence);
+            if (normalizedConfidence) {
+                profile.denial_confidence = normalizedConfidence;
+            }
+            else {
+                delete profile.denial_confidence;
+            }
+        }
         if (protocol && profile) {
             if (!profile.specific_details)
                 profile.specific_details = {};

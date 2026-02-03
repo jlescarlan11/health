@@ -182,7 +182,9 @@ exports.refineQuestion = refineQuestion;
 const evaluateTriageState = async (req, res) => {
     try {
         const { history, profile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts, initialSymptom, } = req.body;
-        const result = TriageArbiter_1.TriageArbiter.evaluateAssessmentState(history, profile, currentTurn, totalPlannedQuestions, remainingQuestions, previousProfile, clarificationAttempts, initialSymptom);
+        const sessionContext = req.body.sessionContext;
+        const safeRemainingQuestions = Array.isArray(remainingQuestions) ? remainingQuestions : [];
+        const result = TriageArbiter_1.TriageArbiter.evaluateAssessmentState(history, profile, currentTurn, totalPlannedQuestions, safeRemainingQuestions, previousProfile, clarificationAttempts, initialSymptom, sessionContext);
         res.json(result);
     }
     catch (error) {

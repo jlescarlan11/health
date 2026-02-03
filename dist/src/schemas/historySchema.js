@@ -16,7 +16,7 @@ const AssessmentProfileSchema = zod_1.z.object({
     red_flags_resolved: zod_1.z.boolean().optional(),
     uncertainty_accepted: zod_1.z.boolean().optional(),
     clinical_friction_detected: zod_1.z.boolean().optional(),
-    clinical_friction_details: zod_1.z.string().optional(),
+    clinical_friction_details: zod_1.z.string().nullable().optional(),
     is_complex_case: zod_1.z.boolean().optional(),
     is_vulnerable: zod_1.z.boolean().optional(),
     symptom_category: zod_1.z.enum(['simple', 'complex', 'critical']).optional(),

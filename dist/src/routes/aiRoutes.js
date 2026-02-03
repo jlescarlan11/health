@@ -35,9 +35,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const aiController = __importStar(require("../controllers/aiController"));
+const authenticate_1 = require("../middleware/authenticate");
 const rateLimit_1 = require("../middleware/rateLimit");
 const utils_1 = require("../utils");
+const validation_1 = require("../middleware/validation");
+const triageSchema_1 = require("../schemas/triageSchema");
 const router = (0, express_1.Router)();
+router.use(authenticate_1.requireAuth);
 router.use(rateLimit_1.apiLimiter);
 router.post('/navigate', (0, utils_1.asyncHandler)(aiController.navigate));
 router.post('/plan', (0, utils_1.asyncHandler)(aiController.generateAssessmentPlan));
@@ -49,7 +53,7 @@ router.post('/refine-plan', aiController.refineAssessmentPlan);
 router.post('/expand-assessment', aiController.expandAssessment);
 router.post('/bridge', aiController.generateBridgeMessage);
 router.post('/refine-question', (0, utils_1.asyncHandler)(aiController.refineQuestion));
-router.post('/evaluate-triage', (0, utils_1.asyncHandler)(aiController.evaluateTriageState));
+router.post('/evaluate-triage', (0, validation_1.validateSchema)(triageSchema_1.TriageAssessmentRequestSchema), (0, utils_1.asyncHandler)(aiController.evaluateTriageState));
 router.post('/chat', (0, utils_1.asyncHandler)(aiController.chat));
 exports.default = router;
 //# sourceMappingURL=aiRoutes.js.map
